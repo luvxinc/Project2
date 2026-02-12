@@ -262,7 +262,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <h3 style={{ color: colors.text }} className="text-[15px] font-semibold">API Server</h3>
-              <p style={{ color: colors.textTertiary }} className="text-[12px] mt-1">NestJS v11</p>
+              <p style={{ color: colors.textTertiary }} className="text-[12px] mt-1">Spring Boot 3.x</p>
             </div>
 
             <div 
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <h3 style={{ color: colors.text }} className="text-[15px] font-semibold">Database</h3>
-              <p style={{ color: colors.textTertiary }} className="text-[12px] mt-1">PostgreSQL + Prisma</p>
+              <p style={{ color: colors.textTertiary }} className="text-[12px] mt-1">PostgreSQL + JPA</p>
             </div>
 
             <div 
@@ -300,7 +300,7 @@ export default function DashboardPage() {
       <footer style={{ borderColor: `${colors.border}50` }} className="py-6 border-t">
         <div className="max-w-[980px] mx-auto px-6">
           <p style={{ color: colors.textTertiary }} className="text-[11px] text-center">
-            MGMT V2 · {tHome('footer.phase')} · {tHome('footer.module')}
+            MGMT V3 · {tHome('footer.phase')} · {tHome('footer.module')}
           </p>
         </div>
       </footer>

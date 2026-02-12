@@ -47,7 +47,7 @@
     "title": "系统状态",
     "api": {
       "title": "API 服务",
-      "description": "NestJS + Prisma + PostgreSQL",
+      "description": "Spring Boot + JPA + PostgreSQL",
       "running": "运行中"
     },
     "database": {
