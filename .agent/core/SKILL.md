@@ -69,11 +69,17 @@ description: 工程部内核 — 层级式索引路由。17 个技能 + 4 个工
 |--------|----------|------|
 | `MGMT`, `ERP`, `VMA` | [`../../projects/mgmt/CONTEXT.md`](../../projects/mgmt/CONTEXT.md) | 项目入口 → roadmap → recipes → data/ |
 
-### 工具库 (L3 — 按需加载)
+### 工具库 (L3 — 按需加载, 先读 INDEX.md)
 
-| 目录 | 说明 |
-|------|------|
-| [`../../warehouse/tools/`](../../warehouse/tools/) | 跨项目通用 SDK/库参考 |
+| 工具 | 目录 | 何时加载 |
+|------|------|---------|
+| ECC | [`warehouse/tools/everything-claude-code/`](../../warehouse/tools/everything-claude-code/) | Agent 系统设计/审查清单 |
+| UI UX Pro | [`warehouse/tools/ui-ux-pro-max/`](../../warehouse/tools/ui-ux-pro-max/) | 选风格/配色/UX 审查 |
+| Anthropic Skills | [`warehouse/tools/anthropic-skills/`](../../warehouse/tools/anthropic-skills/) | 创建新 Skill |
+| Knowledge Plugins | [`warehouse/tools/knowledge-work-plugins/`](../../warehouse/tools/knowledge-work-plugins/) | 创建插件 |
+| Claude-Mem | [`warehouse/tools/claude-mem/`](../../warehouse/tools/claude-mem/) | 理解记忆架构 |
+| Skill Seekers | [`warehouse/tools/skill-seekers/`](../../warehouse/tools/skill-seekers/) | 文档→Skill |
+| Anime.js | [`warehouse/tools/animejs.md`](../../warehouse/tools/animejs.md) | 动画开发 |
 
 ---
 

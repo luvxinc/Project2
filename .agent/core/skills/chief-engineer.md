@@ -140,22 +140,48 @@ PM 交来的文档必须包含:
 
 总工在所有工程师完成后做整合检查:
 
-### 5.1 验证清单
+### 5.1 验证清单 (含具体命令)
 
 ```
-[ ] 所有子任务标记 ✅
-[ ] 编译通过 (无新错误)
-[ ] 各模块之间接口一致 (DTO 匹配, API 路径正确)
+编译验证:
+[ ] ./gradlew build --no-daemon → BUILD SUCCESSFUL
+[ ] cd apps/web && pnpm build → ✓ Compiled successfully
+[ ] pnpm tsc --noEmit → 零类型错误
+
+接口一致性:
+[ ] 后端 DTO 字段 ↔ 前端 TypeScript 接口字段 → 100% 匹配
+[ ] API 路径 (后端 Controller) ↔ 前端 API Client 路径 → 一致
+[ ] 数据库字段 (Entity) ↔ DTO 映射 → 无遗漏
+
+跨文件影响分析 (🔴 必做):
+[ ] git diff --name-only HEAD~1 → 列出所有变更文件
+[ ] 对每个变更文件: grep -r "import.*{ClassName}" --include="*.kt" --include="*.tsx" .
+    → 所有消费方已同步
+[ ] 对每个 API 变更: 前端已更新调用
+[ ] 对每个 Entity 变更: Migration 已写 + DTO 已同步
+
+回归检查:
 [ ] 无冲突的代码修改 (git diff 检查)
-[ ] 数据模型变更有迁移脚本
-[ ] 跨模块依赖正确连接
+[ ] 数据模型变更有迁移脚本 (Flyway)
 [ ] 性能没有明显退化
 ```
 
-### 5.2 不通过时
+### 5.2 不通过时 (精确驳回格式)
 
 ```
-发现问题 → 定位到哪个工程师的产出 → 退回该工程师 → 修复 → 重新整合验证
+发现问题 → 定位到哪个工程师的产出 → 精确驳回
+驳回必须包含:
+  - 具体文件和行号
+  - 预期行为 vs 实际行为
+  - 重现步骤 (如有)
+
+模板:
+  ## ❌ 驳回说明
+  文件: src/modules/vma/controller/EmployeeController.kt:45
+  预期: GET /api/v1/vma/employees 返回员工列表含 department
+  实际: 返回的 DTO 缺少 department 字段
+  影响: 前端 EmployeeTable.tsx 显示部门列为空
+  修复方向: EmployeeResponse DTO 加 department 字段
 ```
 
 ---
@@ -198,4 +224,5 @@ projects/{project}/data/progress/engineering-status.md
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+*Version: 2.0.0 — 强化版 (含具体命令 + 影响分析 + 精确驳回)*
+*Updated: 2026-02-12*

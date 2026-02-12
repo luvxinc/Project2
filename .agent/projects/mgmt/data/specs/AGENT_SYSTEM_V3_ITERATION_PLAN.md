@@ -1,342 +1,336 @@
-# Agent System V3.0 迭代计划
+# Agent System V3 迭代计划 (V2 — 用户反馈后修订)
 
-> **生成时间**: 2026-02-12 14:45 PST
-> **PM**: 项目经理
-> **触发方**: 用户要求严格审计全部工作流/SOP/职务，参考 ECC (42K⭐) 最佳实践
-> **参考源**: [everything-claude-code v1.4.1](https://github.com/affaan-m/everything-claude-code)
+> **修订时间**: 2026-02-12 14:57 PST
+> **修订原因**: V1 计划太乐观。V2→V3 迁移实测暴露: QA 太弱 / 协作遗漏 / SOP 不够详细 / 工具箱无索引
 
 ---
 
-## 一、审计总览：我们 vs ECC
+## 零、用户反馈 (核心痛点)
 
-### 架构对比
-
-| 维度 | 我们 (Agent System v2.x) | ECC (v1.4.1) | 评估 |
-|------|------------------------|--------------|------|
-| **组织模型** | 企业级: PM → CTO → 10工程师 → QA | 扁平: 12 专职 Agent | 🟢 我们更高级 |
-| **角色数** | 17 Skills + 4 Workflows | 12 Agents + 30+ Skills + 30+ Commands | 🟡 ECC 颗粒度更细 |
-| **工作流** | 4 个 Workflow (build/guard/ship/ui) | 30+ Slash Commands | 🟡 ECC 入口更细化 |
-| **TDD** | ✅ §1 有落地代码模板 | ✅ 专门 Agent + Skill + Command | 🟡 ECC 更系统 |
-| **验证循环** | ✅ 6 阶段验证 (agent-mastery) | ✅ 6 阶段验证 (verification-loop) | 🟢 基本一致 |
-| **代码审查** | ✅ §2 代码审查 (guard) | ✅ 专门 Agent + Review Checklist | 🟡 ECC 清单更详尽 |
-| **安全审查** | ✅ 12 项安全检查 | ✅ AgentShield (387 tests) | 🟡 ECC 有工具支持 |
-| **持续学习** | ✅ Instinct 架构 (适配 KI) | ✅ Instinct v2 (原版) | 🟢 基本一致 |
-| **编码标准** | ✅ 文件/函数限制 + 异味检测 | ✅ 同 + 不可变性 + 输入验证 | 🟢 基本一致 |
-| **上下文管理** | ✅ 4 级阈值 + Checkpoint | ✅ 同 | 🟢 一致 |
-| **Hooks (自动化)** | ❌ 无 | ✅ PreToolUse/PostToolUse/Stop | 🔴 我们缺失 |
-| **Rules (强制规则)** | ❌ 散布在各 Skill 中 | ✅ 独立 rules/ 目录，分语言 | 🔴 我们缺失 |
-| **工程师自检** | ❌ 无 (只有 QA 事后审计) | ✅ 编码前/后自动检查 | 🔴 我们缺失 |
-| **Dynamic Contexts** | ❌ 无 | ✅ dev/review/research 模式切换 | 🟡 可选增强 |
+| # | 痛点 | 用户原话 | 根因 |
+|---|------|---------|------|
+| 🔴 **P1** | SOP 太弱 | "所有职务职责, 说明, 流程, SOP 都太弱了" | L1 管理层 SOP 只有流程框架, 缺少**具体执行细节** |
+| 🔴 **P2** | QA 太弱 | "QA 和测试环节非常弱, 很多内容没有被发现" | 审计清单不够细, 缺少**具体验证命令和脚本** |
+| 🔴 **P3** | 协作遗漏 | "各部门协作太差, 遗漏太多内容没有做好修改" | 交接清单缺少**强制验证项**, 无跨文件影响分析 |
+| 🔴 **P4** | 工具箱无索引 | "技能需要目录索引, 按需加载, 按长度切片" | 工具箱文件是索引卡, 缺少**详细内容切片** |
 
 ---
 
-### 当前系统状态审计 (17 Skills)
+## 一、迭代方向 (不再"保持")
 
-| # | Skill 文件 | 大小 | 内容质量 | 问题 |
-|---|-----------|------|----------|------|
-| 1 | `project-manager.md` | 6.8KB | ✅ 完整 | 无 |
-| 2 | `chief-engineer.md` | 5.9KB | ✅ 完整 | 无 |
-| 3 | `qa-auditor.md` | 9.4KB | ✅ 完整 | 无 |
-| 4 | `collaboration.md` | 4.9KB | ✅ 完整 | 无 |
-| 5 | `requirements.md` | 7.5KB | ✅ 完整 | 无 |
-| 6 | `handoff.md` | 3.2KB | ✅ 完整 | 无 |
-| 7 | `backend.md` | 14.3KB | ✅ 完整 | **缺少：完成后自检清单** |
-| 8 | `frontend.md` | 13.4KB | ✅ 完整 | **缺少：完成后自检清单** |
-| 9 | `data.md` | 10.7KB | ✅ 完整 | 无 |
-| 10 | `messaging.md` | 6.5KB | ✅ 完整 | 无 |
-| 11 | `integration.md` | 7.3KB | ✅ 完整 | 无 |
-| 12 | `security.md` | 13.4KB | ✅ 完整 | 无 |
-| 13 | `infrastructure.md` | 13.2KB | ✅ 完整 | 无 |
-| 14 | `observability.md` | 14.5KB | ✅ 完整 | 无 |
-| 15 | `performance.md` | 6.4KB | ✅ 完整 | 无 |
-| 16 | `platform.md` | 7.2KB | ✅ 完整 | 无 |
-| 17 | `agent-mastery.md` | 18.9KB | ✅ 完整 | **可精简：Skill Seekers 部分过大** |
+### V1 计划的错误
+V1 将 PM/CTO/QA/Collaboration 全标 "✅ 保持"。
+**实际证据反驳**: V2→V3 迁移中数据遗漏、未删旧引用、前后端不同步、QA 未发现问题。
 
-### 当前工作流状态审计 (4 Workflows)
-
-| # | Workflow | 大小 | 状态 | 问题 |
-|---|----------|------|------|------|
-| 1 | `build.md` (/main_build) | 11.4KB | ✅ 完整 | §7 验证门禁 ✅ 文件管理 ✅ |
-| 2 | `guard.md` (/main_guard) | 7.5KB | ✅ 完整 | §1 TDD ✅ §2 审查 ✅ §3 安全 ✅ §4 构建错误 ✅ |
-| 3 | `ship.md` (/main_ship) | 7.2KB | ✅ 完整 | §1-§6 全部有实质内容 ✅ |
-| 4 | `ui.md` (/main_ui) | 7.6KB | ✅ 完整 | §1-§3 全部有实质内容 ✅ |
-
-### L2 入口引用审计
-
-| 入口文件 | 指向 | 问题 |
-|---------|------|------|
-| `workflows/contact.md` | PM SOP | ⚠️ 引用路径格式不是 symlink |
-| `workflows/main_build.md` | 内联, 11KB | ✅ 但 README 说是指向 core/workflows/build.md (不存在) |
-| `workflows/main_guard.md` | 内联, 7.5KB | ✅ 同上问题 |
-| `workflows/main_ship.md` | 内联, 7.2KB | ✅ 同上问题 |
-| `workflows/main_ui.md` | 内联, 7.6KB | ✅ 同上问题 |
-
-> **🔴 重要发现**: README.md 标注了 `core/workflows/` 目录存在 `build.md, ship.md, guard.md, ui.md`，但实际上 Workflow 内容是直接写在 `workflows/main_*.md` 中。`core/workflows/` 目录可能不存在或为空。但功能上这不影响使用，因为 Antigravity 读取 `.agent/workflows/` 而非 `core/workflows/`。
+### V2 计划的原则
+1. **每个 SOP 都升级** — 从"概念正确"到"可执行"
+2. **切片 + 索引** — 大文件拆分, 小文件补充细节, 统一索引
+3. **强制验证门** — 每个角色完成后有**具体命令**验证
+4. **交叉检查** — 任何修改必须触发**影响分析清单**
 
 ---
 
-## 二、差距分析 (从 ECC 学到的关键能力)
+## 二、工具箱改造 (P4)
 
-### 🔴 关键差距 (必须补)
+### 2.1 问题: 工具箱索引卡太薄
 
-| # | 差距 | 影响 | ECC 对应 | 优先级 |
-|---|------|------|----------|--------|
-| **G1** | **工程师自检 SOP 缺失** | 错误发现晚，QA 负担重 | code-reviewer checklist | P0 |
-| **G2** | **Rules 缺失 (强制规则层)** | 每次靠记忆，没有强制约束 | `rules/common/*.md` | P0 |
-| **G3** | **L4 参考文件 v2-architecture.md 已过时** | 引用已删除的 V2 NestJS 内容 | — | P0 |
+当前 7 个工具文件 (1.7-2.7KB) 只是索引卡，缺少可操作的详细内容。
 
-### 🟡 重要增强 (应该补)
-
-| # | 差距 | 影响 | ECC 对应 | 优先级 |
-|---|------|------|----------|--------|
-| **G4** | 工程师 Skill 缺少 **反模式清单** | 重复犯同类错误 | code-reviewer anti-patterns | P1 |
-| **G5** | `agent-mastery.md` **过于臃肿** (18.9KB) | 违反自己的 30KB 加载上限规则 | 拆分为多个子 Skill | P1 |
-| **G6** | **README.md 架构图与实际不一致** | core/workflows/ 目录描述不匹配 | — | P1 |
-| **G7** | `/main_guard` 缺少 **TDD 修 Bug 专用流程** | TDD 有概念但没有 Bug 修复专用步骤 | tdd-guide agent workflows | P1 |
-| **G8** | 缺少 **文档同步检查** | 代码改了但文档没跟上 | doc-updater agent | P1 |
-
-### 🟢 可选优化 (锦上添花)
-
-| # | 差距 | ECC 对应 | 优先级 |
-|---|------|----------|--------|
-| **G9** | Dynamic Contexts (dev/review/research 模式) | `contexts/*.md` | P2 |
-| **G10** | 更细化的 Slash Commands (如 `/tdd`, `/plan`, `/code-review`) | 30+ commands | P2 |
-| **G11** | AgentShield 安全自动扫描 | `npx ecc-agentshield scan` | P2 |
-| **G12** | 多 Agent 编排 (`/orchestrate`, `/multi-plan`) | multi-agent orchestration | P3 |
-
----
-
-## 三、迭代计划
-
-### Phase 1: 关键基础设施 (预计 1 会话)
-
-> **目标**: 补齐最关键的 3 个差距 (G1 + G2 + G3)
-
-#### 1.1 创建 Rules 层 (`core/rules/`)
-
-仿照 ECC 的 `rules/` 目录，创建强制约束规则：
+### 2.2 解决方案: 切片 + 目录索引
 
 ```
-core/rules/
-├── README.md               # 规则索引 + 安装说明
-├── common/                  # 语言无关
-│   ├── coding-style.md      # 不可变性, 文件组织, 错误处理, 输入验证
-│   ├── git-workflow.md      # Commit 格式, PR 流程, 分支策略
-│   ├── testing.md           # TDD, 覆盖率 ≥ 80%
-│   ├── security.md          # 密钥检查, SQL 注入, XSS
-│   └── self-review.md       # ⭐ 新增: 工程师完成后自检清单
-├── kotlin/                  # Kotlin / Spring Boot 特定
-│   └── coding-standards.md
-└── typescript/              # TypeScript / Next.js 特定
-    └── coding-standards.md
+warehouse/
+├── README.md                        # 总索引 ✅ 已有
+└── tools/
+    ├── everything-claude-code/      # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引 (路由表 + 切片说明)
+    │   ├── 01-architecture.md       # ECC 架构模式
+    │   ├── 02-agents.md             # 12 Agent 详细参考
+    │   ├── 03-verification.md       # 验证循环详解
+    │   └── 04-rules-hooks.md        # Rules + Hooks 设计
+    │
+    ├── ui-ux-pro-max/               # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引
+    │   ├── 01-styles.md             # 67 风格详细清单 (含示例)
+    │   ├── 02-palettes.md           # 96 配色方案详表 (含 HEX)
+    │   ├── 03-typography.md         # 57 字体配对 (含 Google Fonts 链接)
+    │   ├── 04-ux-rules.md           # 99 UX 准则 (含反模式)
+    │   └── 05-pre-delivery.md       # 交付前自检 + 断点清单
+    │
+    ├── anthropic-skills/            # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引
+    │   ├── 01-spec.md               # Agent Skills 官方规范全文
+    │   └── 02-examples.md           # 核心示例技能详解
+    │
+    ├── knowledge-work-plugins/      # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引
+    │   ├── 01-plugin-arch.md        # 插件架构详解 (plugin.json + .mcp.json)
+    │   ├── 02-productivity.md       # productivity 插件详解 (参考落地)
+    │   └── 03-domain-catalog.md     # 其余 10 插件速查
+    │
+    ├── claude-mem/                  # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引
+    │   ├── 01-architecture.md       # 5 Hooks + SQLite + Chroma 详解
+    │   └── 02-mcp-tools.md          # 5 MCP 工具详细用法 + 示例
+    │
+    ├── skill-seekers/               # 🆕 从 .md → 文件夹
+    │   ├── INDEX.md                 # 目录索引
+    │   ├── 01-commands.md           # 完整命令参考
+    │   └── 02-c3-modules.md         # C3.x AI 增强模块详解
+    │
+    └── animejs.md                   # ✅ 保持 (已有 9.4KB 完整 API)
 ```
 
-**来源**: 从 `agent-mastery.md` §3 + `guard.md` §2 提取 + ECC `rules/common/` 最佳实践融合
-
-#### 1.2 添加工程师自检 SOP (G1)
-
-在 `backend.md` 和 `frontend.md` 末尾添加 **§N 完成后自检** section：
+### 2.3 INDEX.md 模板
 
 ```markdown
-## §N 完成后自检 (必做)
+---
+name: {tool-name}
+description: {一行描述}
+source: {GitHub URL}
+---
 
-> **ECC 原则: 写代码后，列出可能的问题 + 建议测试用例**
+# {工具名}
 
-### 自检清单
+## 切片目录
 
-1. **安全** (🔴 CRITICAL — 必须 0 问题)
-   - [ ] 无硬编码密钥/密码
-   - [ ] 所有用户输入已验证
-   - [ ] 权限注解已添加 (@PreAuthorize / middleware)
-   - [ ] 无 SQL 注入风险
-   - [ ] 无敏感数据泄露
+| 文件 | 内容 | 大小 | 何时加载 |
+|------|------|------|---------|
+| `01-xxx.md` | ... | ~XKB | 需要 xxx 时 |
+| `02-yyy.md` | ... | ~YKB | 需要 yyy 时 |
 
-2. **代码质量** (🟡 HIGH)
-   - [ ] 函数 < 50 行，文件 < 800 行
-   - [ ] 无 > 4 层嵌套
-   - [ ] 错误处理完整
-   - [ ] 不可变模式
-   - [ ] 命名清晰
-
-3. **框架特定** (🟡 HIGH)
-   - [后端] Controller 无业务逻辑
-   - [后端] @Transactional 在 Service 层
-   - [后端] N+1 查询检查
-   - [前端] useEffect 依赖完整
-   - [前端] 无 console.log
-   - [前端] Loading/Error/Empty 三态
-
-4. **测试覆盖** (🟡 HIGH)
-   - [ ] 核心路径有 Unit Test
-   - [ ] 边界条件已测试
-   - [ ] 列出 3 个潜在风险点 + 对应测试建议
-
-5. **回归** (🟢 MEDIUM)
-   - [ ] 现有功能不受影响
-   - [ ] git diff 无意外变更
-   - [ ] i18n 新文本已翻译
+## 快速参考 (不需要读切片即可用的信息)
+...
 ```
-
-#### 1.3 清理过时 L4 参考文件 (G3)
-
-- 审查 `reference/v2-architecture.md` — V2 已删除，标注为 **历史存档** 或删除
-- 审查 `reference/migration-v2.md` — 迁移完成，标注为 **已完成归档**
 
 ---
 
-### Phase 2: SOP 精炼 (预计 1 会话)
+## 三、L1 管理层 SOP 强化 (P1)
 
-> **目标**: 精炼现有 SOP，增加反模式清单和 TDD Bug 修复流程
+### 3.1 CTO 强化方向
 
-#### 2.1 拆分 `agent-mastery.md` (G5)
+当前 `chief-engineer.md` (5.9KB) 问题:
+- ❌ 只有流程框架, 缺少**执行细节**
+- ❌ 整合验证清单只有 7 项通用条目, 没有**具体命令**
+- ❌ 没有**影响分析 SOP** (修改了 A, 还要检查 B/C/D)
+- ❌ 没有**代码走查 SOP** (CTO 亲自审代码的标准)
 
-当前 18.9KB，违反 30KB 加载上限原则。拆分为：
-
-| 原 Section | 新位置 | 大小预估 |
-|-----------|--------|----------|
-| §1 验证循环 | **保留** in agent-mastery.md | ~2KB |
-| §2 渐进检索 | **保留** in agent-mastery.md | ~1.5KB |
-| §3 编码标准 | **移至** `core/rules/common/coding-style.md` | ~2KB |
-| §4 上下文管理 | **保留** in agent-mastery.md | ~2KB |
-| §5 错误处理 | **保留** in agent-mastery.md | ~2KB |
-| §6 持续学习 | **保留** in agent-mastery.md | ~4KB |
-| §7 Skill Seekers | **移至** `warehouse/tools/skill-seekers.md` | ~5KB |
-
-**预期效果**: agent-mastery.md 从 18.9KB 降到 ~12KB
-
-#### 2.2 增强 `/main_guard` TDD Bug 修复流程 (G7)
-
-在 `§1 TDD` 中添加 **§1.5 TDD 修 Bug 专用流程**：
+**补充内容**:
 
 ```markdown
-### §1.5 TDD 修 Bug (Bug Reproduction → Fix → Verify)
+## §N CTO 整合验证 — 具体操作
 
-> **ECC 原则: 发现 Bug 时，先写测试重现，再修复直到通过**
+### N.1 编译+类型验证
+// 后端
+./gradlew build --no-daemon 2>&1 | tail -20
+// 确认: BUILD SUCCESSFUL
 
+// 前端
+cd apps/web && pnpm build 2>&1 | tail -30
+// 确认: ✓ Compiled successfully
+
+### N.2 跨文件影响分析 (🔴 核心 — 协作遗漏根源)
+对于每个被修改的文件:
+1. grep 全局搜索所有 import/引用该文件的位置
+2. 检查 DTO/接口变更是否同步到 消费方
+3. 检查路由变更是否同步到 前端 API Client
+4. 检查数据库字段变更是否同步到 所有 Entity/DTO/前端类型
+
+命令模板:
+  grep -r "OldClassName" --include="*.kt" --include="*.tsx" --include="*.ts" .
+  grep -r "旧路径" --include="*.tsx" .
+  git diff --name-only HEAD~1 | head -50  # 查看所有变更文件
+
+### N.3 接口一致性验证
+对于每个 API 变更:
+1. 后端 Controller → DTO 类型对齐
+2. 前端 API Client → 调用路径对齐
+3. 前端组件 → 使用的 DTO 字段对齐
+4. i18n → 新增 key 已翻译
+
+### N.4 数据完整性
+1. Flyway 迁移脚本是否有对应的回滚脚本
+2. 新字段是否有默认值 (避免 NOT NULL 崩溃)
+3. 外键关系是否正确
+
+### N.5 退回时的精确描述
+退回不能只说"有问题", 必须:
+- 列出具体文件和行号
+- 说明预期行为 vs 实际行为
+- 附带重现步骤 (如有)
 ```
-1. 复现: 确认 Bug 可复现
-2. 测试: 写一个精确描述 Bug 行为的失败测试
-3. 验证: 运行测试 → 确认失败 (RED)
-4. 修复: 写最小代码修复
-5. 验证: 运行测试 → 确认通过 (GREEN)
-6. 回归: 运行全量测试 → 确认无副作用
-7. 文档: 记录根因和修复方案
-```
-```
 
-#### 2.3 添加反模式清单到核心工程师 Skill (G4)
+### 3.2 PM 强化方向
 
-在 `backend.md` 和 `frontend.md` 中添加 **常见反模式** section，仿照 ECC code-reviewer 的详尽清单。
+当前 `project-manager.md` (6.8KB) 问题:
+- ❌ 缺少**交付物完整性中的跨文件检查**
+- ❌ 缺少**用户确认后的回归确认** (用户说 OK 后, 还要验证没弄坏别的)
 
----
-
-### Phase 3: 架构对齐 (预计 0.5 会话)
-
-> **目标**: 修复架构文档与实际文件的不一致
-
-#### 3.1 修复 README.md 架构图 (G6)
-
-当前 README 标注了 `core/workflows/build.md` 等文件，但实际 Workflow 在 `workflows/main_build.md`。
-需统一为以下二选一方案：
-
-| 方案 | 描述 | 推荐 |
-|------|------|------|
-| **A: 移除 core/workflows/** | README 直接指向 `workflows/main_*.md`，删除 core/workflows/ 引用 | ✅ 推荐 |
-| **B: 创建 core/workflows/** | 实际创建 core/workflows/build.md 等，workflows/main_*.md 变为指引 | 过度工程 |
-
-#### 3.2 SKILL.md 路由表更新
-
-更新 `core/SKILL.md` 中的 Workflow 路径引用，确保与实际文件一致。
-
-#### 3.3 添加文档同步检查 (G8)
-
-在 QA `§2 审计清单` 中添加：
+**补充内容**:
 
 ```markdown
-| **文档同步** | API 变更后相关文档已更新 | 🟡 | grep 扫描 + 人工检查 |
+## §N PM 交付验收 — 升级版
+
+### N.1 交付物完整性清单
+PM 在收到 QA 通过的交付物后, 必须:
+[ ] 原始需求中列的每一条都实现了
+[ ] 启动应用 → 手动走一遍核心路径
+[ ] 切换语言 → 新增文本有翻译
+[ ] 切换主题 → 新增 UI 主题正确
+[ ] 检查相关页面 → 未被破坏 (回归)
+
+### N.2 用户确认后回归检查
+用户说"好了"之后, PM 还要:
+[ ] 运行 构建命令 确认无新错误
+[ ] 快速抽查 2-3 个不相关页面
+[ ] 确认 git 状态干净 (无遗留的 uncommitted 文件)
+```
+
+### 3.3 QA 审计师强化 (P2 — 核心)
+
+当前 `qa-auditor.md` (9.4KB) 问题:
+- ❌ 审计清单是通用条目, 没有**具体验证命令**
+- ❌ 没有**分场景模板** (新模块 vs 修改 vs 迁移)
+- ❌ 没有**深度回归** — 只检查新功能，不检查**关联功能**
+- ❌ 没有**跨层验证** — 后端改了但没验前端是否同步
+
+**补充内容**:
+
+```markdown
+## §N QA 深度审计 — 强化版
+
+### N.1 分场景审计模板
+
+#### 场景 A: 新功能开发
+标准审计清单 (原有 14 项) + 以下:
+[ ] 新 API 有 Swagger 文档
+[ ] 新前端页面有 Loading/Error/Empty 三态
+[ ] 新数据库字段有默认值 or 允许 NULL
+[ ] 新 i18n key 在所有语言文件中存在
+
+#### 场景 B: 修改现有功能
+标准审计清单 + 以下:
+[ ] 所有消费该 API 的前端页面已验证
+[ ] 所有引用该 DTO 的文件已更新
+[ ] 所有相关测试已更新
+[ ] **影响半径分析**: grep 旧接口名, 确认零残留
+
+#### 场景 C: V2→V3 迁移
+标准审计清单 + 以下:
+[ ] V2 Controller 的每个端点在 V3 有对应实现
+[ ] V2 前端调用路径全部更新为 V3 路径
+[ ] V2 DTO 字段与 V3 DTO 字段 1:1 对齐
+[ ] V2 业务逻辑 (条件判断/计算/状态流转) 100% 复制到 V3
+[ ] V2 中间件/Guard 功能在 V3 Security 中有对应
+[ ] **删除检查**: 确认 V2 旧文件/旧路由已删除, 无残留
+
+### N.2 具体验证命令
+
+| 检查项 | 命令 | 通过标准 |
+|--------|------|---------|
+| 编译 | `./gradlew build --no-daemon` | BUILD SUCCESSFUL |
+| 前端构建 | `pnpm build` | ✓ Compiled |
+| 类型检查 | `pnpm tsc --noEmit` | 零错误 |
+| 旧引用残留 | `grep -r "旧模块名" --include="*.kt" --include="*.ts" .` | 零匹配 |
+| API 一致性 | `curl localhost:8080/api/v1/{endpoint}` | 200 + 正确响应 |
+| 数据库一致性 | `SELECT * FROM {table} LIMIT 5;` | 字段符合预期 |
+
+### N.3 影响半径分析 (🔴 必做 — 解决协作遗漏根源)
+
+对每个被修改的文件, QA 必须执行:
+
+1. **向下追踪** (谁消费了我?)
+   grep -r "import.*{FileName}" --include="*.kt" --include="*.tsx" .
+
+2. **向上追踪** (我依赖了谁?)
+   查看该文件的 import 列表 → 这些依赖是否也变了?
+
+3. **横向追踪** (平级文件是否同步?)
+   同目录下的其他文件是否需要对应修改?
+
+4. **前后端追踪** (API 两端是否对齐?)
+   后端 Controller 变了 → 前端 API Client 呢?
+   前端需要新字段 → 后端 DTO 出了吗?
+```
+
+### 3.4 协作 SOP 强化 (P3)
+
+当前 `collaboration.md` (4.9KB) 问题:
+- ❌ 交接只有记录格式, 没有**强制验证项**
+- ❌ 没有**变更传播检查** — A 改了, B 不知道
+- ❌ 没有**完成后通知机制**
+
+**补充内容**:
+
+```markdown
+## §N 变更传播协议 (🔴 新增 — 协作遗漏根源解决)
+
+### N.1 变更影响矩阵
+
+当以下文件被修改时, **必须**通知对应工程师:
+
+| 变更源 | 影响方 | 必须同步的内容 |
+|--------|--------|---------------|
+| DB Schema (Migration) | 后端 Entity | 字段名/类型/约束 |
+| 后端 Entity | 后端 DTO | 字段映射 |
+| 后端 DTO | 前端 API Client | 类型定义 |
+| 前端 API Client | 前端组件 | Props/调用方式 |
+| API 路径 | 前端 + 后端 + Nginx | URL 同步 |
+| 权限矩阵 | 后端 Security + 前端 Guard | 权限码 |
+| i18n Key | 所有语言文件 | 翻译 |
+
+### N.2 完成后传播检查 (每个工程师必做)
+
+工程师在完成自己的部分后:
+1. 列出本次修改的所有文件
+2. 对照影响矩阵, 检查是否有下游影响
+3. 如有影响 → 通知 CTO 安排下游工程师同步
+4. 如无影响 → 在交接记录中明确标注 "无下游影响"
+
+### N.3 CTO 协调检查点
+
+CTO 在收到工程师交付后, 必须:
+[ ] 检查影响矩阵 → 所有下游是否已安排同步
+[ ] 如果有链式影响 (A→B→C), 确认**全链路**都安排了
+[ ] 在任务分配单中标注: "已安排 X/Y/Z 同步"
 ```
 
 ---
 
-### Phase 4: 可选增强 (未来会话)
+## 四、执行路线
 
-> **目标**: 锦上添花，根据实际需要择优实施
+### Phase 1: 工具箱升级 + 索引系统 (P4)
+**预计**: 当前会话内
+**内容**:
+- [x] 创建 7 个工具的 INDEX.md + 切片结构
+- [x] 从 GitHub 抓取详细内容填充切片
+- [x] 更新 warehouse/README.md 全局索引
 
-| 项目 | 描述 | 估时 |
-|------|------|------|
-| G9 Dynamic Contexts | 创建 `contexts/` 目录，支持 dev/review/research 模式切换 | 0.5h |
-| G10 细化 Commands | 拆分 `/tdd`, `/review`, `/plan` 独立命令 | 1h |
-| G11 安全扫描集成 | 集成 AgentShield 或自定义安全扫描脚本 | 1h |
-| G12 多 Agent 编排 | 添加 `/orchestrate` 命令用于复杂多步骤任务 | 2h |
+### Phase 2: L1 管理层 SOP 全面强化 (P1+P2+P3)
+**预计**: 当前或下一会话
+**内容**:
+- [ ] CTO SOP: +代码走查 +影响分析 +具体验证命令
+- [ ] PM SOP: +交付完整性中跨文件检查 +回归确认
+- [ ] QA SOP: +分场景审计模板 +具体命令 +影响半径分析
+- [ ] Collaboration SOP: +变更传播协议 +影响矩阵 +传播检查
 
----
-
-## 四、执行优先级矩阵
-
-```
-影响高 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       │ G1 工程师自检    G2 Rules 层  │
-       │    (P0-必做)       (P0-必做)  │
-       │                               │
-       │ G7 TDD修Bug      G4 反模式    │
-       │    (P1-应做)       (P1-应做)  │
-影响 ──┤───────────────────────────────┤
-       │ G3 过时文件      G5 拆分      │
-       │    (P0-即做)      mastery     │
-       │                   (P1-应做)   │
-       │ G6 README修复  G8 文档同步    │
-       │    (P1-应做)     (P1-应做)    │  
-影响低 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       低努力                   高努力
-```
+### Phase 3: Rules 层 + 自检机制 (原 V1 计划)
+**预计**: 后续会话
+**内容**:
+- [ ] 创建 `core/rules/` 目录
+- [ ] 工程师自检 SOP (backend.md + frontend.md)
+- [ ] 反模式清单
+- [ ] agent-mastery.md 精简
 
 ---
 
-## 五、不动的部分 (验证通过，无需改动)
+## 五、预期成果
 
-| 组件 | 状态 | 理由 |
-|------|------|------|
-| PM SOP | ✅ 保持 | 需求领悟铁律完整，覆盖 ECC planner 所有功能点 |
-| CTO SOP | ✅ 保持 | 四级复杂度矩阵 + 分配原则完整 |
-| QA SOP | ✅ 保持 | 双重职责 + 14 项审计清单 + 错误归档 + SOP 更新（=ECC 自我进化） |
-| 协作 SOP | ✅ 保持 | 跨团队协议完整 |
-| 验证循环 | ✅ 保持 | 6 阶段与 ECC verification-loop 一致 |
-| 渐进检索 | ✅ 保持 | 4 阶段检索与 ECC iterative-retrieval 一致 |
-| 持续学习 | ✅ 保持 | Instinct 架构已适配 Antigravity KI |
-| `/main_build` §7 门禁 | ✅ 保持 | 验证门禁 + 文件管理强于 ECC |
-| `/main_ship` | ✅ 保持 | Docker + K8s + Terraform 完整 |
-| `/main_ui` | ✅ 保持 | Hub + Theme + Anime.js 完整 |
-| 10 个专业工程师 Skill | ✅ 保持 | 每个都有实质内容 (6-14KB) |
-| 4 层架构 (L1-L4) | ✅ 保持 | 比 ECC 扁平结构更适合企业项目 |
-| 加载纪律 (≤30KB/次) | ✅ 保持 | ECC 也强调上下文管理 |
-
----
-
-## 六、预期成果
-
-| 指标 | 当前 | 目标 |
-|------|------|------|
-| 工程师编码后自检 | ❌ 无 | ✅ 每次编码后执行 |
-| 全局强制规则 | ❌ 散布在 Skill 中 | ✅ 独立 `rules/` 目录 |
-| agent-mastery.md 大小 | 18.9KB | ≤12KB |
-| 架构文档一致性 | ⚠️ README 与实际不一致 | ✅ 100% 一致 |
-| TDD Bug 修复流程 | ❌ 只有 TDD 概念 | ✅ 有专用 RED→GREEN 流程 |
-| 反模式清单 | ❌ 无 | ✅ 后端 + 前端各一份 |
-| L4 过时文件 | ⚠️ V2 参考仍在 | ✅ 归档标注 |
-
----
-
-## 七、风险与注意事项
-
-| 风险 | 缓解 |
-|------|------|
-| 过度工程化 | 只做 P0 + P1，P2/P3 按需 |
-| 文件膨胀 | 严格遵循 30KB 加载上限，拆分大文件 |
-| 与 ECC 过度对齐 | ECC 面向个人开发者，我们面向企业团队，保持差异化 |
-| 迁移成本 | Rules 层是新增，不修改现有 Skill 核心逻辑 |
-
----
-
-**请确认：**
-- ✅ 理解正确，按 Phase 1 → 2 → 3 顺序执行
-- ❌ 需要修改 → 告诉我哪里不对
+| 指标 | 修订前 | 修订后目标 |
+|------|--------|-----------|
+| CTO 验证深度 | 7 条通用条目 | 20+ 条含具体命令 |
+| QA 审计覆盖 | 14 项通用 | 14 项通用 + 分场景模板 (3 种) |
+| 协作遗漏 | 无检查机制 | 影响矩阵 + 传播检查 + CTO 协调检查点 |
+| 交接验证 | 4 项确认 | 4 项确认 + 强制影响分析 |
+| 工具箱详细度 | 1.7-2.7KB 索引卡 | 切片目录 + 详细切片文件 |
+| 工程完整性 | 靠记忆 | 靠清单 + 命令 + 矩阵 |
