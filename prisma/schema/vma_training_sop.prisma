@@ -1,0 +1,64 @@
+// ================================
+// VMA Training SOP Models
+// VMA 培训SOP文件管理 (主表 + 版本表 + 职责-SOP关联)
+// ================================
+
+/// VMA 培训SOP文件管理 - 主表 (一个SOP文档一条记录)
+model VmaTrainingSop {
+  id                      String       @id @default(uuid())
+  seqNo                   Int          @unique @map("seq_no")
+  sopNo                   String       @unique @map("sop_no")
+  name                    String
+  description             String?
+  structureClassification String       @map("structure_classification")
+  documentType            String       @map("document_type")
+  status                  VmaSopStatus @default(ACTIVE)
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+
+  versions VmaTrainingSopVersion[]
+
+  @@index([status])
+  @@index([documentType])
+  @@index([structureClassification])
+  @@map("vma_training_sops")
+}
+
+/// VMA 培训SOP版本记录 - 每次版本更新一条记录
+model VmaTrainingSopVersion {
+  id               String   @id @default(uuid())
+  sopId            String   @map("sop_id")
+  version          String
+  daNo             String   @map("da_no")
+  effectiveDate    DateTime @map("effective_date")
+  trainingRequired Boolean  @default(true) @map("training_required")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  sop VmaTrainingSop @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@unique([sopId, version])
+  @@index([sopId])
+  @@index([effectiveDate])
+  @@map("vma_training_sop_versions")
+}
+
+/// VMA 职责-SOP培训需求关联 (多对多)
+model VmaDutySopRequirement {
+  id        String   @id @default(uuid())
+  dutyId    String   @map("duty_id")
+  sopNo     String   @map("sop_no")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  duty VmaDepartment @relation(fields: [dutyId], references: [id], onDelete: Cascade)
+
+  @@unique([dutyId, sopNo])
+  @@index([dutyId])
+  @@index([sopNo])
+  @@map("vma_duty_sop_requirements")
+}
+
+enum VmaSopStatus {
+  ACTIVE
+  DEPRECATED
+}

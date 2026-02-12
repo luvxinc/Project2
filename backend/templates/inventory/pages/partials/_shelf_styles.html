@@ -1,0 +1,236 @@
+<style>
+/* ============================================
+   Warehouse Shelf Codes - Three.js 3D 样式
+   ============================================ */
+
+/* 向导步骤 */
+.wizard-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
+
+.wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.wizard-step .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.wizard-step.active .step-number {
+    background: var(--bs-info);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(13, 202, 240, 0.5);
+}
+
+.wizard-step.completed .step-number {
+    background: var(--bs-success);
+    color: #fff;
+}
+
+.wizard-step .step-label {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.wizard-step.active .step-label {
+    color: var(--bs-info);
+}
+
+/* 3D容器 */
+.preview-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 380px;
+}
+
+.threejs-container {
+    width: 100%;
+    height: 800px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0a0c10 0%, #1a1d24 100%);
+}
+
+.threejs-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 仓库卡片 */
+.warehouse-card {
+    background: rgba(30, 32, 40, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.warehouse-card:hover {
+    border-color: var(--bs-info);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.warehouse-card-header {
+    background: linear-gradient(90deg, var(--bs-info), rgba(13, 202, 240, 0.6));
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.warehouse-card-header h5 {
+    margin: 0;
+    font-weight: bold;
+    color: #fff;
+}
+
+.warehouse-card-body {
+    padding: 16px;
+}
+
+/* 图例 */
+.legend-3d {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    padding: 8px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.legend-dot.level-G { background: #4CAF50; }
+.legend-dot.level-M { background: #2196F3; }
+.legend-dot.level-T { background: #FF9800; }
+
+/* 统计 */
+.warehouse-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.stat-item i {
+    color: var(--bs-info);
+}
+
+/* 配置表单 */
+.aisle-config-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.aisle-config-section.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.config-row label {
+    min-width: 80px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.level-checkboxes {
+    display: flex;
+    gap: 12px;
+}
+
+.level-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.level-checkbox input { width: 16px; height: 16px; }
+.level-checkbox label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); }
+
+/* 控制提示 */
+.controls-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 6px;
+}
+
+/* 独立跨配置列表 */
+.bay-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+.bay-config-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+.bay-config-item:last-child { margin-bottom: 0; }
+.bay-title {
+    font-size: 0.85rem;
+    color: var(--bs-info);
+    font-weight: bold;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 4px;
+}
+</style>

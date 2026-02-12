@@ -1,0 +1,83 @@
+{% extends "layouts/base.html" %}
+{% load i18n security_tags static %}
+
+{% block title %}Report Builder - Sales - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/global-wizard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4" data-testid="page-header">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:sales:hub' %}"
+                            class="text-info text-decoration-none">Sales</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">Report Builder</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center mt-2">
+                <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-rocket fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h4 class="text-white fw-bold mb-1">Report Builder (Report Generator)</h4>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_205">配置分析周期与业务参数，启动全量商业智能分析引擎。</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:sales:hub' %}" class="btn btn-outline-secondary rounded-pill px-4"
+                data-testid="btn-back">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="ui.icon_3087">返回Sales</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 操作须知 -->
+    <div class="glass-card p-4 mb-4 border border-info border-opacity-25" data-testid="ops-note">
+        <div class="d-flex align-items-start">
+            <div class="bg-info bg-opacity-25 p-2 rounded-circle me-3 flex-shrink-0">
+                <i class="fas fa-info-circle fa-lg text-info"></i>
+            </div>
+            <div>
+                <h6 class="text-info fw-bold mb-2" data-i18n="common.operation_notes">操作须知</h6>
+                <div class="text-white-50 small">
+                    <p class="mb-2">
+                        <strong data-i18n="ui.text_207">功能说明：</strong>
+                        Report Builder会对指定时间范围内的销售数据进行全面分析，包括 SKU 销量统计、利润诊断、Listing 表现、Combo 策略、客户画像、物流效益、库存快照、AI 预测和智能补货计算。
+                    </p>
+                    <p class="mb-2">
+                        <strong data-i18n="ui.text_208">推荐流程：</strong>
+                        1) 选择分析周期（建议选择完整月份）→ 2) 根据业务情况调整耗损率和供应链参数（可保持默认）→ 3) 点击「启动分析引擎」开始计算 → 4) 等待进度完成后前往「Report Center」查看结果。
+                    </p>
+                    <p class="mb-2">
+                        <strong data-i18n="ui.text_209">常见问题：</strong><br>
+                        • 日期范围错误：开始日期不能晚于结束日期<br>
+                        <span data-i18n="ui.report_fail_hint">• 生成失败：检查是否有该时间段的销售数据；若持续失败请联系管理员</span><br>
+                        • 耗时较长：9 个分析任务依次<span data-i18n="ui.execute">执行</span>，通常需要 1-3 分钟
+                    </p>
+                    <p class="mb-0">
+                        <strong data-i18n="ui.text_210">安全提醒：</strong>
+                        生成的报表文件仅限当前用户访问，不会泄露给其他用户；可在Report Center下载或打包导出。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="glass-card p-4 shadow-lg" data-testid="generator-card">
+        <!-- Generator Content - HTMX 加载 -->
+        <div id="generator-content" hx-get="{% url 'web_ui:sales:reports:generator_form' %}" hx-trigger="load">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-white-50 mt-3" data-i18n="ui.text_211">正在加载...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

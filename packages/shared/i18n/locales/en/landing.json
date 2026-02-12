@@ -1,0 +1,23 @@
+{
+  "signIn": "Sign in",
+  "changelog": "Changelog",
+  "tagline": "Enterprise Resource Planning",
+  "phase": "Phase 2.5",
+  "privacy": "Privacy",
+  "terms": "Terms",
+  "copyright": "All rights reserved.",
+  "modalTitle": "Sign in to ERP",
+  "modalSubtitle": "Your account credentials are used to verify your identity and protect your data. The system employs enterprise-grade PBKDF2-SHA256 encryption, ensuring all sensitive operations are traceable and auditable.",
+  "featureTitle": "All-in-One Cross-Border E-Commerce Platform",
+  "featureDesc": "MGMT ERP is an enterprise-grade management system built for cross-border e-commerce sellers. Integrating purchasing, inventory, finance, and sales analytics modules to help you manage supply chains efficiently, optimize operations, and boost profitability.",
+  "heroTitle": "Enterprise-Grade Management System",
+  "heroDesc": "Integrating purchasing, inventory, finance, and sales analytics modules to help you manage supply chains efficiently, optimize operations, and boost profitability.",
+  "module_purchase": "Purchasing",
+  "module_purchase_desc": "Supplier Strategy · PO Orders · Shipping",
+  "module_inventory": "Inventory",
+  "module_inventory_desc": "FIFO Costing · Dynamic Stock · 3D Warehouse",
+  "module_finance": "Finance",
+  "module_finance_desc": "Payments · Deposits · Cost Accounting",
+  "module_sales": "Sales Analytics",
+  "module_sales_desc": "Order Tracking · P&L Reports · ETL Sync"
+}

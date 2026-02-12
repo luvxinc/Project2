@@ -1,0 +1,149 @@
+<!-- Step 4: 检验参数数据 -->
+<div id="po-step-verify-params" class="wizard-step-content" style="display: none;">
+    <div class="card mb-4 state-normal" id="params-validation-card">
+        <div class="card-header border-0 d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fa-solid fa-shield-halved me-2 text-info" id="params-validation-icon"></i>
+                <span id="params-validation-title" class="text-info" data-i18n="ui.text_854">合同参数信息</span>
+            </div>
+            <span class="badge bg-info bg-opacity-25 text-info" id="strategy-type-badge"></span>
+        </div>
+        <div class="card-body">
+            <!-- 参数信息名片式展示 -->
+            <div class="row g-3" id="params-summary-content">
+                <!-- 供应商信息 -->
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t1246" title="供应商代码">
+                            供应商代码 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="text-primary fw-bold fs-5" id="verify-supplier-code">-</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="ui.icon_3418" title="供应商名字">
+                            供应商名称 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="text-white" id="verify-supplier-name">-</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t6862" title="订单生成日期">
+                            订单日期 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="text-white" id="verify-po-date">-</div>
+                    </div>
+                </div>
+                
+                <!-- 结算信息 -->
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-currency">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="ui.text_2544" title="订单结算货币">
+                            结算货币 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-info fw-bold" id="verify-currency">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-currency" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-exchange-rate">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t3126" title="用户确定订单日USD/RMB汇率买入价">
+                            结算汇率 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-white" id="verify-exchange-rate">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-exchange-rate" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-float-enabled">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t2672" title="订单是否要求价格跟随汇率浮动">
+                            价格浮动开关 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span id="verify-float-enabled">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-float-enabled" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-float-threshold">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t7489" title="若订单要求价格跟随汇率浮动, 汇率浮动阈值">
+                            价格浮动阈值 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-white" id="verify-float-threshold">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-float-threshold" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-deposit-enabled">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t2902" title="订单是否要求提前支付定金">
+                            定金要求开关 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span id="verify-deposit-enabled">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-deposit-enabled" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded bg-black bg-opacity-25" id="verify-cell-deposit-percentage">
+                        <div class="text-white-50 small mb-1" data-bs-toggle="tooltip" data-i18n-title="tooltip.t9590" title="若订单要求提前支付定金,定金百分比">
+                            定金百分比 <i class="fas fa-info-circle ms-1"></i>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-white" id="verify-deposit-percentage">-</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning ms-2 d-none" id="badge-deposit-percentage" data-i18n="ui.text_855">订单级策略</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 错误信息容器 -->
+    <div id="params-errors-container" class="mb-4" style="display: none;">
+        <div class="card bg-danger bg-opacity-10 border-danger">
+            <div class="card-header bg-danger bg-opacity-20 border-0">
+                <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                <span class="text-danger fw-bold" data-i18n="shipping.verify_failed">参数校验未通过</span>
+            </div>
+            <div class="card-body">
+                <ul id="params-errors-list" class="mb-0 text-white"></ul>
+                <p class="text-white-50 small mt-3 mb-0">
+                    <i class="fas fa-arrow-left me-1"></i><span data-i18n="shipping.return_to_fix">请返回上一步修正错误后再继续</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                    id="btn-wizard-back-4" 
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t2853" title="返回修改参数">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_modify">返回修改</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-primary btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-next-4" 
+                    disabled 
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t1737" title="继续录入商品信息">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="ui.icon_3266">下一步：录入商品</span>
+            </button>
+        </div>
+    </div>
+</div>

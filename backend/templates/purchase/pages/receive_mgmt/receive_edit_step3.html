@@ -1,0 +1,152 @@
+<!-- 入库单修改向导 - Step3: 完成 -->
+<div id="receive-edit-step-3" class="wizard-step-content" style="display: none;">
+    <!-- 提交中 -->
+    <div id="receive-edit-step3-loading" class="text-center py-5">
+        <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;"></div>
+        <p class="text-white-50 mt-4 mb-0" data-i18n="ui.text_781">正在提交修改...</p>
+    </div>
+
+    <!-- 成功 -->
+    <div id="receive-edit-step3-success" style="display: none;">
+        <div class="card bg-dark border-success border-opacity-50 mb-4">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <div class="bg-success bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                        <i class="fas fa-check fa-3x text-success"></i>
+                    </div>
+                </div>
+                <h3 class="text-success mb-3" data-i18n="ui.text_782">修改完成</h3>
+                <p class="text-white-50 mb-4" id="receive-edit-success-message" data-i18n="ui.text_783">
+                    入库单数据已成功更新。
+                </p>
+                
+                <!-- 修改结果摘要 -->
+                <div class="card bg-dark border-secondary border-opacity-25 mb-4 mx-auto" style="max-width: 500px;">
+                    <div class="card-body">
+                        <div class="row text-start">
+                            <div class="col-6 text-white-50 mb-2" data-i18n="ui.text_401">物流单号：</div>
+                            <div class="col-6 text-white mb-2 font-monospace" id="receive-edit-result-logistic-num">-</div>
+                            <div class="col-6 text-white-50 mb-2" data-i18n="ui.text_2283">新版本号：</div>
+                            <div class="col-6 text-success fw-bold mb-2" id="receive-edit-result-new-seq">-</div>
+                            <div class="col-6 text-white-50" data-i18n="ui.text_2192">操作时间：</div>
+                            <div class="col-6 text-white" id="receive-edit-result-time">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="wizard-actions">
+            <div class="wizard-actions-left">
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                        onclick="showListView()"
+                        data-bs-toggle="tooltip" 
+                        data-i18n-title="tooltip.t6299" title="返回入库管理列表">
+                    <i class="fas fa-list me-2"></i><span data-i18n="common.back_list">返回列表</span>
+                </button>
+            </div>
+            <div class="wizard-actions-right">
+                <button type="button" 
+                        class="btn btn-info btn-lg px-5 shadow rounded-pill" 
+                        onclick="viewReceive(receiveEditCurrentLogisticNum)"
+                        data-bs-toggle="tooltip" 
+                        data-i18n-title="ui.text_491" title="查看入库单详情">
+                    <i class="fas fa-eye me-2"></i><span data-i18n="ui.text_460">查看入库单</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 失败 -->
+    <div id="receive-edit-step3-error" style="display: none;">
+        <div class="text-center py-5">
+            <div class="bg-danger bg-opacity-25 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="fas fa-times fa-3x text-danger"></i>
+            </div>
+            <h5 class="text-white mb-2" data-i18n="ui.text_784">提交失败</h5>
+            <p class="text-white-50 mb-4" id="receive-edit-error-message">-</p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <button class="btn btn-outline-secondary" onclick="showReceiveEditStep(2)">
+                    <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_modify">返回修改</span>
+                </button>
+                <button class="btn btn-warning" onclick="runReceiveEditSubmit()">
+                    <i class="fas fa-redo me-1"></i><span data-i18n="ui.icon_3090">重试</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Step3: 执行提交
+    function runReceiveEditSubmit() {
+        document.getElementById('receive-edit-step3-loading').style.display = 'block';
+        document.getElementById('receive-edit-step3-success').style.display = 'none';
+        document.getElementById('receive-edit-step3-error').style.display = 'none';
+        
+        // 准备提交数据
+        const changes = receiveEditModifiedItems.filter(item => 
+            item.receive_quantity !== item.original_receive_quantity
+        );
+        
+        const note = document.getElementById('receive-edit-note')?.value || '';
+        
+        const payload = {
+            logistic_num: receiveEditCurrentLogisticNum,
+            note: note,
+            items: changes.map(item => ({
+                po_num: item.po_num,
+                po_sku: item.po_sku,
+                sent_quantity: item.sent_quantity,
+                receive_quantity: item.receive_quantity
+            }))
+        };
+        
+        // 添加Step2验证的密码
+        if (typeof receiveEditVerifiedPasswords !== 'undefined' && receiveEditVerifiedPasswords) {
+            for (const [slot, code] of Object.entries(receiveEditVerifiedPasswords)) {
+                payload[`sec_code_${slot}`] = code;
+            }
+        }
+        
+        fetch(`{% url 'web_ui:purchase:receive_mgmt_edit_submit' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getReceiveEditCSRFToken()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(async data => {
+            document.getElementById('receive-edit-step3-loading').style.display = 'none';
+            
+            if (data.success) {
+                // 上传入库文件（如果有）
+                if (typeof uploadReceiveEditFile === 'function') {
+                    await uploadReceiveEditFile();
+                }
+                
+                document.getElementById('receive-edit-step3-success').style.display = 'block';
+                document.getElementById('receive-edit-result-logistic-num').textContent = receiveEditCurrentLogisticNum;
+                document.getElementById('receive-edit-result-new-seq').textContent = data.new_seq || '-';
+                document.getElementById('receive-edit-result-time').textContent = new Date().toLocaleString('zh-CN');
+                document.getElementById('receive-edit-success-message').textContent = 
+                    data.message || (window.i18n?.t('js.receive_updated') || 'Receiving data updated.');
+            } else {
+                document.getElementById('receive-edit-step3-error').style.display = 'block';
+                document.getElementById('receive-edit-error-message').textContent = 
+                    data.message || (window.i18n?.t('js.submit_failed') || 'Submit Failed');
+            }
+        })
+        .catch(err => {
+            document.getElementById('receive-edit-step3-loading').style.display = 'none';
+            document.getElementById('receive-edit-step3-error').style.display = 'block';
+            document.getElementById('receive-edit-error-message').textContent = 
+                (window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err;
+        });
+    }
+</script>

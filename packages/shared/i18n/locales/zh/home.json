@@ -1,0 +1,12 @@
+{
+  "title": "企业资源管理系统",
+  "subtitle": "V2 架构",
+  "description": "基于 TypeScript 全栈重构。更安全，更快速，更可靠。",
+  "getStarted": "开始使用",
+  "apiDocs": "API 文档",
+  "enter": "进入",
+  "footer": {
+    "phase": "阶段 3",
+    "module": "用户模块"
+  }
+}

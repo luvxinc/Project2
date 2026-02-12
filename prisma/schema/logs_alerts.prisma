@@ -1,0 +1,101 @@
+// ================================
+// Alert & Archive Models
+// 告警与日志归档 (Enterprise Observability)
+// ================================
+
+/// 告警历史记录
+model AlertHistory {
+  id String @id @default(uuid())
+
+  rule      String
+  severity  AlertSeverity
+  message   String
+  value     Float
+  threshold Float
+
+  acknowledged   Boolean   @default(false)
+  acknowledgedAt DateTime? @map("acknowledged_at")
+  acknowledgedBy String?   @map("acknowledged_by")
+
+  resolvedAt DateTime? @map("resolved_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([rule])
+  @@index([severity])
+  @@index([acknowledged])
+  @@index([createdAt])
+  @@map("alert_history")
+}
+
+enum AlertSeverity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+/// 日志归档记录
+model LogArchive {
+  id String @id @default(uuid())
+
+  logType     String   @map("log_type")
+  archiveDate DateTime @map("archive_date")
+  recordCount Int      @map("record_count")
+
+  filePath String? @map("file_path")
+  fileSize Int?    @map("file_size")
+
+  status       ArchiveStatus @default(COMPLETED)
+  errorMessage String?       @map("error_message")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([logType])
+  @@index([archiveDate])
+  @@index([status])
+  @@map("log_archives")
+}
+
+enum ArchiveStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// ================================
+// Shared Enums (used by audit/logging)
+// ================================
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGE
+
+  CREATE_USER
+  UPDATE_USER
+  DELETE_USER
+  LOCK_USER
+  UNLOCK_USER
+  CHANGE_ROLE
+  UPDATE_PERMISSIONS
+
+  GOD_MODE_UNLOCK
+  GOD_MODE_LOCK
+  DEV_MODE_TOGGLE
+  CLEAR_DEV_LOGS
+  SECURITY_CODE_VERIFY
+
+  UPDATE_CONFIG
+  UPDATE_BOUNDARIES
+}
+
+enum ActionCategory {
+  AUTH
+  AUTHZ
+  DATA
+  CONFIG
+  ADMIN
+  SECURITY
+}

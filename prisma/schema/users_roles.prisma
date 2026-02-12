@@ -1,0 +1,48 @@
+// ================================
+// Role & Permission Boundary Models
+// 角色与权限边界
+// ================================
+
+/// 职能角色定义 - 支持 superadmin 动态管理
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique // 角色标识: viewer, editor, staff, admin, superuser
+  displayName String  @map("display_name") // 显示名称
+  level       Int     @unique // 层级: 1, 2, 3, 4, 5
+  description String?
+  isSystem    Boolean @default(false) @map("is_system")
+  isActive    Boolean @default(true) @map("is_active")
+  color       String?
+
+  boundaries RolePermissionBoundary[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+/// 职能权限边界配置
+model RolePermissionBoundary {
+  id     String @id @default(uuid())
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  boundaryType  BoundaryType @default(ALLOWED) @map("boundary_type")
+  permissionKey String       @map("permission_key")
+  description   String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([roleId, permissionKey])
+  @@index([roleId])
+  @@index([permissionKey])
+  @@map("role_permission_boundaries")
+}
+
+enum BoundaryType {
+  ALLOWED
+  DENIED
+  INHERITED
+}

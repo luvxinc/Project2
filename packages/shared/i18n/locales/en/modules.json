@@ -1,0 +1,201 @@
+{
+  "title": "Modules",
+  "subtitle": "V2 Migration Progress",
+  "completed": "Completed",
+  "pending": "Pending",
+  "noPermission": "No Access",
+  "explore": "Explore All",
+  
+  "sales": {
+    "title": "Sales",
+    "description": "Transaction Data & Analytics",
+    "transactions": {
+      "title": "Transactions",
+      "upload": "Data Upload"
+    },
+    "reports": {
+      "title": "Report Center",
+      "generate": "Report Builder",
+      "view": "View Reports"
+    },
+    "visuals": {
+      "title": "Visualization",
+      "dashboard": "Sales Dashboard"
+    }
+  },
+  
+  "purchase": {
+    "title": "Purchasing",
+    "description": "Supplier & Procurement Management",
+    "supplier": {
+      "title": "Suppliers",
+      "add": "Add Supplier",
+      "strategy": "Procurement Strategy"
+    },
+    "po": {
+      "title": "Purchase Orders",
+      "create": "Create PO",
+      "manage": "Manage Orders"
+    },
+    "send": {
+      "title": "Shipping",
+      "create": "Create Shipment",
+      "manage": "Manage Shipments"
+    },
+    "receive": {
+      "title": "Receiving",
+      "goods": "Receive Goods",
+      "manage": "Receiving History"
+    },
+    "abnormal": {
+      "title": "Exceptions",
+      "manage": "Handle Exceptions"
+    }
+  },
+  
+  "inventory": {
+    "title": "Inventory",
+    "description": "Stock Count & Real-time Tracking",
+    "stocktake": {
+      "title": "Stock Count",
+      "upload": "Count Upload",
+      "modify": "Stock Adjustment"
+    },
+    "dynamic": {
+      "title": "Live Inventory",
+      "view": "Real-time Stock"
+    },
+    "shelf": {
+      "title": "Shelf Management",
+      "manage": "Shelf Codes"
+    }
+  },
+  
+  "finance": {
+    "title": "Finance",
+    "description": "Payments & Fund Management",
+    "flow": {
+      "title": "Cash Flow",
+      "overview": "OSR Overview"
+    },
+    "logistic": {
+      "title": "Logistics Costs",
+      "manage": "Freight Management"
+    },
+    "prepay": {
+      "title": "Prepayments",
+      "manage": "Supplier Advances"
+    },
+    "deposit": {
+      "title": "Deposits",
+      "manage": "Deposit Payments"
+    },
+    "po_payment": {
+      "title": "PO Payments",
+      "manage": "Order Payments"
+    }
+  },
+  
+  "products": {
+    "title": "Products",
+    "description": "Catalog & Barcode Management",
+    "cogs": {
+      "title": "COGS Management",
+      "manage": "Cost Maintenance"
+    },
+    "create": {
+      "title": "Add Product",
+      "add": "Create SKU"
+    },
+    "barcode": {
+      "title": "Barcodes",
+      "generate": "Generate Barcode"
+    }
+  },
+  
+  "vma": {
+    "title": "VMA",
+    "description": "Vendor Inventory Tracking & Training Management",
+    "truvalve": {
+      "title": "TruValve",
+      "manage": "TruValve Management"
+    },
+    "p_valve": {
+      "title": "P-Valve",
+      "manage": "P-Valve Management"
+    },
+    "employees": {
+      "title": "Employees",
+      "manage": "Employee Management"
+    },
+    "duties": {
+      "title": "Duties",
+      "manage": "Duty Management"
+    },
+    "training": {
+      "title": "Training",
+      "manage": "Training Management"
+    }
+  },
+  
+  "users": {
+    "title": "Users",
+    "description": "User & Access Management",
+    "list": {
+      "title": "User Management",
+      "view": "User Directory"
+    },
+    "register": {
+      "title": "Add User",
+      "create": "Register User"
+    },
+    "password": {
+      "title": "Password Policy",
+      "manage": "Security Settings"
+    },
+    "capabilities": {
+      "title": "Feature Toggles",
+      "manage": "Role Capabilities"
+    }
+  },
+  
+  "db_admin": {
+    "title": "Database",
+    "description": "Backup & Data Maintenance",
+    "backup": {
+      "title": "Backup",
+      "create": "Create Backup",
+      "restore": "Restore Data",
+      "manage": "Backup List"
+    },
+    "cleanup": {
+      "title": "Cleanup",
+      "delete": "Clear Dev Data"
+    }
+  },
+  
+  "logs": {
+    "title": "Logs",
+    "description": "System Logs & Security Audit",
+    "errors": {
+      "title": "Error Logs",
+      "view": "System Errors"
+    },
+    "audits": {
+      "title": "Security Audit",
+      "view": "Security Events"
+    },
+    "business": {
+      "title": "Activity Logs",
+      "view": "Operations"
+    },
+    "access": {
+      "title": "Access Logs",
+      "view": "Access Records"
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "manage": "Log Cleanup"
+    }
+  }
+}

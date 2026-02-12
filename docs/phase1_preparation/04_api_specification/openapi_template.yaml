@@ -1,0 +1,801 @@
+openapi: 3.0.3
+info:
+  title: MGMT ERP V2 API
+  description: |
+    MGMT ERP V2 系统 API 文档
+    
+    ## 认证
+    - 所有 API 需要 Bearer Token 认证 (除 `/auth/login` 和 `/auth/refresh` 外)
+    - Token 格式: `Authorization: Bearer <access_token>`
+    
+    ## 通用响应格式
+    - 成功: `{ "success": true, "data": {...} }`
+    - 错误: `{ "success": false, "error": { "code": "...", "message": "..." } }`
+    
+    ## 安全等级
+    高危操作需要额外的安全验证 Header:
+    - `X-Security-Level`: L1-L4
+    - `X-Security-Token`: 临时安全令牌
+    - `X-Action-Key`: 操作标识
+  version: 1.0.0
+  contact:
+    name: MGMT Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.mgmt.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: 认证与授权
+  - name: Users
+    description: 用户管理
+  - name: Products
+    description: 产品管理
+  - name: Purchase
+    description: 采购管理
+  - name: Inventory
+    description: 库存管理
+  - name: Sales
+    description: 销售管理
+  - name: Finance
+    description: 财务管理
+  - name: Audit
+    description: 审计日志
+
+paths:
+  # ============ Auth ============
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: 用户登录
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: 用户登出
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: 刷新 Token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: 获取当前用户信息
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  # ============ Products ============
+  /products:
+    get:
+      tags:
+        - Products
+      summary: 产品列表
+      operationId: listProducts
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: 搜索 SKU/名称
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 分类筛选
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, all]
+          description: 状态筛选
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+    post:
+      tags:
+        - Products
+      summary: 创建产品
+      operationId: createProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: 产品详情
+      operationId: getProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: 产品不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - Products
+      summary: 更新产品
+      operationId: updateProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+  # ============ Purchase Orders ============
+  /purchase/orders:
+    get:
+      tags:
+        - Purchase
+      summary: 采购订单列表
+      operationId: listPurchaseOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, shipped, received, cancelled]
+        - name: supplierId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderListResponse'
+    post:
+      tags:
+        - Purchase
+      summary: 创建采购订单
+      operationId: createPurchaseOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePurchaseOrderRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+
+  # ============ Inventory ============
+  /inventory/dynamic:
+    get:
+      tags:
+        - Inventory
+      summary: 动态库存查询
+      operationId: getDynamicInventory
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: productId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DynamicInventoryResponse'
+
+  /inventory/fifo-layers:
+    get:
+      tags:
+        - Inventory
+      summary: FIFO 库存层列表
+      operationId: listFifoLayers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: productId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FifoLayerListResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 资源 UUID
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: 页码
+
+    PageSizeParam:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: 每页数量
+
+  schemas:
+    # ============ Common ============
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Validation failed
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    # ============ Auth ============
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: admin
+        password:
+          type: string
+          format: password
+        rememberMe:
+          type: boolean
+          default: false
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+              example: 900
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    RefreshResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            expiresIn:
+              type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: object
+        settings:
+          type: object
+          properties:
+            language:
+              type: string
+              enum: [en, zh]
+            timezone:
+              type: string
+        lastLoginAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/User'
+
+    # ============ Products ============
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        cogs:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required:
+        - sku
+      properties:
+        sku:
+          type: string
+          minLength: 3
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+        cogs:
+          type: number
+          format: decimal
+          minimum: 0
+        upc:
+          type: string
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        cogs:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [active, inactive]
+
+    ProductResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Product'
+
+    ProductListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============ Purchase ============
+    PurchaseOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        poNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, shipped, received, cancelled]
+        supplierId:
+          type: string
+          format: uuid
+        supplierName:
+          type: string
+        orderDate:
+          type: string
+          format: date
+        expectedDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          enum: [USD, RMB]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderItem'
+
+    PurchaseOrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+        totalPrice:
+          type: number
+          format: decimal
+
+    CreatePurchaseOrderRequest:
+      type: object
+      required:
+        - supplierId
+        - items
+      properties:
+        supplierId:
+          type: string
+          format: uuid
+        orderDate:
+          type: string
+          format: date
+        expectedDate:
+          type: string
+          format: date
+        currency:
+          type: string
+          enum: [USD, RMB]
+          default: USD
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - productId
+              - quantity
+              - unitPrice
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+              unitPrice:
+                type: number
+                format: decimal
+                minimum: 0
+
+    PurchaseOrderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/PurchaseOrder'
+
+    PurchaseOrderListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrder'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============ Inventory ============
+    DynamicInventoryItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        productName:
+          type: string
+        inStock:
+          type: integer
+        inTransit:
+          type: integer
+        onOrder:
+          type: integer
+        availableQty:
+          type: integer
+        totalQty:
+          type: integer
+        avgCost:
+          type: number
+          format: decimal
+        totalValue:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    DynamicInventoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DynamicInventoryItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    FifoLayer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        layerType:
+          type: string
+          enum: [INIT, RECEIVE]
+        originalQty:
+          type: integer
+        remainingQty:
+          type: integer
+        unitCost:
+          type: number
+          format: decimal
+        receiveDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    FifoLayerListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FifoLayer'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

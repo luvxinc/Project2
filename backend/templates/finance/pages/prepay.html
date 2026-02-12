@@ -1,0 +1,1145 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Vendor Prepayment - Finance - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in" id="prepay-main-container">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:finance:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="finance.title">Finance</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="finance.prepay">Vendor
+                        Prepayment</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:finance:hub' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="finance.back_to_hub">返回Finance</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区：分栏布局 -->
+    <div class="row g-4" id="prepay-list-view">
+        <!-- 左侧：供应商预付款余额卡片列表 -->
+        <div class="col-md-3 col-lg-2">
+            <div class="glass-card p-3 h-100">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h6 class="text-white mb-0">
+                        <i class="fas fa-users me-2 text-info"></i><span data-i18n="ui.icon_3371">供应商预付款余额</span>
+                    </h6>
+                    <button class="btn btn-outline-light btn-xs rounded-pill" onclick="loadSupplierBalances()"
+                        data-i18n-title="common.refresh" title="刷新">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                <!-- 供应商卡片容器 -->
+                <div id="supplier-cards-container" class="supplier-cards-scroll">
+                    <!-- JS 动态加载 -->
+                </div>
+
+                <!-- Loading State -->
+                <div id="supplier-loading" class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                    <p class="text-white-50 mt-2 mb-0 small" data-i18n="common.loading">加载中...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="supplier-empty" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-inbox fa-2x text-white-50 opacity-50 mb-2"></i>
+                    <p class="text-white-50 mb-0 small" data-i18n="finance.no_supplier_data">暂无供应商数据</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：交易明细列表 -->
+        <div class="col-md-9 col-lg-10">
+            <div class="glass-card p-4 h-100">
+                <!-- 页面 Header -->
+                <div
+                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                            style="width: 56px; height: 56px;">
+                            <i class="fas fa-wallet fa-2x text-success"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-1" data-i18n="finance.prepay_page_title">Vendor Prepayment</h5>
+                            <p class="text-white-50 small mb-0" data-i18n="ui.text_1278">管理供应商预付款账户，查看交易明细，新增预付款记录。</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-light btn-sm rounded-pill" onclick="loadSupplierBalances()">
+                        <i class="fas fa-sync-alt me-1"></i> <span data-i18n="common.refresh">刷新数据</span>
+                    </button>
+                </div>
+
+                <!-- 未选择供应商时的占位 -->
+                <div id="txn-placeholder" class="text-center py-5">
+                    <div class="placeholder-icon mb-4">
+                        <i class="fas fa-hand-pointer fa-4x text-white-50 opacity-25"></i>
+                    </div>
+                    <h5 class="text-white-50 mb-2" data-i18n="finance.select_supplier">请选择供应商</h5>
+                    <p class="text-white-50 opacity-50 small mb-0" data-i18n="ui.text_1279">从左侧列表选择一个供应商查看交易明细</p>
+                </div>
+
+                <!-- 交易明细视图 -->
+                <div id="txn-detail-view" style="display: none;">
+                    <!-- Header -->
+                    <div
+                        class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                                style="width: 56px; height: 56px;">
+                                <i class="fas fa-receipt fa-2x text-info"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-white mb-1">
+                                    <span id="txn-supplier-code" class="me-2">--</span>
+                                    <span id="txn-supplier-name" class="text-white-50 fw-normal"></span>
+                                </h5>
+                                <p class="text-white-50 small mb-0">
+                                    结算货币：<span id="txn-supplier-currency"
+                                        class="badge bg-warning bg-opacity-25 text-warning">--</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 筛选区域 -->
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary filter-preset active"
+                                    data-preset="" data-i18n="ui.text_1280">全部</button>
+                                <button type="button" class="btn btn-outline-secondary filter-preset" data-preset="6m"
+                                    data-i18n="ui.text_1281">近6月</button>
+                                <button type="button" class="btn btn-outline-secondary filter-preset" data-preset="1y"
+                                    data-i18n="ui.text_1282">近1年</button>
+                                <button type="button" class="btn btn-outline-secondary filter-preset" data-preset="2y"
+                                    data-i18n="ui.text_1283">近2年</button>
+                            </div>
+                            <button class="btn btn-outline-info btn-sm" onclick="showCustomDateFilter()"
+                                data-i18n-title="tooltip.t7934" title="自定义日期">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Beginning Balance (筛选时显示) -->
+                    <div id="beginning-balance-row" class="alert alert-warning mb-3"
+                        style="display: none; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-warning">
+                                <i class="fas fa-calendar-check me-2"></i><span data-i18n="ui.icon_3372">期初余额 (Beginning
+                                    Balance)</span>
+                            </span>
+                            <strong id="beginning-balance-value" class="text-warning">0.00</strong>
+                        </div>
+                    </div>
+
+                    <!-- 交易表格 -->
+                    <div class="txn-table-container">
+                        <table class="txn-table" id="txn-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;" data-i18n="common.date">日期</th>
+                                    <th style="width: 140px;" data-i18n="finance.prepay_in">预付</th>
+                                    <th style="width: 140px;" data-i18n="finance.usage">使用</th>
+                                    <th style="width: 140px;" data-i18n="finance.balance">余额</th>
+                                    <th style="width: 70px;" data-i18n="finance.version">版本</th>
+                                    <th style="width: 80px;" data-i18n="common.operator">操作人</th>
+                                    <th data-i18n="common.remark">备注</th>
+                                    <th style="width: 180px;" data-i18n="finance.tran_no">流水号</th>
+                                    <th style="width: 160px;" data-i18n="common.operation">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txn-table-body">
+                                <!-- JS 动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 交易表格 Loading -->
+                    <div id="txn-loading" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-info" role="status"></div>
+                        <p class="text-white-50 mt-3 mb-0" data-i18n="common.loading">正在加载交易记录...</p>
+                    </div>
+
+                    <!-- 交易表格 Empty -->
+                    <div id="txn-empty" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-file-invoice fa-3x text-white-50 opacity-25 mb-3"></i>
+                        <p class="text-white-50 mb-0" data-i18n="finance.no_transactions">暂无交易记录</p>
+                    </div>
+
+                    <!-- 统计信息 -->
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="text-white-50 small" id="txn-count" data-i18n="ui.text_1284">共 0 条记录</span>
+                        <span class="text-white-50 small" id="txn-filter-info"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自定义日期筛选 Modal -->
+<div class="modal fade" id="customDateModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h6 class="modal-title text-white">
+                    <i class="fas fa-calendar-alt me-2 text-info"></i><span data-i18n="ui.icon_3373">自定义日期范围</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small" data-i18n="reports_gen.start_date">开始日期</label>
+                    <input type="date" class="form-control form-control-sm bg-dark border-secondary text-white"
+                        id="custom-date-from">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small" data-i18n="reports_gen.end_date">结束日期</label>
+                    <input type="date" class="form-control form-control-sm bg-dark border-secondary text-white"
+                        id="custom-date-to">
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"
+                    data-i18n="common.cancel">取消</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="applyCustomDateFilter()">
+                    <i class="fas fa-check me-1"></i><span data-i18n="ui.icon_3374">应用</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== 供应商卡片滚动容器 ===== */
+    .supplier-cards-scroll {
+        max-height: calc(100vh - 280px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 2px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+    }
+
+    /* ===== 供应商卡片 ===== */
+    .supplier-card {
+        background: rgba(25, 28, 35, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .supplier-card:hover {
+        background: rgba(40, 45, 55, 0.8);
+        border-color: rgba(13, 202, 240, 0.3);
+        transform: translateX(2px);
+    }
+
+    .supplier-card.active {
+        background: rgba(13, 202, 240, 0.1);
+        border-color: rgba(13, 202, 240, 0.5);
+        box-shadow: 0 0 0 1px rgba(13, 202, 240, 0.2);
+    }
+
+    .supplier-card .supplier-code {
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    .supplier-card .supplier-name {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .supplier-card .balance-amount {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+
+    .supplier-card .balance-amount.positive {
+        color: #198754;
+    }
+
+    .supplier-card .balance-amount.negative {
+        color: #dc3545;
+    }
+
+    .supplier-card .balance-amount.zero {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .supplier-card .currency-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+
+    /* ===== 交易表格 ===== */
+    .txn-table-container {
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: calc(100vh - 380px);
+        overflow-y: auto;
+    }
+
+    .txn-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .txn-table thead {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .txn-table thead th {
+        padding: 12px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        border-bottom: 2px solid rgba(13, 202, 240, 0.3);
+        white-space: nowrap;
+    }
+
+    .txn-table tbody tr {
+        background: rgba(25, 28, 35, 0.6);
+        transition: all 0.2s ease;
+    }
+
+    .txn-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .txn-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .txn-table tbody td {
+        padding: 10px 8px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .txn-table tbody td.cell-note {
+        text-align: left;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .txn-table tbody td.cell-tran-num {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* 金额样式 */
+    .amount-in {
+        color: #198754;
+        font-weight: 600;
+    }
+
+    .amount-out {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .amount-balance {
+        font-weight: 700;
+    }
+
+    .amount-balance.positive {
+        color: #198754;
+    }
+
+    .amount-balance.negative {
+        color: #dc3545;
+    }
+
+    /* 货币标签 */
+    .curr-tag {
+        font-size: 9px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        margin-right: 4px;
+        font-weight: 500;
+    }
+
+    .curr-tag.usd {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+    }
+
+    .curr-tag.rmb {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+
+    /* 筛选按钮 */
+    .filter-preset {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .filter-preset.active {
+        background: rgba(13, 202, 240, 0.2) !important;
+        border-color: #0dcaf0 !important;
+        color: #0dcaf0 !important;
+    }
+
+    /* 操作按钮组 */
+    .action-btn-group {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.5);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    .action-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .action-btn.view-file:hover:not(:disabled) {
+        background: rgba(13, 110, 253, 0.2);
+        border-color: rgba(13, 110, 253, 0.4);
+        color: #0d6efd;
+    }
+
+    .action-btn.upload-file:hover:not(:disabled) {
+        background: rgba(13, 202, 240, 0.2);
+        border-color: rgba(13, 202, 240, 0.4);
+        color: #0dcaf0;
+    }
+
+
+
+    .action-btn.history:hover:not(:disabled) {
+        background: rgba(108, 117, 125, 0.2);
+        border-color: rgba(108, 117, 125, 0.4);
+        color: #adb5bd;
+    }
+
+    .action-btn.delete:hover:not(:disabled) {
+        background: rgba(220, 53, 69, 0.2);
+        border-color: rgba(220, 53, 69, 0.4);
+        color: #dc3545;
+    }
+
+    .action-btn.restore:hover:not(:disabled) {
+        background: rgba(25, 135, 84, 0.2);
+        border-color: rgba(25, 135, 84, 0.4);
+        color: #198754;
+    }
+
+    /* 已删除行样式 */
+    .txn-table tbody tr.deleted {
+        background: rgba(220, 53, 69, 0.08);
+    }
+
+    .txn-table tbody tr.deleted td {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* 删除标签 */
+    .deleted-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 9px;
+        font-weight: 500;
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .deleted-tag i {
+        font-size: 8px;
+        margin-right: 3px;
+    }
+
+    /* Placeholder 图标 */
+    .placeholder-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.03);
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 小按钮 */
+    .btn-xs {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+
+    /* 新增预付款按钮 */
+    .prepay-add-btn {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+    }
+
+    .prepay-add-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .supplier-card:hover .prepay-add-btn {
+        opacity: 1;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[Prepay] DOMContentLoaded fired, loading supplier balances...');
+        // 初始化加载供应商余额
+        loadSupplierBalances();
+
+        // 绑定筛选预设按钮
+        document.querySelectorAll('.filter-preset').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const preset = this.dataset.preset;
+                loadTransactions(window.currentSupplierCode, preset);
+            });
+        });
+
+        // 监听 prepay-list-view 显示，自动刷新数据
+        const listView = document.getElementById('prepay-list-view');
+        if (listView) {
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const display = listView.style.display;
+                        if (display !== 'none' && display !== '') {
+                            console.log('[Prepay] List view shown, refreshing data...');
+                            loadSupplierBalances();
+                            if (window.currentSupplierCode) {
+                                loadTransactions(window.currentSupplierCode, '', '', '');
+                            }
+                        }
+                    }
+                });
+            });
+            observer.observe(listView, { attributes: true, attributeFilter: ['style'] });
+        }
+    });
+
+    // 当前选中的供应商
+    window.currentSupplierCode = null;
+
+    /**
+     * 加载供应商余额列表
+     */
+    function loadSupplierBalances() {
+        console.log('[Prepay] loadSupplierBalances called');
+        const container = document.getElementById('supplier-cards-container');
+        const loading = document.getElementById('supplier-loading');
+        const empty = document.getElementById('supplier-empty');
+
+        container.innerHTML = '';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+
+        console.log('[Prepay] Fetching supplier balances...');
+        fetch('{% url "web_ui:finance:prepay_balances" %}')
+            .then(res => res.json())
+            .then(data => {
+                console.log('[Prepay] API response:', data);
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    showToast((window.i18n?.t('js.load_failed_colon') || 'Load failed: ') + data.error, 'error');
+                    return;
+                }
+
+                if (data.data.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                data.data.forEach(supplier => {
+                    const card = createSupplierCard(supplier);
+                    container.appendChild(card);
+                });
+                console.log('[Prepay] Loaded', data.data.length, 'suppliers');
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                console.error('[Prepay] 加载供应商余额失败:', err);
+                showToast((window.i18n?.t('js.network_error') || 'Network Error'), 'error');
+            });
+    }
+
+    /**
+     * 创建供应商卡片
+     */
+    function createSupplierCard(supplier) {
+        const card = document.createElement('div');
+        card.className = 'supplier-card';
+        card.dataset.code = supplier.supplier_code;
+
+        // 余额样式
+        let balanceClass = 'zero';
+        let balancePrefix = '';
+        if (supplier.balance > 0) {
+            balanceClass = 'positive';
+            balancePrefix = '+';
+        } else if (supplier.balance < 0) {
+            balanceClass = 'negative';
+        }
+
+        // 货币标签样式
+        const currClass = supplier.currency === 'USD' ? 'bg-info bg-opacity-25 text-info' : 'bg-warning bg-opacity-25 text-warning';
+
+        card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="supplier-code">${supplier.supplier_code}</div>
+                <div class="supplier-name" title="${supplier.supplier_name}">${supplier.supplier_name}</div>
+            </div>
+            <span class="badge ${currClass} currency-tag">${supplier.currency}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="balance-amount ${balanceClass} mb-0">
+                ${balancePrefix}${formatNumber(supplier.balance)}
+            </div>
+            <button class="btn btn-success btn-xs rounded-circle prepay-add-btn" 
+                    onclick="event.stopPropagation(); openPrepayWizard('${supplier.supplier_code}', '${supplier.supplier_name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${supplier.currency}')"
+                    data-i18n-title="tooltip.t6700" title="Add Prepayment">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    `;
+
+        card.addEventListener('click', () => selectSupplier(supplier.supplier_code));
+
+        return card;
+    }
+
+    /**
+     * 选择供应商
+     */
+    function selectSupplier(code) {
+        window.currentSupplierCode = code;
+
+        // 更新卡片选中状态
+        document.querySelectorAll('.supplier-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.code === code);
+        });
+
+        // 重置筛选按钮
+        document.querySelectorAll('.filter-preset').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.preset === '');
+        });
+
+        // 加载交易明细
+        loadTransactions(code, '');
+    }
+
+    /**
+     * 加载交易明细
+     */
+    function loadTransactions(supplierCode, preset, dateFrom, dateTo) {
+        if (!supplierCode) return;
+
+        const placeholder = document.getElementById('txn-placeholder');
+        const detailView = document.getElementById('txn-detail-view');
+        const tableContainer = document.querySelector('.txn-table-container');
+        const loading = document.getElementById('txn-loading');
+        const empty = document.getElementById('txn-empty');
+        const tbody = document.getElementById('txn-table-body');
+        const beginningRow = document.getElementById('beginning-balance-row');
+
+        placeholder.style.display = 'none';
+        detailView.style.display = 'block';
+        tableContainer.style.display = 'none';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        beginningRow.style.display = 'none';
+
+        // 构建 URL
+        let url = `{% url "web_ui:finance:prepay_transactions" %}?supplier_code=${supplierCode}`;
+        if (preset) url += `&preset=${preset}`;
+        if (dateFrom) url += `&date_from=${dateFrom}`;
+        if (dateTo) url += `&date_to=${dateTo}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    showToast((window.i18n?.t('js.load_failed_colon') || 'Load failed: ') + data.error, 'error');
+                    return;
+                }
+
+                const info = data.data;
+
+                // 更新 Header
+                document.getElementById('txn-supplier-code').textContent = info.supplier_code;
+                document.getElementById('txn-supplier-name').textContent = info.supplier_name;
+                document.getElementById('txn-supplier-currency').textContent = info.supplier_currency;
+
+                // 显示 Beginning Balance (如果有筛选)
+                if (info.filter.date_from || info.filter.date_to) {
+                    beginningRow.style.display = 'block';
+                    const balVal = info.beginning_balance;
+                    const balClass = balVal >= 0 ? 'text-warning' : 'text-danger';
+                    document.getElementById('beginning-balance-value').className = balClass;
+                    document.getElementById('beginning-balance-value').textContent =
+                        `${info.supplier_currency} ${formatNumber(balVal)}`;
+
+                    // 筛选信息
+                    let filterText = '';
+                    if (info.filter.date_from) filterText += `从 ${info.filter.date_from}`;
+                    if (info.filter.date_to) filterText += ` 至 ${info.filter.date_to}`;
+                    document.getElementById('txn-filter-info').textContent = filterText;
+                } else {
+                    document.getElementById('txn-filter-info').textContent = '';
+                }
+
+                // 渲染表格
+                if (info.transactions.length === 0) {
+                    empty.style.display = 'block';
+                    document.getElementById('txn-count').textContent = (window.i18n?.t('js.zero_records') || '0 records');
+                    return;
+                }
+
+                tableContainer.style.display = 'block';
+                tbody.innerHTML = '';
+
+                info.transactions.forEach(txn => {
+                    const row = document.createElement('tr');
+
+                    // 预付 / 使用
+                    let prepayCell = '-';
+                    let useCell = '-';
+                    const currTag = `<span class="curr-tag ${txn.tran_curr_use.toLowerCase()}">${txn.tran_curr_use}</span>`;
+
+                    // 汇率显示 + 来源标签 (M=手动输入, A=自动获取)
+                    const rateVal = txn.usd_rmb.toFixed(4);
+                    const typeLabel = txn.tran_curr_type === 'M' ? (window.i18n?.t('js.manual_input') || 'Manual Input') : (window.i18n?.t('js.auto_fetch') || 'Auto Fetch');
+                    const typeClass = txn.tran_curr_type === 'M' ? 'bg-primary' : 'bg-secondary';
+                    const rateInfo = `<div style="font-size:10px; opacity:0.6; margin-top:2px;">
+                    @${rateVal} <span class="badge ${typeClass} bg-opacity-50" style="font-size:9px; padding:1px 4px;">${typeLabel}</span>
+                </div>`;
+
+                    if (txn.tran_type === 'in') {
+                        prepayCell = `<div>${currTag}<span class="amount-in">+${formatNumber(txn.tran_amount)}</span></div>${rateInfo}`;
+                    } else {
+                        useCell = `<div>${currTag}<span class="amount-out">-${formatNumber(txn.tran_amount)}</span></div>${rateInfo}`;
+                    }
+
+                    // 余额
+                    const balClass = txn.running_balance >= 0 ? 'positive' : 'negative';
+                    const reqCurrTag = `<span class="curr-tag ${info.supplier_currency.toLowerCase()}">${info.supplier_currency}</span>`;
+                    const balanceCell = `${reqCurrTag}<span class="amount-balance ${balClass}">${formatNumber(txn.running_balance)}</span>`;
+
+                    // 操作按钮 - 根据交易类型和状态显示
+                    const isDeleted = txn.is_deleted || false;
+                    const hasFile = txn.has_file || false;
+                    const tranType = txn.tran_type;
+
+                    // 只有预付款(in)类型才显示完整操作
+                    // 但如果是“删除定金付款”产生的退回记录（虽然是in），也只能查看历史
+                    const isDeleteRefund = (txn.tran_note || '').startsWith((window.i18n?.t('js.delete_deposit_payment') || 'Delete Deposit Payment'));
+
+                    let actionButtons = '';
+                    if (tranType === 'in' && !isDeleteRefund) {
+                        actionButtons = `
+                        <div class="action-btn-group">
+                            <button class="action-btn ${hasFile ? 'view' : ''}" 
+                                    onclick="viewPrepayFile('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t7921" title="${hasFile ? '查看文件' : (window.i18n?.t('js.no_files') || 'No Files')}" 
+                                    ${!hasFile ? 'disabled' : ''}>
+                                <i class="fas fa-file-invoice"></i>
+                            </button>
+                            <button class="action-btn edit" onclick="uploadPrepayFile('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t9901" title="Replace File">
+                                <i class="fas fa-upload"></i>
+                            </button>
+
+                            <button class="action-btn history" onclick="viewPrepayHistory('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t6" title="History">
+                                <i class="fas fa-history"></i>
+                            </button>
+                            ${isDeleted ? `
+                            <button class="action-btn restore" onclick="restorePrepay('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t1329" title="Restore">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            ` : `
+                            <button class="action-btn delete" onclick="deletePrepay('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="js.delete" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            `}
+                        </div>
+                    `;
+                    } else {
+                        // 使用(out)类型只显示历史记录
+                        actionButtons = `
+                        <div class="action-btn-group">
+                            <button class="action-btn history" onclick="viewPrepayHistory('${txn.tran_num}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t6" title="History">
+                                <i class="fas fa-history"></i>
+                            </button>
+                        </div>
+                    `;
+                    }
+
+                    // 已删除行样式
+                    if (isDeleted) {
+                        row.classList.add('deleted');
+                    }
+
+                    row.innerHTML = `
+                    <td>${txn.tran_date}</td>
+                    <td>${prepayCell}</td>
+                    <td>${useCell}</td>
+                    <td>${balanceCell}</td>
+                    <td><span class="badge bg-secondary bg-opacity-50">${txn.tran_seq}</span></td>
+                    <td class="text-white-50">${txn.tran_by || '-'}</td>
+                    <td class="cell-note" title="${escapeHtml(txn.tran_note)}">${txn.tran_note || '-'}</td>
+                    <td class="cell-tran-num">${txn.tran_num}${isDeleted ? '<span class="deleted-tag ms-1"><i class="fas fa-ban"></i>已删除</span>' : ''}</td>
+                    <td>${actionButtons}</td>
+                `;
+
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('txn-count').textContent = `共 ${info.transactions.length} 条记录`;
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                console.error('加载交易记录失败:', err);
+                showToast((window.i18n?.t('js.network_error') || 'Network Error'), 'error');
+            });
+    }
+
+    /**
+     * 显示自定义日期筛选 Modal
+     */
+    function showCustomDateFilter() {
+        const modal = new bootstrap.Modal(document.getElementById('customDateModal'));
+        modal.show();
+    }
+
+    /**
+     * 应用自定义日期筛选
+     */
+    function applyCustomDateFilter() {
+        const dateFrom = document.getElementById('custom-date-from').value;
+        const dateTo = document.getElementById('custom-date-to').value;
+
+        if (!dateFrom && !dateTo) {
+            showToast((window.i18n?.t('js.select_at_least_date') || 'Select at least one date'), 'warning');
+            return;
+        }
+
+        // 清除预设按钮选中状态
+        document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+
+        // 关闭 Modal
+        bootstrap.Modal.getInstance(document.getElementById('customDateModal')).hide();
+
+        // 加载数据
+        loadTransactions(window.currentSupplierCode, '', dateFrom, dateTo);
+    }
+
+    /**
+     * 格式化数字
+     */
+    function formatNumber(num) {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
+
+    /**
+     * HTML 转义
+     */
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Toast 提示 (依赖全局 GlobalModal.showToast)
+     */
+    function showToast(message, type) {
+        if (typeof GlobalModal !== 'undefined' && GlobalModal.showToast) {
+            GlobalModal.showToast(message, type);
+        } else {
+            console.log(`[Toast][${type}] ${message}`);
+        }
+    }
+
+    // ========================================
+    // 操作按钮事件处理
+    // ========================================
+
+    /**
+     * 查看付款文件
+     */
+    function viewPrepayFile(tranNum) {
+        openPrepayFileView(tranNum, 'view');
+    }
+
+    /**
+     * 上传付款文件
+     */
+    function uploadPrepayFile(tranNum) {
+        openPrepayFileView(tranNum, 'upload');
+    }
+
+
+
+    /**
+     * 查看历史记录
+     */
+    function viewPrepayHistory(tranNum) {
+        // 隐藏主列表视图
+        document.getElementById('prepay-list-view').style.display = 'none';
+        // 显示历史记录视图
+        document.getElementById('prepay-history-view').style.display = 'block';
+        // 加载历史记录
+        loadPrepayHistory(tranNum);
+    }
+
+    /**
+     * 删除预付款
+     */
+    function deletePrepay(tranNum) {
+        GlobalModal.showConfirm({
+            title: (window.i18n?.t('js.confirm_delete_payment') || 'Confirm Delete Payment'),
+            message: `<div class="text-center">
+            <p class="mb-3" data-i18n="ui.text_1288">您确定要删除此预付款记录吗？</p>
+            <p class="text-muted small mb-2">${(window.i18n?.t('finance.tran_no') || 'Transaction No')}: <strong class="text-danger">${tranNum}</strong></p>
+            <p class="text-muted small" data-i18n="ui.text_1289">删除后可通过(window.i18n?.t('js.restore') || 'Restore')功能找回</p>
+        </div>`,
+            confirmText: (window.i18n?.t('js.confirm_delete') || 'Confirm Delete'),
+            confirmStyle: 'danger',
+            onConfirm: () => {
+                // 350ms Closure Buffer，等待第一个 Modal 关闭动画完成
+                setTimeout(() => {
+                    if (typeof requestPasswordVerify === 'function') {
+                        requestPasswordVerify(
+                            'btn_prepay_delete',
+                            (passwords) => submitPrepayDelete(tranNum, passwords),
+                            null,
+                            (window.i18n?.t('js.delete_prepayment') || 'Delete Prepayment'),
+                            () => console.log('[Prepay] Password verification cancelled')
+                        );
+                    } else {
+                        submitPrepayDelete(tranNum, {});
+                    }
+                }, 350);
+            }
+        });
+    }
+
+    /**
+     * 提交删除请求
+     */
+    function submitPrepayDelete(tranNum, passwords) {
+        const requestBody = { tran_num: tranNum };
+
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+
+        fetch('{% url "web_ui:finance:prepay_delete" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || (window.i18n?.t('js.delete_success') || 'Delete Success'), 'success');
+                    // 刷新列表
+                    loadSupplierBalances();
+                    if (currentSupplierCode) {
+                        loadTransactions(currentSupplierCode, '', '', '');
+                    }
+                } else {
+                    showToast(data.error || (window.i18n?.t('js.delete_failed') || 'Delete Failed'), 'error');
+                }
+            })
+            .catch(err => {
+                showToast((window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err, 'error');
+            });
+    }
+
+    /**
+     * 恢复预付款
+     */
+    function restorePrepay(tranNum) {
+        GlobalModal.showConfirm({
+            title: (window.i18n?.t('js.confirm_restore_payment') || 'Confirm Restore Payment'),
+            message: `<div class="text-center">
+            <p class="mb-3" data-i18n="ui.text_1290">您确定要恢复此预付款记录吗？</p>
+            <p class="text-muted small mb-2">${(window.i18n?.t('finance.tran_no') || 'Transaction No')}: <strong class="text-success">${tranNum}</strong></p>
+        </div>`,
+            confirmText: (window.i18n?.t('js.confirm_restore') || 'Confirm Restore'),
+            confirmStyle: 'success',
+            onConfirm: () => {
+                // 350ms Closure Buffer，等待第一个 Modal 关闭动画完成
+                setTimeout(() => {
+                    if (typeof requestPasswordVerify === 'function') {
+                        requestPasswordVerify(
+                            'btn_prepay_undelete',
+                            (passwords) => submitPrepayRestore(tranNum, passwords),
+                            null,
+                            (window.i18n?.t('js.restore_prepayment') || 'Restore Prepayment'),
+                            () => console.log('[Prepay] Password verification cancelled')
+                        );
+                    } else {
+                        submitPrepayRestore(tranNum, {});
+                    }
+                }, 350);
+            }
+        });
+    }
+
+    /**
+     * 提交恢复请求
+     */
+    function submitPrepayRestore(tranNum, passwords) {
+        const requestBody = { tran_num: tranNum };
+
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+
+        fetch('{% url "web_ui:finance:prepay_restore" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || (window.i18n?.t('js.restore_success') || 'Restore Success'), 'success');
+                    // 刷新列表
+                    loadSupplierBalances();
+                    if (currentSupplierCode) {
+                        loadTransactions(currentSupplierCode, '', '', '');
+                    }
+                } else {
+                    showToast(data.error || (window.i18n?.t('js.restore_failed') || 'Restore Failed'), 'error');
+                }
+            })
+            .catch(err => {
+                showToast((window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err, 'error');
+            });
+    }
+
+</script>
+
+
+<!-- GlobalWizard 组件 -->
+<script src="{% static 'js/global-wizard.js' %}"></script>
+
+<!-- 预付款向导 Partial -->
+{% include "finance/pages/partials/prepay_wizard.html" %}
+
+<!-- 历史记录视图 Partial -->
+{% include "finance/pages/partials/prepay_history_view.html" %}
+
+<!-- 编辑向导 Partial -->
+
+
+<!-- 文件管理视图 Partial -->
+{% include "finance/pages/partials/prepay_file_view.html" %}
+
+{% endblock %}

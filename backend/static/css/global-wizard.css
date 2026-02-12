@@ -1,0 +1,223 @@
+/**
+ * GlobalWizard CSS Styles
+ * 全局公有处理向导样式
+ * 
+ * 使用说明：在 base.html 或需要向导的页面中引入此 CSS
+ */
+
+/* ============================================ */
+/* Wizard Step Bar Styles                       */
+/* ============================================ */
+
+.wizard-step-bar {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+}
+
+.wizard-stage-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+/* Active step: pulsing blue glow border */
+.wizard-stage-step.active {
+    opacity: 1;
+}
+
+.wizard-stage-step.active .wizard-step-box {
+    background: transparent;
+    border: 2px solid #0dcaf0;
+    animation: wizardPulseGlow 1.5s ease-in-out infinite;
+    color: #0dcaf0;
+}
+
+/* Completed step: green background with checkmark */
+.wizard-stage-step.completed {
+    opacity: 1;
+}
+
+.wizard-stage-step.completed .wizard-step-box {
+    background: linear-gradient(135deg, #198754, #20c997);
+    border: 2px solid #198754;
+    color: #fff;
+}
+
+/* Failed step: red border */
+.wizard-stage-step.failed {
+    opacity: 1;
+}
+
+.wizard-stage-step.failed .wizard-step-box {
+    background: transparent;
+    border: 2px solid #dc3545;
+    color: #dc3545;
+}
+
+/* Step box - square with rounded corners */
+.wizard-step-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.wizard-step-label {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* Connector line between steps */
+.wizard-stage-connector {
+    width: 50px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    margin-top: 22px;
+    transition: all 0.3s ease;
+}
+
+.wizard-stage-connector.completed {
+    background: linear-gradient(90deg, #198754, #20c997);
+}
+
+/* Pulsing glow animation */
+@keyframes wizardPulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(13, 202, 240, 0.3), 0 0 10px rgba(13, 202, 240, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(13, 202, 240, 0.6), 0 0 25px rgba(13, 202, 240, 0.4), 0 0 35px rgba(13, 202, 240, 0.2);
+    }
+}
+
+/* ============================================ */
+/* Wizard Content Area Styles                   */
+/* ============================================ */
+
+.wizard-content-area {
+    min-height: 200px;
+}
+
+.wizard-step-content {
+    display: none;
+}
+
+.wizard-step-content.active {
+    display: block;
+}
+
+/* ============================================ */
+/* Wizard Action Buttons                        */
+/* ============================================ */
+
+.wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(108, 117, 125, 0.25);
+}
+
+.wizard-actions-left,
+.wizard-actions-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ============================================ */
+/* Done Page Specific Styles                    */
+/* ============================================ */
+
+.wizard-done-header {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.wizard-done-header .icon {
+    font-size: 4rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.wizard-done-header h3 {
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.wizard-done-header p {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.wizard-done-summary,
+.wizard-done-details {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(108, 117, 125, 0.25);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.wizard-done-summary-header,
+.wizard-done-details-header {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(108, 117, 125, 0.25);
+}
+
+/* ============================================ */
+/* Responsive Adjustments                       */
+/* ============================================ */
+
+@media (max-width: 576px) {
+    .wizard-step-box {
+        width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+    }
+
+    .wizard-step-label {
+        font-size: 0.65rem;
+    }
+
+    .wizard-stage-connector {
+        width: 30px;
+        margin-top: 18px;
+    }
+
+    .wizard-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .wizard-actions-left,
+    .wizard-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+}

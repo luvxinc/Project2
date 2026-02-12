@@ -1,0 +1,379 @@
+{% load i18n %}
+<!-- 发货单详情查看页面 -->
+<div class="glass-card p-4 shadow-lg">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex align-items-center">
+            <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                <i class="fas fa-truck fa-2x text-primary"></i>
+            </div>
+            <div>
+                <h5 class="text-white mb-1" data-i18n="ui.text_1055">查看发货单详情</h5>
+                <p class="text-white-50 small mb-0" id="view-logistic-num-label" data-i18n="ui.text_418">物流单号: -</p>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="showListView()">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <!-- 加载中 -->
+    <div id="view-loading" class="text-center py-5">
+        <div class="spinner-border text-info" role="status"></div>
+        <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_1050">正在加载发货单数据...</p>
+    </div>
+
+    <!-- 发货单内容 -->
+    <div id="view-content" style="display: none;">
+        <!-- 操作按钮 (右对齐，在物流单基础信息上方) -->
+        <div class="d-flex justify-content-end gap-2 mb-4 flex-wrap">
+            <button class="btn btn-outline-info rounded-pill px-3" id="btn-view-download-mgmt" onclick="handleDownloadMgmt()">
+                <i class="fas fa-download me-2"></i><span data-i18n="ui.icon_3337">下载发货单(管理部门用)</span>
+            </button>
+            <button class="btn btn-outline-info rounded-pill px-3" id="btn-view-download-warehouse" onclick="handleDownloadWarehouse()">
+                <i class="fas fa-download me-2"></i><span data-i18n="ui.icon_3338">下载发货单(仓储部门用)</span>
+            </button>
+            <button class="btn btn-warning rounded-pill px-3" id="btn-view-edit" onclick="handleEdit()">
+                <i class="fas fa-pen me-2"></i><span data-i18n="ui.text_522">修改发货单</span>
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill px-3" id="btn-view-history" onclick="handleHistory()">
+                <i class="fas fa-history me-2"></i><span data-i18n="common.history">历史记录</span>
+            </button>
+            <button class="btn btn-outline-danger rounded-pill px-3" id="btn-view-delete" onclick="handleDelete()">
+                <i class="fas fa-trash me-2"></i><span data-i18n="ui.text_1036">删除发货单</span>
+            </button>
+        </div>
+
+        <!-- 框体1: 物流单基础信息 -->
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-primary bg-opacity-10 border-secondary">
+                <i class="fas fa-info-circle me-2 text-primary"></i>
+                <span class="text-white" data-i18n="ui.text_1058">物流单基础信息</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-white-50 small mb-1" data-i18n="table.logistics_no">物流单号</div>
+                        <div class="text-white fw-bold font-monospace" id="view-logistic-num">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-white-50 small mb-1" data-i18n="purchase.shipping_date">发货日期</div>
+                        <div class="text-info" id="view-date-sent">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 框体2: 物流单详细信息 -->
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-info bg-opacity-10 border-secondary">
+                <i class="fas fa-shipping-fast me-2 text-info"></i>
+                <span class="text-white" data-i18n="ui.text_1043">物流单详细信息</span>
+            </div>
+            <div class="card-body">
+                <!-- 第一行 -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="abnormal.expected_arrival">预计到货日期</div>
+                        <div class="text-info" id="view-date-eta">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="js.pallets">托盘数</div>
+                        <div class="text-white fw-bold" id="view-pallets">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2376">发货总重量(KG)</div>
+                        <div class="text-white" id="view-total-weight">-</div>
+                    </div>
+                </div>
+                <hr class="border-secondary my-3">
+                <!-- 第二行 -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2377">物流单价(RMB/KG)</div>
+                        <div class="text-white" id="view-price-kg">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2378">物流总价(RMB)</div>
+                        <div class="text-warning fw-bold" id="view-total-price">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="table.settlement_rate">结算汇率</div>
+                        <div id="view-usd-rmb">-</div>
+                    </div>
+                </div>
+                <hr class="border-secondary my-3">
+                <!-- 第三行 -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2380">最新物流单明细版本</div>
+                        <div class="text-info fw-bold" id="view-logistics-seq">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="common.operator">操作人</div>
+                        <div class="text-white" id="view-logistics-by">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2147">修订日期</div>
+                        <div class="text-white" id="view-logistics-date-record">-</div>
+                    </div>
+                </div>
+                <hr class="border-secondary my-3">
+                <!-- 第四行 -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="text-white-50 small mb-1" data-i18n="common.remark">备注</div>
+                        <div class="text-white-50" id="view-logistics-note">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 框体3: 物流单货物信息 -->
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-success bg-opacity-10 border-secondary">
+                <i class="fas fa-boxes me-2 text-success"></i>
+                <span class="text-white" data-i18n="ui.text_1044">物流单货物信息</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-2">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2215">修订版本</div>
+                        <div class="text-success fw-bold" id="view-detail-seq">-</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-white-50 small mb-1" data-i18n="common.operator">操作人</div>
+                        <div class="text-white" id="view-detail-by">-</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2147">修订日期</div>
+                        <div class="text-white" id="view-detail-date">-</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-white-50 small mb-1" data-i18n="common.remark">备注</div>
+                        <div class="text-white-50" id="view-detail-note">-</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-white-50 small mb-1" data-i18n="ui.text_2170">货物价值</div>
+                        <div class="text-success fw-bold fs-5" id="view-cargo-value">-</div>
+                    </div>
+                </div>
+
+                <!-- 货物列表 -->
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr class="text-white-50">
+                                <th>#</th>
+                                <th data-i18n="purchase.order_num">订单号</th>
+                                <th>SKU</th>
+                                <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                                <th class="text-center" data-i18n="common.currency">货币</th>
+                                <th class="text-end" data-i18n="common.unit_price">单价</th>
+                                <th class="text-end" data-i18n="ui.text_2223">价值</th>
+                            </tr>
+                        </thead>
+                        <tbody id="view-items-tbody">
+                            <!-- JS动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 当前查看的物流单号（本地变量）
+    let viewCurrentLogisticNum = null;
+    
+    // 格式化数字：去除尾部的零
+    // 5.0000 -> 5, 5.100 -> 5.1, 5.105 -> 5.105
+    function formatNumber(num, maxDecimals = 4) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        // 先保留最大小数位，然后转成数字去除尾部零
+        return parseFloat(num.toFixed(maxDecimals)).toString();
+    }
+    
+    // 格式化货币数字：带千位分隔符，去除尾部零
+    function formatCurrency(num, minDecimals = 0) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        // 去除尾部零后再格式化
+        const cleaned = parseFloat(num.toFixed(2));
+        return cleaned.toLocaleString('en-US', {minimumFractionDigits: minDecimals});
+    }
+    
+    // 加载发货单详情
+    function loadOrderDetail(logisticNum) {
+        viewCurrentLogisticNum = logisticNum;
+        
+        const loading = document.getElementById('view-loading');
+        const content = document.getElementById('view-content');
+        
+        loading.style.display = 'block';
+        content.style.display = 'none';
+        
+        document.getElementById('view-logistic-num-label').textContent = `物流单号: ${logisticNum}`;
+        
+        fetch(`{% url 'web_ui:purchase:send_mgmt_detail' %}?logistic_num=${encodeURIComponent(logisticNum)}`)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (!data.success) {
+                    alert(data.message || '{% trans "加载失败" %}');
+                    showListView();
+                    return;
+                }
+                
+                content.style.display = 'block';
+                const { base, logistics, detail } = data.data;
+                
+                // 物流单基础信息
+                document.getElementById('view-logistic-num').textContent = base.logistic_num || '-';
+                document.getElementById('view-date-sent').textContent = base.date_sent || '-';
+                
+                // 物流单详细信息
+                // 第一行
+                document.getElementById('view-date-eta').textContent = logistics.date_eta || '-';
+                document.getElementById('view-pallets').textContent = logistics.pallets || '-';
+                document.getElementById('view-total-weight').textContent = 
+                    logistics.total_weight ? formatNumber(logistics.total_weight, 2) : '-';
+                
+                // 第二行
+                document.getElementById('view-price-kg').textContent = 
+                    logistics.price_kg ? formatNumber(logistics.price_kg, 4) : '-';
+                document.getElementById('view-total-price').textContent = 
+                    logistics.total_price ? formatCurrency(logistics.total_price) : '-';
+                
+                // 结算汇率 + tag
+                const usdRmbEl = document.getElementById('view-usd-rmb');
+                const rateValue = logistics.usd_rmb ? formatNumber(logistics.usd_rmb, 4) : '-';
+                const modeTag = logistics.mode || '-';
+                const tagClass = modeTag === (window.i18n?.t('js.auto_fetch') || 'Auto Fetch') ? 'bg-success' : 'bg-warning';
+                usdRmbEl.innerHTML = `
+                    <span class="text-white">${rateValue}</span>
+                    <span class="badge ${tagClass} ms-2">${modeTag}</span>
+                `;
+                
+                // 第三行
+                document.getElementById('view-logistics-seq').textContent = logistics.seq || '-';
+                document.getElementById('view-logistics-by').textContent = logistics.by || '-';
+                document.getElementById('view-logistics-date-record').textContent = logistics.date_record || '-';
+                
+                // 第四行
+                document.getElementById('view-logistics-note').textContent = logistics.note || '-';
+                
+                // 物流单货物信息
+                document.getElementById('view-detail-seq').textContent = detail.seq || '-';
+                document.getElementById('view-detail-by').textContent = detail.by || '-';
+                document.getElementById('view-detail-date').textContent = detail.date || '-';
+                document.getElementById('view-detail-note').textContent = detail.note || '-';
+                
+                // 货物价值显示（双货币）
+                const cargoValueEl = document.getElementById('view-cargo-value');
+                cargoValueEl.innerHTML = `
+                    <div class="d-flex flex-column">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-danger bg-opacity-25 text-danger me-1" style="font-size: 0.65rem;">RMB</span>
+                            <span class="text-success">¥${(detail.cargo_value_rmb || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="d-flex align-items-center mt-1">
+                            <span class="badge bg-primary bg-opacity-25 text-primary me-1" style="font-size: 0.65rem;">USD</span>
+                            <span class="text-info">$${(detail.cargo_value_usd || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 货物列表
+                const tbody = document.getElementById('view-items-tbody');
+                tbody.innerHTML = '';
+                
+                (detail.items || []).forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    // 货币标签样式
+                    const currencyBadge = item.currency === 'USD' 
+                        ? '<span class="badge bg-primary bg-opacity-25 text-primary" style="font-size: 0.7rem;">USD</span>'
+                        : '<span class="badge bg-danger bg-opacity-25 text-danger" style="font-size: 0.7rem;">RMB</span>';
+                    
+                    tr.innerHTML = `
+                        <td class="text-white-50">${idx + 1}</td>
+                        <td class="font-monospace">${item.po_num}</td>
+                        <td class="font-monospace">${item.sku}</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-center">${currencyBadge}</td>
+                        <td class="text-end">${item.unit_price.toFixed(2)}</td>
+                        <td class="text-end">
+                            <div class="d-flex flex-column align-items-end">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-danger bg-opacity-25 text-danger me-1" style="font-size: 0.6rem;">RMB</span>
+                                    <span class="text-success">¥${item.value_rmb.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div class="d-flex align-items-center mt-1">
+                                    <span class="badge bg-primary bg-opacity-25 text-primary me-1" style="font-size: 0.6rem;">USD</span>
+                                    <span class="text-info small">$${item.value_usd.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                // 如果没有货物
+                if (!detail.items || detail.items.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center text-white-50 py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                <p class="mb-0" data-i18n="ui.text_498">暂无货物记录</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                alert('{% trans "加载失败: " %}' + err);
+                showListView();
+            });
+    }
+    
+    // 按钮处理函数
+    function handleDownloadMgmt() {
+        if (viewCurrentLogisticNum) {
+            // 触发下载
+            window.location.href = `{% url 'web_ui:purchase:send_mgmt_download' %}?logistic_num=${encodeURIComponent(viewCurrentLogisticNum)}&type=mgmt`;
+        }
+    }
+    
+    function handleDownloadWarehouse() {
+        if (viewCurrentLogisticNum) {
+            // 触发下载
+            window.location.href = `{% url 'web_ui:purchase:send_mgmt_download' %}?logistic_num=${encodeURIComponent(viewCurrentLogisticNum)}&type=warehouse`;
+        }
+    }
+    
+    function handleEdit() {
+        if (viewCurrentLogisticNum) {
+            if (typeof editOrder === 'function') {
+                editOrder(viewCurrentLogisticNum);
+            }
+        }
+    }
+    
+    function handleHistory() {
+        if (viewCurrentLogisticNum && typeof viewHistory === 'function') {
+            viewHistory(viewCurrentLogisticNum);
+        }
+    }
+    
+    function handleDelete() {
+        if (viewCurrentLogisticNum) {
+            if (typeof deleteSend === 'function') {
+                deleteSend(viewCurrentLogisticNum);
+            } else {
+                console.error('[ViewOrder] deleteSend function not found');
+            }
+        }
+    }
+</script>

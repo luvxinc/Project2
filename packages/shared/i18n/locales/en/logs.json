@@ -1,0 +1,451 @@
+{
+  "pageTitle": "Logs",
+  "hub": {
+    "explore": "Explore"
+  },
+  "nav": {
+    "errors": "Errors",
+    "audits": "Audits",
+    "business": "Business",
+    "access": "Access",
+    "maintenance": "Maintenance"
+  },
+  "features": {
+    "errors": {
+      "title": "Error Logs",
+      "description": "Track system exceptions, analyze stack traces, mark resolved issues",
+      "cta": "View Errors"
+    },
+    "audits": {
+      "title": "Security Audit",
+      "description": "Record sensitive operations, track user behavior, ensure compliance",
+      "cta": "View Audits"
+    },
+    "business": {
+      "title": "Business Logs",
+      "description": "Track business operations, record cross-module interactions",
+      "cta": "View Business"
+    },
+    "access": {
+      "title": "Access Logs",
+      "description": "Monitor HTTP requests, analyze response times, detect anomalies",
+      "cta": "View Access"
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "description": "Clean dev logs, manage storage, execute retention policies",
+      "cta": "Manage Logs"
+    }
+  },
+  "overview": {
+    "title": "System Logs Overview",
+    "description": "Real-time monitoring of system status and key metrics",
+    "stats": {
+      "errors": "Unresolved Errors",
+      "unresolved": "Pending",
+      "critical": "Critical Errors",
+      "requiresAttention": "Needs Attention",
+      "auditsToday": "Today's Audits",
+      "securityEvents": "Security Events",
+      "accessToday": "Today's Access",
+      "requests": "Requests"
+    },
+    "summary": {
+      "title": "Total Statistics",
+      "totalErrors": "Total Errors",
+      "totalAudits": "Total Audits",
+      "totalBusiness": "Total Business Logs",
+      "totalAccess": "Total Access Logs"
+    }
+  },
+  "error": {
+    "title": "Error Logs",
+    "description": "System exception tracking and analysis",
+    "filters": {
+      "severity": "Severity",
+      "resolved": "Resolved",
+      "unresolved": "Unresolved",
+      "all": "All",
+      "allStatus": "All Status",
+      "search": "Search error type or message..."
+    },
+    "columns": {
+      "time": "Time",
+      "type": "Type",
+      "message": "Message",
+      "severity": "Severity",
+      "module": "Module",
+      "path": "Request Path",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "severity": {
+      "CRITICAL": "Critical",
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "detail": {
+      "title": {
+        "error": "Error Details",
+        "audit": "Audit Details",
+        "business": "Business Log Details",
+        "access": "Access Log Details"
+      },
+      "traceback": "Full Stack Trace",
+      "location": "Error Location",
+      "context": "Context Info"
+    },
+    "actions": {
+      "resolve": "Mark Resolved",
+      "viewDetail": "View Details"
+    },
+    "empty": "No error logs"
+  },
+  "errors": {
+    "title": "Error Logs",
+    "description": "System exception tracking and analysis",
+    "filters": {
+      "severity": "Severity",
+      "resolved": "Resolved",
+      "unresolved": "Unresolved",
+      "all": "All",
+      "allStatus": "All Status",
+      "search": "Search error type or message..."
+    },
+    "columns": {
+      "time": "Time",
+      "type": "Type",
+      "message": "Message",
+      "severity": "Severity",
+      "module": "Module",
+      "path": "Request Path",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "severity": {
+      "CRITICAL": "Critical",
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "detail": {
+      "title": "Error Details",
+      "traceback": "Full Stack Trace",
+      "location": "Error Location",
+      "context": "Context Info"
+    },
+    "actions": {
+      "resolve": "Mark Resolved",
+      "viewDetail": "View Details"
+    },
+    "empty": "No error logs"
+  },
+  "audit": {
+    "title": "Security Audit Logs",
+    "description": "Sensitive operation records and compliance tracking",
+    "filters": {
+      "module": "Module",
+      "action": "Action Type",
+      "search": "Search action or entity..."
+    },
+    "columns": {
+      "time": "Time",
+      "user": "User",
+      "action": "Action",
+      "module": "Module",
+      "entity": "Entity",
+      "target": "Target",
+      "ip": "IP Address",
+      "result": "Result",
+      "risk": "Risk"
+    },
+    "empty": "No audit logs"
+  },
+  "audits": {
+    "title": "Security Audit Logs",
+    "description": "Sensitive operation records and compliance tracking",
+    "filters": {
+      "module": "Module",
+      "action": "Action Type",
+      "search": "Search action or entity..."
+    },
+    "columns": {
+      "time": "Time",
+      "user": "User",
+      "action": "Action",
+      "module": "Module",
+      "entity": "Entity",
+      "target": "Target",
+      "ip": "IP Address",
+      "result": "Result",
+      "risk": "Risk"
+    },
+    "empty": "No audit logs"
+  },
+  "business": {
+    "title": "Business Logs",
+    "description": "Business workflow tracking and module interaction records",
+    "filters": {
+      "module": "Module",
+      "action": "Action",
+      "status": "Status",
+      "search": "Search action or summary...",
+      "allModules": "All Modules",
+      "allActions": "All Actions",
+      "allStatus": "All Status"
+    },
+    "columns": {
+      "time": "Time",
+      "user": "User",
+      "module": "Module",
+      "action": "Action",
+      "summary": "Summary",
+      "status": "Status"
+    },
+    "status": {
+      "SUCCESS": "Success",
+      "FAILED": "Failed",
+      "PENDING": "Pending"
+    },
+    "empty": "No business logs"
+  },
+  "access": {
+    "title": "Access Logs",
+    "description": "HTTP request monitoring and performance analysis",
+    "filters": {
+      "statusCode": "Status Code",
+      "method": "Method",
+      "search": "Search path or IP...",
+      "allStatus": "All Status Codes",
+      "allMethods": "All Methods"
+    },
+    "columns": {
+      "time": "Time",
+      "method": "Method",
+      "path": "Path",
+      "status": "Status",
+      "duration": "Duration",
+      "responseTime": "Response Time",
+      "ip": "IP Address",
+      "user": "User"
+    },
+    "empty": "No access logs"
+  },
+  "maintenance": {
+    "title": "Log Maintenance",
+    "description": "System log configuration & maintenance",
+    "groups": {
+      "systemMode": "System Mode",
+      "operations": "Maintenance Operations",
+      "devLogs": "Dev Logs",
+      "prodLogs": "Prod Logs"
+    },
+    "devMode": {
+      "title": "Dev/Deploy Mode",
+      "currentDev": "Current: Development Mode (logs marked as dev_mode)",
+      "currentProd": "Current: Production Mode (prod logs)",
+      "enabled": "Switched to development mode",
+      "disabled": "Switched to production mode", 
+      "toggleFailed": "Failed to toggle mode, check L4 password",
+      "enterL4": "Switching mode requires L4 security code"
+    },
+    "godMode": {
+      "title": "Sensitive Info View",
+      "activeUntil": "Active until",
+      "inactive": "Disabled (data is masked)",
+      "enabled": "Sensitive info view enabled (valid for 30 min)",
+      "disabled": "Sensitive info view disabled",
+      "unlockFailed": "Unlock failed, check L3 password",
+      "lockFailed": "Lock failed",
+      "enterL3": "Unlock sensitive info requires L3 security code"
+    },
+    "stats": {
+      "errors": "Errors",
+      "audits": "Audits",
+      "business": "Business",
+      "access": "Access"
+    },
+    "actions": {
+      "clearDevLogs": "Clear Dev Logs",
+      "requiresL4": "Requires L4",
+      "enterL4": "Clearing dev logs requires L4 security code",
+      "clearSuccess": "Dev logs cleared",
+      "l4Failed": "Operation failed, check L4 password"
+    },
+    "policy": {
+      "title": "Retention Policy",
+      "errorLogs": "Error Logs",
+      "auditLogs": "Audit Logs",
+      "businessLogs": "Business Logs",
+      "accessLogs": "Access Logs"
+    },
+    "archive": {
+      "title": "Log Archive",
+      "description": "Archive old logs to free up database space",
+      "stats": {
+        "totalArchived": "Total Archived",
+        "totalSize": "Archive Size",
+        "totalBatches": "Archive Batches",
+        "archiveDir": "Archive Directory",
+        "pendingArchive": "Pending Archive"
+      },
+      "retention": {
+        "title": "Retention Policy",
+        "error": "Error logs retention",
+        "audit": "Audit logs retention",
+        "business": "Business logs retention",
+        "access": "Access logs retention",
+        "days": "days"
+      },
+      "pending": {
+        "title": "Pending Archive Stats",
+        "logType": "Log Type",
+        "retentionDays": "Retention Days",
+        "pendingCount": "Pending Count",
+        "noRecords": "No records pending archive"
+      },
+      "history": {
+        "title": "Archive History",
+        "empty": "No archive records",
+        "columns": {
+          "time": "Archive Time",
+          "type": "Log Type",
+          "records": "Records",
+          "size": "File Size",
+          "status": "Status"
+        }
+      },
+      "execute": {
+        "button": "Archive Now",
+        "confirm": "Confirm Archive?",
+        "confirmDesc": "This will archive logs older than retention period and delete them from the database. Archive files will be saved to the server.",
+        "enterL4": "Archive execution requires L4 security code",
+        "success": "Archive completed",
+        "failed": "Archive failed"
+      },
+      "status": {
+        "PENDING": "Pending",
+        "IN_PROGRESS": "In Progress",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed"
+      }
+    },
+    "accessDenied": "This feature requires Superadmin privileges"
+  },
+  "common": {
+    "loading": "Loading...",
+    "noData": "No data",
+    "empty": "No data",
+    "page": "Page",
+    "refresh": "Refresh",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "filter": "Filter",
+    "dateRange": "Date Range",
+    "today": "Today",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "custom": "Custom"
+  },
+  "godMode": {
+    "title": "Sensitive Information",
+    "enabled": "God Mode Enabled",
+    "disabled": "God Mode Locked",
+    "unlock": "Unlock",
+    "lock": "Lock",
+    "remaining": "Remaining",
+    "expiresAt": "Expires at",
+    "unlockTitle": "Unlock Sensitive Information",
+    "unlockDesc": "Once unlocked, you can view full IP addresses, usernames, request data, and other sensitive information. The unlock will expire after 30 minutes.",
+    "l3Placeholder": "Enter L3 security code",
+    "securityCodeLabel": "L3 Security Code",
+    "securityCodePlaceholder": "Enter L3 security code",
+    "confirmUnlock": "Confirm Unlock",
+    "verifying": "Verifying...",
+    "unlockSuccess": "Sensitive information unlocked",
+    "lockSuccess": "Data masking restored",
+    "unlockFailed": "Unlock failed",
+    "lockFailed": "Lock failed"
+  },
+  "alerts": {
+    "title": "System Alerts",
+    "active": "Active Alerts",
+    "noAlerts": "No active alerts",
+    "acknowledge": "Acknowledge",
+    "acknowledged": "Acknowledged",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "rules": {
+      "highErrorRate": "High Error Rate",
+      "criticalErrors": "Critical Errors",
+      "highLatency": "High Latency",
+      "authFailures": "Auth Failures"
+    },
+    "health": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "critical": "Critical"
+    }
+  },
+  "detail": {
+    "title": {
+      "error": "Error Details",
+      "audit": "Audit Details",
+      "business": "Business Log Details",
+      "access": "Access Log Details"
+    },
+    "groups": {
+      "basic": "Basic Info",
+      "detail": "Details",
+      "request": "Request Context",
+      "user": "User Info",
+      "system": "System Environment",
+      "business": "Business Context"
+    },
+    "fields": {
+      "traceId": "Trace ID",
+      "createdAt": "Time",
+      "severity": "Severity",
+      "category": "Category",
+      "occurrences": "Occurrences",
+      "isResolved": "Status",
+      "errorType": "Error Type",
+      "errorCode": "Error Code",
+      "errorMessage": "Error Message",
+      "rootCause": "Root Cause",
+      "stackTrace": "Stack Trace",
+      "requestMethod": "Request Method",
+      "requestPath": "Request Path",
+      "requestQuery": "Query Params",
+      "requestBody": "Request Body",
+      "userId": "User ID",
+      "username": "Username",
+      "ipAddress": "IP Address",
+      "userAgent": "User Agent",
+      "module": "Module",
+      "operation": "Operation",
+      "entityType": "Entity Type",
+      "entityId": "Entity ID",
+      "result": "Result",
+      "riskLevel": "Risk Level",
+      "action": "Action",
+      "oldValue": "Old Value",
+      "newValue": "New Value",
+      "details": "Details",
+      "sessionId": "Session ID",
+      "status": "Status",
+      "summary": "Summary",
+      "statusCode": "Status Code",
+      "responseTime": "Response Time",
+      "method": "Method",
+      "path": "Path",
+      "queryParams": "Query Params",
+      "responseSize": "Response Size"
+    },
+    "close": "Press ESC to close"
+  }
+}

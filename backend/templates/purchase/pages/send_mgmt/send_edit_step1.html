@@ -1,0 +1,359 @@
+<!-- 流程1: 修改物流单详细信息 -->
+<div id="edit-step-1" class="wizard-step-content" style="display: none;">
+    <!-- 操作须知 -->
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-info-circle me-3 mt-1 text-info"></i>
+            <div>
+                <strong class="text-info" data-i18n="common.operation_notes">操作须知</strong>
+                <ul class="mb-0 mt-2 ps-3">
+                    <li data-i18n="desc.d152">左侧显示<strong
+                            data-i18n="ui.text_1080">原物流信息</strong>（发货日期、预计到达、托盘数、运费等），右侧可进行修改</li>
+                    <li data-i18n="desc.d153">如需修改物流参数，请填写新值并在下方填写<strong data-i18n="ui.text_655">必填的修改备注</strong></li>
+                    <li data-i18n="desc.d154">若无需修改物流参数，可点击<strong data-i18n="ui.text_1082">「跳过物流修改」</strong>直接进入货物明细编辑
+                    </li>
+                    <li data-i18n="ui.text_1083">物流信息修改后将生成新版本号（如V02），原版本记录保留用于审计追踪</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark border-secondary mb-4">
+        <div
+            class="card-header bg-info bg-opacity-10 border-secondary d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-shipping-fast me-2 text-info"></i>
+                <span class="text-white" data-i18n="ui.text_1084">修改物流单详细信息</span>
+                <span class="badge bg-info ms-2" id="edit-current-strategy-seq">-</span>
+            </div>
+            <small class="text-white-50" data-i18n="ui.text_1085">左侧为原信息，右侧可修改</small>
+        </div>
+        <div class="card-body">
+            <!-- 物流信息显示网格 (50/50 布局) -->
+            <div class="row g-3" id="edit-strategy-display-grid">
+                <!-- JS动态生成 -->
+            </div>
+
+            <!-- 备注区域 (必填) -->
+            <div class="mt-4 p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2"><span data-i18n="common.modify_note">修改备注</span> <span class="text-danger"
+                        data-i18n="ui.text_660">*必填</span></div>
+                <div class="row g-0">
+                    <div class="col-6 pe-3 border-end border-secondary">
+                        <span class="text-white" id="edit-orig-note">-</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-3">
+                        <textarea class="form-control form-control-sm bg-dark border-warning text-white"
+                            id="edit-new-note" rows="2" data-i18n-placeholder="form.placeholder.generic_8"
+                            placeholder="请输入修改原因和备注..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3">
+        <button class="btn btn-warning btn-lg px-4 rounded-pill" id="btn-edit-step1-next" onclick="editWizardNext(1)">
+            <i class="fas fa-arrow-right me-2"></i><span data-i18n="common.next">下一步</span>
+        </button>
+        <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" id="btn-skip-strategy"
+            onclick="editWizardSkipStrategy()">
+            <i class="fas fa-forward me-2"></i><span data-i18n="ui.icon_3344">跳过物流修改</span>
+        </button>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // Step1: 渲染物流信息 (50/50布局，左侧原值，右侧可编辑)
+    // ========================================
+    function renderLogisticsWithEdit(logistics) {
+        if (!logistics) logistics = {};
+
+        const grid = document.getElementById('edit-strategy-display-grid');
+
+        grid.innerHTML = `
+            <!-- 预计到货日期 -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2" data-i18n="abnormal.expected_arrival">预计到货日期</div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-info fw-bold">${logistics.date_eta || '-'}</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <input type="date" class="form-control form-control-sm bg-dark border-warning text-white" 
+                               id="edit_date_eta" value="${logistics.date_eta || ''}">
+                    </div>
+                </div>
+            </div></div>
+            
+            <!-- 托盘数 -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2" data-i18n="js.pallets">托盘数</div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-white fw-bold">${logistics.pallets || 0}</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <input type="number" class="form-control form-control-sm bg-dark border-warning text-white" 
+                               id="edit_pallets" min="0" step="1" value="${logistics.pallets || 0}">
+                    </div>
+                </div>
+            </div></div>
+            
+            <!-- 物流单价(RMB/KG) -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2" data-i18n="ui.text_2377">物流单价(RMB/KG)</div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-white fw-bold">¥${formatNumberStep1(logistics.price_kg, 4)}</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <input type="number" class="form-control form-control-sm bg-dark border-warning text-white" 
+                               id="edit_price_kg" min="0" step="0.0001" value="${logistics.price_kg || ''}" 
+                               onchange="updateTotalPrice()">
+                    </div>
+                </div>
+            </div></div>
+            
+            <!-- 发货总重量(KG) -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2" data-i18n="ui.text_2376">发货总重量(KG)</div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-white fw-bold">${formatNumberStep1(logistics.total_weight, 2)} KG</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <input type="number" class="form-control form-control-sm bg-dark border-warning text-white" 
+                               id="edit_total_weight" min="0" step="0.01" value="${logistics.total_weight || ''}"
+                               onchange="updateTotalPrice()">
+                    </div>
+                </div>
+            </div></div>
+            
+            <!-- 物流总价(RMB) - 自动计算 -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-info border-opacity-50">
+                <div class="text-white-50 small mb-2">物流总价(RMB) <span class="badge bg-info bg-opacity-50 text-white" data-i18n="ui.text_1087">自动计算</span></div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-warning fw-bold">¥${formatNumberStep1(logistics.total_price, 2)}</span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <input type="text" class="form-control form-control-sm bg-dark border-info text-warning" 
+                               id="edit_total_price" value="${formatNumberStep1(logistics.total_price, 2)}" readonly>
+                    </div>
+                </div>
+            </div></div>
+            
+            <!-- 结算汇率 -->
+            <div class="col-6"><div class="p-3 rounded bg-black bg-opacity-25 border border-warning border-opacity-50">
+                <div class="text-white-50 small mb-2" data-i18n="ui.text_2417">结算汇率(RMB/USD)</div>
+                <div class="row g-0">
+                    <div class="col-6 pe-2 border-end border-secondary">
+                        <span class="text-white fw-bold">${formatNumberStep1(logistics.usd_rmb, 4)} <small class="text-white-50">RMB/USD</small></span>
+                        <span class="badge ${logistics.mode === 'A' ? 'bg-success' : 'bg-warning text-dark'} ms-1" style="font-size: 0.6rem;" data-i18n="ui.text_1088">
+                            ${logistics.mode === 'A' ? (window.i18n?.t('js.auto_fetch') || 'Auto Fetch') : '手动填写'}
+                        </span>
+                        <div class="text-white-50" style="font-size: 0.6rem;" data-i18n="ui.text_2407">原信息</div>
+                    </div>
+                    <div class="col-6 ps-2">
+                        <div class="input-group input-group-sm">
+                            <input type="number" class="form-control bg-dark border-warning text-white" 
+                                   id="edit_usd_rmb" min="0" step="0.0001" value="${logistics.usd_rmb || ''}"
+                                   onchange="markRateAsManual()">
+                            <button type="button" class="btn btn-outline-info btn-sm" id="btn-edit-fetch-rate" 
+                                    onclick="fetchExchangeRateForEdit()" data-i18n-title="tooltip.t2774" title="Auto Get Rate">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <small id="edit-rate-status" class="d-block mt-1" style="font-size: 0.55rem;">
+                            <span id="edit-rate-source-badge" class="badge bg-secondary" style="font-size: 0.55rem;" data-i18n="ui.text_1089">待确认</span>
+                        </small>
+                    </div>
+                </div>
+            </div></div>
+        `;
+
+        // 显示原备注
+        document.getElementById('edit-orig-note').textContent = logistics.note || '-';
+    }
+
+    // 自动计算物流总价
+    function updateTotalPrice() {
+        const priceKg = parseFloat(document.getElementById('edit_price_kg')?.value) || 0;
+        const totalWeight = parseFloat(document.getElementById('edit_total_weight')?.value) || 0;
+        const totalPrice = (priceKg * totalWeight).toFixed(2);
+        document.getElementById('edit_total_price').value = totalPrice;
+    }
+
+    // 收集流程1的数据
+    function collectLogisticsData() {
+        return {
+            date_eta: document.getElementById('edit_date_eta')?.value || '',
+            pallets: parseInt(document.getElementById('edit_pallets')?.value) || 0,
+            price_kg: parseFloat(document.getElementById('edit_price_kg')?.value) || 0,
+            total_weight: parseFloat(document.getElementById('edit_total_weight')?.value) || 0,
+            total_price: parseFloat(document.getElementById('edit_total_price')?.value) || 0,
+            usd_rmb: parseFloat(document.getElementById('edit_usd_rmb')?.value) || 0,
+            note: document.getElementById('edit-new-note')?.value?.trim() || '',
+            usd_rmb_manual: window.editRateIsManual || false  // 标记是否为手动输入
+        };
+    }
+
+    // 格式化数字（Step1专用，避免命名冲突）
+    function formatNumberStep1(num, maxDecimals = 4) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        return parseFloat(num.toFixed(maxDecimals)).toString();
+    }
+
+    // ========================================
+    // 汇率获取相关函数
+    // ========================================
+
+    // 全局状态：标记当前汇率是手动输入还是自动获取
+    window.editRateIsManual = false;
+
+    // 标记汇率为手动输入（当用户修改输入框时触发）
+    function markRateAsManual() {
+        window.editRateIsManual = true;
+        updateRateSourceBadge('manual');
+    }
+
+    // 更新汇率来源标签
+    function updateRateSourceBadge(source) {
+        const badge = document.getElementById('edit-rate-source-badge');
+        if (!badge) return;
+
+        if (source === 'auto') {
+            badge.className = 'badge bg-success ms-1';
+            badge.style.fontSize = '0.6rem';
+            badge.textContent = (window.i18n?.t('js.auto_fetch') || 'Auto Fetch');
+        } else if (source === 'manual') {
+            badge.className = 'badge bg-warning text-dark ms-1';
+            badge.style.fontSize = '0.6rem';
+            badge.textContent = (window.i18n?.t('js.manual_input') || 'Manual Input');
+        } else {
+            badge.className = 'badge bg-secondary ms-1';
+            badge.style.fontSize = '0.6rem';
+            badge.textContent = '-';
+        }
+    }
+
+    // 自动获取汇率
+    function fetchExchangeRateForEdit() {
+        const btn = document.getElementById('btn-edit-fetch-rate');
+        const input = document.getElementById('edit_usd_rmb');
+        const statusEl = document.getElementById('edit-rate-status');
+
+        // 获取发货日期（date_sent 在 editOriginalData 顶层）
+        const dateSent = editOriginalData?.date_sent;
+        if (!dateSent) {
+            GlobalModal.showError({
+                title: (window.i18n?.t('js.cannot_get_rate') || 'Cannot Get Rate'),
+                message: (window.i18n?.t('js.no_shipment_date') || 'No shipment date, enter rate manually.')
+            });
+            markRateAsManual();
+            return;
+        }
+
+        // 显示加载状态
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>获取中...';
+
+        // 设置5秒超时
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        fetch(`{% url 'web_ui:purchase:po_exchange_rate' %}?date=${dateSent}`, {
+            signal: controller.signal
+        })
+            .then(r => r.json())
+            .then(result => {
+                clearTimeout(timeoutId);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+
+                if (result.success && result.rate > 0) {
+                    // 获取成功
+                    input.value = result.rate.toFixed(4);
+                    window.editRateIsManual = false;
+                    updateRateSourceBadge('auto');
+                    if (statusEl) {
+                        statusEl.innerHTML = `<i class="fas fa-check text-success me-1"></i>已获取 ${dateSent} 买入价`;
+                        statusEl.className = 'text-success d-block mt-1';
+                        statusEl.style.fontSize = '0.55rem';
+                    }
+                } else {
+                    // 获取失败，弹出手动输入对话框
+                    showManualRateInput(result.message || (window.i18n?.t('js.cannot_get_date_rate') || 'Cannot get rate for date'));
+                }
+            })
+            .catch(err => {
+                clearTimeout(timeoutId);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+
+                if (err.name === 'AbortError') {
+                    showManualRateInput((window.i18n?.t('js.timeout_5s') || 'Timeout (5s)'));
+                } else {
+                    showManualRateInput((window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err.message);
+                }
+            });
+    }
+
+    // 弹出手动输入汇率对话框
+    function showManualRateInput(errorMessage) {
+        const statusEl = document.getElementById('edit-rate-status');
+        if (statusEl) {
+            statusEl.innerHTML = `<i class="fas fa-exclamation-triangle text-warning me-1"></i>${errorMessage}`;
+            statusEl.className = 'text-warning d-block mt-1';
+            statusEl.style.fontSize = '0.55rem';
+        }
+
+        // 使用GlobalModal自定义弹窗，只显示返回按钮
+        GlobalModal.showCustom({
+            html: `
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>自动获取失败
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p class="text-white-50">${errorMessage}</p>
+                    <p class="text-white mb-0" data-i18n="ui.text_1090">请在输入框中手动填写汇率。</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary px-4" id="gm-btn-back">
+                        <i class="fas fa-arrow-left me-2"></i>返回
+                    </button>
+                </div>
+            `,
+            borderColor: '#ffc107',
+            glowEffect: 'none',
+            backMode: 'none',
+            clearMode: 'none'
+        });
+
+        // 绑定返回按钮事件
+        setTimeout(() => {
+            document.getElementById('gm-btn-back')?.addEventListener('click', () => {
+                GlobalModal.hide();
+                // 聚焦到输入框
+                const input = document.getElementById('edit_usd_rmb');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        }, 100);
+
+        markRateAsManual();
+    }
+</script>

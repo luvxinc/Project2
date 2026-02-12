@@ -1,0 +1,88 @@
+<!-- Step 1: 订单准备说明 -->
+<div id="po-step-intro" class="wizard-step-content">
+    <div class="card bg-dark border-info border-opacity-25 mb-4">
+        <div class="card-header bg-info bg-opacity-10 border-0">
+            <i class="fas fa-info-circle me-2 text-info"></i>
+            <span class="text-info fw-bold" data-i18n="common.operation_notes">操作须知</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <h6 class="text-white mb-3"><i class="fas fa-clipboard-list me-2"></i><span data-i18n="shipping.workflow_title">操作流程</span></h6>
+                    <ol class="text-white-50 small mb-0">
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_905">下载模板</strong>：<span data-i18n="instructions.desc_49">点击下方按钮下载采购订单Excel模板</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="wizard.fill_info">填写信息</strong>：<span data-i18n="instructions.desc_89">在模板中填写订单商品明细（SKU、数量、单价）以及订单合同策略</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_907">选择参数</strong>：<span data-i18n="instructions.desc_15">在下一步选择供应商和订单日期，系统自动匹配合同策略</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="file.upload_title">上传文件</strong>：<span data-i18n="instructions.desc_25">上传填好的Excel文件完成商品录入</span>
+                        </li>
+                        <li>
+                            <strong class="text-info" data-i18n="ui.text_909">生成订单</strong>：<span data-i18n="instructions.desc_52">系统校验后生成正式采购订单（PO）供下载</span>
+                        </li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i><span data-i18n="ui.icon_3050">注意事项</span>
+                    </h6>
+                    <ul class="text-white-50 small mb-0">
+                        <li class="mb-2">
+                            上传的Excel仅用于商品明细录入，<strong class="text-warning" data-i18n="ui.text_910">非最终采购订单</strong>
+                        </li>
+                        <li class="mb-2" data-i18n="ui.text_911">
+                            最终正式PO将由系统生成并提供下载
+                        </li>
+                        <li class="mb-2">
+                            如需<strong data-i18n="purchase.supplier_create">新增供应商</strong>，请先前往
+                            <a href="{% url 'web_ui:purchase:supplier_add_page' %}" class="text-info" data-i18n="purchase.supplier_create">新增供应商</a> 页面完成创建
+                        </li>
+                        <li class="mb-2">
+                            如需<strong data-i18n="ui.icon_3215">新增SKU</strong>，请先前往
+                            <a href="/dashboard/products/add/" class="text-info">Add Product</a> 页面完成创建
+                        </li>
+                        <li>
+                            您也可以在后续步骤<strong data-i18n="ui.text_915">手动逐行填写</strong>商品信息，但推荐使用模板批量导入以提高效率
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 下载模板区域 -->
+    <div class="card bg-dark border-primary border-opacity-25 mb-4">
+        <div class="card-header bg-primary bg-opacity-10 border-0">
+            <i class="fas fa-download me-2 text-primary"></i>
+            <span class="text-primary fw-bold" data-i18n="ui.text_916">下载订单模板</span>
+        </div>
+        <div class="card-body text-center py-4">
+            <p class="text-white-50 mb-3" data-i18n="ui.text_917">请先下载采购订单模板Excel文件，按格式填写商品明细后上传</p>
+            <a href="{% url 'web_ui:purchase:po_template_download' %}" 
+               class="btn btn-primary btn-lg rounded-pill px-5 shadow" 
+               data-bs-toggle="tooltip" 
+               data-i18n-title="tooltip.t247" title="点击下载采购订单Excel模板">
+                <i class="fas fa-file-excel me-2"></i><span data-i18n="ui.icon_3288">下载采购订单模板</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left"></div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-primary btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-next-1" 
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t5919" title="开始创建采购订单">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="ui.icon_3289">开始创建</span>
+            </button>
+        </div>
+    </div>
+</div>

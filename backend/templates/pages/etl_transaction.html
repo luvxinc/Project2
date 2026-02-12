@@ -1,0 +1,115 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Data Integration (ETL) - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+    <div class="mb-4">
+        <h4 class="text-white fw-bold mb-1">
+            <i class="fa-solid fa-plug me-2 text-info"></i><span data-i18n="etl.title">Data Integration (Transaction ETL)</span>
+        </h4>
+        <div class="text-muted small">
+            Supported Files: <span class="text-white-50">Transaction Report, Order Earnings Report (CSV)</span>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="glass-card p-5 mb-4 text-center">
+
+                <form id="uploadForm"
+                      hx-post="{% url 'web_ui:etl_upload' %}"
+                      hx-encoding="multipart/form-data"
+                      hx-target="#etl-process-area"
+                      hx-indicator="#upload-spinner">
+
+                    {% csrf_token %}
+
+                    <div class="upload-zone p-5 border border-2 border-secondary border-opacity-25 rounded-3 position-relative" id="drop-zone">
+                        <input type="file" name="files" multiple accept=".csv"
+                               class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                               style="cursor: pointer;"
+                               onchange="updateFileName(this)">
+
+                        <div class="pointer-events-none">
+                            <i class="fa-solid fa-cloud-arrow-up fa-3x text-primary mb-3 opacity-75"></i>
+                            <h5 class="text-white" data-i18n="etl.drop_zone_title">Click or drag CSV files here</h5>
+                            <p class="text-muted small mb-0" id="file-label" data-i18n="etl.batch_upload_supported">Batch upload supported</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-info px-5 fw-bold text-dark shadow-lg hover-scale">
+                            <i class="fa-solid fa-upload me-2"></i><span data-i18n="etl.start_upload">Start Upload</span>
+                        </button>
+                    </div>
+
+                    <div id="upload-spinner" class="htmx-indicator mt-3 text-info">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        <span class="ms-2" data-i18n="etl.uploading_analyzing">Uploading and analyzing file structure...</span>
+                    </div>
+
+                </form>
+            </div>
+
+            <div id="etl-process-area"></div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // [交互] 拖拽高亮效果
+    const dropZone = document.getElementById('drop-zone');
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+        }, false);
+    });
+
+    // [交互] 显示选中文件数
+    function updateFileName(input) {
+        const label = document.getElementById('file-label');
+        if (input.files && input.files.length > 0) {
+            label.innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-check me-1"></i>${(window.i18n?.t('etl.files_selected') || 'Selected')} ${input.files.length} ${(window.i18n?.t('etl.files') || 'files')}</span>`;
+        } else {
+            label.innerText = window.i18n?.t('etl.batch_upload_supported') || 'Batch upload supported';
+        }
+    }
+</script>
+
+<style>
+    .upload-zone {
+        transition: all 0.3s ease;
+        border-style: dashed !important;
+    }
+    .hover-scale:hover { transform: scale(1.05); }
+
+    /* HTMX Indicator 默认隐藏 */
+    .htmx-indicator {
+        display: none;
+        opacity: 0;
+        transition: opacity 200ms ease-in;
+    }
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+        opacity: 1;
+    }
+    .htmx-request.htmx-indicator {
+        display: inline-block;
+        opacity: 1;
+    }
+</style>
+{% endblock %}

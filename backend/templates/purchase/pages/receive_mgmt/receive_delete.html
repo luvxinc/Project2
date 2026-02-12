@@ -1,0 +1,392 @@
+{% load i18n %}
+<!-- 入库单删除页面 -->
+<div class="glass-card p-4 shadow-lg">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex align-items-center">
+            <div class="bg-danger bg-opacity-25 p-3 rounded-circle me-3">
+                <i class="fas fa-trash-alt fa-2x text-danger"></i>
+            </div>
+            <div>
+                <h5 class="text-white mb-1" data-i18n="ui.icon_3249">删除入库单</h5>
+                <p class="text-white-50 small mb-0" id="receive-delete-logistic-num-label" data-i18n="ui.text_418">物流单号: -</p>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="showListView()">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <!-- 加载中 -->
+    <div id="receive-delete-loading" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_493">正在加载入库单数据...</p>
+    </div>
+
+    <!-- 删除确认内容 -->
+    <div id="receive-delete-content" style="display: none;">
+        <!-- Step 1: 预览确认 -->
+        <div id="receive-delete-step-1">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-trash-alt fa-2x text-danger"></i>
+                </div>
+                <h4 class="text-white" data-i18n="ui.text_833">确认删除入库单</h4>
+                <p class="text-white-50" data-i18n="ui.text_834">请仔细核对以下入库单信息，删除后可通过"恢复"功能找回</p>
+            </div>
+
+            <!-- 警告提示 -->
+            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+                    <div>
+                        <h6 class="mb-1 text-danger" data-i18n="ui.text_630">危险操作警告</h6>
+                        <p class="mb-0 small" data-i18n="ui.text_836">此操作将标记整个入库单为已删除状态。入库单删除后将不会出现在正常列表中，但可以通过"恢复"功能找回。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 入库单基本信息卡片 -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header bg-primary bg-opacity-10 border-secondary">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    <span class="text-white" data-i18n="ui.text_837">入库单基本信息</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="text-white-50 small mb-1" data-i18n="table.logistics_no">物流单号</div>
+                            <div class="text-white fw-bold font-monospace" id="receive-delete-preview-logistic-num">-</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-white-50 small mb-1" data-i18n="table.receive_date">入库日期</div>
+                            <div class="text-info" id="receive-delete-preview-receive-date">-</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-white-50 small mb-1" data-i18n="ui.text_465">入库状态</div>
+                            <div id="receive-delete-preview-status">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 入库货物信息卡片 -->
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-success bg-opacity-10 border-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-box me-2 text-success"></i>
+                        <span class="text-white" data-i18n="ui.text_838">入库货物信息</span>
+                    </div>
+                    <span class="badge bg-success" id="receive-delete-preview-items-count" data-i18n="ui.text_839">0 件货物</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead class="sticky-top bg-dark">
+                                <tr class="text-white-50">
+                                    <th>#</th>
+                                    <th data-i18n="purchase.order_num">订单号</th>
+                                    <th>SKU</th>
+                                    <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                                    <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                                    <th class="text-center" data-i18n="table.variance">差异</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receive-delete-preview-items-tbody">
+                                <!-- JS动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 删除备注（必填） -->
+            <div class="card bg-dark border-warning mb-4">
+                <div class="card-header bg-warning bg-opacity-10 border-warning">
+                    <i class="fas fa-comment-alt me-2 text-warning"></i>
+                    <span class="text-white" data-i18n="ui.text_840">删除备注</span>
+                    <span class="badge bg-danger ms-2" data-i18n="common.required">必填</span>
+                </div>
+                <div class="card-body">
+                    <textarea 
+                        id="receive-delete-note-input" 
+                        class="form-control bg-dark text-white border-secondary" 
+                        rows="3" 
+                        data-i18n-placeholder="form.placeholder.generic_12" placeholder="请填写删除原因..."
+                        oninput="validateReceiveDeleteNote()"
+                    ></textarea>
+                    <div class="form-text text-white-50 mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        请填写删除原因，此信息将记录在操作日志中
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="d-flex justify-content-end gap-3">
+                <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                    <i class="fas fa-times me-2"></i><span data-i18n="common.cancel">取消</span>
+                </button>
+                <button class="btn btn-danger btn-lg px-4 rounded-pill" id="btn-receive-delete-confirm" onclick="confirmReceiveDelete()" disabled>
+                    <i class="fas fa-trash-alt me-2"></i><span data-i18n="modal.confirm_delete.title">确认删除</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: 完成 -->
+        <div id="receive-delete-step-2" style="display: none;">
+            <div class="text-center py-5">
+                <div id="receive-delete-result-icon">
+                    <!-- JS动态填充 -->
+                </div>
+                <h4 class="text-white mb-3" id="receive-delete-result-title" data-i18n="ui.text_229">处理中...</h4>
+                <p class="text-white-50 mb-4" id="receive-delete-result-message" data-i18n="ui.text_843">
+                    正在删除入库单...
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-primary btn-lg px-4 rounded-pill" onclick="showListView()">
+                        <i class="fas fa-list me-2"></i><span data-i18n="ui.icon_3253">返回入库单列表</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 当前删除的物流单号
+    let receiveDeleteLogisticNum = null;
+    let receiveDeleteData = null;
+    
+    // 加载入库单数据用于删除
+    function loadReceiveForDelete(logisticNum) {
+        receiveDeleteLogisticNum = logisticNum;
+        document.getElementById('receive-delete-logistic-num-label').textContent = `物流单号: ${logisticNum}`;
+        
+        const loading = document.getElementById('receive-delete-loading');
+        const content = document.getElementById('receive-delete-content');
+        
+        loading.style.display = 'block';
+        content.style.display = 'none';
+        
+        // 获取入库单详情
+        fetch(`{% url 'web_ui:purchase:receive_mgmt_detail' %}?logistic_num=${encodeURIComponent(logisticNum)}`)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (!data.success) {
+                    alert(data.message || '{% trans "加载入库单失败" %}');
+                    showListView();
+                    return;
+                }
+                
+                receiveDeleteData = data.data;
+                content.style.display = 'block';
+                
+                // 重置到Step 1
+                document.getElementById('receive-delete-step-1').style.display = 'block';
+                document.getElementById('receive-delete-step-2').style.display = 'none';
+                
+                // 填充预览数据
+                populateReceiveDeletePreview(data.data);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                alert('{% trans "加载入库单失败" %}: ' + err);
+                showListView();
+            });
+    }
+    
+    // 填充删除预览数据
+    function populateReceiveDeletePreview(data) {
+        // 基础信息 - 从 data.logistics 读取
+        const logistics = data.logistics || {};
+        const detail = data.detail || {};
+        
+        document.getElementById('receive-delete-preview-logistic-num').textContent = logistics.logistic_num || '-';
+        document.getElementById('receive-delete-preview-receive-date').textContent = logistics.receive_date || '-';
+        
+        // 状态
+        const statusEl = document.getElementById('receive-delete-preview-status');
+        if (logistics.receive_status) {
+            let statusClass = 'text-success';
+            if (logistics.receive_status.includes((window.i18n?.t('js.difference') || 'Difference'))) {
+                statusClass = logistics.receive_status.includes((window.i18n?.t('js.unresolved') || 'Unresolved')) ? 'text-danger' : 'text-warning';
+            }
+            statusEl.innerHTML = `<span class="${statusClass}">${logistics.receive_status}</span>`;
+        } else {
+            statusEl.textContent = '-';
+        }
+        
+        // 货物明细 - 从 data.detail.items 读取
+        const items = detail.items || [];
+        document.getElementById('receive-delete-preview-items-count').textContent = `${items.length} 件货物`;
+        
+        const tbody = document.getElementById('receive-delete-preview-items-tbody');
+        tbody.innerHTML = '';
+        
+        items.forEach((item, idx) => {
+            const diff = item.sent_quantity - item.receive_quantity;
+            let diffClass = '';
+            let diffText = '0';
+            if (diff > 0) {
+                diffClass = 'text-danger';
+                diffText = `-${diff}`;
+            } else if (diff < 0) {
+                diffClass = 'text-success';
+                diffText = `+${Math.abs(diff)}`;
+            }
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-white-50">${idx + 1}</td>
+                <td class="font-monospace small text-info">${item.po_num}</td>
+                <td class="font-monospace">${item.po_sku}</td>
+                <td class="text-center">${item.sent_quantity}</td>
+                <td class="text-center">${item.receive_quantity}</td>
+                <td class="text-center ${diffClass} fw-bold">${diffText}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        // 重置删除备注和按钮
+        document.getElementById('receive-delete-note-input').value = '';
+        document.getElementById('btn-receive-delete-confirm').disabled = true;
+    }
+    
+    // 验证删除备注是否填写
+    function validateReceiveDeleteNote() {
+        const noteInput = document.getElementById('receive-delete-note-input');
+        const confirmBtn = document.getElementById('btn-receive-delete-confirm');
+        const note = noteInput.value.trim();
+        
+        if (note.length > 0) {
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('btn-secondary');
+            confirmBtn.classList.add('btn-danger');
+        } else {
+            confirmBtn.disabled = true;
+            confirmBtn.classList.remove('btn-danger');
+            confirmBtn.classList.add('btn-secondary');
+        }
+    }
+    
+    // 确认删除入库单
+    function confirmReceiveDelete() {
+        // 再次检查备注
+        const note = document.getElementById('receive-delete-note-input').value.trim();
+        if (!note) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "请填写删除备注" %}', 'warning');
+            }
+            return;
+        }
+        
+        // 使用密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_receive_delete',         // actionKey
+                (passwords) => submitReceiveDeleteAsync(passwords),     // onSuccess，接收密码对象
+                null,                         // contextEl (无需回填)
+                (window.i18n?.t('js.delete_receive') || 'Delete Receiving'),                 // actionDisplayName
+                (reason) => {}                // onCancel
+            );
+        } else {
+            // 无密码验证，直接确认
+            if (confirm('{% trans "确定要删除此入库单吗？" %}')) {
+                submitReceiveDeleteAsync({});
+            }
+        }
+    }
+    
+    // 异步提交删除
+    function submitReceiveDeleteAsync(passwords) {
+        return new Promise((resolve, reject) => {
+            submitReceiveDelete(passwords, resolve, reject);
+        });
+    }
+    
+    // 提交删除
+    function submitReceiveDelete(passwords, onSuccess, onError) {
+        // 获取删除备注
+        const deleteNote = document.getElementById('receive-delete-note-input').value.trim();
+        
+        // 跳转到完成步骤
+        document.getElementById('receive-delete-step-1').style.display = 'none';
+        document.getElementById('receive-delete-step-2').style.display = 'block';
+        
+        // 显示处理中状态
+        document.getElementById('receive-delete-result-icon').innerHTML = `
+            <div class="spinner-border text-danger mb-3" style="width: 80px; height: 80px;" role="status"></div>
+        `;
+        document.getElementById('receive-delete-result-title').textContent = '{% trans "正在删除..." %}';
+        document.getElementById('receive-delete-result-message').textContent = '{% trans "请稍候，正在处理删除请求..." %}';
+        
+        // 构建请求体，包含密码
+        const requestBody = {
+            logistic_num: receiveDeleteLogisticNum,
+            note: deleteNote
+        };
+        
+        // 添加密码到请求（passwords格式为 { l3: "密码" }）
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+        
+        fetch(`{% url 'web_ui:purchase:receive_mgmt_submit_delete' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // 成功
+                document.getElementById('receive-delete-result-icon').innerHTML = `
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-check fa-2x text-success"></i>
+                    </div>
+                `;
+                document.getElementById('receive-delete-result-title').textContent = '{% trans "删除成功" %}';
+                document.getElementById('receive-delete-result-title').className = 'text-success mb-3';
+                document.getElementById('receive-delete-result-message').textContent = 
+                    '{% trans "入库单" %} ' + receiveDeleteLogisticNum + ' {% trans "已成功删除。" %}';
+                
+                if (onSuccess) onSuccess();
+            } else {
+                // 失败
+                document.getElementById('receive-delete-result-icon').innerHTML = `
+                    <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-times fa-2x text-danger"></i>
+                    </div>
+                `;
+                document.getElementById('receive-delete-result-title').textContent = '{% trans "删除失败" %}';
+                document.getElementById('receive-delete-result-title').className = 'text-danger mb-3';
+                document.getElementById('receive-delete-result-message').textContent = 
+                    data.message || '{% trans "删除入库单时发生错误" %}';
+                
+                if (onError) onError();
+            }
+        })
+        .catch(err => {
+            // 错误
+            document.getElementById('receive-delete-result-icon').innerHTML = `
+                <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+            `;
+            document.getElementById('receive-delete-result-title').textContent = '{% trans "请求失败" %}';
+            document.getElementById('receive-delete-result-title').className = 'text-danger mb-3';
+            document.getElementById('receive-delete-result-message').textContent = 
+                '{% trans "网络错误" %}: ' + err;
+            
+            if (onError) onError();
+        });
+    }
+</script>

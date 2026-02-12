@@ -1,0 +1,404 @@
+<!-- 订单历史修订记录页面 -->
+<div class="glass-card p-4 shadow-lg">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex align-items-center">
+            <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                <i class="fas fa-history fa-2x text-info"></i>
+            </div>
+            <div>
+                <h5 class="text-white mb-1" data-i18n="ui.text_417">历史修订记录</h5>
+                <p class="text-white-50 small mb-0" id="history-po-num-label" data-i18n="ui.text_627">订单号: -</p>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="showListView()">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <!-- 加载中 -->
+    <div id="history-loading" class="text-center py-5">
+        <div class="spinner-border text-info" role="status"></div>
+        <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_707">正在加载历史记录...</p>
+    </div>
+
+    <!-- 双栏布局 -->
+    <div id="history-content" class="row g-4" style="display: none;">
+        <!-- 左栏：策略修订记录 -->
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-primary bg-opacity-10 border-secondary">
+                    <i class="fas fa-chess-knight me-2 text-primary"></i>
+                    <span class="text-white fw-bold" data-i18n="ui.text_708">策略修订记录</span>
+                    <span class="badge bg-primary ms-2" id="strategy-version-count">0</span>
+                </div>
+                <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                    <div id="strategy-versions-container" class="p-3">
+                        <!-- JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右栏：明细修订记录 -->
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-success bg-opacity-10 border-secondary">
+                    <i class="fas fa-list me-2 text-success"></i>
+                    <span class="text-white fw-bold" data-i18n="ui.text_709">明细修订记录</span>
+                    <span class="badge bg-success ms-2" id="detail-version-count">0</span>
+                </div>
+                <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                    <div id="detail-versions-container" class="p-3">
+                        <!-- JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .version-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(108, 117, 125, 0.3);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    
+    .version-header {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.2);
+    }
+    
+    .version-header.initial {
+        background: linear-gradient(90deg, rgba(13, 110, 253, 0.2), transparent);
+        border-left: 3px solid #0d6efd;
+    }
+    
+    .version-header.delete-order {
+        background: linear-gradient(90deg, rgba(220, 53, 69, 0.2), transparent);
+        border-left: 3px solid #dc3545;
+    }
+    
+    .version-header.restore-order {
+        background: linear-gradient(90deg, rgba(25, 135, 84, 0.2), transparent);
+        border-left: 3px solid #198754;
+    }
+    
+    .version-seq {
+        font-family: 'SF Mono', monospace;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .version-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .version-meta i {
+        margin-right: 0.3rem;
+    }
+    
+    .version-body {
+        padding: 1rem;
+    }
+    
+    .change-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+    
+    .change-item.add {
+        border-left: 3px solid #198754;
+    }
+    
+    .change-item.adjust {
+        border-left: 3px solid #ffc107;
+    }
+    
+    .change-item.delete {
+        border-left: 3px solid #dc3545;
+    }
+    
+    .change-arrow {
+        color: #6c757d;
+        margin: 0 0.5rem;
+    }
+    
+    .change-old {
+        color: #dc3545;
+        text-decoration: line-through;
+    }
+    
+    .change-new {
+        color: #198754;
+    }
+    
+    .initial-card-table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    .initial-card-table td {
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.1);
+    }
+    
+    .initial-card-table td:first-child {
+        color: rgba(255, 255, 255, 0.5);
+        width: 35%;
+    }
+    
+    .initial-card-table td:last-child {
+        color: #fff;
+    }
+    
+    .items-mini-table {
+        width: 100%;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+    
+    .items-mini-table th {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: normal;
+        padding: 0.3rem 0.5rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.2);
+    }
+    
+    .items-mini-table td {
+        color: #fff;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: rgba(255, 255, 255, 0.4);
+    }
+</style>
+
+<script>
+    let historyCurrentPoNum = null;
+    
+    function loadOrderHistory(poNum) {
+        historyCurrentPoNum = poNum;
+        document.getElementById('history-po-num-label').textContent = `订单号: ${poNum}`;
+        
+        const loading = document.getElementById('history-loading');
+        const content = document.getElementById('history-content');
+        
+        loading.style.display = 'block';
+        content.style.display = 'none';
+        
+        fetch(`{% url 'web_ui:purchase:po_mgmt_history' %}?po_num=${encodeURIComponent(poNum)}`)
+            .then(r => r.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (!data.success) {
+                    document.getElementById('strategy-versions-container').innerHTML = 
+                        `<div class="empty-state"><i class="fas fa-exclamation-circle fa-2x mb-2"></i><p data-i18n="ui.text_710">${data.message || (window.i18n?.t('js.load_failed') || 'Load Failed')}</p></div>`;
+                    document.getElementById('detail-versions-container').innerHTML = '';
+                    content.style.display = 'flex';
+                    return;
+                }
+                
+                content.style.display = 'flex';
+                renderStrategyVersions(data.data.strategy_versions);
+                renderDetailVersions(data.data.detail_versions);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                content.style.display = 'flex';
+                document.getElementById('strategy-versions-container').innerHTML = 
+                    `<div class="empty-state"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p data-i18n="ui.text_490">网络错误: ${err}</p></div>`;
+            });
+    }
+    
+    // 渲染策略版本
+    function renderStrategyVersions(versions) {
+        const container = document.getElementById('strategy-versions-container');
+        document.getElementById('strategy-version-count').textContent = versions.length;
+        
+        if (!versions || versions.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox fa-2x mb-2"></i><p data-i18n="ui.text_712">暂无策略记录</p></div>';
+            return;
+        }
+        
+        let html = '';
+        versions.forEach(v => {
+            const headerClass = v.is_initial ? 'initial' : '';
+            
+            html += `
+                <div class="version-card">
+                    <div class="version-header ${headerClass}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="version-seq text-info">${v.seq}</span>
+                            ${v.is_initial ? '<span class="badge bg-primary" data-i18n="ui.text_713">初始版本</span>' : '<span class="badge bg-secondary" data-i18n="ui.text_714">修订</span>'}
+                        </div>
+                        <div class="version-meta">
+                            <span><i class="fas fa-calendar"></i>${v.date}</span>
+                            <span><i class="fas fa-user"></i>${v.by || '-'}</span>
+                        </div>
+                        ${v.note ? `<div class="text-white-50 small mt-2"><i class="fas fa-comment me-1"></i>${v.note}</div>` : ''}
+                    </div>
+                    <div class="version-body">
+            `;
+            
+            if (v.is_initial) {
+                // 初始版本显示名片
+                html += `
+                    <table class="initial-card-table">
+                        <tr><td data-i18n="common.currency">货币</td><td>${v.currency}</td></tr>
+                        <tr><td data-i18n="table.exchange_rate">汇率</td><td>${v.exchange_rate.toFixed(4)}</td></tr>
+                        <tr><td data-i18n="purchase.price_float">价格浮动</td><td>${v.float_enabled ? `<span class="text-success" data-i18n="ui.text_715">开启 (±${v.float_threshold}%)</span>` : '<span class="text-white-50" data-i18n="common.close">关闭</span>'}</td></tr>
+                        <tr><td data-i18n="purchase.deposit_req">定金要求</td><td>${v.deposit_enabled ? `<span class="text-success" data-i18n="ui.text_717">开启 (${v.deposit_par}%)</span>` : '<span class="text-white-50" data-i18n="common.close">关闭</span>'}</td></tr>
+                    </table>
+                `;
+            } else if (v.changes && v.changes.length > 0) {
+                // 修订版本显示变更
+                v.changes.forEach(c => {
+                    html += `
+                        <div class="change-item adjust">
+                            <span class="text-white-50">${c.field}:</span>
+                            <span class="change-old ms-2">${c.old}</span>
+                            <span class="change-arrow"><i class="fas fa-arrow-right"></i></span>
+                            <span class="change-new">${c.new}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div class="text-white-50 small" data-i18n="common.no_change">无变更</div>';
+            }
+            
+            html += '</div></div>';
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // 渲染明细版本
+    function renderDetailVersions(versions) {
+        const container = document.getElementById('detail-versions-container');
+        document.getElementById('detail-version-count').textContent = versions.length;
+        
+        if (!versions || versions.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox fa-2x mb-2"></i><p data-i18n="ui.text_719">暂无明细记录</p></div>';
+            return;
+        }
+        
+        let html = '';
+        versions.forEach(v => {
+            let headerClass = '';
+            let badgeHtml = '';
+            
+            if (v.is_initial) {
+                headerClass = 'initial';
+                badgeHtml = '<span class="badge bg-primary" data-i18n="ui.text_713">初始版本</span>';
+            } else if (v.is_delete_order) {
+                headerClass = 'delete-order';
+                badgeHtml = '<span class="badge bg-danger"><i class="fas fa-trash me-1"></i>删除订单</span>';
+            } else if (v.is_restore_order) {
+                headerClass = 'restore-order';
+                badgeHtml = '<span class="badge bg-success"><i class="fas fa-undo me-1"></i>恢复删除订单</span>';
+            } else {
+                badgeHtml = '<span class="badge bg-secondary" data-i18n="ui.text_714">修订</span>';
+            }
+            
+            html += `
+                <div class="version-card">
+                    <div class="version-header ${headerClass}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="version-seq text-success">${v.seq}</span>
+                            ${badgeHtml}
+                        </div>
+                        <div class="version-meta">
+                            <span><i class="fas fa-calendar"></i>${v.date}</span>
+                            <span><i class="fas fa-user"></i>${v.by || '-'}</span>
+                        </div>
+                        ${v.note ? `<div class="text-white-50 small mt-2"><i class="fas fa-comment me-1"></i>${v.note}</div>` : ''}
+                    </div>
+                    <div class="version-body">
+            `;
+            
+            if (v.is_initial && v.items && v.items.length > 0) {
+                // 初始版本显示商品表格
+                html += `
+                    <table class="items-mini-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th class="text-center" data-i18n="common.quantity">数量</th>
+                                <th class="text-end" data-i18n="common.unit_price">单价</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                v.items.filter(item => item.sku).forEach(item => {
+                    html += `
+                        <tr>
+                            <td class="font-monospace">${item.sku}</td>
+                            <td class="text-center">${item.qty}</td>
+                            <td class="text-end">${item.unit_price.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+            } else if (v.is_delete_order) {
+                html += '<div class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>整单删除，所有商品数据已清空</div>';
+            } else if (v.is_restore_order) {
+                html += '<div class="text-success small"><i class="fas fa-check-circle me-1"></i>订单已恢复，商品数据已重新写入</div>';
+            } else if (v.changes && v.changes.length > 0) {
+                // 修订版本显示变更
+                v.changes.forEach(c => {
+                    if (c.type === 'add') {
+                        html += `
+                            <div class="change-item add">
+                                <span class="badge bg-success me-2" data-i18n="ui.text_722">新增</span>
+                                <span class="font-monospace">${c.sku}</span>
+                                <span class="text-white-50 ms-2" data-i18n="ui.text_723">数量: ${c.qty}, 单价: ${c.unit_price.toFixed(2)}</span>
+                            </div>
+                        `;
+                    } else if (c.type === 'delete') {
+                        html += `
+                            <div class="change-item delete">
+                                <span class="badge bg-danger me-2" data-i18n="common.delete">删除</span>
+                                <span class="font-monospace text-decoration-line-through">${c.sku}</span>
+                            </div>
+                        `;
+                    } else if (c.type === 'adjust' && c.fields) {
+                        let fieldsHtml = c.fields.map(f => 
+                            `${f.field}: <span class="change-old">${f.old}</span> <i class="fas fa-arrow-right text-muted mx-1"></i> <span class="change-new">${f.new}</span>`
+                        ).join(', ');
+                        html += `
+                            <div class="change-item adjust">
+                                <span class="badge bg-warning text-dark me-2" data-i18n="ui.text_725">调整</span>
+                                <span class="font-monospace">${c.sku}</span>
+                                <span class="ms-2">${fieldsHtml}</span>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                html += '<div class="text-white-50 small" data-i18n="common.no_change">无变更</div>';
+            }
+            
+            html += '</div></div>';
+        });
+        
+        container.innerHTML = html;
+    }
+</script>

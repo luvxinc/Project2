@@ -1,0 +1,16 @@
+<!-- 会话列表 (Partial) -->
+{% for session in sessions %}
+<div class="session-item {% if session.id == active_session_id %}active{% endif %}"
+    onclick="switchSession('{{ session.id }}')">
+    <i class="fa-regular fa-message session-icon"></i>
+    <span class="session-title">{{ session.title }}</span>
+    <button type="button" class="btn-delete" onclick="deleteSession(event, '{{ session.id }}')" title="删除">
+        <i class="fa-solid fa-trash"></i>
+    </button>
+</div>
+{% empty %}
+<div class="text-center text-muted py-4">
+    <i class="fa-regular fa-comments fa-2x mb-2 opacity-50"></i>
+    <p class="small">暂无对话</p>
+</div>
+{% endfor %}

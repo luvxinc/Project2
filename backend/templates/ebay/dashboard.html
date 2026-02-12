@@ -1,0 +1,428 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}eBay Integration - Finance - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header with Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/" class="text-info text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">eBay Integration</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <!-- Global Utils -->
+            <button class="btn btn-outline-light btn-sm" onclick="location.reload()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Connection Status -->
+        <div class="col-md-6 col-lg-4">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-info bg-opacity-25 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="fas fa-plug text-info fs-5"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-white mb-0">System Status</h6>
+                        <small class="text-white-50">API Configuration</small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                        {% if config.is_configured %}
+                            <span class="badge bg-success bg-opacity-25 text-success">Configured</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-25 text-danger">Missing Config</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <span class="text-white-50 small d-block">Environment</span>
+                        <span class="badge {% if config.environment == 'sandbox' %}bg-warning{% else %}bg-success{% endif %} bg-opacity-25 text-white">
+                            {{ config.environment|upper }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions Card -->
+        <div class="col-md-6 col-lg-8">
+            <div class="glass-card p-3 h-100 d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h6 class="text-white mb-1"><i class="fab fa-ebay me-2"></i>Account Management</h6>
+                    <p class="text-white-50 small mb-0">Manage multiple eBay store connections and data synchronization.</p>
+                </div>
+                <div>
+                     <a href="{% url 'ebay:authorize' %}" class="btn btn-primary btn-sm rounded-pill px-3">
+                         <i class="fas fa-plus me-1"></i>Link New Account
+                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accounts Table Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h5 class="text-white mb-0">
+                        <i class="fas fa-users-cog me-2 text-info"></i>Authorized Accounts
+                    </h5>
+                    
+                    <!-- Manual Code Input Toggle -->
+                    <button class="btn btn-link btn-sm text-white-50 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#manualCodeInput">
+                        <i class="fas fa-keyboard me-1"></i>Manual Code
+                    </button>
+                </div>
+
+                <!-- Manual Code Section (Hidden) -->
+                <div class="collapse mb-3" id="manualCodeInput">
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-3 border border-secondary border-opacity-25">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-9">
+                                <input type="text" id="authCodeInput" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="Paste authentication code or full callback URL here...">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-sm btn-info w-100" onclick="submitManualCode()">
+                                    <i class="fas fa-check me-1"></i>Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accounts Table -->
+                <div class="table-container">
+                    <table class="custom-table w-100">
+                        <thead>
+                            <tr>
+                                <th>eBay User</th>
+                                <th>User ID</th>
+                                <th>Environment</th>
+                                <th>Status</th>
+                                <th>Token Expiry</th>
+                                <th>Last Sync</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in accounts %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            <span class="text-white-50">{{ account.ebay_username|slice:":1"|upper }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="text-white fw-bold" style="font-size: 14px;">{{ account.ebay_username }}</div>
+                                            <div class="text-white-50" style="font-size: 11px;">Added by {{ account.user.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="font-monospace text-white-50 small">{{ account.ebay_user_id }}</td>
+                                <td>
+                                    {% if account.environment == 'sandbox' %}
+                                    <span class="badge bg-warning bg-opacity-25 text-warning">Sandbox</span>
+                                    {% else %}
+                                    <span class="badge bg-success bg-opacity-25 text-success">Production</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_active %}
+                                    <span class="badge bg-success bg-opacity-25 text-success"><i class="fas fa-check-circle me-1"></i>Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary bg-opacity-25 text-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-white-50 small">
+                                    {{ account.token_expiry|date:"Y-m-d H:i" }}
+                                    {% if account.token_expiry < now|date:"Y-m-d H:i" %}
+                                        <i class="fas fa-exclamation-triangle text-danger ms-1" title="Expired"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-white-50 small">
+                                    <i class="far fa-clock me-1"></i>{{ account.last_sync_at|default:"--" }}
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-icon btn-outline-primary" onclick="syncAccount({{ account.id }}, 'orders')" title="Sync Orders">
+                                        <i class="fas fa-box"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-outline-success" onclick="syncAccount({{ account.id }}, 'finances')" title="Sync Finances">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </button>
+                                    <div class="d-inline-block border-start border-white border-opacity-10 mx-1 align-middle" style="height: 18px;"></div>
+                                    <form method="POST" action="{% url 'ebay:disconnect_account' account.id %}" class="d-inline" onsubmit="return confirm('Disconnect this account?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-icon btn-outline-danger" title="Disconnect">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-white-50 opacity-50 mb-3">
+                                        <i class="fas fa-inbox fa-3x"></i>
+                                    </div>
+                                    <p class="text-white-50 mb-0">No accounts connected yet.</p>
+                                    <a href="{% url 'ebay:authorize' %}" class="btn btn-link text-info text-decoration-none">Connect your first account</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Footer Info -->
+                <div class="mt-3 text-white-50 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Syncing orders will import new transactions into the Financial module.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Mimic Finance Module Styles */
+    .glass-card {
+        background: rgba(25, 28, 35, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .table-container {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .custom-table thead {
+        background: rgba(40, 44, 52, 0.8);
+        border-bottom: 2px solid rgba(13, 202, 240, 0.3);
+    }
+
+    .custom-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .custom-table tbody tr {
+        background: rgba(30, 34, 42, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: background-color 0.2s;
+    }
+
+    .custom-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .custom-table td {
+        padding: 12px 16px;
+        vertical-align: middle;
+    }
+
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .btn-icon:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+        color: #fff;
+    }
+    
+    .btn-outline-primary.btn-icon:hover { border-color: #0d6efd; color: #0d6efd; }
+    .btn-outline-success.btn-icon:hover { border-color: #198754; color: #198754; }
+    .btn-outline-danger.btn-icon:hover { border-color: #dc3545; color: #dc3545; }
+
+    .font-monospace {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+</style>
+
+<script>
+    /**
+     * Disconnect Account Flow
+     */
+    function confirmDisconnect(url, username) {
+        GlobalModal.showConfirm({
+            title: 'Disconnect Account',
+            message: `Are you sure you want to disconnect ${username}? This will stop data synchronization.`,
+            confirmLabel: 'Disconnect',
+            confirmClass: 'btn-danger',
+            onConfirm: () => {
+                // Programmatically submit a form to perform the POST request
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                form.appendChild(csrfInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    /**
+     * Sync Account Flow
+     */
+    function syncAccount(accountId, type) {
+        const titleType = type.charAt(0).toUpperCase() + type.slice(1);
+        
+        GlobalModal.showConfirm({
+            title: `Sync ${titleType}`,
+            message: `Do you want to start syncing ${type} for this account? This may take a few moments.`,
+            confirmLabel: 'Start Sync',
+            confirmClass: 'btn-primary',
+            onConfirm: () => {
+                performSync(accountId, type);
+            }
+        });
+    }
+
+    function performSync(accountId, type) {
+        // Show a loading/processing modal using 'showFlow' or just wait. 
+        // GlobalModal doesn't have a simple "loading" without steps, 
+        // but we can use showCustom or just let the user wait (with a pointer cursor? not implemented).
+        // Let's use createAndShowToast to indicate start, then Modal for result.
+        createAndShowToast(`Syncing ${type}...`, 'info');
+
+        const url = type === 'orders' ? '{% url "ebay:api_sync_orders" %}' : '{% url "ebay:api_sync_finances" %}';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ account_id: accountId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                GlobalModal.showSuccess({
+                    title: 'Sync Complete',
+                    message: data.message || `Successfully synced ${type}.`,
+                    btnConfirmText: 'OK',
+                    onConfirm: () => location.reload() // Reload to update timestamps
+                });
+            } else {
+                GlobalModal.showError({
+                    title: 'Sync Failed',
+                    message: data.error || 'Unknown error occurred.',
+                    errorDetail: data.error_description
+                });
+            }
+        })
+        .catch(e => {
+            GlobalModal.showError({
+                title: 'System Error',
+                message: 'Failed to communicate with the server.',
+                errorDetail: String(e)
+            });
+        });
+    }
+
+    /**
+     * Manual Code Submission Flow
+     */
+    function submitManualCode() {
+        const codeInput = document.getElementById('authCodeInput');
+        const code = codeInput.value.trim();
+        
+        if (!code) {
+            createAndShowToast('Please enter the authorization code.', 'warning');
+            return;
+        }
+
+        let authCode = code;
+        if (code.includes('code=')) {
+            const match = code.match(/[?&]code=([^&]+)/);
+            if (match) authCode = decodeURIComponent(match[1]);
+        }
+        
+        // Show processing...
+        createAndShowToast('Exchanging token...', 'info');
+
+        fetch('{% url "ebay:api_exchange_code" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({ code: authCode })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                GlobalModal.showSuccess({
+                    title: 'Account Connected',
+                    message: data.message || 'Successfully connected eBay account.',
+                    onConfirm: () => location.reload()
+                });
+            } else {
+                GlobalModal.showError({
+                    title: 'Connection Failed',
+                    message: data.error || 'Failed to exchange code.',
+                    errorDetail: data.error_description
+                });
+            }
+        })
+        .catch(e => {
+             GlobalModal.showError({
+                title: 'System Error',
+                message: 'Network or server error.',
+                errorDetail: String(e)
+            });
+        });
+    }
+</script>
+{% endblock %}

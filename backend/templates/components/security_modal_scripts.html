@@ -1,0 +1,176 @@
+<!-- 
+    安全验证 JavaScript 工具函数组件
+    使用方法: {% include "components/security_modal_scripts.html" %}
+    
+    提供的全局函数:
+    - getModal(id): 获取或创建 Bootstrap Modal 实例
+    - safeHide(modalId): 安全地隐藏 Modal
+    - handleRawResponse(res): 解析 fetch 响应为 JSON 并附加状态码
+    - showSuccess(msg): 显示成功 Modal
+    - showError(msg): 显示错误 Modal
+    - clearPasswordInputs(): 清空所有密码输入框
+    
+    需要页面提前定义的全局变量:
+    - currentAction: 当前操作类型 (用于 submitWithPassword 判断)
+-->
+
+<script>
+    // ============================================
+    // 安全验证相关通用工具函数
+    // ============================================
+
+    // Helper: 获取或创建 Bootstrap Modal 实例
+    function getModal(id) {
+        const el = document.getElementById(id);
+        if (!el) {
+            console.error('[getModal] 找不到元素:', id);
+            return null;
+        }
+        return bootstrap.Modal.getOrCreateInstance(el);
+    }
+
+    // Helper: 安全地隐藏 Modal (防止 Modal 未初始化时报错)
+    function safeHide(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        const modal = bootstrap.Modal.getInstance(el);
+        if (modal) modal.hide();
+    }
+
+    // Helper: 解析 fetch 响应为 JSON 并附加 HTTP 状态码
+    function handleRawResponse(res) {
+        return res.json().then(data => {
+            data.status = res.status;
+            return data;
+        }).catch(err => {
+            // JSON 解析失败时返回基本错误信息
+            return {
+                success: false,
+                status: res.status,
+                message: window.i18n?.t('toast.server_format_error') || 'Server response format error'
+            };
+        });
+    }
+
+    // Helper: 显示成功 Modal
+    function showSuccess(msg) {
+        const el = document.getElementById('success-msg-content');
+        if (el) el.textContent = msg;
+        const modal = getModal('successModal');
+        if (modal) modal.show();
+    }
+
+    // Helper: 显示错误 Modal
+    function showError(msg) {
+        const el = document.getElementById('error-msg-content');
+        if (el) el.textContent = msg;
+        const modal = getModal('errorModal');
+        if (modal) modal.show();
+    }
+
+    // Helper: 清空所有密码输入框
+    function clearPasswordInputs() {
+        document.querySelectorAll('input[type="password"]').forEach(function (input) {
+            input.value = '';
+        });
+    }
+
+    // Helper: 获取 CSRF Token
+    function getCsrfToken() {
+        const el = document.querySelector('[name=csrfmiddlewaretoken]');
+        return el ? el.value : '';
+    }
+
+    // ============================================
+    // 通用响应处理函数
+    // ============================================
+
+    /**
+     * 处理 API 响应
+     * @param {Object} data - 解析后的响应数据
+     * @param {boolean} resetFormOnSuccess - 成功时是否重置表单
+     * @param {string} formId - 要重置的表单 ID (可选)
+     */
+    function handleSecurityResponse(data, resetFormOnSuccess, formId) {
+        if (data.success) {
+            // 成功
+            safeHide('passwordVerifyModal');
+            showSuccess(data.message);
+
+            if (resetFormOnSuccess && formId) {
+                const form = document.getElementById(formId);
+                if (form) form.reset();
+            }
+
+            clearPasswordInputs();
+
+        } else {
+            if (data.status === 403) {
+                // 密码错误 -> 震动 Modal
+                const verifyModal = document.getElementById('passwordVerifyModal');
+                const myModal = bootstrap.Modal.getOrCreateInstance(verifyModal);
+                myModal.show();
+
+                const errorEl = document.getElementById('verify-error-msg');
+                const inputEl = document.getElementById('verify-sec-code-l0');
+
+                if (errorEl) {
+                    errorEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> ' + data.message;
+                    errorEl.className = 'text-danger text-center mt-2 fw-bold';
+                }
+
+                if (inputEl) {
+                    inputEl.classList.add('border-danger');
+                    inputEl.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        inputEl.style.animation = '';
+                        inputEl.classList.remove('border-danger');
+                    }, 500);
+                    inputEl.value = '';
+                    inputEl.focus();
+                }
+
+            } else {
+                // 其他错误
+                safeHide('passwordVerifyModal');
+                setTimeout(() => showError(data.message), 300);
+            }
+        }
+    }
+
+    // 处理 fetch 错误
+    function handleSecurityError(err) {
+        safeHide('passwordVerifyModal');
+        setTimeout(() => {
+            showError((window.i18n?.t('toast.request_failed') || 'Request failed') + ': ' + err);
+        }, 350);
+    }
+
+    console.log('[Security Modal Scripts] Utility functions loaded');
+</script>
+
+<style>
+    /* 密码输入框震动动画 */
+    @keyframes shake {
+
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+            transform: translateX(-5px);
+        }
+
+        20%,
+        40%,
+        60%,
+        80% {
+            transform: translateX(5px);
+        }
+    }
+</style>

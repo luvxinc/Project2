@@ -1,0 +1,432 @@
+<!-- PO Payment 历史修订记录视图 (默认隐藏) - 3栏布局 -->
+<div id="po-payment-history-view" style="display: none;">
+    <div class="glass-card p-4 shadow-lg">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+            <div class="d-flex align-items-center">
+                <div class="bg-warning bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-history fa-2x text-warning"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="ui.text_417">历史修订记录</h5>
+                    <p class="text-white-50 small mb-0" id="po-payment-history-label" data-i18n="ui.text_627">订单号: -</p>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="closePOPaymentHistory()">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="po-payment-history-loading" class="text-center py-5">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_707">正在加载历史记录...</p>
+        </div>
+
+        <!-- Content - 3栏布局 -->
+        <div id="po-payment-history-content" class="row g-4" style="display: none;">
+            
+            <!-- 第1栏: 策略修订记录 -->
+            <div class="col-md-4 border-end border-secondary border-opacity-25">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-25 p-2 rounded-circle me-2">
+                        <i class="fas fa-chess-knight text-primary"></i>
+                    </div>
+                    <h6 class="text-white mb-0" data-i18n="ui.text_1464">厂商策略修改</h6>
+                    <span class="badge bg-secondary ms-2 rounded-pill" id="po-history-strategy-count">0</span>
+                </div>
+                <div class="history-timeline custom-scrollbar" style="max-height: 600px; overflow-y: auto;" id="po-strategy-versions-container">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+            <!-- 第2栏: 定金付款记录 -->
+            <div class="col-md-4 border-end border-secondary border-opacity-25">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-25 p-2 rounded-circle me-2">
+                        <i class="fas fa-hand-holding-usd text-info"></i>
+                    </div>
+                    <h6 class="text-white mb-0" data-i18n="ui.text_1465">定金付款修改</h6>
+                    <span class="badge bg-secondary ms-2 rounded-pill" id="po-history-deposit-count">0</span>
+                </div>
+                <div class="history-timeline custom-scrollbar" style="max-height: 600px; overflow-y: auto;" id="po-deposit-versions-container">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+            <!-- 第3栏: 订单付款记录 -->
+            <div class="col-md-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-25 p-2 rounded-circle me-2">
+                        <i class="fas fa-file-invoice-dollar text-success"></i>
+                    </div>
+                    <h6 class="text-white mb-0" data-i18n="ui.text_1466">订单付款修改</h6>
+                    <span class="badge bg-secondary ms-2 rounded-pill" id="po-history-payment-count">0</span>
+                </div>
+                <div class="history-timeline custom-scrollbar" style="max-height: 600px; overflow-y: auto;" id="po-payment-versions-container">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * 查看 PO 全流程历史记录 (3栏)
+ * @param {string} poNum - 订单号
+ * @param {string} pmtNo - 付款单号 (可选)
+ */
+function viewPOPaymentHistory(poNum, pmtNo) {
+    console.log('[POHistory] View:', poNum, pmtNo);
+    
+    // 切换视图
+    const listView = document.getElementById('po-list-view');
+    if (listView) listView.style.display = 'none';
+    
+    document.getElementById('po-payment-history-view').style.display = 'block';
+    
+    // 更新标题
+    let labelHtml = `订单号: <span class="font-monospace text-info">${poNum}</span>`;
+    if (pmtNo) {
+        labelHtml += ` <span class="mx-2">|</span> 付款单: <span class="font-monospace text-warning">${pmtNo}</span>`;
+    }
+    document.getElementById('po-payment-history-label').innerHTML = labelHtml;
+    
+    const loading = document.getElementById('po-payment-history-loading');
+    const content = document.getElementById('po-payment-history-content');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    
+    // 获取数据
+    let url = `/dashboard/finance/po/api/history/?po_num=${encodeURIComponent(poNum)}`;
+    if (pmtNo) {
+        url += `&pmt_no=${encodeURIComponent(pmtNo)}`;
+    }
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            loading.style.display = 'none';
+            content.style.display = 'flex';
+            
+            if (!data.success) {
+                const errHtml = `<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>${data.message || (window.i18n?.t('js.load_failed') || 'Load Failed')}</div>`;
+                document.getElementById('po-strategy-versions-container').innerHTML = errHtml;
+                document.getElementById('po-deposit-versions-container').innerHTML = errHtml;
+                document.getElementById('po-payment-versions-container').innerHTML = errHtml;
+                return;
+            }
+            
+            renderPOStrategyVersions(data.data.strategy_versions || []);
+            renderPODepositVersions(data.data.deposit_versions || []);
+            renderPOPaymentVersions(data.data.payment_versions || []);
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            content.style.display = 'flex';
+            const errHtml = `<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>网络错误: ${err}</div>`;
+            document.getElementById('po-strategy-versions-container').innerHTML = errHtml;
+            document.getElementById('po-deposit-versions-container').innerHTML = errHtml;
+            document.getElementById('po-payment-versions-container').innerHTML = errHtml;
+        });
+}
+
+function closePOPaymentHistory() {
+    document.getElementById('po-payment-history-view').style.display = 'none';
+    const listView = document.getElementById('po-list-view');
+    if (listView) listView.style.display = 'block';
+    
+    // 刷新列表数据
+    if (typeof loadPOTable === 'function') {
+        loadPOTable();
+    }
+}
+
+// 渲染策略版本 - 与定金模块一致
+function renderPOStrategyVersions(versions) {
+    const container = document.getElementById('po-strategy-versions-container');
+    document.getElementById('po-history-strategy-count').textContent = versions.length;
+    
+    if (versions.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-white-50"><i class="fas fa-inbox fa-2x mb-2 opacity-50"></i><p class="small mb-0" data-i18n="ui.text_1467">无策略修订记录</p></div>';
+        return;
+    }
+    
+    let html = '';
+    versions.forEach(v => {
+        const badgeHtml = v.is_initial 
+            ? '<span class="badge bg-primary bg-opacity-50" data-i18n="ui.text_1468">初始策略</span>'
+            : '<span class="badge bg-warning text-dark" data-i18n="ui.text_1469">策略修订</span>';
+            
+        html += `
+            <div class="card bg-dark border-secondary border-opacity-50 mb-3 hover-shadow transition-all">
+                <div class="card-header bg-black bg-opacity-25 border-bottom border-secondary border-opacity-25 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-primary font-monospace me-2">${v.seq || '-'}</span>
+                            ${badgeHtml}
+                        </div>
+                        <small class="text-white-50"><i class="fas fa-clock me-1"></i>${v.date_record}</small>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-2 text-white-50 small">
+                        <i class="fas fa-user-circle me-1"></i> 操作人: <span class="text-white ms-1">${v.by_user}</span>
+                    </div>
+        `;
+        
+        if (v.is_initial) {
+            html += `
+                <div class="row g-2 small">
+                    <div class="col-6">
+                        <span class="text-white-50" data-i18n="ui.text_1470">结算货币:</span>
+                        <span class="text-info ms-1">${v.data.cur_currency || '-'}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-white-50" data-i18n="ui.text_1471">价格浮动:</span>
+                        <span class="ms-1">${v.data.cur_float === 1 ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-secondary py-1"></i>'}</span>
+                        <span class="text-warning ms-1">${v.data.cur_ex_float}%</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-white-50" data-i18n="ui.text_1472">汇率浮动:</span>
+                        <span class="ms-1">${v.data.cur_deposit === 1 ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-secondary py-1"></i>'}</span>
+                        <span class="text-warning ms-1">${v.data.cur_deposit_par}%</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-white-50" data-i18n="ui.text_1473">结算汇率:</span>
+                        <span class="text-white ms-1 font-monospace">${v.data.cur_usd_rmb}</span>
+                        <span class="badge ${v.data.cur_mode === 'A' ? 'bg-info' : 'bg-warning text-dark'} ms-1" style="font-size:0.55rem;" data-i18n="ui.text_1474">${v.data.cur_mode === 'A' ? (window.i18n?.t('js.auto') || 'Auto') : (window.i18n?.t('js.manual') || 'Manual')}</span>
+                    </div>
+                </div>
+            `;
+        } else if (v.changes && v.changes.length > 0) {
+            html += '<div class="d-flex flex-column gap-2">';
+            v.changes.forEach(c => {
+                 html += `
+                    <div class="d-flex align-items-center text-small bg-black bg-opacity-25 p-2 rounded">
+                        <span class="text-white-50 me-2" style="min-width: 80px;">${c.field}:</span>
+                        <span class="text-white-50 text-decoration-line-through me-2">${c.old}</span>
+                        <i class="fas fa-arrow-right text-success mx-2" style="font-size: 0.8rem;"></i>
+                        <span class="text-warning fw-bold">${c.new}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="text-white-50 fst-italic small" data-i18n="ui.text_2629">无实质变更</div>';
+        }
+        
+        if (v.note) {
+            html += `<div class="mt-2 pt-2 border-top border-secondary border-opacity-25 text-white-50 small"><i class="fas fa-quote-left me-1 opacity-50"></i>${v.note}</div>`;
+        }
+        
+        html += `   </div>
+            </div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 渲染定金版本 - 与定金模块一致
+function renderPODepositVersions(versions) {
+    const container = document.getElementById('po-deposit-versions-container');
+    document.getElementById('po-history-deposit-count').textContent = versions.length;
+    
+    if (versions.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-white-50"><i class="fas fa-inbox fa-2x mb-2 opacity-50"></i><p class="small mb-0" data-i18n="ui.text_1475">无定金付款记录</p></div>';
+        return;
+    }
+    
+    let html = '';
+    versions.forEach(v => {
+        let badgeHtml = '';
+        if (v.ops === 'delete') badgeHtml = '<span class="badge bg-danger" data-i18n="common.deleted">已删除</span>';
+        else if (v.is_initial) badgeHtml = '<span class="badge bg-success bg-opacity-75" data-i18n="ui.text_1477">初始支付</span>';
+        else badgeHtml = '<span class="badge bg-info text-dark" data-i18n="ui.text_1478">支付修订</span>';
+        
+        html += `
+            <div class="card bg-dark border-secondary border-opacity-50 mb-3 hover-shadow transition-all">
+                <div class="card-header bg-black bg-opacity-25 border-bottom border-secondary border-opacity-25 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-info font-monospace me-2">${v.seq || '-'}</span>
+                            ${badgeHtml}
+                        </div>
+                        <small class="text-white-50"><i class="fas fa-clock me-1"></i>${v.date_record}</small>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-2 text-white-50 small">
+                        <i class="fas fa-user-circle me-1"></i> 操作人: <span class="text-white ms-1">${v.by_user}</span>
+                        ${v.pmt_no ? `<span class="ms-2 badge bg-secondary" style="font-size:0.6rem;">${v.pmt_no}</span>` : ''}
+                    </div>
+        `;
+        
+        if (v.is_initial && v.data) {
+            // Display full details
+            const d = v.data;
+            html += `
+                <table class="table table-dark table-sm table-borderless small mb-0">
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2630">付款日期:</td>
+                        <td class="text-end"><span class="text-info">${d.dep_date}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2631">预付款抵扣:</td>
+                        <td class="text-end"><span class="text-success">¥${formatNumber(d.dep_prepay_amount)}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2632">定金支付:</td>
+                        <td class="text-end"><span class="text-warning fw-bold">${formatNumber(d.dep_paid)}</span> <span class="text-white-50" style="font-size:0.7em">${d.dep_cur}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2633">定金结算汇率:</td>
+                        <td class="text-end text-white font-monospace">${d.dep_paid_cur}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2634">覆盖定金标准:</td>
+                        <td class="text-end">${d.dep_override === 1 ? '<span class="text-danger" data-i18n="ui.text_1479">是</span>' : '<span class="text-white-50" data-i18n="ui.text_1480">否</span>'}</td>
+                    </tr>
+            `;
+            
+            if (d.extra_amount > 0) {
+                 html += `
+                    <tr>
+                        <td class="text-white-50 pb-0" data-i18n="ui.text_2635">额外费用:</td>
+                        <td class="text-end pb-0"><span class="text-warning">${d.extra_amount}</span> <span class="text-white-50" style="font-size:0.7em">${d.extra_cur}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50 pt-0" colspan="2"><small class="fst-italic opacity-50">${d.extra_note}</small></td>
+                    </tr>
+                 `;
+            }
+            html += `</table>`;
+            
+        } else if (v.changes && v.changes.length > 0) {
+            html += '<div class="d-flex flex-column gap-2">';
+            v.changes.forEach(c => {
+                 html += `
+                    <div class="d-flex align-items-center text-small bg-black bg-opacity-25 p-2 rounded">
+                        <span class="text-white-50 me-2" style="min-width: 90px;">${c.field}:</span>
+                        <span class="text-white-50 text-decoration-line-through me-2">${c.old}</span>
+                        <i class="fas fa-arrow-right text-success mx-2" style="font-size: 0.8rem;"></i>
+                        <span class="text-warning fw-bold">${c.new}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+             html += '<div class="text-white-50 fst-italic small" data-i18n="ui.text_2629">无实质变更</div>';
+        }
+        
+        if (v.note) {
+            html += `<div class="mt-2 pt-2 border-top border-secondary border-opacity-25 text-white-50 small"><i class="fas fa-quote-left me-1 opacity-50"></i>${v.note}</div>`;
+        }
+        
+        html += `   </div>
+            </div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 渲染订单付款版本 - 与定金模块一致
+function renderPOPaymentVersions(versions) {
+    const container = document.getElementById('po-payment-versions-container');
+    document.getElementById('po-history-payment-count').textContent = versions.length;
+    
+    if (versions.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-white-50"><i class="fas fa-inbox fa-2x mb-2 opacity-50"></i><p class="small mb-0" data-i18n="ui.text_1481">无订单付款记录</p></div>';
+        return;
+    }
+    
+    let html = '';
+    versions.forEach(v => {
+        let badgeHtml = '';
+        if (v.note && v.note.includes((window.i18n?.t('js.delete') || 'Delete'))) badgeHtml = '<span class="badge bg-danger" data-i18n="common.deleted">已删除</span>';
+        else if (v.is_initial) badgeHtml = '<span class="badge bg-success bg-opacity-75" data-i18n="ui.text_1477">初始支付</span>';
+        else badgeHtml = '<span class="badge bg-info text-dark" data-i18n="ui.text_1478">支付修订</span>';
+        
+        html += `
+            <div class="card bg-dark border-secondary border-opacity-50 mb-3 hover-shadow transition-all">
+                <div class="card-header bg-black bg-opacity-25 border-bottom border-secondary border-opacity-25 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-success font-monospace me-2">${v.seq || '-'}</span>
+                            ${badgeHtml}
+                        </div>
+                        <small class="text-white-50"><i class="fas fa-clock me-1"></i>${v.date_record}</small>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-2 text-white-50 small">
+                        <i class="fas fa-user-circle me-1"></i> 操作人: <span class="text-white ms-1">${v.by_user}</span>
+                    </div>
+        `;
+        
+        if (v.is_initial && v.data) {
+            const d = v.data;
+            html += `
+                <table class="table table-dark table-sm table-borderless small mb-0">
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2631">预付款抵扣:</td>
+                        <td class="text-end"><span class="text-success">¥${formatNumber(d.pmt_prepay_amount)}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2638">订单支付:</td>
+                        <td class="text-end"><span class="text-warning fw-bold">${formatNumber(d.pmt_paid)}</span> <span class="text-white-50" style="font-size:0.7em">${d.pmt_cur}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2639">订单结算汇率:</td>
+                        <td class="text-end text-white font-monospace">${d.pmt_rate}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50" data-i18n="ui.text_2640">覆盖订单标准:</td>
+                        <td class="text-end">${d.pmt_override === 1 ? '<span class="text-danger" data-i18n="ui.text_1485">是</span>' : '<span class="text-white-50" data-i18n="ui.text_1486">否</span>'}</td>
+                    </tr>
+            `;
+            
+            if (d.extra_amount > 0) {
+                 html += `
+                    <tr>
+                        <td class="text-white-50 pb-0" data-i18n="ui.text_2635">额外费用:</td>
+                        <td class="text-end pb-0"><span class="text-warning">${d.extra_amount}</span> <span class="text-white-50" style="font-size:0.7em">${d.extra_cur}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-white-50 pt-0" colspan="2"><small class="fst-italic opacity-50">${d.extra_note}</small></td>
+                    </tr>
+                 `;
+            }
+            html += `</table>`;
+            
+        } else if (v.changes && v.changes.length > 0) {
+            html += '<div class="d-flex flex-column gap-2">';
+            v.changes.forEach(c => {
+                 html += `
+                    <div class="d-flex align-items-center text-small bg-black bg-opacity-25 p-2 rounded">
+                        <span class="text-white-50 me-2" style="min-width: 90px;">${c.field}:</span>
+                        <span class="text-white-50 text-decoration-line-through me-2">${c.old}</span>
+                        <i class="fas fa-arrow-right text-success mx-2" style="font-size: 0.8rem;"></i>
+                        <span class="text-warning fw-bold">${c.new}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+             html += '<div class="text-white-50 fst-italic small" data-i18n="ui.text_2629">无实质变更</div>';
+        }
+        
+        if (v.note) {
+            html += `<div class="mt-2 pt-2 border-top border-secondary border-opacity-25 text-white-50 small"><i class="fas fa-quote-left me-1 opacity-50"></i>${v.note}</div>`;
+        }
+        
+        html += `   </div>
+            </div>`;
+    });
+    
+    container.innerHTML = html;
+}
+</script>

@@ -1,0 +1,1094 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+{% load i18n %}
+
+{% block title %}Packaging Barcode - Products - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/global-wizard.css">
+<link rel="stylesheet" href="/static/css/apple-table.css">
+<style>
+    .barcode-row {
+        transition: all 0.2s ease;
+    }
+    .barcode-row:hover {
+        background: rgba(255,255,255,0.03);
+    }
+    .barcode-row.row-invalid {
+        background: rgba(220, 53, 69, 0.12);
+    }
+    .barcode-row .form-control,
+    .barcode-row .form-select {
+        border-radius: 8px;
+    }
+    .file-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    .file-list-item:hover {
+        background: rgba(255,255,255,0.06);
+    }
+    .file-list-item .file-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .file-list-item .file-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, 0.15);
+        border-radius: 10px;
+    }
+    .file-list-item .file-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    /* SKU 模糊搜索样式 */
+    .sku-search-wrapper {
+        position: relative;
+    }
+    .sku-search-input {
+        width: 100%;
+    }
+    .sku-dropdown {
+        position: fixed;
+        max-height: 200px;
+        min-width: 200px;
+        overflow-y: auto;
+        background: #1a1d21;
+        border: 1px solid #495057;
+        border-radius: 8px;
+        z-index: 99999;
+        display: none;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .sku-dropdown.show {
+        display: block;
+    }
+    .sku-dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        color: #e9ecef;
+        transition: background 0.15s;
+    }
+    .sku-dropdown-item:hover,
+    .sku-dropdown-item.active {
+        background: rgba(13, 110, 253, 0.25);
+    }
+    .sku-dropdown-empty {
+        padding: 12px;
+        color: #6c757d;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    .sku-search-input.is-valid {
+        border-color: #198754 !important;
+    }
+    .sku-search-input.is-invalid {
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:products:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="nav.products">Products</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="products.barcode">Packaging Barcode</li>
+                </ol>
+            </nav>
+            <p class="text-white-50 small mb-0 mt-1" data-i18n="ui.text_174">根据 SKU 和包装规格批量生成条形码 PDF 文件。</p>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:products:hub' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="products.back_to_hub">返回Products</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Wizard Container -->
+    <div class="glass-card p-4" id="barcode-wizard-container" data-testid="barcode-wizard">
+
+        <!-- Wizard Header -->
+        <div class="wizard-header d-flex flex-column mb-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-barcode fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="products.barcode_wizard_title">Packaging Barcode生成向导</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_175">按步骤填写数据、验证并生成条形码 PDF。</p>
+                </div>
+            </div>
+            <hr class="border-secondary border-opacity-25 my-4 w-100">
+        </div>
+
+        <!-- StepBar Anchor -->
+        <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+
+        <!-- ========================================== -->
+        <!-- Step 1: 输入数据 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content active" id="step-input" data-testid="step-input">
+            <!-- 操作说明卡片 -->
+            <div class="card bg-dark bg-opacity-50 border-info border-opacity-25 mb-4" data-testid="ops-guide-card">
+                <div class="card-header bg-info bg-opacity-10 border-0 d-flex align-items-center">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    <span class="text-info fw-bold" data-i18n="common.operation_desc">操作说明</span>
+                </div>
+                <div class="card-body">
+                    <ul class="text-white-50 small mb-0 ps-3">
+                        <li class="mb-2" data-i18n="ui.text_177">每行填写一个 SKU 及其包装规格（每盒个数、每箱盒数）。</li>
+                        <li class="mb-2" data-i18n="ui.text_178">多行用于生成不同规格的条形码 PDF，每行生成一个独立文件。</li>
+                        <li class="mb-2" data-i18n="ui.text_179">每盒个数和每箱盒数必须是大于 0 的正整数。</li>
+                        <li data-i18n="ui.text_180">如需新增 SKU，请先使用"Add Product"功能添加。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 数据输入区域 -->
+            <div class="table-responsive" style="max-height: 400px; overflow: visible;">
+                <table class="apple-table" id="barcode-input-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">SKU</th>
+                            <th style="width: 20%;" data-i18n="ui.text_2043">每盒个数 (QTY/BOX)</th>
+                            <th style="width: 20%;" data-i18n="ui.text_2044">每箱盒数 (BOX/CTN)</th>
+                            <th style="width: 10%;" data-i18n="common.operation">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="barcode-rows">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 添加行按钮组 -->
+            <div class="d-flex gap-2 mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="addBarcodeRow()">
+                    <i class="fas fa-plus me-1"></i><span data-i18n="ui.icon_3001">添加一行</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" onclick="addMultipleBarcodeRows()">
+                    <i class="fas fa-layer-group me-1"></i><span data-i18n="ui.icon_3071">批量添加 (5行)</span>
+                </button>
+            </div>
+
+            <div id="step1-error" class="text-danger small text-center mb-3 mt-3"></div>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left">
+                    <span class="text-white-50 small" id="row-count-label">
+                        <i class="fas fa-list me-1"></i><span data-i18n="ui.icon_3072">待生成:</span><strong id="row-count">0</strong> 行
+                    </span>
+                </div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="btn-step1-next">
+                        验证数据 <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- Step 2: 验证数据 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content" id="step-validate" data-testid="step-validate">
+            <!-- 验证结果区域 -->
+            <div class="glass-card p-4 mb-4" id="validate-result-card"
+                style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);">
+
+                <!-- 错误汇总 -->
+                <div id="error-summary" class="d-none mb-4">
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                            <strong class="text-danger" data-i18n="modal.password.verify_failed">验证失败</strong>
+                        </div>
+                        <ul class="mb-0 small" id="error-list"></ul>
+                    </div>
+                </div>
+
+                <!-- 无有效行提示 -->
+                <div id="no-valid-rows-notice" class="d-none text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-secondary opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="ui.text_182">未填写任何有效的条形码数据。</p>
+                </div>
+
+                <!-- 待生成表格 -->
+                <div id="preview-table-wrapper" class="d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="text-white mb-0">
+                            <i class="fas fa-barcode text-info me-2"></i>
+                            <span data-i18n="ui.barcodes_to_generate">待生成的条形码（</span><span id="preview-row-count">0</span><span data-i18n="ui.count_suffix">个）</span>
+                        </h6>
+                    </div>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="apple-table" id="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th data-i18n="ui.text_2043">每盒个数 (QTY/BOX)</th>
+                                    <th data-i18n="ui.text_2044">每箱盒数 (BOX/CTN)</th>
+                                    <th data-i18n="ui.text_2048">预计文件名</th>
+                                </tr>
+                            </thead>
+                            <tbody id="preview-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden security inputs -->
+            <form id="barcode-submit-form" class="d-none">
+                {% csrf_token %}
+                <input type="hidden" name="barcode_data" id="barcode-submit-data">
+                {% security_inputs "btn_generate_barcode" %}
+            </form>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-step2-back">
+                        <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_modify">返回修改</span>
+                    </button>
+                </div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="btn-step2-submit"
+                        data-testid="primary-action-btn" data-requires-global-modal="true"
+                        data-action-key="btn_generate_barcode" data-action-display="{% trans 'Generate Barcode' %}" disabled>
+                        <i class="fas fa-barcode me-2"></i><span data-i18n="ui.icon_3074">生成条形码</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- Step 3: 生成中 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content" id="step-execute" data-testid="step-execute">
+            <div class="text-center py-5">
+                <div class="spinner-border text-info mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                <h5 class="text-white mb-2" data-i18n="common.loading">正在生成条形码...</h5>
+                <p class="text-white-50 mb-0" data-i18n="ui.text_183">请勿关闭页面，正在处理您的请求。</p>
+                <div class="progress mt-4" style="height: 8px; max-width: 400px; margin: 0 auto;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                         style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- Step 4: 完成 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content" id="step-done" data-testid="step-done">
+            <div class="glass-card p-4" id="result-panel" data-testid="result-panel">
+                
+                <!-- 成功结果 -->
+                <div id="success-result" class="d-none">
+                    <div class="wizard-done-header">
+                        <div class="icon"><i class="fas fa-check-circle text-success"></i></div>
+                        <h3 data-i18n="ui.text_184">生成完成</h3>
+                        <p data-i18n="ui.text_185">条形码 PDF 文件已生成，您可以下载或打印。</p>
+                    </div>
+
+                    <div class="wizard-done-summary">
+                        <div class="wizard-done-summary-header">
+                            <i class="fas fa-chart-bar me-2"></i><span data-i18n="ui.icon_3075">生成统计</span>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-success" id="result-success-count">0</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2049">成功生成</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-danger" id="result-fail-count">0</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2050">生成失败</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-info" id="result-total-files">0</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2051">总文件数</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 失败项列表 -->
+                    <div id="fail-items-section" class="d-none mt-4">
+                        <div class="alert alert-warning bg-warning bg-opacity-10 border-warning">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                <strong class="text-warning" data-i18n="ui.text_186">部分生成失败</strong>
+                            </div>
+                            <ul class="mb-0 small" id="fail-items-list"></ul>
+                        </div>
+                    </div>
+
+                    <!-- 文件列表 - Report Center风格 -->
+                    <div class="row g-4 mt-3">
+                        <!-- Left: 操作栏 -->
+                        <div class="col-md-4">
+                            <div class="glass-card p-3 border border-secondary border-opacity-25">
+                                <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                                    <i class="fas fa-tools me-2"></i><span data-i18n="common.operation">操作</span>
+                                </h6>
+
+                                <!-- Download All ZIP -->
+                                <button type="button" class="btn btn-success w-100 mb-3" id="btn-download-all"
+                                    data-testid="btn-download-zip">
+                                    <i class="fas fa-file-archive me-2"></i><span data-i18n="ui.icon_3077">打包下载所有 (.zip)</span>
+                                </button>
+
+                                <!-- Clear All -->
+                                <button type="button" class="btn btn-outline-danger w-100" id="btn-clear-all"
+                                    data-testid="btn-clear-all">
+                                    <i class="fas fa-trash-alt me-2"></i><span data-i18n="ui.icon_3078">清空所有文件</span>
+                                </button>
+
+                                <hr class="border-secondary">
+
+                                <div class="text-center text-muted small">
+                                    <i class="fas fa-file-pdf me-1"></i>
+                                    <span data-i18n="ui.total_prefix">共</span> <span class="text-info fw-bold" id="file-count-display">0</span> <span data-i18n="etl.files">个文件</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: 文件列表 -->
+                        <div class="col-md-8">
+                            <div class="glass-card p-3 border border-secondary border-opacity-25">
+                                <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                                    <i class="fas fa-list me-2"></i><span data-i18n="sales.file_list">文件列表</span>
+                                </h6>
+
+                                <div id="file-list" class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- 动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 失败结果 -->
+                <div id="error-result" class="d-none">
+                    <div class="wizard-done-header">
+                        <div class="icon"><i class="fas fa-times-circle text-danger"></i></div>
+                        <h3 data-i18n="ui.text_2050">生成失败</h3>
+                        <p id="error-result-message" data-i18n="ui.text_173">请查看错误信息并重试。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left"></div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-new-round">
+                        <i class="fas fa-redo me-2"></i><span data-i18n="ui.icon_3080">继续生成</span>
+                    </button>
+                    <a href="{% url 'web_ui:products:hub' %}" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-home me-2"></i><span data-i18n="ui.icon_3069">返回Products</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ============================================================
+    // State Management
+    // ============================================================
+    let validRows = [];           // 有效行数据
+    let validationErrors = [];    // 校验错误
+    let rowCounter = 0;
+
+    // SKU 列表 (从后端传入)
+    const skuList = {{ sku_list|safe }};
+
+    // ============================================================
+    // Initialize Wizard
+    // ============================================================
+    const wizard = new GlobalWizard({
+        containerId: 'barcode-wizard-container',
+        steps: [
+            { id: 'input', label: (window.i18n?.t('js.input_data') || 'Input Data'), contentSelector: '#step-input' },
+            { id: 'validate', label: (window.i18n?.t('js.validate_data') || 'Validate'), contentSelector: '#step-validate' },
+            { id: 'execute', label: (window.i18n?.t('js.generating') || 'Generating...'), contentSelector: '#step-execute' },
+            { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#step-done' }
+        ],
+        onStepChange: function (from, to) {
+            console.log('[BarcodeWizard] Step changed:', from, '->', to);
+            if (to === 1) {
+                renderValidationStep();
+            }
+        },
+        onBeforeNext: async function (currentStep) {
+            if (currentStep.id === 'input') {
+                return validateStep1();
+            }
+            if (currentStep.id === 'validate') {
+                if (validationErrors.length > 0) {
+                    createAndShowToast(i18n.t('toast.fix_validation_errors'), 'warning');
+                    return false;
+                }
+                if (validRows.length === 0) {
+                    createAndShowToast(i18n.t('toast.no_valid_data'), 'warning');
+                    return false;
+                }
+                return await triggerAuthAndSubmit();
+            }
+            return true;
+        },
+        onRestart: function () {
+            location.reload();
+        }
+    });
+
+    // ============================================================
+    // Row Management
+    // ============================================================
+    window.addBarcodeRow = function () {
+        const tbody = document.getElementById('barcode-rows');
+        if (!tbody) return;
+
+        const rowId = rowCounter++;
+        const tr = document.createElement('tr');
+        tr.className = 'barcode-row';
+        tr.setAttribute('data-row-id', rowId);
+
+        tr.innerHTML =
+            '<td>' +
+                '<div class="sku-search-wrapper">' +
+                    '<input type="text" class="form-control form-control-sm bg-dark text-warning border-secondary sku-search-input" ' +
+                           'name="sku" data-i18n-placeholder="form.placeholder.enter_or_select_sku" placeholder="' + (window.i18n?.t('js.input_or_select_sku_ellipsis') || 'Input or select SKU...') + '" autocomplete="off" data-row-id="' + rowId + '">' +
+                    '<input type="hidden" class="sku-value" name="sku_value">' +
+                '</div>' +
+            '</td>' +
+            '<td><input type="number" min="1" step="1" class="form-control form-control-sm bg-dark text-info border-secondary qty-box-input" name="qty_per_box" data-i18n-placeholder="form.placeholder.enter_quantity" placeholder="' + (window.i18n?.t('form.placeholder.enter_quantity') || 'Input Quantity') + '"></td>' +
+            '<td><input type="number" min="1" step="1" class="form-control form-control-sm bg-dark text-info border-secondary box-ctn-input" name="box_per_ctn" data-i18n-placeholder="form.placeholder.enter_quantity" placeholder="' + (window.i18n?.t('form.placeholder.enter_quantity') || 'Input Quantity') + '"></td>' +
+            '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove(); updateRowCount();"><i class="fas fa-times"></i></button></td>';
+
+        tbody.appendChild(tr);
+        
+        // 绑定 SKU 搜索事件
+        const skuInput = tr.querySelector('.sku-search-input');
+        const skuHidden = tr.querySelector('.sku-value');
+        
+        // 创建下拉框并添加到 body（避免被父容器裁剪）
+        const skuDropdown = document.createElement('div');
+        skuDropdown.className = 'sku-dropdown';
+        skuDropdown.id = 'sku-dropdown-' + rowId;
+        document.body.appendChild(skuDropdown);
+        
+        // 行删除时清理下拉框
+        tr.querySelector('.btn-outline-danger').addEventListener('click', function() {
+            skuDropdown.remove();
+        });
+        
+        initSkuSearch(skuInput, skuHidden, skuDropdown);
+        
+        updateRowCount();
+    };
+    
+    // SKU 模糊搜索初始化
+    function initSkuSearch(input, hidden, dropdown) {
+        let activeIndex = -1;
+        
+        // 输入事件 - 过滤 SKU 列表
+        input.addEventListener('input', function() {
+            const currentInput = this;  // 保存当前输入框引用
+            const query = this.value.trim().toUpperCase();
+            hidden.value = ''; // 清空已选值
+            currentInput.classList.remove('is-valid', 'is-invalid');
+            
+            if (!query) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            
+            // 模糊匹配
+            const matches = skuList.filter(sku => 
+                sku.toUpperCase().includes(query)
+            ).slice(0, 20); // 最多显示20个
+            
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="sku-dropdown-empty" data-i18n="ui.text_2052">无匹配结果</div>';
+            } else {
+                dropdown.innerHTML = matches.map((sku, idx) => 
+                    '<div class="sku-dropdown-item" data-value="' + sku + '" data-index="' + idx + '">' + 
+                        highlightMatch(sku, query) + 
+                    '</div>'
+                ).join('');
+            }
+            
+            activeIndex = -1;
+            
+            // 动态计算位置 (position:fixed) - 使用当前输入框
+            const rect = currentInput.getBoundingClientRect();
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.width = rect.width + 'px';
+            
+            dropdown.classList.add('show');
+        });
+        
+        // 高亮匹配文本
+        function highlightMatch(sku, query) {
+            const idx = sku.toUpperCase().indexOf(query);
+            if (idx === -1) return sku;
+            return sku.substring(0, idx) + 
+                   '<span class="text-warning fw-bold">' + sku.substring(idx, idx + query.length) + '</span>' + 
+                   sku.substring(idx + query.length);
+        }
+        
+        // 点击选择
+        dropdown.addEventListener('click', function(e) {
+            const item = e.target.closest('.sku-dropdown-item');
+            if (item) {
+                selectSku(item.dataset.value);
+            }
+        });
+        
+        // 选择 SKU
+        function selectSku(value) {
+            input.value = value;
+            hidden.value = value;
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+            dropdown.classList.remove('show');
+        }
+        
+        // 键盘导航
+        input.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('.sku-dropdown-item');
+            if (items.length === 0) return;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActive(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActive(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    selectSku(items[activeIndex].dataset.value);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        function updateActive(items) {
+            items.forEach((item, idx) => {
+                item.classList.toggle('active', idx === activeIndex);
+            });
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        // 失焦验证
+        input.addEventListener('blur', function() {
+            setTimeout(() => {
+                dropdown.classList.remove('show');
+                validateSkuInput(input, hidden);
+            }, 200);
+        });
+        
+        // 聚焦时显示提示
+        input.addEventListener('focus', function() {
+            if (this.value && !hidden.value) {
+                // 触发重新搜索
+                this.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+    
+    // 验证 SKU 输入
+    function validateSkuInput(input, hidden) {
+        const inputValue = input.value.trim().toUpperCase();
+        
+        // 检查是否是有效的 SKU
+        if (!inputValue) {
+            input.classList.remove('is-valid', 'is-invalid');
+            hidden.value = '';
+            return;
+        }
+        
+        // 精确匹配
+        const exactMatch = skuList.find(sku => sku.toUpperCase() === inputValue);
+        if (exactMatch) {
+            hidden.value = exactMatch;
+            input.value = exactMatch;
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+        } else {
+            hidden.value = '';
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        }
+    }
+
+    window.addMultipleBarcodeRows = function () {
+        for (let i = 0; i < 5; i++) {
+            window.addBarcodeRow();
+        }
+    };
+
+    window.updateRowCount = function () {
+        const count = document.querySelectorAll('#barcode-rows tr').length;
+        document.getElementById('row-count').textContent = count;
+    };
+
+    // 初始化：添加第一行
+    addBarcodeRow();
+
+    // ============================================================
+    // Step 1 Validation
+    // ============================================================
+    function validateStep1() {
+        const errorEl = document.getElementById('step1-error');
+        errorEl.textContent = '';
+
+        const rows = collectFormData();
+        if (rows.length === 0) {
+            errorEl.textContent = '{% trans "请至少填写一条有效的条形码数据。" %}';
+            return false;
+        }
+        return true;
+    }
+
+    function collectFormData() {
+        const rows = [];
+        const tableRows = document.querySelectorAll('#barcode-rows tr');
+
+        tableRows.forEach(tr => {
+            // 优先使用隐藏字段的值（验证过的），否则尝试输入框的值
+            const skuHidden = tr.querySelector('.sku-value');
+            const skuInput = tr.querySelector('.sku-search-input');
+            let sku = (skuHidden?.value || '').trim();
+            
+            // 如果隐藏字段没有值，检查输入框值是否是有效 SKU
+            if (!sku && skuInput) {
+                const inputVal = skuInput.value.trim().toUpperCase();
+                const exactMatch = skuList.find(s => s.toUpperCase() === inputVal);
+                if (exactMatch) {
+                    sku = exactMatch;
+                }
+            }
+            
+            if (!sku) return; // 跳过无效 SKU 的行
+
+            const qtyPerBox = parseInt(tr.querySelector('.qty-box-input')?.value) || 0;
+            const boxPerCtn = parseInt(tr.querySelector('.box-ctn-input')?.value) || 0;
+
+            rows.push({
+                sku: sku.toUpperCase(),
+                qty_per_box: qtyPerBox,
+                box_per_ctn: boxPerCtn
+            });
+        });
+
+        return rows;
+    }
+
+    // ============================================================
+    // Step 2: Validation & Preview
+    // ============================================================
+    function renderValidationStep() {
+        validRows = collectFormData();
+        validationErrors = [];
+
+        // Reset UI
+        document.getElementById('error-summary').classList.add('d-none');
+        document.getElementById('no-valid-rows-notice').classList.add('d-none');
+        document.getElementById('preview-table-wrapper').classList.add('d-none');
+
+        if (validRows.length === 0) {
+            document.getElementById('no-valid-rows-notice').classList.remove('d-none');
+            document.getElementById('btn-step2-submit').disabled = true;
+            return;
+        }
+
+        // Validate each row
+        validRows.forEach((row, idx) => {
+            validateRow(row, idx);
+        });
+
+        // Render preview table
+        renderPreviewTable(validRows);
+
+        // Show error summary
+        if (validationErrors.length > 0) {
+            renderErrorList(validationErrors);
+            document.getElementById('error-summary').classList.remove('d-none');
+            document.getElementById('btn-step2-submit').disabled = true;
+        } else {
+            document.getElementById('btn-step2-submit').disabled = false;
+        }
+    }
+
+    function validateRow(row, idx) {
+        if (!row.sku) {
+            validationErrors.push({ row: idx + 1, sku: row.sku, field: 'SKU', message: '{% trans "不能为空" %}' });
+        }
+
+        if (!Number.isInteger(row.qty_per_box) || row.qty_per_box < 1) {
+            validationErrors.push({ row: idx + 1, sku: row.sku, field: '{% trans "每盒个数" %}', message: '{% trans "必须是大于0的正整数" %}' });
+        }
+
+        if (!Number.isInteger(row.box_per_ctn) || row.box_per_ctn < 1) {
+            validationErrors.push({ row: idx + 1, sku: row.sku, field: '{% trans "每箱盒数" %}', message: '{% trans "必须是大于0的正整数" %}' });
+        }
+    }
+
+    function renderErrorList(errors) {
+        const errorList = document.getElementById('error-list');
+        errorList.textContent = '';
+
+        errors.forEach(e => {
+            const li = document.createElement('li');
+            const skuPart = e.sku ? ' [' + e.sku + ']' : '';
+            li.textContent = (window.i18n?.t('js.row_prefix') || 'Row ') + e.row + (window.i18n?.t('js.row_suffix') || ' row') + skuPart + ' - ' + e.field + ': ' + e.message;
+            errorList.appendChild(li);
+        });
+    }
+
+    function renderPreviewTable(rows) {
+        const tbody = document.getElementById('preview-table-body');
+        tbody.textContent = '';
+
+        // 构建错误索引
+        const errorMap = new Map();
+        validationErrors.forEach(e => {
+            if (!errorMap.has(e.row)) errorMap.set(e.row, new Set());
+            errorMap.get(e.row).add(e.field);
+        });
+
+        rows.forEach((row, idx) => {
+            const rowNum = idx + 1;
+            const tr = document.createElement('tr');
+            const rowErrors = errorMap.get(rowNum);
+
+            if (rowErrors) {
+                tr.style.background = 'rgba(220, 53, 69, 0.12)';
+            }
+
+            // SKU
+            const skuTd = document.createElement('td');
+            skuTd.textContent = row.sku;
+            if (rowErrors && rowErrors.has('SKU')) {
+                skuTd.classList.add('text-danger', 'fw-bold');
+            }
+            tr.appendChild(skuTd);
+
+            // QTY/BOX
+            const qtyTd = document.createElement('td');
+            qtyTd.textContent = row.qty_per_box || '-';
+            if (rowErrors && rowErrors.has((window.i18n?.t('js.qty_per_box') || 'Qty per box'))) {
+                qtyTd.classList.add('text-danger', 'fw-bold');
+            }
+            tr.appendChild(qtyTd);
+
+            // BOX/CTN
+            const ctnTd = document.createElement('td');
+            ctnTd.textContent = row.box_per_ctn || '-';
+            if (rowErrors && rowErrors.has((window.i18n?.t('js.boxes_per_carton') || 'Boxes per carton'))) {
+                ctnTd.classList.add('text-danger', 'fw-bold');
+            }
+            tr.appendChild(ctnTd);
+
+            // 预计文件名
+            const filenameTd = document.createElement('td');
+            filenameTd.classList.add('text-info');
+            filenameTd.textContent = row.sku + '.' + row.qty_per_box + '->' + row.box_per_ctn + '.pdf';
+            tr.appendChild(filenameTd);
+
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('preview-row-count').textContent = rows.length;
+        document.getElementById('preview-table-wrapper').classList.remove('d-none');
+    }
+
+    // ============================================================
+    // Submit
+    // ============================================================
+    function triggerAuthAndSubmit() {
+        return new Promise((resolve) => {
+            requestPasswordVerify(
+                'btn_generate_barcode',
+                function (passwords) {
+                    for (const [slot, code] of Object.entries(passwords)) {
+                        const input = document.querySelector('input[name="sec_code_' + slot + '"]');
+                        if (input) input.value = code;
+                    }
+                    wizard.goToStep('execute');
+                    executeSubmit();
+                    resolve(false);
+                },
+                document.getElementById('barcode-submit-form'),
+                (window.i18n?.t('js.generate_barcode') || 'Generate Barcode'),
+                function () {
+                    console.log('Submit cancelled');
+                    resolve(false);
+                }
+            );
+        });
+    }
+
+    function executeSubmit() {
+        const form = document.getElementById('barcode-submit-form');
+        const formData = new FormData(form);
+        formData.set('barcode_data', JSON.stringify(validRows));
+
+        fetch('{% url "web_ui:products:generate_barcode" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            wizard.goToStep('done');
+            if (data.success) {
+                renderSuccessResult(data.data);
+            } else {
+                showErrorResult(data.message || '{% trans "生成失败，请重试" %}');
+            }
+        })
+        .catch(error => {
+            wizard.goToStep('done');
+            showErrorResult('{% trans "网络错误，请检查连接后重试" %}');
+            console.error('Submit error:', error);
+        });
+    }
+
+    function renderSuccessResult(data) {
+        document.getElementById('result-success-count').textContent = data.success_count || 0;
+        document.getElementById('result-fail-count').textContent = data.fail_count || 0;
+        document.getElementById('result-total-files').textContent = data.files?.length || 0;
+        // 同时更新左侧操作栏的文件数显示
+        document.getElementById('file-count-display').textContent = data.files?.length || 0;
+
+        // 显示失败项
+        if (data.fail_items && data.fail_items.length > 0) {
+            const failList = document.getElementById('fail-items-list');
+            failList.textContent = '';
+            data.fail_items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item.sku + ': ' + item.error;
+                failList.appendChild(li);
+            });
+            document.getElementById('fail-items-section').classList.remove('d-none');
+        } else {
+            document.getElementById('fail-items-section').classList.add('d-none');
+        }
+
+        // 渲染文件列表
+        renderFileList(data.files || []);
+
+        document.getElementById('success-result').classList.remove('d-none');
+        document.getElementById('error-result').classList.add('d-none');
+        createAndShowToast(i18n.t('toast.barcode_generated'), 'success');
+    }
+
+    function renderFileList(files) {
+        const container = document.getElementById('file-list');
+        container.textContent = '';
+
+        if (files.length === 0) {
+            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i><p class="text-white-50 mb-0" data-i18n="ui.text_189">暂无文件</p></div>';
+            return;
+        }
+
+        files.forEach((file, index) => {
+            const displayName = file.display_name || file.filename || 'unknown.pdf';
+            
+            // 使用后端提供的 relative_path 构建 URL
+            const relativePath = file.relative_path || displayName;
+            const encodedPath = relativePath.split('/').map(s => encodeURIComponent(s)).join('/');
+            const viewUrl = '/dashboard/products/barcode/view/' + encodedPath;
+            const downloadUrl = '/dashboard/products/barcode/download/' + encodedPath;
+            
+            // Report Center风格的行布局
+            const item = document.createElement('div');
+            item.className = 'list-group-item bg-transparent border-secondary border-opacity-25 d-flex align-items-center p-3';
+            
+            item.innerHTML = 
+                // 左侧按钮组
+                '<div class="btn-group me-3 flex-shrink-0 shadow">' +
+                    // 查看按钮 - 跳转到 PDF 查看页面
+                    '<a href="' + viewUrl + '" ' +
+                       'class="btn btn-sm btn-danger text-white fw-bold" data-i18n-title="tooltip.t5679" title="View PDF" data-testid="btn-view-' + index + '">' +
+                        '<i class="fas fa-file-pdf me-1"></i>' + (window.i18n?.t('js.view') || 'View') +
+                    '</a>' +
+                    // 下载按钮
+                    '<a href="' + downloadUrl + '" download ' +
+                       'class="btn btn-sm btn-success" data-i18n-title="tooltip.t2982" title="Download File" data-testid="btn-download-' + index + '">' +
+                        '<i class="fas fa-download me-1"></i>' + (window.i18n?.t('js.download') || 'Download') +
+                    '</a>' +
+                '</div>' +
+                // 右侧文件信息
+                '<div class="d-flex align-items-center flex-grow-1 min-w-0">' +
+                    '<i class="fas fa-file-pdf text-danger fa-lg me-3 flex-shrink-0"></i>' +
+                    '<div class="text-truncate">' +
+                        '<span class="text-white fw-bold">' + displayName + '</span>' +
+                        '<br>' +
+                        '<small class="text-muted font-monospace">' + formatFileSize(file.size) + '</small>' +
+                    '</div>' +
+                '</div>';
+            
+            container.appendChild(item);
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function showErrorResult(message) {
+        document.getElementById('error-result-message').textContent = message;
+        document.getElementById('success-result').classList.add('d-none');
+        document.getElementById('error-result').classList.remove('d-none');
+        createAndShowToast(message, 'error');
+    }
+
+    // ============================================================
+    // Button Handlers
+    // ============================================================
+    document.getElementById('btn-step1-next').addEventListener('click', function () {
+        wizard.next();
+    });
+
+    document.getElementById('btn-step2-back').addEventListener('click', function () {
+        wizard.goToStep('input');
+    });
+
+    document.getElementById('btn-step2-submit').addEventListener('click', function () {
+        wizard.next();
+    });
+
+    document.getElementById('btn-new-round').addEventListener('click', function () {
+        location.reload();
+    });
+
+    document.getElementById('btn-download-all').addEventListener('click', function () {
+        window.location.href = '{% url "web_ui:products:download_all_barcodes" %}';
+    });
+
+    document.getElementById('btn-clear-all').addEventListener('click', function () {
+        if (!confirm('{% trans "确定要清空所有已生成的条形码文件吗？此操作不可撤销。" %}')) {
+            return;
+        }
+
+        fetch('{% url "web_ui:products:clear_barcodes" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createAndShowToast(data.message, 'success');
+                document.getElementById('file-list').innerHTML = '<div class="text-center py-4"><i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i><p class="text-white-50 mb-0" data-i18n="ui.text_189">暂无文件</p></div>';
+                document.getElementById('result-total-files').textContent = '0';
+                document.getElementById('file-count-display').textContent = '0';
+            } else {
+                createAndShowToast(data.message || i18n.t('toast.clear_failed'), 'error');
+            }
+        })
+        .catch(error => {
+            createAndShowToast(i18n.t('toast.network_error'), 'error');
+            console.error('Clear error:', error);
+        });
+    });
+
+    // ============================================================
+    // 页面离开清理机制 (智能版)
+    // 当用户离开页面时自动清理临时生成的条形码文件
+    // 但跳转到 PDF 查看页面时不清理
+    // ============================================================
+    let isNavigatingToViewer = false;  // 标记是否正在跳转到查看页面
+    
+    function cleanupOnLeave() {
+        // 如果正在跳转到查看页面，不清理
+        if (isNavigatingToViewer) {
+            console.log('[Barcode] Skip cleanup - navigating to viewer');
+            return;
+        }
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) return;
+        
+        console.log('[Barcode] Cleaning up barcode files on leave');
+        
+        // 使用 sendBeacon 发送异步请求（在页面关闭时可靠执行）
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        navigator.sendBeacon('{% url "web_ui:products:clear_barcodes" %}', formData);
+    }
+    
+    // 拦截所有指向查看页面的链接点击
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a[href*="/barcode/view/"]');
+        if (link) {
+            isNavigatingToViewer = true;
+            console.log('[Barcode] Detected navigation to viewer, cleanup disabled');
+        }
+    });
+    
+    // 监听页面离开事件
+    window.addEventListener('pagehide', cleanupOnLeave);
+    
+    // 监听 visibilitychange 事件作为备用（用户切换标签页长时间后可能关闭）
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            // 如果正在跳转到查看页面，不设置清理
+            if (isNavigatingToViewer) {
+                return;
+            }
+            // 用户切换离开时，设置延迟清理
+            // 如果用户在短时间内返回，则不清理
+            window._barcodeCleanupTimeout = setTimeout(function() {
+                cleanupOnLeave();
+            }, 60000); // 60秒后清理（给用户足够时间返回）
+        } else if (document.visibilityState === 'visible') {
+            // 用户返回，取消清理
+            if (window._barcodeCleanupTimeout) {
+                clearTimeout(window._barcodeCleanupTimeout);
+                window._barcodeCleanupTimeout = null;
+            }
+            // 重置跳转标记
+            isNavigatingToViewer = false;
+        }
+    });
+});
+</script>
+{% endblock %}

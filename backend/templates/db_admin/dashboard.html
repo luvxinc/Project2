@@ -1,0 +1,528 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+{% load security_tags %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-white-50 mb-0 small" data-i18n="db_admin.hub_desc">
+                管理系统备份、恢复点以及数据生命周期策略。
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 backdrop-blur">
+                <i class="fas fa-shield-alt me-1"></i> <span data-i18n="db_admin.module">安全模块</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Module Hub Menu -->
+    {% with hub_id="db-admin-hub" hub_items=hub_items module_icon="fas fa-database" module_title="Database Admin (DB
+    Admin)" %}
+    {% include "components/module_hub.html" %}
+    {% endwith %}
+
+    <!-- Tabs Header (Hidden by default via Hub logic, but kept for Bootstrap/HTMX targeting) -->
+    <div class="glass-card p-2 mb-4 d-none">
+        <ul class="nav nav-pills" id="dbTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active d-flex align-items-center" id="backup-tab" data-bs-toggle="tab"
+                    data-bs-target="#backup" type="button" role="tab" data-hub-target="backup">
+                    <i class="fas fa-cloud-upload-alt me-2"></i><span data-i18n="db_admin.backup">数据备份</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center" id="restore-tab" data-bs-toggle="tab"
+                    data-bs-target="#restore" type="button" role="tab" data-hub-target="restore">
+                    <i class="fas fa-history me-2"></i><span data-i18n="db_admin.restore">数据恢复</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center" id="manage-tab" data-bs-toggle="tab"
+                    data-bs-target="#manage" type="button" role="tab" data-hub-target="manage">
+                    <i class="fas fa-folder-open me-2"></i><span data-i18n="ui.icon_3005">备份管理</span>
+                </button>
+            </li>
+            {% if is_superuser %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-danger d-flex align-items-center" id="delete-tab" data-bs-toggle="tab"
+                    data-bs-target="#delete" type="button" role="tab" data-hub-target="delete">
+                    <i class="fas fa-biohazard me-2"></i><span data-i18n="db_admin.clean">数据清洗</span>
+                </button>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Tabs Content -->
+    <div class="tab-content" id="dbTabsContent">
+
+        <!-- Tab 1: Backup -->
+        <div class="tab-pane fade show active" id="backup" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="glass-card p-4 shadow-lg">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                                <i class="fas fa-save fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-white mb-1" data-i18n="ui.text_4">创建系统备份</h5>
+                                <p class="text-white-50 small mb-0" data-i18n="ui.text_5">生成当前数据库状态的全量 SQL 转储快照。</p>
+                            </div>
+                        </div>
+
+                        <form hx-post="{% url request.resolver_match.namespace|add:':create_backup' %}"
+                            hx-target="#backup-result" hx-indicator="#global-progress"
+                            hx-disabled-elt="find button[type='submit']">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold"
+                                    data-i18n="ui.text_6">备份标签 (必填)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-white-50"><i
+                                            class="fas fa-tag"></i></span>
+                                    <input type="text" name="tag"
+                                        class="form-control bg-dark text-white border-secondary"
+                                        data-i18n-placeholder="form.placeholder.generic_1" placeholder="例如：系统升级前_v2"
+                                        required>
+                                </div>
+                                <div class="form-text text-white-50 small mt-2">
+                                    <i class="fas fa-info-circle me-1"></i><span data-i18n="ui.icon_3007">文件名格式:</span>
+                                    <code>YYYYMMDD_HHMMSS_TAG.sql</code>
+                                </div>
+                            </div>
+
+                            <!-- Security Gate -->
+                            <div class="mb-4">
+                                {% security_inputs 'btn_create_backup' %}
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                {% if perms.can_backup %}
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                    <span class="spinner-border spinner-border-sm htmx-indicator me-2"
+                                        id="backup-spinner" role="status" aria-hidden="true"></span>
+                                    <i class="fas fa-play me-2"></i><span data-i18n="ui.icon_3008"><span
+                                            data-i18n="ui.execute">执行</span>备份</span>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-secondary btn-lg" disabled>
+                                    <i class="fas fa-lock me-2"></i><span data-i18n="api.forbidden">权限不足</span>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </form>
+                        <div id="backup-result" class="mt-4"></div>
+
+                        <!-- Progress Bar Container -->
+                        <div id="backup-progress-container" class="mt-3 d-none">
+                            <label class="small text-white-50 mb-1" id="backup-status-text">Ready</label>
+                            <div class="progress bg-dark border border-secondary" style="height: 10px;">
+                                <div id="backup-progress-bar"
+                                    class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+                                    role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.body.addEventListener('htmx:afterRequest', function (evt) {
+                                if (evt.detail.elt.getAttribute('hx-post') && evt.detail.elt.getAttribute('hx-post').includes('create_backup')) {
+                                    // Start Polling
+                                    // Ideally, the backend should return the task_key in the response headers or initiate polling
+                                    // For now, we simulate UI feedback or rely on future enhancement
+                                }
+                            });
+
+                            // Simple Poller Function to be called if we had the key
+                            function startPolling(key, barId, statusId) {
+                                const bar = document.getElementById(barId);
+                                const status = document.getElementById(statusId);
+                                const container = bar.closest('.d-none');
+                                if (container) container.classList.remove('d-none');
+
+                                const interval = setInterval(() => {
+                                    fetch(`/api/sys/task_progress?key=${key}`)
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            bar.style.width = data.percent + '%';
+                                            if (status) status.innerText = data.status;
+                                            if (data.percent >= 100) clearInterval(interval);
+                                        });
+                                }, 1000);
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Restore -->
+        <div class="tab-pane fade" id="restore" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="glass-card p-4 shadow-lg">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-warning bg-opacity-25 p-3 rounded-circle me-3">
+                                <i class="fas fa-undo-alt fa-2x text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-warning mb-1" data-i18n="ui.text_7">系统恢复</h5>
+                                <p class="text-white-50 small mb-0"><span data-i18n="desc.d168">将数据库回滚到以前的快照。</span>
+                                    <strong data-i18n="ui.text_8">此操作不可逆。</strong></p>
+                            </div>
+                        </div>
+
+                        <form hx-post="{% url request.resolver_match.namespace|add:':restore_backup' %}"
+                            hx-target="#restore-result" hx-indicator="#global-progress"
+                            hx-disabled-elt="find button[type='submit']"
+                            hx-confirm="{% trans 'Warning: This will overwrite all current data with the selected snapshot. This action cannot be undone. Are you sure?' %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label text-white-50 small text-uppercase fw-bold"
+                                    data-i18n="ui.text_9">选择快照</label>
+                                <select name="filename"
+                                    class="form-select bg-dark text-white border-secondary form-select-lg">
+                                    {% for b in backups %}
+                                    <option value="{{ b.filename }}">{{ b.display }}</option>
+                                    {% empty %}
+                                    <option disabled data-i18n="ui.text_1737">无可用备份</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Security Gate -->
+                            <div class="mb-4">
+                                {% security_inputs 'btn_restore_db' %}
+                            </div>
+
+                            <div class="d-grid">
+                                {% if perms.can_restore %}
+                                <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold">
+                                    <i class="fas fa-exclamation-triangle me-2"></i><span
+                                        data-i18n="ui.icon_3010">恢复数据库</span>
+                                </button>
+                                {% else %}
+                                <div class="alert alert-dark border-secondary d-flex align-items-center mb-0">
+                                    <i class="fas fa-lock text-warning me-3"></i>
+                                    <span class="text-white-50" data-i18n="ui.text_10">需要超级用户权限才能恢复。</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </form>
+                        <div id="restore-result" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Manage (备份管理) -->
+        <div class="tab-pane fade" id="manage" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="glass-card p-4 shadow-lg">
+                        <!-- Header -->
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                                    <i class="fas fa-folder-open fa-2x text-info"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-white mb-1" data-i18n="db_admin.manage">备份管理</h5>
+                                    <p class="text-white-50 small mb-0" data-i18n="ui.text_12">查看、管理和批量删除历史备份文件。</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="text-end">
+                                    <span
+                                        class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-2">
+                                        <i class="fas fa-database me-1"></i>
+                                        共 <strong>{{ backups|length }}</strong> 个备份
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="border-secondary border-opacity-25 my-4">
+
+                        <form hx-post="{% url request.resolver_match.namespace|add:':batch_delete_backups' %}"
+                            hx-target="#batch-delete-result" hx-indicator="#global-progress">
+                            {% csrf_token %}
+
+                            <!-- Backup List (First: select files) -->
+                            <div class="glass-card p-0 overflow-hidden border border-secondary border-opacity-25 mb-4">
+                                <div class="table-responsive" style="max-height: 55vh;">
+                                    <table class="table table-hover table-dark mb-0 align-middle">
+                                        <thead class="bg-black bg-opacity-50 sticky-top">
+                                            <tr>
+                                                <th class="ps-4 py-3" style="width: 50px;">
+                                                    <input type="checkbox"
+                                                        class="form-check-input bg-dark border-secondary"
+                                                        id="select-all-backups" onchange="toggleAllBackups(this)">
+                                                </th>
+                                                <th class="text-uppercase text-muted small fw-bold"
+                                                    data-i18n="ui.text_2007">快照信息</th>
+                                                <th class="text-uppercase text-muted small fw-bold text-center"
+                                                    style="width: 120px;" data-i18n="ui.text_2008">大小</th>
+                                                <th class="text-end pe-4 text-uppercase text-muted small fw-bold"
+                                                    style="width: 100px;" data-i18n="common.operation">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for b in backups %}
+                                            <tr class="border-bottom border-secondary border-opacity-10"
+                                                id="row-{{ forloop.counter }}">
+                                                <td class="ps-4">
+                                                    <input type="checkbox" name="selected_files"
+                                                        value="{{ b.filename }}"
+                                                        class="form-check-input bg-dark border-secondary backup-check"
+                                                        onchange="updateBatchBtn()">
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                                                            <i class="fas fa-file-archive text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-white fw-bold">{{ b.display }}</span>
+                                                            <div class="text-white-50 small">{{ b.filename }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-secondary bg-opacity-50 text-white-50">{{
+                                                        b.size_kb }}</span>
+                                                </td>
+
+                                                <td class="text-end pe-4">
+                                                    {% if perms.can_manage %}
+                                                    <button class="btn btn-sm btn-outline-danger" type="button"
+                                                        onclick="openDeleteModal('{{ b.filename }}', '{{ b.display }}')"
+                                                        data-i18n-title="tooltip.t8525" title="删除此备份">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                    {% else %}
+                                                    <span class="text-muted" data-i18n-title="common.no_permission"
+                                                        title="无权限"><i class="fas fa-lock"></i></span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-center py-5">
+                                                    <div class="py-4">
+                                                        <i
+                                                            class="fas fa-inbox fa-4x text-secondary opacity-25 mb-4"></i>
+                                                        <h5 class="text-white-50 mb-2" data-i18n="ui.text_13">暂无备份文件
+                                                        </h5>
+                                                        <p class="text-muted small mb-0" data-i18n="ui.text_14">
+                                                            请前往「数据备份」创建您的第一个系统快照
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Security Gate (Below the list) -->
+                            <div class="mb-4">
+                                {% security_inputs 'btn_delete_backup' %}
+                            </div>
+
+                            <!-- Action Button (Full width at bottom) -->
+                            <div class="d-grid">
+                                {% if perms.can_manage %}
+                                <button type="submit" class="btn btn-danger btn-lg" id="batch-del-btn" disabled
+                                    hx-confirm="{% trans 'Are you sure you want to delete the selected backups? This cannot be undone.' %}">
+                                    <span class="spinner-border spinner-border-sm htmx-indicator me-2" role="status"
+                                        aria-hidden="true"></span>
+                                    <i class="fas fa-trash-alt me-2"></i><span data-i18n="ui.icon_3011">批量删除选中项</span>
+                                    <span class="badge bg-white text-danger ms-2" id="batch-count">0</span>
+                                </button>
+
+                                {% else %}
+                                <button type="button" class="btn btn-secondary btn-lg" disabled>
+                                    <i class="fas fa-lock me-2"></i><span data-i18n="ui.icon_3012">权限不足</span>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <div id="batch-delete-result" class="mt-4"></div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function toggleAllBackups(source) {
+                    document.querySelectorAll('.backup-check').forEach(cb => {
+                        cb.checked = source.checked;
+                    });
+                    updateBatchBtn();
+                }
+
+                function updateBatchBtn() {
+                    const count = document.querySelectorAll('.backup-check:checked').length;
+                    const btn = document.getElementById('batch-del-btn');
+                    const countBadge = document.getElementById('batch-count');
+                    btn.disabled = count === 0;
+                    countBadge.textContent = count;
+                }
+
+                // Keep Tab Active Logic
+                document.body.addEventListener('htmx:afterOnLoad', function (evt) {
+                    if (evt.detail.xhr.getResponseHeader('HX-Trigger') === 'batchDeleteSuccess') {
+                        window.location.hash = "manage";
+                        window.location.reload();
+                    }
+                });
+
+                // On load, verify hash and activate tab
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (window.location.hash === "#manage") {
+                        var triggerEl = document.querySelector('#manage-tab');
+                        if (triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+                    }
+                });
+            </script>
+        </div>
+
+
+        {% if is_superuser %}
+        <!-- Tab 4: Delete Data -->
+        <div class="tab-pane fade" id="delete" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="glass-card p-4 shadow-lg">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-danger bg-opacity-25 p-3 rounded-circle me-3">
+                                <i class="fas fa-skull-crossbones fa-2x text-danger"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-danger mb-1" data-i18n="ui.text_15">数据清洗 (物理删除)</h5>
+                                <p class="text-white-50 small mb-0"><span data-i18n="ui.text_1670">物理擦除指定日期范围内的数据。</span>
+                                    <strong data-i18n="ui.text_16">仅限合规需求操作。</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="alert alert-danger bg-opacity-10 border-danger border-opacity-25 d-flex align-items-center mb-4">
+                            <i class="fas fa-radiation text-danger me-3 fs-4"></i>
+                            <span class="small" data-i18n="ui.text_17">危险：此操作将绕过所有软删除机制。删除的数据在没有备份的情况下无法恢复。</span>
+                        </div>
+
+                        <form hx-post="{% url request.resolver_match.namespace|add:':clean_data' %}"
+                            hx-target="#clean-result" hx-indicator="#global-progress"
+                            hx-disabled-elt="find button[type='submit']"
+                            hx-confirm="{% trans 'SEVERE WARNING: You are about to permanently delete data. This action is logged and audited. Are you absolutely sure?' %}">
+                            {% csrf_token %}
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-white-50 small text-uppercase"
+                                        data-i18n="reports_gen.start_date">开始日期</label>
+                                    <input type="date" name="start_date"
+                                        class="form-control bg-dark text-white border-secondary" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-white-50 small text-uppercase"
+                                        data-i18n="reports_gen.end_date">结束日期</label>
+                                    <input type="date" name="end_date"
+                                        class="form-control bg-dark text-white border-secondary" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label text-white-50 small text-uppercase" data-i18n="ui.text_20">审计原因
+                                    (必填)</label>
+                                <textarea name="reason"
+                                    class="form-control bg-dark text-white border-secondary font-monospace" rows="3"
+                                    data-i18n-placeholder="form.placeholder.generic_0"
+                                    placeholder="例如：GDPR 请求编号 #1234 - 被遗忘权" required></textarea>
+                            </div>
+
+                            <!-- Security Gate -->
+                            <div class="mb-4">
+                                {% security_inputs 'btn_clean_data' %}
+                            </div>
+
+                            <div class="d-grid">
+                                {% if perms.can_delete %}
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-eraser me-2"></i><span data-i18n="ui.icon_3013"><span
+                                            data-i18n="ui.execute">执行</span>数据擦除</span>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-secondary btn-lg" disabled
+                                    data-i18n="api.forbidden">权限不足</button>
+                                {% endif %}
+                            </div>
+                        </form>
+                        <div id="clean-result" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <!-- Shared Loading Indicator Component -->
+        {% include "components/ui_loader.html" %}
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteBackupModal" data-bs-focus="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content glass-card border-danger border-top border-4">
+                    <div class="modal-header border-bottom border-white border-opacity-10">
+                        <h5 class="modal-title text-danger"><i class="fas fa-trash-alt me-2"></i><span
+                                data-i18n="ui.icon_3014">确认删除</span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-white" data-i18n="ui.text_22">确定要永久删除此备份吗？</p>
+                        <div class="alert alert-dark border border-secondary d-flex align-items-center mb-3">
+                            <i class="fas fa-file-archive text-primary me-3 fs-3"></i>
+                            <div>
+                                <span class="d-block text-white fw-bold" id="delModalDisplay"></span>
+                                <span class="small text-muted font-monospace" id="delModalFilenameStub"
+                                    style="filter: blur(4px);">hidden_filename.sql</span>
+                            </div>
+                        </div>
+
+                        <form hx-post="{% url request.resolver_match.namespace|add:':delete_backup' %}"
+                            hx-target="#delete-msg-zone" hx-indicator="#global-progress"
+                            hx-disabled-elt="find button[type='submit']">
+                            {% csrf_token %}
+                            <input type="hidden" name="filename" id="delModalFilename">
+
+                            <div class="mb-3">
+                                {% security_inputs 'btn_delete_backup' %}
+                            </div>
+
+                            <div id="delete-msg-zone"></div>
+
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal"
+                                    data-i18n="common.cancel">取消</button>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-bomb me-2"></i><span data-i18n="reports_gen.start_engine">确认删除</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openDeleteModal(filename, display) {
+                document.getElementById('delModalFilename').value = filename;
+                document.getElementById('delModalDisplay').innerText = display;
+                var myModal = new bootstrap.Modal(document.getElementById('deleteBackupModal'));
+                myModal.show();
+            }
+        </script>
+    </div>
+    {% endblock %}

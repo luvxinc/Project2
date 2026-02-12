@@ -1,0 +1,571 @@
+{% load i18n %}
+<!-- 预付款向导主容器 -->
+<!-- File: backend/templates/finance/pages/partials/prepay_wizard.html -->
+
+<div id="prepay-wizard-view" style="display: none;">
+    <div class="glass-card p-4 shadow-lg" id="prepay-wizard-container">
+        <!-- Wizard Header -->
+        <div class="wizard-header d-flex flex-column mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-wallet fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="ui.text_1381">新增预付款向导</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_1382">为供应商添加预付款记录</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="closePrepayWizard()">
+                    <i class="fas fa-times me-1"></i><span data-i18n="common.cancel">取消</span>
+                </button>
+            </div>
+            <hr class="border-secondary border-opacity-25 my-4 w-100">
+        </div>
+        
+        <!-- StepBar 锚点：GlobalWizard 会将步骤条注入到此 div 内 -->
+        <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+        
+        <!-- 各步骤内容 (通过 include 引入，每个文件包含自己的 wrapper div) -->
+        {% include "finance/pages/partials/prepay_step1_intro.html" %}
+        {% include "finance/pages/partials/prepay_step2_form.html" %}
+        {% include "finance/pages/partials/prepay_step3_confirm.html" %}
+        {% include "finance/pages/partials/prepay_step4_complete.html" %}
+    </div>
+</div>
+
+<script>
+// ========================================
+// 预付款向导 - JavaScript
+// ========================================
+
+// 预付款表单状态
+window.prepayFormData = {
+    supplierCode: '',
+    supplierName: '',
+    supplierCurrency: '',
+    date: '',
+    currency: '',
+    amount: 0,
+    rate: 0,
+    rateSource: 'manual', // 'auto' or 'manual'
+    note: ''
+};
+
+// 预付款向导实例
+let prepayWizardInstance = null;
+
+/**
+ * 打开预付款向导
+ */
+function openPrepayWizard(supplierCode, supplierName, supplierCurrency) {
+    // 保存供应商信息
+    window.prepayFormData.supplierCode = supplierCode;
+    window.prepayFormData.supplierName = supplierName;
+    window.prepayFormData.supplierCurrency = supplierCurrency;
+    
+    // 填充供应商信息显示 (hidden inputs)
+    document.getElementById('prepay-supplier-code').value = supplierCode;
+    document.getElementById('prepay-supplier-name').value = supplierName;
+    document.getElementById('prepay-supplier-currency').value = supplierCurrency;
+    // 填充供应商信息显示 (名片式 div 元素)
+    document.getElementById('prepay-supplier-code-display').textContent = supplierCode;
+    document.getElementById('prepay-supplier-name-display').textContent = supplierName;
+    document.getElementById('prepay-supplier-currency-display').textContent = supplierCurrency;
+    
+    // 设置默认日期为今天
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('prepay-date').value = today;
+    window.prepayFormData.date = today;
+    
+    // 清空其他字段
+    document.getElementById('prepay-currency').value = '';
+    document.getElementById('prepay-amount').value = '';
+    document.getElementById('prepay-note').value = '';
+    document.getElementById('prepay-form-error').style.display = 'none';
+    
+    // 重置汇率组件（如果已初始化）
+    if (prepayRateComponent) {
+        prepayRateComponent.reset();
+    }
+    
+    // 显示向导视图，隐藏主内容
+    document.getElementById('prepay-wizard-view').style.display = 'block';
+    document.getElementById('prepay-list-view').style.display = 'none';
+    
+    // 初始化向导
+    initPrepayWizard();
+}
+
+/**
+ * 关闭预付款向导
+ */
+function closePrepayWizard() {
+    document.getElementById('prepay-wizard-view').style.display = 'none';
+    document.getElementById('prepay-list-view').style.display = 'flex';
+    
+    // 销毁向导实例
+    if (prepayWizardInstance) {
+        prepayWizardInstance.destroy();
+        prepayWizardInstance = null;
+    }
+}
+
+/**
+ * 关闭向导并刷新
+ */
+function closePrepayWizardAndRefresh() {
+    closePrepayWizard();
+    loadSupplierBalances();
+    
+    // 如果有选中的供应商，刷新交易列表
+    if (window.currentSupplierCode) {
+        loadTransactions(window.currentSupplierCode, '');
+    }
+}
+
+/**
+ * 初始化预付款向导
+ */
+function initPrepayWizard() {
+    // 销毁旧实例
+    if (prepayWizardInstance) {
+        prepayWizardInstance.destroy();
+        prepayWizardInstance = null;
+    }
+    
+    // 检查 GlobalWizard 是否可用
+    if (typeof GlobalWizard === 'undefined') {
+        console.error('[PrepayWizard] GlobalWizard not available');
+        return;
+    }
+    
+    // 创建新实例
+    prepayWizardInstance = new GlobalWizard({
+        containerId: 'prepay-wizard-container',
+        steps: [
+            { id: 'intro', label: (window.i18n?.t('js.operation_notes') || 'Operation Notes'), contentSelector: '#prepay-step-intro' },
+            { id: 'form', label: (window.i18n?.t('js.payment_details') || 'Payment Details'), contentSelector: '#prepay-step-form' },
+            { id: 'confirm', label: (window.i18n?.t('js.verification_info') || 'Verification Info'), contentSelector: '#prepay-step-confirm' },
+            { id: 'complete', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#prepay-step-complete' }
+        ],
+        
+        onStepChange: (fromStep, toStep) => {
+            // 进入确认步骤时填充数据
+            if (prepayWizardInstance.steps[toStep].id === 'confirm') {
+                populateConfirmStep();
+            }
+        },
+        
+        onBeforeNext: async (currentStep) => {
+            // Step 2 表单验证
+            if (currentStep.id === 'form') {
+                return validatePrepayForm();
+            }
+            // Step 3 需要密码验证后才能提交
+            if (currentStep.id === 'confirm') {
+                return await submitPrepayWithAuth();
+            }
+            return true;
+        },
+        
+        onComplete: () => {},
+        onRestart: () => {}
+    });
+    
+    // 初始化汇率组件
+    initPrepayRateComponent();
+    
+    // 绑定按钮事件
+    bindPrepayWizardButtons();
+}
+
+// 预付款汇率组件实例
+let prepayRateComponent = null;
+
+/**
+ * 初始化预付款汇率组件
+ */
+function initPrepayRateComponent() {
+    if (prepayRateComponent) return;
+    
+    prepayRateComponent = new GlobalExchangeRate({
+        container: '#prepay-rate-container',
+        inputId: 'prepay-rate',
+        apiUrl: '{% url "web_ui:purchase:po_exchange_rate" %}',
+        defaultRate: 7.25,
+        showSourceTag: true,
+        showStatusText: true,
+        showFetchButton: true,
+        dateInputSelector: '#prepay-date',
+        placeholder: (window.i18n?.t('js.example_rate') || 'e.g. 7.2345'),
+        modalFallback: true,
+        inputClass: 'form-control bg-dark border-secondary text-white',
+        onChange: (rate, source) => {
+            // 更新全局数据
+            window.prepayFormData.rate = rate;
+            window.prepayFormData.rateSource = source === 'A' ? 'auto' : 'manual';
+        },
+        onFetchSuccess: (rate) => {
+            console.log('[PrepayWizard] Rate fetched:', rate);
+        },
+        onFetchError: (error) => {
+            console.warn('[PrepayWizard] Rate fetch failed:', error);
+        }
+    });
+}
+
+/**
+ * 绑定向导按钮事件
+ */
+function bindPrepayWizardButtons() {
+    // Step 1
+    document.getElementById('prepay-btn-step1-next')?.addEventListener('click', () => prepayWizardInstance.next());
+    
+    // Step 2
+    document.getElementById('prepay-btn-step2-back')?.addEventListener('click', () => prepayWizardInstance.back());
+    document.getElementById('prepay-btn-step2-next')?.addEventListener('click', () => prepayWizardInstance.next());
+    
+    // Step 3
+    document.getElementById('prepay-btn-step3-back')?.addEventListener('click', () => prepayWizardInstance.back());
+    document.getElementById('prepay-btn-step3-confirm')?.addEventListener('click', () => prepayWizardInstance.next());
+    
+    // Step 4
+    document.getElementById('prepay-btn-close')?.addEventListener('click', () => closePrepayWizard());
+    document.getElementById('prepay-btn-complete')?.addEventListener('click', () => closePrepayWizardAndRefresh());
+}
+
+/**
+ * 预付款日期变更
+ */
+function onPrepayDateChange() {
+    const date = document.getElementById('prepay-date').value;
+    window.prepayFormData.date = date;
+    
+    // 重置汇率组件
+    if (prepayRateComponent) {
+        prepayRateComponent.reset();
+    }
+}
+
+/**
+ * 汇率输入变化
+ */
+function onPrepayRateInput() {
+    // 由组件自动处理
+}
+
+/**
+ * 自动获取汇率
+ */
+function fetchPrepayRate() {
+    // 调用组件的获取方法
+    if (prepayRateComponent) {
+        prepayRateComponent.fetchRate();
+    }
+}
+
+/**
+ * 更新汇率来源标签
+ */
+function updatePrepayRateSourceTag(source) {
+    // 由组件自动管理
+}
+
+/**
+ * 验证预付款表单
+ */
+function validatePrepayForm() {
+    const errorEl = document.getElementById('prepay-form-error');
+    const errorText = document.getElementById('prepay-form-error-text');
+    
+    const date = document.getElementById('prepay-date').value;
+    const currency = document.getElementById('prepay-currency').value;
+    const amount = parseFloat(document.getElementById('prepay-amount').value);
+    const note = document.getElementById('prepay-note').value.trim();
+    
+    // 从组件获取汇率
+    const rateData = prepayRateComponent ? prepayRateComponent.getValue() : { rate: 0, source: '-' };
+    const rate = rateData.rate;
+    
+    let errors = [];
+    
+    if (!date) errors.push((window.i18n?.t('js.select_prepay_date') || 'Select Prepay Date'));
+    if (!currency) errors.push((window.i18n?.t('js.select_prepay_currency') || 'Select Prepay Currency'));
+    if (!amount || amount <= 0) errors.push((window.i18n?.t('js.enter_valid_prepay') || 'Enter valid prepay amount'));
+    if (amount && !Number.isFinite(amount)) errors.push((window.i18n?.t('js.amount_format_error') || 'Amount format error'));
+    if (amount && (Math.round(amount * 100) / 100 !== amount)) errors.push((window.i18n?.t('js.amount_max_2dec') || 'Amount max 2 decimals'));
+    if (!rate || rate <= 0) errors.push((window.i18n?.t('js.enter_valid_rate') || 'Enter valid rate'));
+    if (!note) errors.push((window.i18n?.t('js.fill_prepay_notes') || 'Fill prepay notes'));
+    
+    if (errors.length > 0) {
+        errorText.textContent = errors.join('；');
+        errorEl.style.display = 'block';
+        return false;
+    }
+    
+    errorEl.style.display = 'none';
+    
+    // 保存数据
+    window.prepayFormData.date = date;
+    window.prepayFormData.currency = currency;
+    window.prepayFormData.amount = amount;
+    window.prepayFormData.rate = rate;
+    window.prepayFormData.rateSource = rateData.source === 'A' ? 'auto' : 'manual';
+    window.prepayFormData.note = note;
+    
+    return true;
+}
+
+/**
+ * 填充确认步骤
+ */
+function populateConfirmStep() {
+    const data = window.prepayFormData;
+    
+    document.getElementById('confirm-supplier-code').textContent = data.supplierCode;
+    document.getElementById('confirm-supplier-name').textContent = data.supplierName;
+    document.getElementById('confirm-supplier-currency').textContent = data.supplierCurrency;
+    document.getElementById('confirm-date').textContent = data.date;
+    document.getElementById('confirm-currency').textContent = data.currency;
+    document.getElementById('confirm-amount').textContent = `${data.currency} ${data.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+    document.getElementById('confirm-rate').textContent = data.rate.toFixed(4);
+    document.getElementById('confirm-rate-source').textContent = data.rateSource === 'auto' ? (window.i18n?.t('js.auto_fetch') || 'Auto Fetch') : (window.i18n?.t('js.manual_input') || 'Manual Input');
+    document.getElementById('confirm-note').textContent = data.note;
+    
+    // 货币转换提示
+    const conversionNotice = document.getElementById('currency-conversion-notice');
+    const conversionText = document.getElementById('currency-conversion-text');
+    
+    if (data.currency !== data.supplierCurrency) {
+        let converted;
+        if (data.supplierCurrency === 'RMB') {
+            converted = data.amount * data.rate;
+            conversionText.textContent = `付款货币 (${data.currency}) 与结算货币 (${data.supplierCurrency}) 不同，系统将按汇率 ${data.rate.toFixed(4)} 转换为 ¥${converted.toFixed(2)} 计入账户。`;
+        } else {
+            converted = data.amount / data.rate;
+            conversionText.textContent = `付款货币 (${data.currency}) 与结算货币 (${data.supplierCurrency}) 不同，系统将按汇率 ${data.rate.toFixed(4)} 转换为 $${converted.toFixed(2)} 计入账户。`;
+        }
+        conversionNotice.style.display = 'block';
+    } else {
+        conversionNotice.style.display = 'none';
+    }
+}
+
+// ========================================
+// Step 3 -> 提交（需密码验证）
+// ========================================
+function submitPrepayWithAuth() {
+    // [FIX] 这个函数返回false以阻止wizard自动前进
+    // 密码验证成功后，由doSubmitPrepayAsync手动调用goToStep前进
+    return new Promise((resolve) => {
+        requestPasswordVerify(
+            'btn_prepay_submit',
+            async (passwords) => {
+                // 密码验证通过，执行提交
+                await doSubmitPrepayAsync(passwords);
+                // 提交完成后，手动前进到Step4
+                prepayWizardInstance.goToStep('complete');
+                resolve(false);  // 返回false防止wizard的next()再次前进
+            },
+            document.getElementById('form-prepay-detail'),
+            (window.i18n?.t('js.add_prepayment') || 'Add Prepayment'),
+            () => {
+                // 用户取消密码验证，保持在Step3
+                resolve(false);  // 返回false阻止wizard前进
+            }
+        );
+    });
+}
+
+async function doSubmitPrepayAsync(passwords) {
+    const data = window.prepayFormData;
+    
+    // 使用 FormData 支持文件上传
+    const formData = new FormData();
+    formData.append('supplier_code', data.supplierCode);
+    formData.append('tran_date', data.date);
+    formData.append('tran_curr_req', data.supplierCurrency);
+    formData.append('tran_curr_use', data.currency);
+    formData.append('usd_rmb', data.rate);
+    formData.append('tran_curr_type', data.rateSource === 'auto' ? 'A' : 'M');
+    formData.append('tran_amount', data.amount);
+    formData.append('tran_note', data.note);
+    
+    // 添加密码
+    if (passwords) {
+        for (const [slot, code] of Object.entries(passwords)) {
+            formData.append(`sec_code_${slot}`, code);
+        }
+    }
+    
+    // 添加文件（如果选择了）
+    if (data.file) {
+        formData.append('file', data.file);
+    }
+    
+    try {
+        const response = await fetch('{% url "web_ui:finance:prepay_submit" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 立即刷新列表数据（后台执行，不阻塞UI）
+            if (typeof loadSupplierBalances === 'function') {
+                loadSupplierBalances();
+            }
+            if (window.currentSupplierCode && typeof loadTransactions === 'function') {
+                loadTransactions(window.currentSupplierCode, '');
+            }
+            
+            renderPrepayFinishPage(true, result.tran_num);
+        } else {
+            renderPrepayFinishPage(false, result.error || (window.i18n?.t('js.check_input_retry') || 'Please check input and retry'));
+        }
+    } catch (err) {
+        console.error('[PrepayWizard] Submit error:', err);
+        renderPrepayFinishPage(false, (window.i18n?.t('js.network_check_retry') || 'Network error, please check and retry'));
+    }
+}
+
+/**
+ * 渲染完成页面（成功/失败）
+ */
+function renderPrepayFinishPage(isSuccess, tranNumOrError) {
+    const data = window.prepayFormData;
+    const statusCard = document.querySelector('#prepay-step-complete .card');
+    const successIcon = document.querySelector('#prepay-step-complete .fa-check-circle');
+    
+    if (isSuccess) {
+        // 成功状态
+        if (statusCard) {
+            statusCard.classList.remove('border-danger');
+            statusCard.classList.add('border-success');
+        }
+        if (successIcon) {
+            successIcon.classList.remove('fa-times-circle', 'text-danger');
+            successIcon.classList.add('fa-check-circle', 'text-success');
+        }
+        document.getElementById('complete-tran-num').textContent = tranNumOrError;
+        document.getElementById('complete-supplier').textContent = `${data.supplierCode} - ${data.supplierName}`;
+        document.getElementById('complete-amount').textContent = `+${data.currency} ${data.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('complete-date').textContent = data.date;
+    } else {
+        // 失败状态
+        if (statusCard) {
+            statusCard.classList.remove('border-success');
+            statusCard.classList.add('border-danger');
+        }
+        if (successIcon) {
+            successIcon.classList.remove('fa-check-circle', 'text-success');
+            successIcon.classList.add('fa-times-circle', 'text-danger');
+        }
+        document.getElementById('complete-tran-num').textContent = (window.i18n?.t('js.submit_failed') || 'Submit Failed');
+        document.getElementById('complete-supplier').textContent = tranNumOrError;
+        document.getElementById('complete-amount').textContent = '--';
+        document.getElementById('complete-date').textContent = '--';
+    }
+}
+
+/**
+ * 获取 CSRF Token
+ */
+function getCsrfToken() {
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    return cookieValue || '';
+}
+
+// ========================================
+// 文件上传相关
+// ========================================
+
+/**
+ * 处理文件选择
+ */
+function handlePrepayFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        setPrepayFile(file);
+    }
+}
+
+/**
+ * 处理文件拖放
+ */
+function handlePrepayFileDrop(event) {
+    event.preventDefault();
+    const zone = document.getElementById('prepay-file-drop-zone');
+    zone.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
+    
+    const file = event.dataTransfer.files[0];
+    if (file) {
+        setPrepayFile(file);
+    }
+}
+
+/**
+ * 设置选中的文件
+ */
+function setPrepayFile(file) {
+    // 验证文件大小 (50MB)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+        if (typeof showToast === 'function') {
+            showToast("{% trans '文件大小超过 50MB 限制' %}", 'error');
+        } else {
+            alert("{% trans '文件大小超过 50MB 限制' %}");
+        }
+        return;
+    }
+    
+    // 验证文件类型
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.heic', '.heif', '.xls', '.xlsx', '.doc', '.docx', '.csv', '.zip', '.rar'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+        if (typeof showToast === 'function') {
+            showToast("{% trans '不支持的文件格式' %}", 'error');
+        } else {
+            alert("{% trans '不支持的文件格式' %}");
+        }
+        return;
+    }
+    
+    // 保存文件引用
+    window.prepayFormData.file = file;
+    
+    // 显示文件预览
+    document.getElementById('prepay-file-placeholder').style.display = 'none';
+    document.getElementById('prepay-file-preview').style.display = 'block';
+    document.getElementById('prepay-file-name').textContent = file.name;
+    document.getElementById('prepay-file-size').textContent = formatFileSize(file.size);
+}
+
+/**
+ * 清除选中的文件
+ */
+function clearPrepayFile() {
+    window.prepayFormData.file = null;
+    document.getElementById('prepay-file-input').value = '';
+    document.getElementById('prepay-file-placeholder').style.display = 'block';
+    document.getElementById('prepay-file-preview').style.display = 'none';
+}
+
+/**
+ * 格式化文件大小
+ */
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+</script>

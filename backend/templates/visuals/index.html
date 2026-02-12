@@ -1,0 +1,182 @@
+{% extends 'layouts/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load security_tags %}
+
+{% block title %}Data Visualization - Sales - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header (对标 user_admin/headers/header_users.html) -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:sales:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="sales.title">Sales</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="visuals.title">Data Visualization</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center mt-2">
+                <div class="bg-warning bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-chart-line fa-2x text-warning"></i>
+                </div>
+                <div>
+                    <h4 class="text-white fw-bold mb-1" data-i18n="visuals.analytics">Data Visualization (Analytics)</h4>
+                    <p class="text-white-50 small mb-0" data-i18n="visuals.analytics_desc">交互式数据可视化与深度分析，支持多维度筛选和图表切换。</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:sales:hub' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="sales.back_to_hub">返回Sales</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div id="visuals-root" class="position-relative w-100" style="min-height: 80vh;">
+
+        {# 未解锁状态：使用公有 GlobalModal 机制 #}
+        {% if not is_unlocked %}
+        <div id="visuals-locked-overlay"
+            class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style="backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); background: rgba(0,0,0,0.6); z-index: 1000; border-radius: 12px;">
+
+            <div class="text-center p-5">
+                <div class="mb-4">
+                    <div class="bg-danger bg-opacity-25 p-4 rounded-circle d-inline-block">
+                        <i class="fas fa-lock fa-3x text-danger"></i>
+                    </div>
+                </div>
+                <h4 class="text-white fw-bold mb-2" data-i18n="visuals.locked">功能已锁定</h4>
+                <p class="text-white-50 mb-4" data-i18n="visuals.locked_desc">此功能需要安全验证后才能访问</p>
+
+                {# 隐藏的 security_inputs（供 GlobalModal 填充） #}
+                <form id="unlock-form" method="post" action="{% url 'web_ui:sales:visuals:unlock' %}">
+                    {% csrf_token %}
+                    {# [Fix] 移除 security_inputs，改用 AJAX 提交 #}
+
+                    <button type="button" id="btn-unlock-visuals"
+                        class="btn btn-danger btn-lg rounded-pill px-5 shadow-lg" data-requires-global-modal="true"
+                        data-action-key="btn_unlock_visuals" data-action-display="{% trans 'Unlock Visuals' %}">
+                        <i class="fas fa-unlock-alt me-2"></i><span data-i18n="visuals.unlock">验证并解锁</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {# 背景占位结构（虚化背景） #}
+        <div class="container-fluid p-4 opacity-25">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="glass-card" style="min-height: 80px;"></div>
+                </div>
+                <div class="col-3">
+                    <div class="glass-card" style="min-height: 500px;"></div>
+                </div>
+                <div class="col-9">
+                    <div class="glass-card" style="min-height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# 已解锁状态：显示仪表板内容 #}
+        {% if is_unlocked %}
+        <div id="visuals-content">
+            {% include 'visuals/partials/dashboard_content.html' %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const unlockBtn = document.getElementById('btn-unlock-visuals');
+        if (!unlockBtn) return;
+
+        unlockBtn.addEventListener('click', function () {
+            // [Fix] 使用标准的 GlobalModal 密码验证模式
+            if (typeof requestPasswordVerify === 'function') {
+                requestPasswordVerify(
+                    'btn_unlock_visuals',
+                    async function (passwords) {
+                        // 密码验证通过，使用 AJAX 提交
+                        console.log('[VisualsUnlock] Security verified, submitting...');
+                        await doUnlockSubmit(passwords);
+                    },
+                    document.getElementById('unlock-form'),
+                    (window.i18n?.t('js.unlock_analytics') || 'Unlock Analytics'),
+                    function () {
+                        // 用户取消密码验证
+                        console.log('[VisualsUnlock] User cancelled');
+                    }
+                );
+            } else {
+                console.error('[VisualsUnlock] requestPasswordVerify not available');
+            }
+        });
+
+        // [Fix] 使用 AJAX 提交（参考 receive.html 标准模式）
+        async function doUnlockSubmit(passwords) {
+            const submitData = {};
+
+            // 添加密码到请求体
+            if (passwords) {
+                for (const [slot, code] of Object.entries(passwords)) {
+                    submitData['sec_code_' + slot] = code;
+                }
+            }
+
+            try {
+                const response = await fetch('{% url "web_ui:sales:visuals:unlock" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(submitData)
+                });
+
+                if (response.ok) {
+                    // 验证成功，刷新页面显示解锁后的内容
+                    console.log('[VisualsUnlock] Success, reloading page...');
+                    window.location.reload();
+                } else {
+                    const text = await response.text();
+                    console.error('[VisualsUnlock] Error:', text);
+                    if (window.createAndShowToast) {
+                        createAndShowToast((window.i18n?.t('js.verify_failed_retry') || 'Verification failed, please retry'), 'danger');
+                    } else {
+                        alert((window.i18n?.t('js.verify_failed_retry') || 'Verification failed, please retry'));
+                    }
+                }
+            } catch (error) {
+                console.error('[VisualsUnlock] Submit error:', error);
+                if (window.createAndShowToast) {
+                    createAndShowToast((window.i18n?.t('js.network_error_retry') || 'Network error, please retry'), 'danger');
+                } else {
+                    alert((window.i18n?.t('js.network_error_retry') || 'Network error, please retry'));
+                }
+            }
+        }
+
+        function getCsrfToken() {
+            const el = document.querySelector('[name=csrfmiddlewaretoken]');
+            return el ? el.value : '';
+        }
+    });
+</script>
+
+<style>
+    .glass-card {
+        background: rgba(30, 32, 40, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,294 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Warehouse Shelf Codes - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+{% include "inventory/pages/partials/_shelf_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div id="main-view" class="fade-in">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-white fw-bold mb-1">
+                <i class="fas fa-warehouse me-2 text-info"></i><span data-i18n="inventory.shelf">Warehouse Shelf Codes</span>
+            </h4>
+            <p class="text-white-50 mb-0 small" data-i18n="ui.text_308">
+                管理仓库库位结构，查看货架3D地图，生成库位码。
+            </p>
+        </div>
+        <div>
+            <a href="/dashboard/inventory/" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="inventory.back_to_hub">返回Inventory</span>
+            </a>
+        </div>
+    </div>
+
+
+    <!-- 操作按钮栏 -->
+    <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-primary" id="btnAddWarehouse" onclick="startWizard()">
+            <i class="fas fa-plus me-1"></i><span data-i18n="ui.icon_3124">新增仓库</span>
+        </button>
+        <button class="btn btn-outline-info" id="btnDownloadAll" onclick="downloadAllBarcodes()">
+            <i class="fas fa-download me-1"></i><span data-i18n="ui.icon_3125">下载全仓库码</span>
+        </button>
+        <button class="btn btn-outline-warning" id="btnCustomDownload" onclick="openCustomDownloadView()">
+            <i class="fas fa-barcode me-1"></i><span data-i18n="ui.icon_3126">自定义下载库房码</span>
+        </button>
+    </div>
+
+    <!-- 仓库列表容器 -->
+    <div id="warehouseContainer" class="row g-4">
+        <!-- 动态加载仓库卡片 -->
+    </div>
+
+    <!-- 空状态 -->
+    <div id="emptyState" class="text-center py-5 d-none">
+        <i class="fas fa-warehouse fa-4x text-white-50 mb-3"></i>
+        <h5 class="text-white-50" data-i18n="inventory.no_warehouse">暂无仓库数据</h5>
+        <p class="text-white-50 small" data-i18n="ui.text_309">点击"新增仓库"开始创建第一个仓库</p>
+    </div>
+</div>
+
+<!-- Custom Download View (Initially Hidden) -->
+<div id="custom-download-view" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-white fw-bold mb-1">
+                <i class="fas fa-barcode me-2 text-warning"></i><span data-i18n="ui.icon_3126">自定义下载库房码</span>
+            </h4>
+            <p class="text-white-50 mb-0 small" data-i18n="ui.text_310">
+                选择仓库与库位，查看详细信息。
+            </p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="closeCustomDownloadView()">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <!-- Selection Bar -->
+    <div class="card bg-dark border-secondary mb-4">
+        <div class="card-body d-flex align-items-center gap-3">
+             <div class="flex-grow-1">
+                 <label class="form-label text-white-50 text-xs mb-1" data-i18n="ui.text_311">选择仓库</label>
+                 <select class="form-select bg-black text-white border-secondary" id="custom-download-wh-select">
+                     <option value="" selected disabled data-i18n="option.o2629">请选择仓库...</option>
+                 </select>
+             </div>
+             <div class="pt-4">
+                 <button class="btn btn-primary" id="btn-generate-barcode" disabled>
+                     <i class="fas fa-qrcode me-1"></i><span data-i18n="ui.icon_3074">生成条形码</span>
+                 </button>
+             </div>
+        </div>
+    </div>
+
+    <!-- 3D Interactions -->
+    <div class="row h-100" style="min-height: 600px;">
+        <div class="col-md-8">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-transparent border-secondary text-white-50">
+                    <i class="fas fa-cubes me-1"></i><span data-i18n="ui.icon_3130">仓库 3D 视图 (点击选中)</span>
+                </div>
+                <div class="card-body p-0 position-relative bg-black" id="custom-3d-container">
+                    <!-- 3D Canvas -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+             <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-transparent border-secondary text-white-50">
+                    <i class="fas fa-info-circle me-1"></i><span data-i18n="ui.icon_3131">选中位置信息</span>
+                </div>
+                <div class="card-body overflow-auto custom-scrollbar" id="location-info-bar">
+                    <div class="text-center text-white-50 mt-5">
+                        <i class="fas fa-mouse-pointer fa-2x mb-3 opacity-50"></i>
+                        <p data-i18n="ui.text_312">请在左侧 3D 图中点击货架位置</p>
+                    </div>
+                </div>
+             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Wizard Container (Initially Hidden) -->
+<div id="wizard-view" class="d-none">
+    <div class="glass-card p-4" id="add-shelf-wizard-container">
+        <!-- Wizard Header -->
+        <div class="wizard-header d-flex flex-column mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-warehouse fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="js.add_warehouse_wizard">新增仓库向导</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_313">规划仓库布局，自动生成货架与库位。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="cancelWizard()">
+                    <i class="fas fa-times me-1"></i><span data-i18n="common.cancel">取消</span>
+                </button>
+            </div>
+            <hr class="border-secondary border-opacity-25 my-4 w-100">
+        </div>
+
+        <!-- StepBar Anchor -->
+        <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+
+        <!-- Step 1: 仓库号 -->
+        <div class="wizard-step-content text-center active" id="step-wh-num">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark bg-opacity-50 border-secondary p-4 mt-5">
+                        <h5 class="text-info mb-4 text-start" data-i18n="ui.text_314">请输入仓库编号</h5>
+                        <div class="mb-3 text-start">
+                            <label class="form-label text-white-50" data-i18n="ui.text_315">仓库号 (唯一标识)</label>
+                            <input type="text" class="form-control form-control-lg bg-dark text-white border-secondary fw-bold" 
+                                   id="inputWhNum" placeholder="WH01" maxlength="10" 
+                                   style="letter-spacing: 2px;">
+                            <div class="form-text text-white-50 mt-2" data-i18n="ui.text_2077">将用于生成所有库位条码的前缀</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-actions d-flex justify-content-end mt-5">
+                <button type="button" class="btn btn-primary rounded-pill px-5 btn-lg" id="btn-step1-next">
+                    开始设计 <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: 设计仓库 -->
+        <div class="wizard-step-content" id="step-design">
+            <div class="row h-100">
+                <!-- 左侧配置区 -->
+                <div class="col-md-5 d-flex flex-column">
+                    <ul class="nav nav-pills nav-fill mb-3 bg-dark bg-opacity-50 rounded p-1" id="designTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill" id="tab-aisle-l" data-bs-toggle="pill" data-bs-target="#content-aisle-l" type="button">
+                                <i class="fas fa-arrow-left me-1"></i><span data-i18n="ui.icon_3133">左排货架 (L)</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill" id="tab-aisle-r" data-bs-toggle="pill" data-bs-target="#content-aisle-r" type="button">
+                                右排货架 (R)<i class="fas fa-arrow-right ms-1"></i>
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content flex-grow-1 overflow-auto custom-scrollbar pe-2" id="designTabContent" style="height: 850px; max-height: 80vh;">
+                        <div class="tab-pane fade show active" id="content-aisle-l">
+                            <div class="card bg-dark bg-opacity-25 border-secondary mb-3">
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enableAisleL" checked>
+                                        <label class="form-check-label text-white" for="enableAisleL" data-i18n="ui.text_316">启用左排货架</label>
+                                    </div>
+                                    <div id="aisleLConfig">
+                                        {% include "inventory/pages/partials/_shelf_aisle_config.html" with aisle="L" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="content-aisle-r">
+                            <div class="card bg-dark bg-opacity-25 border-secondary mb-3">
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enableAisleR" checked>
+                                        <label class="form-check-label text-white" for="enableAisleR" data-i18n="ui.text_317">启用右排货架</label>
+                                    </div>
+                                    <div id="aisleRConfig">
+                                        {% include "inventory/pages/partials/_shelf_aisle_config.html" with aisle="R" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧预览区 -->
+                <div class="col-md-7">
+                    <div class="preview-container h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-white-50 mb-0"><i class="fas fa-eye me-1"></i>3D 实时预览</h6>
+                            <span class="badge bg-secondary bg-opacity-50" id="preview-wh-num">WH??</span>
+                        </div>
+                        <div id="warehousePreview" class="flex-grow-1 rounded overflow-hidden position-relative border border-secondary border-opacity-25 bg-black bg-opacity-25">
+                            <!-- 3D Canvas will be injected here -->
+                        </div>
+                        <div id="configSummary" class="mt-3 text-white-50 small">
+                            <!-- 动态统计信息 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wizard-actions mt-4 border-top border-secondary border-opacity-25 pt-4">
+                <div class="wizard-actions-left">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-step2-back">
+                        <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.prev">上一步</span>
+                    </button>
+                </div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-success rounded-pill px-4" id="btn-step2-submit">
+                        <i class="fas fa-check-circle me-2"></i><span data-i18n="ui.icon_3135">完成创建</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: 完成 -->
+        <div class="wizard-step-content" id="step-done">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                <h3 class="text-white mb-3" data-i18n="ui.text_318">仓库创建成功!</h3>
+                <p class="text-white-50 mb-5">
+                    仓库 <span id="result-wh-num" class="text-info fw-bold"></span> 及其货架结构已成功生成。
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="cancelWizard()">
+                        <i class="fas fa-list me-2"></i><span data-i18n="common.back_list">返回列表</span>
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="startWizard()">
+                        <i class="fas fa-plus me-2"></i><span data-i18n="ui.icon_3137">继续创建</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: 完成 (Edit Version) -->
+        <div class="wizard-step-content" id="edit-step-done">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                <h3 class="text-white mb-3" data-i18n="ui.text_319">仓库修改成功!</h3>
+                <p class="text-white-50 mb-5">
+                    仓库 <span id="edit-result-wh-num" class="text-info fw-bold"></span> 的布局已更新。
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="cancelWizard()">
+                        <i class="fas fa-list me-2"></i><span data-i18n="common.back_list">返回列表</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holding Pen for Wizard Step 1 (Warehouse Number) - Used for Edit Mode Toggling -->
+<div id="step-1-holding-pen" class="d-none"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% include "inventory/pages/partials/_shelf_scripts.html" %}
+{% include "inventory/pages/partials/_shelf_custom_download.html" %}
+{% endblock %}

@@ -1,0 +1,472 @@
+{
+  "title": "Quản lý VMA",
+  "description": "Theo dõi hàng tồn kho nhà cung cấp & Quản lý đào tạo",
+  "module": {
+    "title": "VMA",
+    "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp"
+  },
+  "hub": {
+    "explore": "Tìm hiểu thêm",
+    "truvalve": {
+      "title": "TruValve",
+      "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp TruValve",
+      "cta": "Quản lý"
+    },
+    "p_valve": {
+      "title": "P-Valve",
+      "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp P-Valve",
+      "cta": "Quản lý"
+    },
+    "employees": {
+      "title": "Nhân viên",
+      "description": "Hồ sơ nhân viên, tiếp nhận và quản lý thông tin",
+      "cta": "Quản lý"
+    },
+    "duties": {
+      "title": "Nhiệm vụ",
+      "description": "Định nghĩa, phân công và theo dõi nhiệm vụ công việc",
+      "cta": "Quản lý"
+    },
+    "training": {
+      "title": "Đào tạo",
+      "description": "Kế hoạch đào tạo, hồ sơ, chứng chỉ và theo dõi kỹ năng",
+      "cta": "Đi đến Đào tạo"
+    }
+  },
+  "truvalve": {
+    "title": "TruValve",
+    "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp TruValve"
+  },
+  "p_valve": {
+    "title": "P-Valve",
+    "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp P-Valve",
+    "tabs": {
+      "inventory": {
+        "title": "Quản lý kho",
+        "description": "Theo dõi và quản lý mức tồn kho P-Valve và Hệ thống giao hàng"
+      },
+      "clinicalCase": {
+        "title": "Ca lâm sàng",
+        "description": "Ghi nhận và quản lý các ca phẫu thuật lâm sàng và sử dụng sản phẩm"
+      },
+      "overview": {
+        "title": "Tổng quan",
+        "description": "Bảng điều khiển tồn kho với số liệu tổng hợp và hoạt động gần đây"
+      },
+      "demoInventory": {
+        "title": "Kho demo",
+        "description": "Theo dõi sản phẩm demo, mẫu và đơn vị trình diễn"
+      },
+      "fridgeShelf": {
+        "title": "Kệ tủ lạnh",
+        "description": "Trực quan hóa vị trí sản phẩm trên các kệ tủ lạnh"
+      },
+      "productManagement": {
+        "title": "Quản lý sản phẩm",
+        "description": "Quản lý danh mục sản phẩm P-Valve và hệ thống giao hàng"
+      },
+      "siteManagement": {
+        "title": "Quản lý địa điểm",
+        "description": "Quản lý thông tin bệnh viện và phòng khám"
+      }
+    }
+  },
+  "employees": {
+    "title": "Nhân viên",
+    "description": "Hồ sơ và quản lý thông tin nhân viên",
+    "list": {
+      "title": "Danh sách nhân viên",
+      "empty": "Không tìm thấy nhân viên",
+      "search": "Tìm kiếm theo tên hoặc mã nhân viên...",
+      "total": "{count} nhân viên"
+    },
+    "fields": {
+      "employeeNo": "Mã NV",
+      "lastName": "Họ",
+      "firstName": "Tên",
+      "department": "Phòng ban",
+      "duties": "Nhiệm vụ",
+      "hireDate": "Ngày tuyển dụng",
+      "terminationDate": "Ngày nghỉ việc",
+      "terminationDateDesc": "Vui lòng chọn ngày nghỉ việc của nhân viên này",
+      "assignedAt": "Ngày phân công",
+      "removedAt": "Ngày gỡ bỏ",
+      "status": "Trạng thái"
+    },
+    "status": {
+      "active": "Đang làm việc",
+      "inactive": "Đã nghỉ việc"
+    },
+    "actions": {
+      "add": "Thêm nhân viên",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "activate": "Kích hoạt",
+      "deactivate": "Vô hiệu hóa",
+      "confirmDelete": "Xác nhận xóa?",
+      "deleteSuccess": "Đã xóa nhân viên thành công",
+      "activateSuccess": "Đã kích hoạt nhân viên",
+      "deactivateSuccess": "Đã vô hiệu hóa nhân viên",
+      "saveSuccess": "Đã lưu nhân viên thành công"
+    },
+    "form": {
+      "title_create": "Thêm nhân viên mới",
+      "title_edit": "Sửa nhân viên",
+      "employeeNo_placeholder": "Nhập mã nhân viên",
+      "lastName_placeholder": "Nhập họ",
+      "firstName_placeholder": "Nhập tên",
+      "department_placeholder": "Chọn phòng ban",
+      "hireDate_placeholder": "Chọn ngày tuyển dụng",
+      "employeeNo_exists": "Mã nhân viên này đã tồn tại"
+    },
+    "career": {
+      "title": "Lộ trình nghề nghiệp",
+      "viewCareer": "Xem lộ trình nghề nghiệp",
+      "active": "Đang hoạt động",
+      "ended": "Đã kết thúc",
+      "historical": "lịch sử",
+      "latest": "Mới nhất",
+      "noAssignments": "Chưa có phân công phòng ban",
+      "addAssignment": "Thêm phân công phòng ban",
+      "endAssignment": "Kết thúc",
+      "addSuccess": "Đã thêm phân công phòng ban",
+      "editSuccess": "Đã cập nhật phân công",
+      "removeSuccess": "Đã kết thúc phân công",
+      "deleteSuccess": "Đã xóa phân công",
+      "stackRule": "Chỉ có thể sửa bản ghi mới nhất",
+      "start": "Bắt đầu",
+      "hired": "Đã tuyển dụng",
+      "joinedCompany": "Gia nhập công ty",
+      "onboardedAs": "Tiếp nhận với mã",
+      "modifyHistory": "Sửa lịch sử",
+      "planNewEvent": "Lên kế hoạch sự kiện nghề nghiệp",
+      "confirmPlan": "Xác nhận kế hoạch",
+      "processing": "Đang xử lý...",
+      "selectPlaceholder": "Chọn...",
+      "statusActive": "Đang làm việc",
+      "statusInactive": "Đã nghỉ việc (Chấm dứt)",
+      "statusLeave": "Nghỉ phép",
+      "save": "Lưu",
+      "create": "Tạo mới",
+      "addDuty": "Thêm nhiệm vụ +",
+      "removeDuty": "Gỡ nhiệm vụ -",
+      "terminateStatus": "Chấm dứt / Trạng thái",
+      "cannotRemoveLast": "Không thể gỡ nhiệm vụ cuối cùng. Sử dụng \"Chấm dứt\" để kết thúc hợp đồng hoặc thêm nhiệm vụ khác trước.",
+      "effectiveDate": "Ngày hiệu lực",
+      "selectDepartment": "Chọn phòng ban",
+      "selectAssignmentEnd": "Chọn phân công để kết thúc",
+      "assigned": "Đã phân công",
+      "newStatus": "Trạng thái mới",
+      "changeDuty": "Thay đổi nhiệm vụ",
+      "changeTo": "Thay đổi thành:",
+      "cancel": "Hủy",
+      "historyAdjustment": "* Điều chỉnh lịch sử: Thao tác này sẽ cập nhật hồ sơ chính thức cho ngày này.",
+      "cannotDeleteHistory": "Hồ sơ lịch sử không thể xóa. Bạn có thể sửa phân công nhiệm vụ.",
+      "alertOnlyAssigned": "Chỉ có sự kiện 'Phân công nhiệm vụ' mới có thể thay đổi sang chức năng khác.",
+      "legacyUnknown": "Cũ / Không rõ",
+      "noEmployeesInDept": "Không tìm thấy nhân viên trong phòng ban này",
+      "joined": "Gia nhập",
+      "staff": "Nhân viên",
+      "depts": "phòng ban",
+      "employeesTimeline": "Dòng thời gian nhân viên",
+      "assignedDuty": "Phân công nhiệm vụ:",
+      "relievedFromDuty": "Giải phóng nhiệm vụ:",
+      "duration": "Thời gian:"
+    }
+  },
+  "departments": {
+    "title": "Quản lý phòng ban",
+    "description": "Quản lý mã phòng ban, tên và yêu cầu đào tạo SOP",
+    "list": {
+      "empty": "Chưa có phòng ban",
+      "employeeCount": "{count} nhân viên",
+      "employees": "nhân viên",
+      "active": "Đang hoạt động",
+      "inactive": "Ngừng hoạt động"
+    },
+    "fields": {
+      "code": "Mã PB",
+      "name": "Tên phòng ban",
+      "duties": "Nhiệm vụ",
+      "sopTrainingReq": "Yêu cầu đào tạo SOP",
+      "employeeCount": "Nhân viên",
+      "status": "Trạng thái"
+    },
+    "actions": {
+      "add": "Thêm phòng ban",
+      "addDepartment": "Phòng ban mới",
+      "addDuty": "Thêm nhiệm vụ",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "manage": "Quản lý phòng ban",
+      "confirmDelete": "Bạn có chắc chắn muốn xóa phòng ban này?",
+      "cannotDelete": "Không thể xóa phòng ban đã có nhân viên",
+      "deleteSuccess": "Đã xóa phòng ban thành công",
+      "saveSuccess": "Đã lưu phòng ban thành công",
+      "sopRequirements": "Yêu cầu SOP",
+      "sopReqSaveSuccess": "Đã lưu yêu cầu SOP thành công",
+      "sopReqCount": "{count} SOP cần thiết",
+      "sopReqNone": "Không có yêu cầu SOP"
+    },
+    "form": {
+      "title_create": "Thêm phòng ban mới",
+      "title_edit": "Sửa phòng ban",
+      "title_addDuty": "Thêm nhiệm vụ",
+      "code_placeholder": "Nhập mã phòng ban",
+      "name_placeholder": "Nhập tên phòng ban",
+      "duties_placeholder": "Nhập nhiệm vụ / trách nhiệm của phòng ban",
+      "sopTrainingReq_placeholder": "Nhập yêu cầu đào tạo SOP (tùy chọn)",
+      "focusHint": "Nhập nhiệm vụ mới bên dưới",
+      "name_exists": "Tên phòng ban này đã tồn tại",
+      "code_exists": "Mã phòng ban này đã tồn tại",
+      "code_duties_exists": "Tổ hợp mã phòng ban + nhiệm vụ này đã tồn tại"
+    }
+  },
+  "duties": {
+    "title": "Phòng ban & Nhiệm vụ",
+    "description": "Quản lý phòng ban và phân công nhiệm vụ"
+  },
+  "sopRequirementsModal": {
+    "title": "Yêu cầu đào tạo SOP",
+    "subtitle": "Chọn SOP cần thiết cho nhiệm vụ này",
+    "search": "Tìm kiếm SOP...",
+    "selectAll": "Chọn tất cả",
+    "deselectAll": "Bỏ chọn tất cả",
+    "selected": "Đã chọn {count}",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "saving": "Đang lưu...",
+    "noResults": "Không tìm thấy SOP",
+    "editRequirements": "Sửa yêu cầu",
+    "selectOption": "-- Chọn --"
+  },
+  "sopHistory": {
+    "title": "Lịch sử yêu cầu SOP",
+    "viewHistory": "Xem lịch sử",
+    "noHistory": "Không tìm thấy hồ sơ lịch sử",
+    "initial": "Thiết lập ban đầu",
+    "add": "Đã thêm",
+    "remove": "Đã gỡ",
+    "change": "Thay đổi",
+    "changeDate": "Ngày thay đổi",
+    "changeGroups": "nhóm thay đổi",
+    "totalRecords": "tổng số bản ghi",
+    "deleteRecord": "Xóa bản ghi",
+    "confirmDeleteRecord": "Xóa bản ghi lịch sử SOP",
+    "deleteGroup": "Xóa nhóm thay đổi",
+    "confirmDeleteGroup": "Xóa tất cả",
+    "recordsOnDate": "bản ghi vào",
+    "scrollHint": "Cuộn để xem tất cả cột mốc",
+    "latest": "Mới nhất",
+    "changes": "Thay đổi SOP",
+    "more": "thêm",
+    "start": "Bắt đầu",
+    "edit": "Sửa",
+    "addNew": "Thêm",
+    "dateError": "Ngày phải sau ngày cột mốc mới nhất hiện có"
+  },
+  "trainingSop": {
+    "title": "SOP Đào tạo",
+    "description": "Quản lý tài liệu kiểm soát và theo dõi phiên bản SOP",
+    "search": "Tìm kiếm theo STT, số SOP, tên tài liệu hoặc DA#...",
+    "versionHistory": "Lịch sử phiên bản",
+    "list": {
+      "empty": "Không tìm thấy SOP",
+      "total": "{count} SOP",
+      "documents": "tài liệu",
+      "requireTraining": "cần đào tạo"
+    },
+    "fields": {
+      "seqNo": "STT",
+      "sopNo": "Số tài liệu",
+      "name": "Tên tài liệu",
+      "description": "Mô tả",
+      "version": "Phiên bản",
+      "effectiveDate": "Ngày hiệu lực",
+      "structureClassification": "Cấu trúc",
+      "documentType": "Loại tài liệu",
+      "trainingRequired": "Cần đào tạo",
+      "status": "Trạng thái",
+      "daNo": "DA#",
+      "initial": "Ban đầu"
+    },
+    "documentTypes": {
+      "Procedure Document": "Tài liệu quy trình",
+      "Management Regulation": "Quy định quản lý",
+      "Technical Document": "Tài liệu kỹ thuật",
+      "Quality Manual": "Sổ tay chất lượng"
+    },
+    "structureTypes": {
+      "Master Document": "Tài liệu chính",
+      "Form": "Biểu mẫu",
+      "Template": "Mẫu",
+      "Attachment": "Phụ lục",
+      "Master": "Chính"
+    },
+    "close": "ĐÓNG",
+    "status": {
+      "active": "Đang hoạt động",
+      "deprecated": "Đã lỗi thời",
+      "latest": "Mới nhất"
+    },
+    "training": {
+      "required": "Cần đào tạo",
+      "notRequired": "Không cần đào tạo",
+      "short": "Đào tạo"
+    },
+    "actions": {
+      "add": "SOP mới",
+      "edit": "Sửa",
+      "newRevision": "Phiên bản mới",
+      "activate": "Kích hoạt",
+      "deprecate": "Lỗi thời",
+      "saveSuccess": "Đã lưu SOP thành công"
+    },
+    "form": {
+      "title_create": "Tài liệu SOP mới",
+      "title_edit": "Sửa tài liệu SOP",
+      "title_revision": "Phiên bản mới",
+      "revisionHint": "Tạo phiên bản mới cho tài liệu này. STT được tự động gán, số tài liệu được kế thừa.",
+      "sopNo_placeholder": "VD: VM-QP-030",
+      "name_placeholder": "Nhập tên tài liệu",
+      "description_placeholder": "Nhập mô tả (tùy chọn)",
+      "version_placeholder": "VD: A0, B1, C2",
+      "effectiveDate_placeholder": "Chọn ngày hiệu lực"
+    }
+  },
+  "training": {
+    "title": "Đào tạo",
+    "description": "Kế hoạch đào tạo và quản lý chứng chỉ",
+    "stats": {
+      "employees": "{count} nhân viên",
+      "complete": "{count} hoàn thành",
+      "missing": "{count} thiếu"
+    },
+    "fields": {
+      "employeeId": "Mã nhân viên",
+      "employeeName": "Tên nhân viên",
+      "hireDate": "Ngày tuyển dụng",
+      "required": "Yêu cầu",
+      "status": "Trạng thái đào tạo"
+    },
+    "status": {
+      "complete": "Hoàn thành",
+      "missing": "Thiếu ({count})"
+    },
+    "detail": {
+      "trained": "✓ Đã đào tạo ({count})",
+      "missingSops": "⚠ Thiếu SOP ({count})",
+      "noRecords": "Không có hồ sơ đào tạo",
+      "columns": {
+        "sopNo": "Số SOP",
+        "version": "Phiên bản",
+        "trainingNo": "Số đào tạo",
+        "date": "Ngày",
+        "trainer": "Giảng viên",
+        "name": "Tên",
+        "da": "DA",
+        "effective": "Hiệu lực"
+      }
+    },
+    "actions": {
+      "smartFill": "Đào tạo",
+      "back": "Quay lại",
+      "roadmap": "Lộ trình"
+    },
+    "smartFill": {
+      "title": "Tự động điền hồ sơ đào tạo",
+      "cutoffDate": "Ngày giới hạn (Đào tạo đến)",
+      "lecturer": "Giảng viên",
+      "selectLecturer": "Chọn giảng viên",
+      "generating": "Đang tạo...",
+      "button": "Tự động điền tất cả hồ sơ thiếu",
+      "download": "Tải xuống tất cả PDF",
+      "confirm": "Tạo",
+      "confirmTitle": "Tự động điền",
+      "confirmMessage": "Tự động tạo tất cả hồ sơ đào tạo thiếu đến"
+    },
+    "roadmap": {
+      "title": "Lộ trình tuân thủ đào tạo",
+      "description": "Ảnh chụp tuân thủ đào tạo tại mỗi sự kiện thay đổi SOP",
+      "subtitle": "Ảnh chụp tuân thủ đào tạo tại mỗi sự kiện thay đổi SOP",
+      "milestones": "cột mốc",
+      "loading": "Đang tính toán ảnh chụp tuân thủ...",
+      "noData": "Không tìm thấy sự kiện thay đổi SOP",
+      "compliant": "tuân thủ",
+      "nonCompliant": "Không tuân thủ",
+      "latest": "Mới nhất",
+      "initial": "Ban đầu",
+      "scrollHint": "Cuộn để xem toàn bộ dòng thời gian tuân thủ",
+      "start": "Bắt đầu"
+    }
+  },
+  "trainingRecords": {
+    "title": "Hồ sơ đào tạo",
+    "sessions": "Buổi học",
+    "description": "Xem, sửa và tải xuống hồ sơ buổi đào tạo",
+    "stats": {
+      "sessions": "{count} buổi",
+      "trainees": "{count} tổng học viên"
+    },
+    "fields": {
+      "trainingNo": "Số đào tạo",
+      "trainingDate": "Ngày đào tạo",
+      "subject": "Chủ đề",
+      "lecturer": "Giảng viên",
+      "employees": "Nhân viên",
+      "sops": "SOP",
+      "download": "Tải xuống"
+    },
+    "empty": "Chưa có hồ sơ đào tạo. Sử dụng Tự động điền từ tab Đào tạo để tạo hồ sơ.",
+    "evaluation": {
+      "selfTraining": "Tự đào tạo",
+      "oralQA": "Hỏi đáp miệng"
+    },
+    "detail": {
+      "sops": "SOP ({count})",
+      "employees": "Nhân viên ({count})",
+      "noSops": "Không có SOP trong buổi này",
+      "noEmployees": "Không có nhân viên trong buổi này",
+      "columns": {
+        "sopNo": "Số SOP",
+        "version": "Phiên bản",
+        "trainees": "Học viên",
+        "employeeNo": "Mã NV",
+        "sopsCol": "SOP",
+        "remove": "Gỡ"
+      }
+    },
+    "actions": {
+      "edit": "✎ Sửa",
+      "done": "✕ Xong",
+      "remove": "Gỡ",
+      "pdf": "PDF"
+    },
+    "delete": {
+      "title": "Xóa buổi đào tạo?",
+      "message": "Thao tác này sẽ xóa vĩnh viễn buổi {trainingNo} và tất cả {count} hồ sơ. Không thể hoàn tác.",
+      "cancel": "Hủy",
+      "confirm": "Xóa"
+    }
+  },
+  "trainingMatrix": {
+    "title": "Ma trận đào tạo",
+    "employee": "Nhân viên",
+    "employees": "Nhân viên",
+    "rate": "Tỷ lệ",
+    "completed": "Hoàn thành",
+    "missing": "Thiếu",
+    "na": "Không yêu cầu",
+    "compliant": "Tuân thủ",
+    "totalEmployees": "Tổng nhân viên",
+    "totalSops": "Tổng SOP",
+    "fullyCompliant": "Tuân thủ hoàn toàn",
+    "overallRate": "Tỷ lệ chung",
+    "generatedAt": "Đã tạo",
+    "required": "Yêu cầu",
+    "pendingAction": "Chờ xử lý",
+    "triggers": "Kích hoạt",
+    "allCompliant": "Tất cả tuân thủ",
+    "baseline": "CƠ SỞ"
+  }
+}

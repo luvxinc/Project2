@@ -1,0 +1,3761 @@
+# English translations for MGMT ERP
+# Copyright (C) 2026 EagleStar Inc.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: MGMT ERP 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-12 00:23-0800\n"
+"PO-Revision-Date: 2026-01-11 23:00-0800\n"
+"Last-Translator: System\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/audit/views/actions.py:49 apps/audit/views/actions.py:194
+msgid "Access Denied"
+msgstr ""
+
+#: apps/audit/views/actions.py:56
+msgid "上帝模式已开启：敏感信息已解密。"
+msgstr ""
+
+#: apps/audit/views/actions.py:67
+#, python-brace-format
+msgid "鉴权失败: {msg}"
+msgstr ""
+
+#: apps/audit/views/actions.py:88
+msgid "已恢复脱敏保护模式。"
+msgstr ""
+
+#: apps/audit/views/actions.py:120
+msgid "权限不足: 仅超级管理员可执行日志清洗。"
+msgstr ""
+
+#: apps/audit/views/actions.py:132
+#, python-brace-format
+msgid "操作拒绝: {msg}"
+msgstr ""
+
+#: apps/audit/views/actions.py:147
+msgid "参数不完整，请选择日志类型和时间范围。"
+msgstr ""
+
+#: apps/audit/views/actions.py:178
+#, python-brace-format
+msgid "日志清洗成功。备份文件: {file}"
+msgstr ""
+
+#: apps/audit/views/actions.py:180
+#, python-brace-format
+msgid "清洗过程发生错误: {msg}"
+msgstr ""
+
+#: apps/audit/views/actions.py:203
+#, python-brace-format
+msgid "操作验证失败: {msg}"
+msgstr ""
+
+#: apps/audit/views/actions.py:209
+msgid "缺少参数: snapshot_id"
+msgstr ""
+
+#: apps/audit/views/actions.py:238
+msgid "Superuser Only"
+msgstr ""
+
+#: apps/audit/views/actions.py:242 apps/audit/views/actions.py:275
+#: templates/finance/pages/partials/deposit_step3_confirm.html:1124
+#: templates/finance/pages/partials/po_step3_confirm.html:1131
+msgid "Error"
+msgstr ""
+
+#: apps/audit/views/actions.py:248 apps/finance/views/deposit/api.py:1036
+#: apps/finance/views/payment/file_ops.py:189
+#: apps/finance/views/payment/file_ops.py:244 apps/finance/views/po/api.py:1235
+#: apps/finance/views/po/api.py:1290 apps/finance/views/prepay/api.py:904
+#: apps/finance/views/prepay/api.py:1049
+#: apps/purchase/views/po_mgmt/invoice.py:192
+#: apps/purchase/views/po_mgmt/invoice.py:268
+#: apps/purchase/views/receive_mgmt/upload.py:210
+#: apps/purchase/views/receive_mgmt/upload.py:279
+#: apps/purchase/views/send_mgmt/invoice.py:186
+#: apps/purchase/views/send_mgmt/invoice.py:260 apps/visuals/views.py:95
+msgid "缺少参数"
+msgstr ""
+
+#: apps/audit/views/actions.py:268
+msgid "Ignored"
+msgstr ""
+
+#: apps/audit/views/actions.py:270
+msgid "Fixed"
+msgstr ""
+
+#: apps/audit/views/actions.py:272
+msgid "Pending"
+msgstr ""
+
+#: apps/audit/views/actions.py:306
+msgid "权限不足：仅超级管理员可执行"
+msgstr ""
+
+#: apps/audit/views/actions.py:315
+msgid "请选择至少一种日志类型"
+msgstr ""
+
+#: apps/audit/views/actions.py:318 apps/db_admin/views.py:631
+msgid "请填写日期范围"
+msgstr ""
+
+#: apps/audit/views/actions.py:326 apps/db_admin/views.py:588
+#: apps/db_admin/views.py:637
+msgid "日期格式错误"
+msgstr ""
+
+#: apps/audit/views/actions.py:329 apps/db_admin/views.py:640
+msgid "开始日期不能晚于结束日期"
+msgstr ""
+
+#: apps/audit/views/actions.py:336
+#, python-brace-format
+msgid "在 {start} 至 {end} 期间，共发现 {count} 条可清理的审计日志记录。"
+msgstr ""
+
+#: apps/audit/views/actions.py:338
+#, python-brace-format
+msgid "在 {start} 至 {end} 期间，未发现可清理的审计日志记录。"
+msgstr ""
+
+#: apps/db_admin/views.py:84
+msgid "数据备份"
+msgstr "Database Backup"
+
+#: apps/db_admin/views.py:84
+msgid "生成全量数据库快照，支持标签管理。"
+msgstr "Create full database snapshots with tag management."
+
+#: apps/db_admin/views.py:85
+msgid "数据恢复"
+msgstr "Database Restore"
+
+#: apps/db_admin/views.py:85
+msgid "从现有快照还原数据库。操作不可逆。"
+msgstr "Restore database from existing snapshots. This action is irreversible."
+
+#: apps/db_admin/views.py:86
+msgid "备份管理"
+msgstr "Backup Management"
+
+#: apps/db_admin/views.py:86
+msgid "查看或批量删除历史备份文件。"
+msgstr "View or batch delete historical backup files."
+
+#: apps/db_admin/views.py:87
+msgid "数据清洗"
+msgstr "Data Cleanup"
+
+#: apps/db_admin/views.py:87
+msgid "符合合规标准的数据物理擦除工具。"
+msgstr "Compliance-grade data purge utility."
+
+#: apps/db_admin/views.py:88 templates/db_admin/pages/rollback_restore.html:5
+#: templates/db_admin/pages/rollback_restore.html:69
+#: templates/db_admin/pages/rollback_restore.html:78
+msgid "数据修改找回"
+msgstr "Data Recovery"
+
+#: apps/db_admin/views.py:88
+msgid "将数据恢复到历史操作前的状态。"
+msgstr "Restore data to its state before a previous operation."
+
+#: apps/db_admin/views.py:225
+msgid "未知操作"
+msgstr "Unknown Operation"
+
+#: apps/db_admin/views.py:276 apps/db_admin/views.py:506
+#: apps/db_admin/views.py:534 apps/db_admin/views.py:567
+#: apps/db_admin/views.py:622
+msgid "功能已关闭"
+msgstr "Feature disabled"
+
+#: apps/db_admin/views.py:278 apps/db_admin/views.py:452
+#: apps/db_admin/views.py:509 apps/db_admin/views.py:537
+#: apps/db_admin/views.py:570 apps/db_admin/views.py:625
+#: apps/db_admin/views.py:793 apps/db_admin/views.py:846
+#: apps/db_admin/views.py:971 apps/db_admin/views.py:1037 apps/log/views.py:476
+#: apps/log/views.py:520 apps/purchase/views/po_mgmt/invoice.py:254
+#: apps/purchase/views/receive_mgmt/upload.py:265
+#: apps/purchase/views/send_mgmt/invoice.py:246
+msgid "权限不足"
+msgstr "Permission denied"
+
+#: apps/db_admin/views.py:289 apps/finance/views/deposit/api.py:735
+#: apps/finance/views/payment/file_ops.py:126
+#: apps/finance/views/payment/submit.py:50
+#: apps/finance/views/payment/submit.py:224
+#: apps/finance/views/payment/submit.py:301 apps/finance/views/po/api.py:1284
+#: apps/finance/views/prepay/api.py:313 apps/finance/views/prepay/api.py:672
+#: apps/finance/views/prepay/api.py:748 apps/log/views.py:512
+#: apps/purchase/views/po_create/submit.py:50
+#: apps/purchase/views/po_mgmt/edit.py:244
+#: apps/purchase/views/po_mgmt/invoice.py:38
+#: apps/purchase/views/po_mgmt/invoice.py:263
+#: apps/purchase/views/receive/submit.py:76
+#: apps/purchase/views/receive_mgmt/upload.py:273
+#: apps/purchase/views/send_mgmt/invoice.py:37
+#: apps/purchase/views/send_mgmt/invoice.py:254
+#, fuzzy
+#| msgid "密码验证失败，无法完成回档。"
+msgid "密码验证失败"
+msgstr "Password verification failed, cannot complete rollback."
+
+#: apps/db_admin/views.py:295
+msgid "参数缺失"
+msgstr "Missing parameters"
+
+#: apps/db_admin/views.py:303
+#, fuzzy
+#| msgid "暂无可用回档点"
+msgid "无可用回档点"
+msgstr "No Rollback Points Available"
+
+#: apps/db_admin/views.py:316
+msgid "回档点不存在"
+msgstr ""
+
+#: apps/db_admin/views.py:321
+msgid "必须先回档最近的操作"
+msgstr ""
+
+#: apps/db_admin/views.py:345
+msgid "创建回滚点失败，回档已取消"
+msgstr ""
+
+#: apps/db_admin/views.py:381
+#: templates/db_admin/pages/rollback_restore.html:263
+msgid "回档成功"
+msgstr "Rollback Successful"
+
+#: apps/db_admin/views.py:396
+#: templates/db_admin/pages/rollback_restore.html:348
+msgid "回档执行失败"
+msgstr "Rollback execution failed"
+
+#: apps/db_admin/views.py:407
+#, fuzzy
+#| msgid "回档执行失败"
+msgid "回档执行异常"
+msgstr "Rollback execution failed"
+
+#: apps/db_admin/views.py:449 apps/db_admin/views.py:475
+msgid "该功能已被管理员关闭"
+msgstr "This feature has been disabled by administrator"
+
+#: apps/db_admin/views.py:466
+msgid "备份成功"
+msgstr ""
+
+#: apps/db_admin/views.py:469
+msgid "备份失败"
+msgstr ""
+
+#: apps/db_admin/views.py:478
+msgid "仅限超级管理员操作"
+msgstr ""
+
+#: apps/db_admin/views.py:486 apps/db_admin/views.py:541
+#: apps/finance/views/deposit/api.py:743
+#: apps/finance/views/payment/file_ops.py:121 apps/finance/views/po/api.py:1000
+#: apps/finance/views/prepay/api.py:976
+msgid "未选择文件"
+msgstr ""
+
+#: apps/db_admin/views.py:497
+msgid "恢复成功 (已自动创建回滚点)"
+msgstr ""
+
+#: apps/db_admin/views.py:500 templates/purchase/pages/receive_mgmt.html:705
+#: templates/purchase/pages/receive_mgmt.html:707
+#: templates/purchase/pages/send_mgmt.html:793
+#: templates/purchase/pages/send_mgmt.html:799
+msgid "恢复失败"
+msgstr ""
+
+#: apps/db_admin/views.py:528 templates/finance/pages/deposit.html:1478
+#: templates/finance/pages/logistic.html:2359
+#: templates/finance/pages/logistic.html:2365
+#: templates/finance/pages/po.html:1670
+#: templates/purchase/pages/po_mgmt/po_delete.html:386
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:369
+#: templates/purchase/pages/send_mgmt/send_delete.html:437
+msgid "删除失败"
+msgstr ""
+
+#: apps/db_admin/views.py:555
+msgid "批量删除完成"
+msgstr ""
+
+#: apps/db_admin/views.py:555
+msgid "个文件已删除"
+msgstr ""
+
+#: apps/db_admin/views.py:561
+msgid "部分删除完成"
+msgstr ""
+
+#: apps/db_admin/views.py:561
+#, fuzzy
+#| msgid "回档成功"
+msgid "成功"
+msgstr "Rollback Successful"
+
+#: apps/db_admin/views.py:561
+#, fuzzy
+#| msgid "回档失败"
+msgid "失败"
+msgstr "Rollback Failed"
+
+#: apps/db_admin/views.py:582
+msgid "请填写所有必填项"
+msgstr ""
+
+#: apps/db_admin/views.py:604
+msgid "数据清洗完成 (已自动创建回滚点)"
+msgstr ""
+
+#: apps/db_admin/views.py:606
+msgid "清洗失败"
+msgstr ""
+
+#: apps/db_admin/views.py:748
+msgid "请先选择日期列"
+msgstr ""
+
+#: apps/db_admin/views.py:780
+msgid "无效的操作类型"
+msgstr ""
+
+#: apps/db_admin/views.py:790 apps/db_admin/views.py:843
+#: apps/db_admin/views.py:910 apps/db_admin/views.py:939
+#: apps/db_admin/views.py:968 apps/db_admin/views.py:1034
+msgid "功能禁用"
+msgstr ""
+
+#: apps/db_admin/views.py:805 apps/db_admin/views.py:857
+msgid "缺少必要参数"
+msgstr ""
+
+#: apps/db_admin/views.py:818 apps/db_admin/views.py:869
+#: apps/db_admin/views.py:1003 apps/db_admin/views.py:1072
+msgid "回滚点创建失败"
+msgstr ""
+
+#: apps/db_admin/views.py:827 apps/db_admin/views.py:878
+#: apps/db_admin/views.py:1019 apps/db_admin/views.py:1081
+msgid "已创建回滚点"
+msgstr ""
+
+#: apps/db_admin/views.py:831
+msgid "无效的数量格式"
+msgstr ""
+
+#: apps/db_admin/views.py:983 apps/db_admin/views.py:1049
+msgid "未提供数据"
+msgstr ""
+
+#: apps/db_admin/views.py:987 apps/db_admin/views.py:1053
+msgid "数据为空"
+msgstr ""
+
+#: apps/db_admin/views.py:991 apps/db_admin/views.py:1060
+msgid "JSON 解析失败"
+msgstr ""
+
+#: apps/etl/views.py:49
+msgid "暂无数据"
+msgstr "No data"
+
+#: apps/etl/views.py:121 apps/sales/views.py:35
+msgid "交易数据上传"
+msgstr "Transaction Upload"
+
+#: apps/etl/views.py:123 apps/sales/views.py:37
+msgid "上传 eBay Transaction/Earning CSV 报表，系统自动解析、清洗、转换。"
+msgstr ""
+"Upload eBay transaction/earning CSV files for automatic parsing and "
+"processing."
+
+#: apps/etl/views.py:128 apps/inventory/views.py:34
+#: apps/inventory/views/__init__.py:50
+msgid "手动上传盘存"
+msgstr "Manual Stocktake Upload"
+
+#: apps/etl/views.py:130 apps/inventory/views.py:36
+#: apps/inventory/views/__init__.py:52
+msgid "上传库存盘点 CSV 文件，校验后同步到盘存表。"
+msgstr "Upload stocktake CSV files, validate and sync to inventory."
+
+#: apps/etl/views.py:231
+msgid "<div class=\"alert alert-danger\">未检测到文件，请重新选择。</div>"
+msgstr ""
+
+#: apps/etl/views.py:337
+#, python-brace-format
+msgid "缺少 {missing} 报表文件，请同时上传对应的 CSV。"
+msgstr ""
+
+#: apps/etl/views.py:345
+msgid "Transaction 与 Earning 文件的店铺(seller) 不匹配。"
+msgstr ""
+
+#: apps/etl/views.py:349
+#, python-brace-format
+msgid ""
+"Transaction 与 Earning 文件的时间区间不一致。Trans: {trans_min}~{trans_max}, "
+"Earn: {earn_min}~{earn_max}"
+msgstr ""
+
+#: apps/etl/views.py:353
+#, python-brace-format
+msgid ""
+"文件中的最新日期({trans_max})不能是今天({today})或未来。请检查数据日期。"
+msgstr ""
+
+#: apps/etl/views.py:383
+#: templates/purchase/pages/abnormal_process_wizard.html:938
+msgid "处理失败"
+msgstr ""
+
+#: apps/etl/views.py:462
+msgid "Data_Transaction 表为空，请先上传数据。"
+msgstr ""
+
+#: apps/etl/views.py:464 apps/etl/views.py:719
+#: templates/purchase/pages/receive_mgmt.html:1071
+msgid "未知错误"
+msgstr ""
+
+#: apps/etl/views.py:469
+msgid "引擎错误"
+msgstr ""
+
+#: apps/etl/views.py:522 apps/etl/views.py:772
+msgid "<div class=\"alert alert-danger\">安全验证失败</div>"
+msgstr ""
+
+#: apps/etl/views.py:533
+msgid "<div class=\"alert alert-danger\">SKU 不能为空</div>"
+msgstr ""
+
+#: apps/etl/views.py:538
+#, python-brace-format
+msgid ""
+"<div class=\"alert alert-danger\">SKU [{new_sku}] 无效 (资料库中不存在)</div>"
+msgstr ""
+
+#: apps/etl/views.py:545
+#, python-brace-format
+msgid "<div class=\"alert alert-danger\">数量无效: {new_qty}</div>"
+msgstr ""
+
+#: apps/etl/views.py:614
+msgid "<div class=\"alert alert-danger\">修复失败，请检查日志</div>"
+msgstr ""
+
+#: apps/etl/views.py:659
+msgid "<div class=\"alert alert-danger\">请选择文件</div>"
+msgstr ""
+
+#: apps/etl/views.py:729
+msgid "校验失败"
+msgstr ""
+
+#: apps/etl/views.py:749
+msgid "<div class=\"alert alert-danger\">数据已过期，请重新上传</div>"
+msgstr ""
+
+#: apps/etl/views.py:813
+msgid "同步失败"
+msgstr ""
+
+#: apps/etl/views.py:856
+msgid "数据已过期，请重新上传"
+msgstr ""
+
+#: apps/etl/views.py:940
+msgid "安全验证失败，请检查密码"
+msgstr ""
+
+#: apps/etl/views.py:1018
+msgid "入库失败"
+msgstr ""
+
+#: apps/finance/views/__init__.py:136
+msgid "物流财务管理"
+msgstr "Logistics Finance"
+
+#: apps/finance/views/__init__.py:138
+msgid "管理物流费用，查看付款状态，进行批量付款操作。"
+msgstr ""
+"Manage logistics costs, view payment status, and process batch payments."
+
+#: apps/finance/views/__init__.py:145
+msgid "厂商预付款管理"
+msgstr "Vendor Prepayment"
+
+#: apps/finance/views/__init__.py:147
+msgid "管理厂商预付款账户，查看余额和交易流水。"
+msgstr "Manage vendor prepayment accounts, check balances and transactions."
+
+#: apps/finance/views/__init__.py:154
+msgid "定金付款管理"
+msgstr "Deposit Payments"
+
+#: apps/finance/views/__init__.py:156
+msgid "管理订货单定金，查看付款状态，进行批量付款操作。"
+msgstr "Manage order deposits, view status, and process batch payments."
+
+#: apps/finance/views/__init__.py:163
+msgid "订单付款管理"
+msgstr "Order Payments"
+
+#: apps/finance/views/__init__.py:165
+msgid "管理订单尾款，查看付款状态，进行批量付款操作。"
+msgstr "Manage order balances, view status, and process batch payments."
+
+#: apps/finance/views/__init__.py:172
+msgid "定发收总预览"
+msgstr "Order Lifecycle Overview"
+
+#: apps/finance/views/__init__.py:174
+msgid "订单全生命周期概览，查看定金、货款、物流费用及摊销汇总。"
+msgstr ""
+"Full order lifecycle view with deposit, payment, logistics, and amortization "
+"summary."
+
+#: apps/finance/views/deposit/api.py:394
+#, python-brace-format
+msgid "获取定金付款列表失败: {error}"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:462 apps/finance/views/po/api.py:655
+msgid "请选择至少一个订单"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:506 apps/finance/views/po/api.py:699
+#, python-brace-format
+msgid "未找到订单信息 (DEBUG: {debug_info})"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:685 apps/finance/views/po/api.py:941
+msgid "没有产生付款记录 (金额为0)"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:701 apps/finance/views/po/api.py:957
+#, python-brace-format
+msgid "付款成功，共 {count} 条记录"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:712 apps/finance/views/po/api.py:969
+msgid "无效的请求数据"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:718 apps/finance/views/po/api.py:975
+#, python-brace-format
+msgid "付款失败: {error}"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:741 apps/finance/views/deposit/api.py:1082
+#: apps/finance/views/po/api.py:998 apps/finance/views/po/api.py:1336
+msgid "缺少付款单号"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:759 apps/finance/views/po/api.py:1014
+#: templates/finance/pages/partials/prepay_wizard.html:527
+#: templates/finance/pages/partials/prepay_wizard.html:529
+msgid "不支持的文件格式"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:780 apps/finance/views/po/api.py:1035
+#: apps/purchase/views/po_mgmt/invoice.py:86
+#: apps/purchase/views/receive_mgmt/upload.py:96
+#: apps/purchase/views/send_mgmt/invoice.py:84
+msgid "上传成功"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:784
+#: apps/finance/views/payment/file_ops.py:175 apps/finance/views/po/api.py:1039
+#: apps/purchase/views/po_mgmt/invoice.py:95
+#: apps/purchase/views/receive_mgmt/upload.py:106
+#: apps/purchase/views/send_mgmt/invoice.py:93
+#, python-brace-format
+msgid "上传失败: {error}"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:803 apps/finance/views/po/api.py:1058
+msgid "缺少供应商代码"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1040 apps/finance/views/po/api.py:1294
+msgid "非法文件名"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1050
+#: apps/finance/views/payment/file_ops.py:202
+#: apps/finance/views/payment/file_ops.py:260 apps/finance/views/po/api.py:1248
+#: apps/finance/views/po/api.py:1304 apps/finance/views/prepay/api.py:918
+#: apps/finance/views/prepay/api.py:1063 apps/products/actions.py:167
+#: apps/products/actions.py:302 apps/purchase/views/po_mgmt/invoice.py:209
+#: apps/purchase/views/po_mgmt/invoice.py:284
+#: apps/purchase/views/receive_mgmt/upload.py:221
+#: apps/purchase/views/receive_mgmt/upload.py:289
+#: apps/purchase/views/send_mgmt/invoice.py:201
+#: apps/purchase/views/send_mgmt/invoice.py:274 apps/reports/views.py:338
+#: apps/reports/views.py:391
+msgid "文件不存在"
+msgstr "File not found"
+
+#: apps/finance/views/deposit/api.py:1055 apps/finance/views/po/api.py:1309
+#: apps/finance/views/prepay/api.py:922 apps/finance/views/prepay/api.py:1067
+msgid "非法文件路径"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1064 apps/finance/views/po/api.py:1318
+#: apps/finance/views/prepay/api.py:1074
+msgid "文件删除成功"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1232
+msgid "缺少付款单号或订单号"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1401
+msgid "覆盖定金标准"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1410
+msgid "额外费用说明"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1420
+msgid "额外费用"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1449
+#: apps/finance/views/deposit/delete_logic_snippet.py:16
+msgid "Missing pmt_no"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1471
+#: apps/finance/views/deposit/delete_logic_snippet.py:38
+msgid "Payments not found or already deleted"
+msgstr ""
+
+#: apps/finance/views/deposit/api.py:1615
+#: apps/finance/views/deposit/delete_logic_snippet.py:179
+msgid "Payment deleted successfully"
+msgstr ""
+
+#: apps/finance/views/deposit/delete_logic_snippet.py:103
+#: templates/purchase/pages/po_mgmt.html:513
+#: templates/purchase/pages/po_mgmt/po_delete.html:313
+msgid "删除订单"
+msgstr ""
+
+#: apps/finance/views/deposit/delete_logic_snippet.py:168
+#, python-brace-format
+msgid "Deposit Delete Refund: {pmt_no}"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:560
+msgid "无定金需求"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:563
+msgid "已减免"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:566
+msgid "已付清"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:569 apps/finance/views/logistic.py:201
+msgid "部分付款"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:572
+msgid "待付款"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:724
+msgid "待发货"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:728
+msgid "已收货(有差异)"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:731
+msgid "已收货"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:734
+msgid "部分收货"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:737
+msgid "已发货"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:786
+msgid "定金"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:786
+msgid "货款"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:786
+msgid "物流"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:844
+#, python-brace-format
+msgid "获取订单流览列表失败: {error}"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:867 apps/finance/views/po/api.py:1484
+#: apps/purchase/views/po_mgmt/delete.py:50
+#: apps/purchase/views/po_mgmt/delete.py:251
+#: apps/purchase/views/po_mgmt/detail.py:39
+#: apps/purchase/views/po_mgmt/detail.py:209
+#: apps/purchase/views/po_mgmt/edit.py:39
+#: apps/purchase/views/po_mgmt/edit.py:252
+#: apps/purchase/views/po_mgmt/history.py:33
+#: apps/purchase/views/po_mgmt/invoice.py:46
+#: apps/purchase/views/po_mgmt/invoice.py:111
+#: apps/purchase/views/send_mgmt/edit_items/query.py:349
+msgid "缺少订单号"
+msgstr ""
+
+#: apps/finance/views/flow/api.py:883 apps/finance/views/po/api.py:1469
+#: apps/purchase/views/po_mgmt/detail.py:191
+#, python-brace-format
+msgid "获取订单详情失败: {error}"
+msgstr ""
+
+#: apps/finance/views/logistic.py:192
+#: apps/purchase/views/receive_mgmt/list.py:251
+#: templates/purchase/pages/po_mgmt.html:589
+#: templates/purchase/pages/send_mgmt.html:546
+#, fuzzy
+#| msgid "删除"
+msgid "已删除"
+msgstr "Delete"
+
+#: apps/finance/views/logistic.py:195
+msgid "未付款"
+msgstr ""
+
+#: apps/finance/views/logistic.py:198
+msgid "已付款"
+msgstr ""
+
+#: apps/finance/views/logistic.py:315
+#, python-brace-format
+msgid "获取物流财务列表失败: {error}"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:50
+#: apps/finance/views/payment/file_ops.py:84
+#: apps/finance/views/payment/file_ops.py:117
+#: apps/finance/views/payment/history.py:98
+#: apps/finance/views/payment/history.py:192
+msgid "缺少 pmt_no"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:169
+#: apps/finance/views/prepay/api.py:1024
+msgid "文件上传成功"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:199
+#: apps/finance/views/payment/file_ops.py:257 apps/finance/views/po/api.py:1239
+#: apps/purchase/views/po_mgmt/invoice.py:206
+#: apps/purchase/views/po_mgmt/invoice.py:272
+#: apps/purchase/views/receive_mgmt/upload.py:218
+#: apps/purchase/views/receive_mgmt/upload.py:283
+#: apps/purchase/views/send_mgmt/invoice.py:198
+#: apps/purchase/views/send_mgmt/invoice.py:264
+msgid "无效的文件名"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:227
+#: apps/finance/views/payment/history.py:183
+#: apps/finance/views/payment/history.py:246
+#, python-brace-format
+msgid "获取失败: {error}"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:277
+#: apps/purchase/views/po_mgmt/invoice.py:291
+#: apps/purchase/views/receive_mgmt/upload.py:296
+#: apps/purchase/views/send_mgmt/invoice.py:281
+#, python-brace-format
+msgid "文件 {filename} 已删除"
+msgstr ""
+
+#: apps/finance/views/payment/file_ops.py:282
+#: apps/finance/views/payment/submit.py:281 apps/inventory/views/shelf.py:305
+#: apps/purchase/views/po_mgmt/invoice.py:298
+#: apps/purchase/views/receive_mgmt/upload.py:303
+#: apps/purchase/views/send_mgmt/invoice.py:288
+#, python-brace-format
+msgid "删除失败: {error}"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:31
+msgid "运费(RMB)"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:32
+msgid "单价($/kg)"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:33
+msgid "重量(kg)"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:34
+#: apps/purchase/views/send_mgmt/history.py:75
+msgid "托盘数"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:35
+#: apps/purchase/views/send_mgmt/history.py:73
+msgid "发货日期"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:73
+#: templates/finance/pages/logistic.html:2236
+msgid "物流费"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:77
+#: apps/finance/views/payment/history.py:78
+msgid "无"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:79
+#: templates/finance/pages/logistic.html:2240
+msgid "附加费"
+msgstr ""
+
+#: apps/finance/views/payment/history.py:88 apps/finance/views/po/api.py:1569
+#: apps/purchase/views/po_create/validation.py:45
+#: apps/purchase/views/po_create/validation.py:47
+#: templates/finance/pages/logistic.html:1942
+#: templates/finance/pages/logistic.html:2235
+msgid "结算汇率"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:43
+#: apps/finance/views/payment/submit.py:218
+#: apps/finance/views/payment/submit.py:295 apps/inventory/views/shelf.py:153
+#: apps/inventory/views/shelf.py:283
+#: apps/purchase/views/send_create/submit.py:53
+#: apps/purchase/views/send_create/template.py:188
+#: apps/purchase/views/send_create/validation.py:150
+msgid "数据格式错误"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:61
+msgid "未选择物流单"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:64
+msgid "付款日期不能为空"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:195
+#, python-brace-format
+msgid "成功处理 {count} 单付款"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:204
+#, python-brace-format
+msgid "处理失败: {error}"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:228
+#: apps/finance/views/payment/submit.py:305
+msgid "付款序列号不能为空"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:244
+#, python-brace-format
+msgid "未找到付款记录: {pmt_no}"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:275
+#, python-brace-format
+msgid "成功删除付款记录 {pmt_no}，共 {count} 单"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:324
+#, python-brace-format
+msgid "未找到可恢复的删除记录: {pmt_no}"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:388
+#, python-brace-format
+msgid "成功恢复付款记录 {pmt_no}，共 {count} 单"
+msgstr ""
+
+#: apps/finance/views/payment/submit.py:394
+#, python-brace-format
+msgid "恢复失败: {error}"
+msgstr ""
+
+#: apps/finance/views/po/api.py:587
+#, python-brace-format
+msgid "获取订单付款列表失败: {error}"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1163
+#, python-brace-format
+msgid "获取余额失败: {error}"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1176
+msgid "缺少参数: pmt_no or identifier"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1219
+#, python-brace-format
+msgid "获取文件列表失败: {error}"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1533
+#: apps/purchase/views/po_create/validation.py:39
+msgid "结算货币"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1541 apps/purchase/views/po_mgmt/history.py:68
+msgid "价格浮动"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1547
+msgid "价格浮动比例"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1555
+msgid "汇率浮动"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1561
+msgid "汇率浮动比例"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1804
+msgid "付款记录不存在或已删除"
+msgstr ""
+
+#: apps/finance/views/po/api.py:1958 templates/finance/pages/po.html:1667
+msgid "订单付款已删除"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:134
+msgid "缺少 supplier_code"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:161 apps/purchase/views/supplier.py:104
+msgid "供应商不存在"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:343
+#: apps/purchase/views/receive/submit.py:118
+msgid "缺少必填字段"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:346
+#: apps/purchase/views/po_create/validation.py:45
+msgid "汇率必须大于0"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:349
+msgid "金额必须大于0"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:437
+msgid "预付款记录已成功添加"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:441
+msgid "无效的请求格式"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:464 apps/finance/views/prepay/api.py:676
+#: apps/finance/views/prepay/api.py:752 apps/finance/views/prepay/api.py:844
+#: apps/finance/views/prepay/api.py:973
+msgid "缺少流水号参数"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:515
+msgid "厂商要求货币"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:569
+#: apps/purchase/views/po_mgmt/history.py:67
+#: apps/purchase/views/send_mgmt/history.py:79
+msgid "汇率"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:575
+msgid "操作货币"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:631
+msgid "付款金额"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:686 apps/finance/views/prepay/api.py:762
+msgid "预付款记录不存在"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:692
+msgid "该记录已被删除"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:729
+msgid "预付款记录已删除"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:768
+msgid "该记录未被删除，无需恢复"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:784
+msgid "无法找到可恢复的版本"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:823
+msgid "预付款记录已恢复"
+msgstr ""
+
+#: apps/finance/views/prepay/api.py:981
+msgid "文件大小超过限制"
+msgstr ""
+
+#: apps/inventory/views.py:42 apps/inventory/views/__init__.py:58
+msgid "库存修改向导"
+msgstr "Inventory Adjustment Wizard"
+
+#: apps/inventory/views.py:44 apps/inventory/views/__init__.py:60
+msgid "按步骤修正单品库存或删除整列数据。"
+msgstr "Step-by-step inventory corrections or column deletion."
+
+#: apps/inventory/views/__init__.py:34
+msgid "动态库存管理"
+msgstr "Dynamic Inventory"
+
+#: apps/inventory/views/__init__.py:36
+msgid "查看各 SKU 的实时库存、下订、在途状态。"
+msgstr "View real-time stock, on-order, and in-transit status for each SKU."
+
+#: apps/inventory/views/__init__.py:42
+msgid "仓库货架码"
+msgstr "Shelf Management"
+
+#: apps/inventory/views/__init__.py:44
+msgid "管理仓库库位结构，查看货架地图，生成库位码。"
+msgstr "Manage warehouse location structure, view shelf maps, and generate location codes."
+
+#: apps/inventory/views/dynamic_inv.py:80
+msgid "Invalid date format"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:160 apps/inventory/views/shelf.py:288
+msgid "仓库号不能为空"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:163
+msgid "至少需要配置一个货架排"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:180
+#, python-brace-format
+msgid "仓库号 {wh_num} 已存在"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:264
+#, python-brace-format
+msgid "成功创建仓库 {wh_num}，共 {count} 个库位"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:270
+#, python-brace-format
+msgid "创建失败: {error}"
+msgstr ""
+
+#: apps/inventory/views/shelf.py:300
+#, python-brace-format
+msgid "成功删除仓库 {wh_num}"
+msgstr ""
+
+#: apps/log/views.py:498
+msgid "敏感信息已解锁"
+msgstr ""
+
+#: apps/log/views.py:534
+msgid "已恢复脱敏保护"
+msgstr ""
+
+#: apps/log/views.py:545 apps/log/views.py:627
+msgid "仅超级管理员可操作"
+msgstr ""
+
+#: apps/log/views.py:578 apps/log/views.py:642
+#, python-brace-format
+msgid "验证失败: {msg}"
+msgstr ""
+
+#: apps/log/views.py:602
+#, python-brace-format
+msgid "开发者模式控制已{state}"
+msgstr ""
+
+#: apps/log/views.py:602 apps/purchase/views/po_mgmt/history.py:78
+#: apps/purchase/views/po_mgmt/history.py:79
+msgid "开启"
+msgstr ""
+
+#: apps/log/views.py:602 apps/purchase/views/po_mgmt/history.py:78
+#: apps/purchase/views/po_mgmt/history.py:79
+msgid "关闭"
+msgstr ""
+
+#: apps/log/views.py:652
+msgid "没有需要清理的开发日志"
+msgstr ""
+
+#: apps/log/views.py:672
+#, python-brace-format
+msgid "已清理 {count} 条开发日志"
+msgstr ""
+
+#: apps/products/actions.py:87
+msgid "您没有生成条形码的权限"
+msgstr ""
+
+#: apps/products/actions.py:114
+msgid "请提供有效的条形码数据"
+msgstr ""
+
+#: apps/products/actions.py:120
+msgid "条形码数据格式错误"
+msgstr ""
+
+#: apps/products/actions.py:136
+#, python-brace-format
+msgid "生成完成: 成功 {success} 个, 失败 {fail} 个"
+msgstr ""
+
+#: apps/products/actions.py:157 apps/products/actions.py:224
+#: apps/products/actions.py:295 apps/purchase/views/po_create/submit.py:45
+#: apps/purchase/views/po_create/template.py:81
+#: apps/purchase/views/po_create/template.py:117
+#: apps/purchase/views/po_create/template.py:374
+#: apps/purchase/views/po_mgmt/edit.py:35
+#: apps/purchase/views/po_mgmt/edit.py:196
+#: apps/purchase/views/po_mgmt/edit.py:236
+#: apps/purchase/views/po_mgmt/invoice.py:33
+#: apps/purchase/views/po_mgmt/invoice.py:107
+#: apps/purchase/views/po_mgmt/invoice.py:186
+#: apps/purchase/views/po_mgmt/list.py:35
+#: apps/purchase/views/po_mgmt/list.py:354
+#: apps/purchase/views/receive/query.py:53
+#: apps/purchase/views/receive/query.py:260
+#: apps/purchase/views/receive/submit.py:58
+#: apps/purchase/views/receive_mgmt/delete.py:40
+#: apps/purchase/views/receive_mgmt/delete.py:235
+#: apps/purchase/views/receive_mgmt/detail.py:32
+#: apps/purchase/views/receive_mgmt/history.py:29
+#: apps/purchase/views/receive_mgmt/upload.py:39
+#: apps/purchase/views/receive_mgmt/upload.py:118
+#: apps/purchase/views/receive_mgmt/upload.py:204
+#: apps/purchase/views/send_create/availability.py:38
+#: apps/purchase/views/send_create/query.py:29
+#: apps/purchase/views/send_create/query.py:57
+#: apps/purchase/views/send_create/query.py:98
+#: apps/purchase/views/send_create/submit.py:48
+#: apps/purchase/views/send_create/template.py:40
+#: apps/purchase/views/send_create/template.py:183
+#: apps/purchase/views/send_create/template.py:283
+#: apps/purchase/views/send_create/validation.py:38
+#: apps/purchase/views/send_create/validation.py:145
+#: apps/purchase/views/send_mgmt/edit_items/query.py:31
+#: apps/purchase/views/send_mgmt/edit_items/query.py:221
+#: apps/purchase/views/send_mgmt/edit_items/query.py:345
+#: apps/purchase/views/send_mgmt/edit_items/query.py:437
+#: apps/purchase/views/send_mgmt/edit_items/submit.py:36
+#: apps/purchase/views/send_mgmt/invoice.py:32
+#: apps/purchase/views/send_mgmt/invoice.py:105
+#: apps/purchase/views/send_mgmt/invoice.py:180
+#: apps/purchase/views/send_mgmt/list.py:42
+#: apps/purchase/views/send_mgmt/list.py:395
+msgid "无权限"
+msgstr ""
+
+#: apps/products/actions.py:173 apps/products/actions.py:308
+msgid "非法路径"
+msgstr ""
+
+#: apps/products/actions.py:233
+msgid "没有可下载的文件"
+msgstr ""
+
+#: apps/products/actions.py:270
+msgid "您没有操作权限"
+msgstr ""
+
+#: apps/products/actions.py:278
+#, python-brace-format
+msgid "已清空 {count} 个文件"
+msgstr ""
+
+#: apps/products/services/barcode_generator.py:377
+msgid "(空)"
+msgstr ""
+
+#: apps/products/services/barcode_generator.py:377
+msgid "SKU 不能为空"
+msgstr ""
+
+#: apps/products/services/barcode_generator.py:381
+msgid "每盒个数必须是大于0的正整数"
+msgstr ""
+
+#: apps/products/services/barcode_generator.py:385
+msgid "每箱盒数必须是大于0的正整数"
+msgstr ""
+
+#: apps/products/views.py:34
+msgid "产品数据维护"
+msgstr "Product Data Maintenance"
+
+#: apps/products/views.py:36
+msgid "批量编辑产品成本、运费及分类信息。"
+msgstr "Bulk edit product costs, freight, and categories."
+
+#: apps/products/views.py:42
+msgid "新增产品"
+msgstr "Add Product"
+
+#: apps/products/views.py:44
+msgid "创建新的产品档案并初始化库存记录。"
+msgstr "Create new product profile and initialize inventory."
+
+#: apps/products/views.py:50
+msgid "外包装条形码"
+msgstr "Carton Barcode"
+
+#: apps/products/views.py:52
+msgid "根据 SKU 和包装规格批量生成条形码 PDF。"
+msgstr "Generate barcode PDFs based on SKU and packaging specs."
+
+#: apps/purchase/forms.py:14
+msgid "供应商代号必须是两个英文字母"
+msgstr ""
+
+#: apps/purchase/forms.py:17
+#, python-brace-format
+msgid "供应商代号 '{code}' 已存在"
+msgstr ""
+
+#: apps/purchase/forms.py:49
+msgid "开启 [价格浮动] 时，必须设置有效的浮动阈值 (大于 0)"
+msgstr ""
+
+#: apps/purchase/forms.py:51
+msgid "价格浮动阈值不能超过 10%"
+msgstr ""
+
+#: apps/purchase/forms.py:55
+msgid "开启 [要求定金] 时，必须设置有效的定金百分比 (大于 0)"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:145 apps/purchase/views/abnormal.py:311
+#: apps/purchase/views/supplier.py:99
+msgid "参数不完整"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:259
+#, python-format
+msgid "加载失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:314
+msgid "未选择处理策略"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:331
+msgid "未找到待处理的差异记录"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:392
+msgid "策略3仅适用于少收情况"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:407
+#, python-format
+msgid "未知策略 %(method)s"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:495
+#, python-format
+msgid "处理完成，共处理 %(count)s 条差异"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:506
+#, python-format
+msgid "处理失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:1018
+#: apps/purchase/views/receive/query.py:264
+#: apps/purchase/views/receive_mgmt/detail.py:36
+msgid "缺少物流单号参数"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:1101
+#: apps/purchase/views/receive_mgmt/delete.py:48
+#: apps/purchase/views/receive_mgmt/delete.py:242
+#: apps/purchase/views/receive_mgmt/edit.py:97
+#: apps/purchase/views/receive_mgmt/history.py:33
+#: apps/purchase/views/receive_mgmt/upload.py:47
+#: apps/purchase/views/receive_mgmt/upload.py:124
+#: apps/purchase/views/send_mgmt/delete.py:54
+#: apps/purchase/views/send_mgmt/delete.py:326
+#: apps/purchase/views/send_mgmt/detail.py:40
+#: apps/purchase/views/send_mgmt/detail.py:251
+#: apps/purchase/views/send_mgmt/edit.py:37
+#: apps/purchase/views/send_mgmt/edit.py:170
+#: apps/purchase/views/send_mgmt/edit_items/query.py:35
+#: apps/purchase/views/send_mgmt/edit_items/submit.py:47
+#: apps/purchase/views/send_mgmt/history.py:33
+#: apps/purchase/views/send_mgmt/invoice.py:44
+#: apps/purchase/views/send_mgmt/invoice.py:109
+msgid "缺少物流单号"
+msgstr ""
+
+#: apps/purchase/views/abnormal.py:1122
+msgid "没有已处理的差异记录可删除"
+msgstr ""
+
+#: apps/purchase/views/hub.py:38
+msgid "新增供应商"
+msgstr "Add Supplier"
+
+#: apps/purchase/views/hub.py:40
+msgid "创建新的供应商档案"
+msgstr "Create new supplier profile"
+
+#: apps/purchase/views/hub.py:46
+msgid "供应商管理"
+msgstr "Supplier Management"
+
+#: apps/purchase/views/hub.py:48
+msgid "查看和修改供应商策略"
+msgstr "View and modify supplier strategies"
+
+#: apps/purchase/views/hub.py:54
+msgid "新建采购订单"
+msgstr "New Purchase Order"
+
+#: apps/purchase/views/hub.py:56
+msgid "创建新的采购订单"
+msgstr "Create new purchase order"
+
+#: apps/purchase/views/hub.py:62
+msgid "订单管理"
+msgstr "Order Management"
+
+#: apps/purchase/views/hub.py:64
+msgid "查看和管理采购订单"
+msgstr "View and manage purchase orders"
+
+#: apps/purchase/views/hub.py:70
+msgid "新建发货单"
+msgstr "New Shipment"
+
+#: apps/purchase/views/hub.py:72
+msgid "创建新的发货单"
+msgstr "Create new shipment"
+
+#: apps/purchase/views/hub.py:78
+msgid "发货单管理"
+msgstr "Shipment Management"
+
+#: apps/purchase/views/hub.py:80
+msgid "查看和管理发货单"
+msgstr "View and manage shipments"
+
+#: apps/purchase/views/hub.py:86
+msgid "货物入库"
+msgstr "Goods Receipt"
+
+#: apps/purchase/views/hub.py:88
+msgid "接收发货单货物并入库"
+msgstr "Receive shipment goods into warehouse"
+
+#: apps/purchase/views/hub.py:94
+msgid "入库管理"
+msgstr "Receipt Management"
+
+#: apps/purchase/views/hub.py:96
+msgid "查看和管理入库记录"
+msgstr "View and manage receipt records"
+
+#: apps/purchase/views/hub.py:102
+msgid "入库异常处理"
+msgstr "Abnormality Handling"
+
+#: apps/purchase/views/hub.py:104
+msgid "处理入库差异和异常情况"
+msgstr "Handle receipt discrepancies and abnormalities"
+
+#: apps/purchase/views/po_create/query.py:49
+#, python-format
+msgid "获取供应商列表失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:69
+msgid "请提供供应商代号"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:72
+msgid "请提供订单日期"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:77
+#: apps/purchase/views/po_create/query.py:131
+msgid "日期格式无效"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:87
+#, python-format
+msgid "未找到供应商 %(code)s 在 %(date)s 之前生效的策略"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:110
+#, python-format
+msgid "获取供应商策略失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:126
+msgid "请提供日期"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:143
+#, python-format
+msgid "所选日期 %(date)s 是未来日期，汇率尚未公布，请手动输入预估汇率"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:189
+msgid "今日实时汇率"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:192
+#, python-format
+msgid "%(date)s 参考汇率"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:203
+#, python-format
+msgid "已获取USD/RMB买入价：%(rate)s"
+msgstr ""
+
+#: apps/purchase/views/po_create/query.py:212
+msgid "无法自动获取汇率，请手动输入当日USD/RMB买入价"
+msgstr ""
+
+#: apps/purchase/views/po_create/submit.py:72
+msgid "供应商代码必须是2个字母"
+msgstr ""
+
+#: apps/purchase/views/po_create/submit.py:83
+#, python-brace-format
+msgid "供应商代码 {supplier_code} 不存在"
+msgstr ""
+
+#: apps/purchase/views/po_create/submit.py:225
+msgid "采购订单创建成功"
+msgstr ""
+
+#: apps/purchase/views/po_create/submit.py:233
+#: apps/purchase/views/po_create/validation.py:55
+#: apps/purchase/views/po_create/validation.py:106
+msgid "请求数据格式错误"
+msgstr ""
+
+#: apps/purchase/views/po_create/submit.py:236
+#, python-brace-format
+msgid "订单创建失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:95
+#, python-brace-format
+msgid "模板文件不存在且创建失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:129
+#: apps/purchase/views/send_create/template.py:291
+msgid "请上传文件"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:136
+#: apps/purchase/views/send_create/template.py:294
+msgid "仅支持 .xlsx 或 .xls 格式的Excel文件"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:150
+#: apps/purchase/views/send_create/template.py:300
+#, fuzzy, python-brace-format
+#| msgid "无法解析文件内容"
+msgid "无法解析Excel文件: {error}"
+msgstr "Cannot parse file content"
+
+#: apps/purchase/views/po_create/template.py:160
+#, python-brace-format
+msgid "文件格式错误：B1单元格应为 \"{expected}\"，实际为 \"{actual}\""
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:171
+#, python-brace-format
+msgid "供应商不匹配：文件中为 \"{actual}\"，期望为 \"{expected}\""
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:193
+#, python-brace-format
+msgid ""
+"日期不匹配：文件中为 \"{actual_raw}\" (解析为 {actual_parsed})，期望为 "
+"\"{expected}\""
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:204
+#, python-brace-format
+msgid "货币不匹配：文件中为 \"{actual}\"，期望为 \"{expected}\""
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:257
+#: apps/purchase/views/po_create/validation.py:82
+#: apps/purchase/views/send_create/validation.py:171
+msgid "SKU不能为空"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:259
+msgid "SKU不存在"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:266
+msgid "数量不能为空"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:268
+#: apps/purchase/views/po_create/validation.py:88
+#: apps/purchase/views/send_create/validation.py:179
+msgid "数量必须大于0"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:271
+msgid "数量必须为整数"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:279
+#: apps/purchase/views/po_create/validation.py:96
+msgid "单价必须大于0"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:282
+msgid "单价不能为空"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:285
+msgid "单价必须为数字"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:299
+msgid "未在Excel中找到商品数据（从B5行开始）"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:311
+#, python-brace-format
+msgid "发现 {n} 行SKU错误，请在线修正"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:326
+#, python-brace-format
+msgid "发现 {n} 行数据错误，请在线修正"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:335
+#, python-brace-format
+msgid "成功解析 {n} 条商品数据"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:347
+#: apps/purchase/views/po_create/template.py:457
+#, python-brace-format
+msgid "依赖模块导入失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:354
+#, python-brace-format
+msgid "服务器错误: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:392
+msgid "请提供订单日期和供应商"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:405
+#: apps/purchase/views/send_create/template.py:203
+msgid "模板文件不存在"
+msgstr ""
+
+#: apps/purchase/views/po_create/template.py:463
+#, python-brace-format
+msgid "生成预填模板失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:31
+#: templates/finance/pages/logistic.html:1934
+msgid "供应商"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:31
+msgid "请选择供应商"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:35
+msgid "订单日期"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:35
+msgid "请选择订单日期"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:39
+msgid "货币类型必须是 USD 或 RMB"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:47
+msgid "汇率格式无效"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:52
+#, fuzzy
+#| msgid "验证通过"
+msgid "参数验证通过"
+msgstr "Verification Passed"
+
+#: apps/purchase/views/po_create/validation.py:76
+msgid "商品列表"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:76
+#: apps/purchase/views/send_create/validation.py:156
+msgid "请至少添加一个商品"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:82
+#, python-format
+msgid "第%(idx)s行 SKU"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:88
+#: apps/purchase/views/po_create/validation.py:90
+#, python-format
+msgid "第%(idx)s行 数量"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:90
+msgid "数量格式无效"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:96
+#: apps/purchase/views/po_create/validation.py:98
+#, python-format
+msgid "第%(idx)s行 单价"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:98
+msgid "单价格式无效"
+msgstr ""
+
+#: apps/purchase/views/po_create/validation.py:103
+#, fuzzy
+#| msgid "验证通过"
+msgid "商品数据验证通过"
+msgstr "Verification Passed"
+
+#: apps/purchase/views/po_mgmt/delete.py:60
+#: apps/purchase/views/po_mgmt/detail.py:51
+#: apps/purchase/views/po_mgmt/detail.py:221
+#: apps/purchase/views/po_mgmt/edit.py:51
+#: apps/purchase/views/po_mgmt/edit.py:262
+msgid "订单不存在"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:87
+msgid "订单已被删除"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:135
+msgid "订单无货物记录"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:202
+msgid "订单删除成功"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:212
+msgid "删除失败: 数据库写入失败"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:220
+#, python-format
+msgid "删除订单失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:272
+msgid "找不到删除记录，订单未被删除"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:332
+#: apps/purchase/views/send_mgmt/delete.py:436
+msgid "无法恢复：找不到历史记录"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:401
+#, python-format
+msgid "订单恢复成功，共恢复 %(count)s 个商品"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:411
+msgid "恢复失败: 数据库写入失败"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/delete.py:419
+#: apps/purchase/views/send_mgmt/delete.py:660
+#, python-format
+msgid "撤销删除失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/detail.py:395
+#, python-brace-format
+msgid "生成订单文件失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/edit.py:184
+#, python-brace-format
+msgid "获取订单数据失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/edit.py:213
+#: apps/purchase/views/send_mgmt/edit_items/query.py:423
+#, python-brace-format
+msgid "获取SKU列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/edit.py:549
+msgid "订单修改成功"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/edit.py:561
+#: apps/purchase/views/send_mgmt/edit_items/submit.py:380
+#, python-brace-format
+msgid "提交修改失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:66
+#: templates/finance/pages/logistic.html:1964
+msgid "货币"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:69
+msgid "浮动阈值"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:70
+msgid "定金要求"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:71
+msgid "定金比例"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:178
+#: apps/purchase/views/send_mgmt/history.py:196
+#: templates/finance/pages/logistic.html:1963
+msgid "数量"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:180
+#: templates/finance/pages/logistic.html:1965
+msgid "单价"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/history.py:210
+#: apps/purchase/views/receive_mgmt/history.py:199
+#: apps/purchase/views/send_mgmt/history.py:227
+#, python-brace-format
+msgid "获取历史记录失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/invoice.py:48
+#: apps/purchase/views/receive_mgmt/upload.py:51
+#: apps/purchase/views/send_mgmt/invoice.py:46
+msgid "未上传文件"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/invoice.py:117
+msgid "无效的订单号"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/invoice.py:174
+#: apps/purchase/views/receive_mgmt/upload.py:192
+#: apps/purchase/views/send_mgmt/invoice.py:168
+#, python-brace-format
+msgid "获取文件信息失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/invoice.py:239
+#: apps/purchase/views/receive_mgmt/upload.py:250
+#: apps/purchase/views/send_mgmt/invoice.py:231
+#, python-brace-format
+msgid "获取文件失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/list.py:342
+#: apps/purchase/views/send_mgmt/edit_items/query.py:329
+#, python-brace-format
+msgid "获取订单列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/list.py:373
+#, python-brace-format
+msgid "获取供应商列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/utils.py:25
+#: apps/purchase/views/po_mgmt/utils.py:60
+#: apps/purchase/views/po_mgmt/utils.py:66
+msgid "未发货"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/utils.py:63
+msgid "该订单已全部发货完成，无法修改或删除"
+msgstr ""
+
+#: apps/purchase/views/po_mgmt/utils.py:70
+#, python-brace-format
+msgid "该订单已部分发货（已发{qty}件），无法修改或删除"
+msgstr ""
+
+#: apps/purchase/views/receive/query.py:57
+msgid "缺少入库日期参数"
+msgstr ""
+
+#: apps/purchase/views/receive/query.py:77
+msgid "没有找到待入库的发货单"
+msgstr ""
+
+#: apps/purchase/views/receive/query.py:229
+#: apps/purchase/views/receive/query.py:295
+#, python-brace-format
+msgid "查询失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:80
+#: apps/purchase/views/receive_mgmt/upload.py:49
+#: apps/purchase/views/receive_mgmt/upload.py:126
+msgid "缺少入库日期"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:82
+msgid "没有需要入库的数据"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:99
+#, python-brace-format
+msgid "以下物流单已入库，不可重复提交: {log_list}"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:180
+#: apps/purchase/views/receive/submit.py:217
+#: apps/purchase/views/receive/submit.py:248
+msgid "原始入库"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:315
+#: apps/purchase/views/receive/submit.py:341
+msgid "原始入库差异"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:369
+msgid "入库成功"
+msgstr ""
+
+#: apps/purchase/views/receive/submit.py:382
+#, python-brace-format
+msgid "入库失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:51
+#: apps/purchase/views/send_mgmt/delete.py:57
+msgid "缺少删除备注"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:78
+#: apps/purchase/views/receive_mgmt/detail.py:57
+#: apps/purchase/views/receive_mgmt/edit.py:115
+msgid "入库单不存在"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:93
+msgid "入库单已被删除"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:103
+msgid "入库单无货物记录"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:208
+#, python-format
+msgid "入库单 %(logistic_num)s 已成功删除"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:215
+#, python-format
+msgid "删除失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:268
+msgid "入库单未被删除"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:343
+msgid "无法恢复：找不到删除前的有效记录"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:518
+#, python-format
+msgid "入库单 %(logistic_num)s 已成功恢复"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/delete.py:525
+#, python-format
+msgid "恢复失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/detail.py:151
+#: apps/purchase/views/receive_mgmt/list.py:226
+#: apps/purchase/views/send_mgmt/list.py:271
+msgid "全部已入库"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/detail.py:161
+#: apps/purchase/views/receive_mgmt/detail.py:165
+#: apps/purchase/views/receive_mgmt/list.py:231
+#: apps/purchase/views/receive_mgmt/list.py:237
+#: apps/purchase/views/send_mgmt/list.py:276
+#: apps/purchase/views/send_mgmt/list.py:282
+msgid "入库有差异:未解决"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/detail.py:163
+#: apps/purchase/views/receive_mgmt/list.py:235
+#: apps/purchase/views/send_mgmt/list.py:280
+msgid "入库有差异:已解决"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/detail.py:240
+#, python-brace-format
+msgid "获取入库单详情失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/edit.py:100
+msgid "无修改项"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/edit.py:447
+#, python-format
+msgid "入库单已更新至版本 %(seq)s"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/edit.py:457
+#, python-format
+msgid "提交失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/history.py:95
+#: apps/purchase/views/receive_mgmt/history.py:171
+msgid "入库数量"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/history.py:170
+msgid "差异数量"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/list.py:207
+#: apps/purchase/views/receive_mgmt/list.py:223
+#: apps/purchase/views/send_mgmt/list.py:245
+#: apps/purchase/views/send_mgmt/list.py:267
+msgid "货物在途中"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/list.py:287
+#, python-format
+msgid "获取入库记录列表失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/upload.py:59
+msgid "入库日期格式错误，应为 YYYY-MM-DD"
+msgstr ""
+
+#: apps/purchase/views/receive_mgmt/upload.py:135
+msgid "入库日期格式错误"
+msgstr ""
+
+#: apps/purchase/views/send_create/availability.py:50
+msgid "无有效订单，请先新增订单后才能发货"
+msgstr ""
+
+#: apps/purchase/views/send_create/availability.py:93
+msgid "当前订单已全部发货，请新增订单后才能继续发货"
+msgstr ""
+
+#: apps/purchase/views/send_create/availability.py:105
+#, python-format
+msgid "检查失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/send_create/query.py:33
+#: apps/purchase/views/send_create/validation.py:88
+msgid "物流单号不能为空"
+msgstr ""
+
+#: apps/purchase/views/send_create/query.py:102
+#: apps/purchase/views/send_create/validation.py:186
+msgid "订单号不能为空"
+msgstr ""
+
+#: apps/purchase/views/send_create/submit.py:72
+#, python-brace-format
+msgid "安全验证失败: 缺少验证码: {label}"
+msgstr ""
+
+#: apps/purchase/views/send_create/submit.py:75
+#, python-brace-format
+msgid "安全验证失败: {label} 错误"
+msgstr ""
+
+#: apps/purchase/views/send_create/submit.py:349
+msgid "发货单创建成功"
+msgstr ""
+
+#: apps/purchase/views/send_create/submit.py:354
+#, python-brace-format
+msgid "提交失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:47
+#: apps/purchase/views/send_create/template.py:194
+msgid "请先选择发货日期"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:63
+#, python-brace-format
+msgid "该发货日期({date_sent})前没有订单，请先去建立订单"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:141
+#, python-brace-format
+msgid "价格位列{rank}"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:157
+#, python-brace-format
+msgid "该发货日期({date})前的订单已全部发货完成"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:172
+#, python-brace-format
+msgid "生成模板数据失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:197
+msgid "没有可发货的订单数据"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:272
+#, python-brace-format
+msgid "生成模板失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:310
+msgid "无法验证上传文件，请返回第一步重新下载模板"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:324
+#: apps/purchase/views/send_create/template.py:357
+#: apps/purchase/views/send_create/template.py:366
+msgid "文件上传错误"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:325
+msgid "当前无可发货的订单数据，请确认后重试："
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:326
+msgid "请确认系统中存在待发货订单"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:326
+msgid "返回第一步重新下载模板"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:358
+msgid "验证数据异常，请返回第一步重新开始："
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:359
+msgid "请点击上方步骤条返回\"发货说明\"步骤"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:359
+msgid "下载最新发货模板"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:359
+msgid "填写后重新上传"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:367
+msgid "上传的文件与当前发货模板数据不一致，请确保上传的是最新下载的模板："
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:368
+msgid "...还有更多不一致项"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:395
+msgid "以下物流参数未填写"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:442
+msgid "上传文件不完整"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:443
+msgid "以下发货明细未填写："
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:444
+msgid "...还有更多未填写项"
+msgstr ""
+
+#: apps/purchase/views/send_create/template.py:526
+#, python-brace-format
+msgid "验证失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:60
+#, python-format
+msgid "发货日期不能早于订单日期（最晚订单日期为 %(date)s）"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:73
+msgid "预计到达日期不能早于发货日期"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:86
+msgid "物流单号已存在，请勿重复录入"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:94
+msgid "托盘数必须大于等于0"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:96
+msgid "托盘数必须是整数"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:102
+msgid "发货总重量必须大于0"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:104
+msgid "发货总重量必须是数字"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:110
+msgid "物流单价必须大于0"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:112
+msgid "物流单价必须是数字"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:121
+msgid "结算汇率必须大于1"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:123
+msgid "结算汇率必须是数字"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:173
+#, python-format
+msgid "SKU %s 不存在"
+msgstr ""
+
+#: apps/purchase/views/send_create/validation.py:181
+msgid "数量必须是正整数"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/delete.py:75
+#: apps/purchase/views/send_mgmt/delete.py:342
+#: apps/purchase/views/send_mgmt/detail.py:67
+#: apps/purchase/views/send_mgmt/detail.py:278
+#: apps/purchase/views/send_mgmt/edit.py:64
+#: apps/purchase/views/send_mgmt/edit.py:183
+#: apps/purchase/views/send_mgmt/edit_items/submit.py:59
+msgid "发货单不存在"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/delete.py:87
+msgid "发货单无货物记录"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/delete.py:287
+#, python-format
+msgid "发货单删除成功，共处理 %(count)s 件货物"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/delete.py:299
+#, python-format
+msgid "删除发货单失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/delete.py:359
+#, fuzzy
+#| msgid "已删除记录"
+msgid "找不到删除记录"
+msgstr "Deleted Records"
+
+#: apps/purchase/views/send_mgmt/delete.py:648
+#, python-format
+msgid "发货单恢复成功，共恢复 %(count)s 件货物"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:78
+#: apps/purchase/views/send_mgmt/history.py:91
+msgid "自动获取"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:78
+msgid "手动填写"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:231
+#, python-brace-format
+msgid "获取发货单详情失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:417
+#: apps/purchase/views/send_mgmt/detail.py:605
+msgid "是"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:418
+msgid "否"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/detail.py:641
+#, python-brace-format
+msgid "生成发货单文件失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit.py:99
+#, python-format
+msgid "获取发货单数据失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit.py:128
+#, python-format
+msgid "获取SKU列表失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit.py:222
+msgid "发货单物流信息修改成功"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit.py:233
+#, python-format
+msgid "提交修改失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit_items/query.py:203
+#, python-brace-format
+msgid "获取货物明细失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit_items/query.py:443
+msgid "缺少订单号或SKU"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit_items/query.py:520
+#, python-brace-format
+msgid "获取价格列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/edit_items/submit.py:367
+msgid "发货单修改成功"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:74
+msgid "预计到达"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:76
+msgid "总重量(kg)"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:77
+msgid "单价(/kg)"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:78 apps/visuals/views.py:287
+msgid "物流费用"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:80
+msgid "汇率获取方式"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/history.py:91
+msgid "手动输入"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/list.py:345
+#, python-brace-format
+msgid "获取发货单列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/send_mgmt/list.py:414
+#, python-brace-format
+msgid "获取物流单号列表失败: {error}"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:74
+msgid "代号不能为空"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:79
+msgid "代号格式不正确"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:116
+#, python-format
+msgid "该供应商在 %(date)s 已存在策略记录"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:136
+msgid "权限不足: 无法访问该功能"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:170
+#, python-format
+msgid "供应商 %(code)s 已成功添加 (含策略)"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:174 apps/purchase/views/supplier.py:336
+#, python-format
+msgid "保存失败: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:184 apps/purchase/views/supplier.py:340
+#, python-format
+msgid "表单错误 [%(field)s]: %(error)s"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:301
+msgid "该供应商在此生效日期已存在策略，请确认覆盖"
+msgstr ""
+
+#: apps/purchase/views/supplier.py:331
+msgid "策略已更新"
+msgstr ""
+
+#: apps/reports/views.py:131 apps/sales/views.py:43
+msgid "报表生成器"
+msgstr "Report Generator"
+
+#: apps/reports/views.py:133
+msgid "配置分析周期并启动全量分析引擎，生成商业智能报表。"
+msgstr ""
+"Configure analysis period and run the analytics engine to generate business "
+"intelligence reports."
+
+# ===== Reports =====
+#: apps/reports/views.py:138 apps/sales/views.py:51
+#: templates/reports/pages/viewer_image.html:16
+#: templates/reports/pages/viewer_pdf.html:16
+#: templates/reports/pages/viewer_table.html:16
+msgid "报表中心"
+msgstr "Report Center"
+
+#: apps/reports/views.py:140
+msgid "预览、下载和管理已生成的分析报表文件。"
+msgstr "Preview, download, and manage generated report files."
+
+#: apps/sales/views.py:45
+msgid "生成自定义业务报表，支持多种格式导出。"
+msgstr "Generate custom business reports with multiple export formats."
+
+#: apps/sales/views.py:53
+msgid "查看和管理已生成的报表。"
+msgstr "View and manage generated reports."
+
+#: apps/sales/views.py:59
+msgid "数据交互可视化"
+msgstr "Data Visualization"
+
+#: apps/sales/views.py:61
+msgid "交互式数据可视化与深度分析。"
+msgstr "Interactive data visualization and in-depth analytics."
+
+#: apps/user_admin/views/actions.py:574
+msgid "保存成功"
+msgstr "Saved successfully"
+
+#: apps/user_admin/views/main.py:59
+msgid "用户列表"
+msgstr "User List"
+
+#: apps/user_admin/views/main.py:61
+msgid "查看、搜索及管理系统用户账号状态。"
+msgstr "View, search, and manage user accounts."
+
+#: apps/user_admin/views/main.py:67
+msgid "注册新用户"
+msgstr "Register User"
+
+#: apps/user_admin/views/main.py:69
+msgid "创建新的系统访问账号。"
+msgstr "Create a new system account."
+
+#: apps/user_admin/views/main.py:75
+msgid "密码策略"
+msgstr "Password Policy"
+
+#: apps/user_admin/views/main.py:77
+msgid "配置全局密码复杂度及安全矩阵。"
+msgstr "Configure password complexity and security matrix."
+
+#: apps/user_admin/views/main.py:83
+msgid "职能开关"
+msgstr "Role Switches"
+
+#: apps/user_admin/views/main.py:85
+msgid "动态启用或禁用特定模块功能。"
+msgstr "Enable or disable specific module features."
+
+#: apps/user_admin/views/main.py:229 apps/user_admin/views/main.py:288
+msgid "用户名不能为空"
+msgstr "Username is required"
+
+#: apps/user_admin/views/main.py:274
+msgid "您没有创建用户的权限"
+msgstr "You do not have permission to create users"
+
+#: apps/user_admin/views/main.py:279
+#, python-brace-format
+msgid "安全验证失败: {msg}"
+msgstr ""
+
+#: apps/user_admin/views/main.py:294
+msgid "用户名格式不正确: 仅允许英文字母、数字和下划线，长度2-32位"
+msgstr ""
+
+#: apps/user_admin/views/main.py:298
+msgid "密码不能为空"
+msgstr "Password is required"
+
+#: apps/user_admin/views/main.py:300
+msgid "密码长度至少5位"
+msgstr "Password must be at least 5 characters"
+
+#: apps/user_admin/views/main.py:305
+#, python-brace-format
+msgid "用户名 \"{username}\" 已存在，请更换后重试"
+msgstr ""
+
+#: apps/user_admin/views/main.py:333
+msgid "创建用户失败，请稍后再试"
+msgstr "Failed to create user, please try again"
+
+#: apps/user_admin/views/main.py:335
+#, python-brace-format
+msgid "用户名 \"{username}\" 已存在"
+msgstr ""
+
+#: apps/user_admin/views/main.py:337
+msgid "密码不符合要求"
+msgstr "Password does not meet requirements"
+
+#: apps/user_admin/views/tabs.py:76 apps/user_admin/views/tabs.py:103
+msgid "权限不足：仅超级管理员可见"
+msgstr ""
+
+#: apps/visuals/views.py:73
+msgid "未解锁"
+msgstr ""
+
+#: apps/visuals/views.py:262
+msgid "净销售"
+msgstr ""
+
+#: apps/visuals/views.py:278
+msgid "净退货"
+msgstr ""
+
+#: apps/visuals/views.py:290
+msgid "产品成本"
+msgstr ""
+
+#: apps/visuals/views.py:293
+msgid "平台佣金"
+msgstr ""
+
+#: django_config/settings.py:163
+msgid "简体中文"
+msgstr "Chinese (Simplified)"
+
+#: django_config/settings.py:164
+msgid "English"
+msgstr "English"
+
+# ===== DB Admin =====
+#: templates/db_admin/pages/rollback_restore.html:5
+#: templates/db_admin/pages/rollback_restore.html:68
+msgid "数据库运维"
+msgstr "Database Admin"
+
+#: templates/db_admin/pages/rollback_restore.html:79
+msgid "从历史回滚点恢复数据，撤销之前的修改操作。"
+msgstr ""
+"Restore data from historical rollback points, undo previous modifications."
+
+# ===== Common UI =====
+#: templates/db_admin/pages/rollback_restore.html:82
+msgid "返回"
+msgstr "Back"
+
+#: templates/db_admin/pages/rollback_restore.html:94
+msgid "操作须知"
+msgstr "Instructions"
+
+#: templates/db_admin/pages/rollback_restore.html:97
+msgid "必须从最近的回档点开始"
+msgstr "Must start from the most recent point"
+
+#: templates/db_admin/pages/rollback_restore.html:97
+msgid "，不允许跳过顺序。"
+msgstr ", skipping is not allowed."
+
+#: templates/db_admin/pages/rollback_restore.html:98
+msgid "回档会覆盖当前数据，操作前系统会自动创建新的回滚点。"
+msgstr ""
+"Rollback will overwrite current data. System will create a new rollback "
+"point before operation."
+
+#: templates/db_admin/pages/rollback_restore.html:99
+msgid "如果选择的回档点来自「数据修改找回」，则本次不会创建新的回滚点。"
+msgstr ""
+"If the selected point is from 'Data Recovery', no new rollback point will be "
+"created."
+
+#: templates/db_admin/pages/rollback_restore.html:100
+msgid "需要验证用户密码和管理员密码才能执行回档。"
+msgstr ""
+"User password and admin password verification required to execute rollback."
+
+#: templates/db_admin/pages/rollback_restore.html:101
+msgid "回档期间请勿进行其他数据库操作。"
+msgstr "Do not perform other database operations during rollback."
+
+#: templates/db_admin/pages/rollback_restore.html:106
+msgid "当前状态"
+msgstr "Current Status"
+
+#: templates/db_admin/pages/rollback_restore.html:110
+msgid "可用回档点"
+msgstr "Available Rollback Points"
+
+#: templates/db_admin/pages/rollback_restore.html:114
+msgid "系统正常"
+msgstr "System Normal"
+
+#: templates/db_admin/pages/rollback_restore.html:131
+msgid "数据修改找回向导"
+msgstr "Data Recovery Wizard"
+
+#: templates/db_admin/pages/rollback_restore.html:132
+msgid "请按步骤恢复历史数据。"
+msgstr "Please follow the steps to restore historical data."
+
+#: templates/db_admin/pages/rollback_restore.html:145
+msgid "选择要回档的时间点"
+msgstr "Select rollback point"
+
+#: templates/db_admin/pages/rollback_restore.html:159
+#: templates/db_admin/pages/rollback_restore.html:342
+msgid "操作内容"
+msgstr "Operation Details"
+
+#: templates/db_admin/pages/rollback_restore.html:163
+msgid "最新"
+msgstr "Latest"
+
+#: templates/db_admin/pages/rollback_restore.html:175
+msgid "下一步"
+msgstr "Next"
+
+#: templates/db_admin/pages/rollback_restore.html:185
+msgid "验证回档顺序"
+msgstr "Verify Rollback Order"
+
+#: templates/db_admin/pages/rollback_restore.html:190
+msgid "已选择的回档点"
+msgstr "Selected Rollback Point"
+
+#: templates/db_admin/pages/rollback_restore.html:204
+msgid "正在验证..."
+msgstr "Verifying..."
+
+#: templates/db_admin/pages/rollback_restore.html:207
+msgid "必须先回档最近的回滚点，不允许跳过顺序。"
+msgstr "Must rollback to the most recent point first, skipping is not allowed."
+
+#: templates/db_admin/pages/rollback_restore.html:214
+msgid "验证通过"
+msgstr "Verification Passed"
+
+#: templates/db_admin/pages/rollback_restore.html:215
+msgid "选择的回档点为最新，可以执行回档操作。"
+msgstr "Selected point is the latest, rollback can be executed."
+
+#: templates/db_admin/pages/rollback_restore.html:220
+msgid "密码验证失败，无法完成回档。"
+msgstr "Password verification failed, cannot complete rollback."
+
+#: templates/db_admin/pages/rollback_restore.html:233
+msgid "上一步"
+msgstr "Previous"
+
+#: templates/db_admin/pages/rollback_restore.html:239
+msgid "确认回档"
+msgstr "Confirm Rollback"
+
+#: templates/db_admin/pages/rollback_restore.html:251
+msgid "正在执行回档"
+msgstr "Executing Rollback"
+
+#: templates/db_admin/pages/rollback_restore.html:256
+#: templates/db_admin/pages/rollback_restore.html:343
+msgid "准备中..."
+msgstr "Preparing..."
+
+#: templates/db_admin/pages/rollback_restore.html:264
+msgid "数据已成功恢复到指定时间点。"
+msgstr "Data has been successfully restored to the specified point."
+
+#: templates/db_admin/pages/rollback_restore.html:269
+msgid "数据变化摘要"
+msgstr "Data Change Summary"
+
+#: templates/db_admin/pages/rollback_restore.html:274
+msgid "已删除记录"
+msgstr "Deleted Records"
+
+#: templates/db_admin/pages/rollback_restore.html:280
+msgid "已恢复记录"
+msgstr "Restored Records"
+
+#: templates/db_admin/pages/rollback_restore.html:289
+msgid "已创建新的回滚点，便于撤回本次操作。"
+msgstr "New rollback point created for reverting this operation."
+
+#: templates/db_admin/pages/rollback_restore.html:292
+msgid "这是撤销之前的回档，无需建立新的备份。"
+msgstr "This is undoing a previous rollback, no backup needed."
+
+#: templates/db_admin/pages/rollback_restore.html:299
+msgid "回档失败"
+msgstr "Rollback Failed"
+
+#: templates/db_admin/pages/rollback_restore.html:300
+msgid "执行过程中发生错误，请稍后重试。"
+msgstr "An error occurred during execution, please try again later."
+
+#: templates/db_admin/pages/rollback_restore.html:307
+msgid "重新开始"
+msgstr "Start Over"
+
+#: templates/db_admin/pages/rollback_restore.html:312
+#: templates/db_admin/pages/rollback_restore.html:327
+msgid "返回数据库运维"
+msgstr "Return to Database Admin"
+
+#: templates/db_admin/pages/rollback_restore.html:324
+msgid "暂无可用回档点"
+msgstr "No Rollback Points Available"
+
+#: templates/db_admin/pages/rollback_restore.html:325
+msgid "系统中没有可用的回滚点，请先进行数据修改操作后再使用此功能。"
+msgstr "No rollback points in system. Please perform data modifications first."
+
+#: templates/db_admin/pages/rollback_restore.html:344
+msgid "执行中..."
+msgstr "Executing..."
+
+#: templates/db_admin/pages/rollback_restore.html:345
+msgid "校验中..."
+msgstr "Validating..."
+
+#: templates/db_admin/pages/rollback_restore.html:346
+#: templates/db_admin/pages/rollback_restore.html:368
+msgid "完成"
+msgstr "Done"
+
+#: templates/db_admin/pages/rollback_restore.html:347
+msgid "网络错误，请重试"
+msgstr "Network error, please retry"
+
+#: templates/db_admin/pages/rollback_restore.html:349
+msgid "涉及数据表"
+msgstr "Affected Tables"
+
+#: templates/db_admin/pages/rollback_restore.html:366
+msgid "选择回档"
+msgstr "Select Rollback"
+
+#: templates/db_admin/pages/rollback_restore.html:367
+msgid "验证确认"
+msgstr "Verify & Confirm"
+
+#: templates/db_admin/pages/rollback_restore.html:500
+msgid "执行数据回档"
+msgstr "Execute Data Rollback"
+
+#: templates/db_admin/pages/rollback_restore.html:588
+msgid "个"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:603
+msgid "已创建新的回滚点"
+msgstr "New rollback point created"
+
+#: templates/etl/partials/inv_validate_result.html:383
+#: templates/etl/partials/inv_validate_result.html:401
+msgid "请选择正确的 SKU 或点击跳过"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:779
+#: templates/finance/pages/deposit.html:781 templates/finance/pages/po.html:782
+#: templates/finance/pages/po.html:784
+msgid "请先选择至少一个订单"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1406
+msgid "您确定要删除定金付款记录吗？"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1407
+#: templates/finance/pages/po.html:1557
+msgid "付款单号"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1412
+msgid "注意: 该付款单关联多个订单。删除将同时撤销以下所有订单的定金支付:"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1416
+#: templates/finance/pages/po.html:1569
+msgid "关联订单"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1435
+msgid "删除定金"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1448
+#: templates/finance/pages/po.html:1598
+msgid "无法获取付款详情"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1453
+#: templates/finance/pages/logistic.html:2014
+#: templates/finance/pages/logistic.html:2066
+#: templates/finance/pages/po.html:1603 templates/finance/pages/po.html:1695
+#: templates/purchase/pages/abnormal_process_wizard.html:956
+#: templates/purchase/pages/po_mgmt/po_delete.html:404
+#: templates/purchase/pages/receive_mgmt.html:713
+#: templates/purchase/pages/receive_mgmt.html:715
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:387
+#: templates/purchase/pages/send_mgmt/send_delete.html:455
+#, fuzzy
+#| msgid "网络错误，请重试"
+msgid "网络错误"
+msgstr "Network error, please retry"
+
+#: templates/finance/pages/deposit.html:1475
+msgid "定金付款已删除"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1482
+#: templates/finance/pages/po.html:1674
+#: templates/purchase/pages/abnormal_process_wizard.html:953
+#: templates/purchase/pages/po_mgmt/po_delete.html:401
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:384
+#: templates/purchase/pages/send_mgmt/send_delete.html:452
+msgid "请求失败"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1535
+#: templates/finance/pages/deposit.html:1537
+#: templates/finance/pages/po.html:1747 templates/finance/pages/po.html:1749
+msgid "请先选择需要付款的订货单"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1748
+#: templates/finance/pages/po.html:1960
+msgid "请选择付款日期"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1765
+#: templates/finance/pages/po.html:1977
+msgid "获取汇率失败"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1826
+msgid "定金付款"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1856
+msgid "付款回执上传失败"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1862
+msgid "付款回执上传出错"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1947
+#: templates/finance/pages/po.html:2142
+msgid "付款失败"
+msgstr ""
+
+#: templates/finance/pages/deposit.html:1953
+#: templates/finance/pages/po.html:2148
+msgid "付款请求失败"
+msgstr ""
+
+#: templates/finance/pages/flow.html:359
+#: templates/finance/pages/logistic.html:1498
+#: templates/finance/pages/logistic.html:1874
+#: templates/finance/pages/logistic.html:2052
+#: templates/purchase/pages/abnormal_view.html:197
+#: templates/purchase/pages/po_mgmt.html:670
+#: templates/purchase/pages/po_mgmt/po_view.html:196
+#: templates/purchase/pages/receive_mgmt.html:564
+#: templates/purchase/pages/receive_mgmt/receive_view.html:202
+#: templates/purchase/pages/send_mgmt.html:650
+#: templates/purchase/pages/send_mgmt/send_view.html:224
+msgid "加载失败"
+msgstr ""
+
+#: templates/finance/pages/flow.html:377
+msgid "加载数据失败"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1528
+#: templates/finance/pages/logistic.html:1530
+msgid "请选择至少一条物流单"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1739
+#: templates/finance/pages/logistic.html:1801
+#, fuzzy
+#| msgid "返回文件列表"
+msgid "获取文件列表失败"
+msgstr "Return to File List"
+
+#: templates/finance/pages/logistic.html:1748
+msgid "该付款批次暂无附件文件"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1761
+#, fuzzy
+#| msgid "文件查看器"
+msgid "付款文件查看"
+msgstr "File Viewer"
+
+#: templates/finance/pages/logistic.html:1762
+#: templates/finance/pages/logistic.html:1818
+#: templates/finance/pages/logistic.html:2299
+msgid "付款号"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1792
+msgid "文件查看器组件未加载，请刷新页面"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1817
+msgid "上传付款文件"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1840
+msgid "上传组件未加载，请刷新页面"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1887
+msgid "暂无订单数据"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1925
+msgid "订单基础信息"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1930
+msgid "订单号"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1938
+msgid "订货日期"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1953
+msgid "订单明细"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:1966
+msgid "价值"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2078
+msgid "暂无物流单修订记录"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2098
+msgid "初始版本"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2099
+msgid "汇率修订"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2141
+#: templates/finance/pages/logistic.html:2266
+msgid "无变更"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2162
+msgid "暂无付款修订记录"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2185
+msgid "原始付款"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2188
+#: templates/finance/pages/logistic.html:2313
+msgid "删除付款"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2190
+msgid "修改付款"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2192
+msgid "修订"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2215
+msgid "自动"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2215
+msgid "手动"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2234
+msgid "付款日期"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2244
+msgid "总费用"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2252
+msgid "付款已被删除，物流费归零"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2291
+#: templates/finance/pages/partials/payment_step3_confirm.html:365
+msgid "系统组件未加载，请刷新页面"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2296
+msgid "确认删除付款"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2298
+msgid "您确定要删除付款记录吗？"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2300
+msgid "此操作将标记该批次付款为已删除"
+msgstr ""
+
+#: templates/finance/pages/logistic.html:2302
+#: templates/finance/pages/po.html:1577
+msgid "确认删除"
+msgstr ""
+
+#: templates/finance/pages/partials/deposit_step3_confirm.html:992
+#: templates/finance/pages/partials/po_step3_confirm.html:997
+msgid "确认提交付款? (Password Verification Disabled)"
+msgstr ""
+
+#: templates/finance/pages/partials/deposit_step3_confirm.html:1024
+#: templates/finance/pages/partials/po_step3_confirm.html:1029
+msgid "未选择任何订单"
+msgstr ""
+
+#: templates/finance/pages/partials/deposit_step3_confirm.html:1124
+#: templates/finance/pages/partials/po_step3_confirm.html:1131
+msgid "Unknown error"
+msgstr ""
+
+#: templates/finance/pages/partials/deposit_step3_confirm.html:1132
+#: templates/finance/pages/partials/po_step3_confirm.html:1139
+msgid "System Error"
+msgstr ""
+
+#: templates/finance/pages/partials/payment_step3_confirm.html:451
+#: templates/purchase/pages/po_mgmt.html:829
+#: templates/purchase/pages/po_mgmt.html:831
+#, fuzzy
+#| msgid "网络错误，请重试"
+msgid "网络错误: "
+msgstr "Network error, please retry"
+
+#: templates/finance/pages/partials/prepay_wizard.html:515
+#: templates/finance/pages/partials/prepay_wizard.html:517
+msgid "文件大小超过 50MB 限制"
+msgstr ""
+
+#: templates/finance/pages/po.html:1556
+msgid "您确定要删除订单付款记录吗？"
+msgstr ""
+
+#: templates/finance/pages/po.html:1562
+msgid "注意: 该付款单关联多个订单。删除将同时撤销以下所有订单的付款:"
+msgstr ""
+
+#: templates/finance/pages/po.html:1575
+msgid "确认删除订单付款"
+msgstr ""
+
+#: templates/finance/pages/po.html:1587
+msgid "删除订单付款"
+msgstr ""
+
+#: templates/finance/pages/po.html:1681
+msgid "缺少订单号上下文"
+msgstr ""
+
+#: templates/finance/pages/po.html:1692
+msgid "获取历史失败"
+msgstr ""
+
+#: templates/finance/pages/po.html:2038
+msgid "订单付款"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:234
+msgid "解锁失败"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:238
+#: templates/log/pages/dashboard.html:332
+#: templates/log/pages/dashboard.html:376
+msgid "请求失败: "
+msgstr ""
+
+#: templates/log/pages/dashboard.html:262
+msgid "锁定失败"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:304
+msgid "安全验证组件未加载，请刷新页面"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:328
+#: templates/log/pages/dashboard.html:372
+msgid "操作失败"
+msgstr "Operation failed"
+
+#: templates/log/pages/dashboard.html:342
+#: templates/log/pages/dashboard.html:380
+msgid "清理开发日志"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:343
+msgid "此操作将删除所有开发模式日志，且"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:343
+msgid "无法恢复"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:343
+msgid "确认要清理所有开发日志吗？"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:344
+msgid "确认清理"
+msgstr ""
+
+#: templates/log/pages/dashboard.html:386
+msgid "模态框组件未加载，请刷新页面"
+msgstr ""
+
+#: templates/pages/user_admin.html:105
+msgid "密码重置成功！"
+msgstr ""
+
+#: templates/products/pages/barcode.html:674
+msgid "请至少填写一条有效的条形码数据。"
+msgstr ""
+
+#: templates/products/pages/barcode.html:752
+msgid "不能为空"
+msgstr ""
+
+#: templates/products/pages/barcode.html:756
+msgid "每盒个数"
+msgstr ""
+
+#: templates/products/pages/barcode.html:756
+#: templates/products/pages/barcode.html:760
+msgid "必须是大于0的正整数"
+msgstr ""
+
+#: templates/products/pages/barcode.html:760
+msgid "每箱盒数"
+msgstr ""
+
+#: templates/products/pages/barcode.html:877
+#, fuzzy
+#| msgid "网络错误，请重试"
+msgid "生成失败，请重试"
+msgstr "Network error, please retry"
+
+#: templates/products/pages/barcode.html:882
+#, fuzzy
+#| msgid "网络错误，请重试"
+msgid "网络错误，请检查连接后重试"
+msgstr "Network error, please retry"
+
+#: templates/products/pages/barcode.html:1003
+msgid "确定要清空所有已生成的条形码文件吗？此操作不可撤销。"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:97
+#: templates/purchase/pages/abnormal_process_wizard.html:122
+msgid "加载异常数据失败"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:864
+msgid "确定要执行此异常处理操作吗？"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:888
+msgid "正在处理..."
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:889
+msgid "请稍候，正在执行异常处理..."
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:925
+msgid "处理成功"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:928
+msgid "异常处理已完成。"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_process_wizard.html:941
+msgid "异常处理时发生错误"
+msgstr ""
+
+#: templates/purchase/pages/abnormal_view.html:347
+#: templates/purchase/pages/po_mgmt/po_edit.html:747
+#: templates/purchase/pages/po_mgmt/po_view.html:311
+#: templates/purchase/pages/receive_mgmt/receive_view.html:352
+#: templates/purchase/pages/send_mgmt/send_view.html:336
+msgid "加载失败: "
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:477
+msgid "全部已发货"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:478
+msgid "在产未发货"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:479
+msgid "部分已发货"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:501
+msgid "订单已删除，无法修改"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:502
+msgid "订单已全部发货，无法修改"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:503
+msgid "订单已部分发货，无法修改"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:504
+msgid "修改订单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:511
+msgid "订单已全部发货，无法删除"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:512
+msgid "订单已部分发货，无法删除"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:570
+#: templates/purchase/pages/send_mgmt.html:526
+#: templates/reports/partials/center_list.html:60
+msgid "共"
+msgstr "Total"
+
+#: templates/purchase/pages/po_mgmt.html:570
+msgid "条订单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:624
+#: templates/purchase/pages/send_mgmt.html:603
+msgid "查看账单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:624
+#: templates/purchase/pages/send_mgmt.html:603
+msgid "未上传账单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:629
+#: templates/purchase/pages/send_mgmt.html:608
+msgid "更换文件"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:637
+msgid "查看订单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:645
+#: templates/purchase/pages/receive_mgmt.html:545
+#: templates/purchase/pages/send_mgmt.html:625
+msgid "历史记录"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:650
+msgid "撤销删除"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:777
+msgid "撤销删除订单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt.html:782
+msgid "确定要撤销删除此订单吗？"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:202
+#: templates/purchase/pages/po_mgmt/po_delete.html:226
+msgid "加载订单失败"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:211
+msgid "此订单已被删除"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:267
+#: templates/purchase/pages/po_mgmt/po_delete.html:274
+msgid "未启用"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:279
+msgid "件商品"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:319
+msgid "确定要删除此订单吗？此操作不可恢复！"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:341
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:323
+#: templates/purchase/pages/send_mgmt/send_delete.html:391
+msgid "正在删除..."
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:342
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:324
+#: templates/purchase/pages/send_mgmt/send_delete.html:392
+msgid "请稍候，正在处理删除请求..."
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:373
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:356
+#: templates/purchase/pages/send_mgmt/send_delete.html:424
+msgid "删除成功"
+msgstr "Deleted successfully"
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:376
+msgid "订单"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:376
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:359
+#: templates/purchase/pages/send_mgmt/send_delete.html:427
+msgid "已成功删除。"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_delete.html:389
+msgid "删除订单时发生错误"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_edit.html:717
+msgid "加载订单数据失败"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_edit.html:1989
+msgid "确定要提交修改吗？"
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_edit.html:2062
+#: templates/purchase/pages/po_mgmt/po_edit.html:2067
+msgid "提交失败: "
+msgstr ""
+
+#: templates/purchase/pages/po_mgmt/po_view.html:319
+msgid "无法下载：未选择订单"
+msgstr ""
+
+#: templates/purchase/pages/receive.html:230
+msgid "请选择入库日期"
+msgstr ""
+
+#: templates/purchase/pages/receive.html:238
+msgid "请至少确认一个发货单的入库数据"
+msgstr ""
+
+#: templates/purchase/pages/receive.html:540
+msgid "入库数量不能为负数"
+msgstr ""
+
+#: templates/purchase/pages/receive.html:888
+msgid "入库失败: "
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:522
+msgid "查看入库文件"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:522
+msgid "未上传入库文件"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:527
+msgid "上传入库文件"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:536
+msgid "查看入库单"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:540
+msgid "修改入库单"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:550
+#: templates/purchase/pages/receive_mgmt.html:663
+msgid "恢复入库单"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:550
+msgid "删除入库单"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:667
+msgid "确定要恢复此入库单吗？"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:698
+#: templates/purchase/pages/receive_mgmt.html:700
+msgid "入库单已恢复"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:739
+msgid "该入库单暂无入库文件"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:749
+msgid "获取文件信息失败"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt.html:971
+msgid "请先选择要上传的文件"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:179
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:196
+msgid "加载入库单失败"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:281
+#: templates/purchase/pages/send_mgmt/send_delete.html:349
+msgid "请填写删除备注"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:297
+msgid "确定要删除此入库单吗？"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:359
+msgid "入库单"
+msgstr ""
+
+#: templates/purchase/pages/receive_mgmt/receive_delete.html:372
+msgid "删除入库单时发生错误"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:526
+msgid "条发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:574
+#: templates/purchase/pages/send_mgmt.html:588
+msgid "RMB"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:578
+#: templates/purchase/pages/send_mgmt.html:592
+msgid "USD"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:616
+msgid "查看发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:620
+msgid "修改发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:620
+msgid "入库后不可修改"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:630
+#: templates/purchase/pages/send_mgmt.html:755
+msgid "恢复发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:634
+msgid "删除发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:634
+msgid "入库后不可删除"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:759
+msgid "确定要恢复此发货单吗？"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt.html:788
+msgid "发货单恢复成功"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt/send_delete.html:235
+#: templates/purchase/pages/send_mgmt/send_delete.html:252
+msgid "加载发货单失败"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt/send_delete.html:366
+msgid "确定要删除此发货单吗？"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt/send_delete.html:427
+msgid "发货单"
+msgstr ""
+
+#: templates/purchase/pages/send_mgmt/send_delete.html:440
+msgid "删除发货单时发生错误"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:4
+#: templates/reports/pages/viewer_image.html:17
+msgid "图片查看器"
+msgstr "Image Viewer"
+
+#: templates/reports/pages/viewer_image.html:14
+#: templates/reports/pages/viewer_pdf.html:14
+#: templates/reports/pages/viewer_table.html:14
+msgid "销售板块"
+msgstr "Sales Module"
+
+#: templates/reports/pages/viewer_image.html:27
+#: templates/reports/pages/viewer_pdf.html:27
+#: templates/reports/pages/viewer_table.html:27
+msgid "大小"
+msgstr "Size"
+
+#: templates/reports/pages/viewer_image.html:27
+#: templates/reports/pages/viewer_pdf.html:27
+#: templates/reports/pages/viewer_table.html:27
+msgid "修改时间"
+msgstr "Modified"
+
+#: templates/reports/pages/viewer_image.html:34
+#: templates/reports/pages/viewer_pdf.html:34
+#: templates/reports/pages/viewer_table.html:35
+#: templates/reports/partials/center_list.html:104
+msgid "下载"
+msgstr "Download"
+
+#: templates/reports/pages/viewer_image.html:38
+#: templates/reports/pages/viewer_pdf.html:38
+#: templates/reports/pages/viewer_table.html:39
+msgid "返回文件列表"
+msgstr "Return to File List"
+
+#: templates/reports/pages/viewer_image.html:49
+#: templates/reports/pages/viewer_pdf.html:49
+#: templates/reports/pages/viewer_table.html:70
+msgid "缩放"
+msgstr "Zoom"
+
+#: templates/reports/pages/viewer_image.html:60
+msgid "适应窗口"
+msgstr "Fit Window"
+
+#: templates/reports/pages/viewer_image.html:64
+msgid "实际大小"
+msgstr "Actual Size"
+
+#: templates/reports/pages/viewer_image.html:73
+msgid "向左旋转"
+msgstr "Rotate Left"
+
+#: templates/reports/pages/viewer_image.html:77
+msgid "向右旋转"
+msgstr "Rotate Right"
+
+#: templates/reports/pages/viewer_image.html:95
+msgid "无法加载图片"
+msgstr "Cannot load image"
+
+#: templates/reports/pages/viewer_image.html:96
+#: templates/reports/pages/viewer_pdf.html:110
+msgid "请尝试下载后查看"
+msgstr "Please try downloading to view"
+
+#: templates/reports/pages/viewer_pdf.html:4
+#: templates/reports/pages/viewer_pdf.html:17
+msgid "PDF 查看器"
+msgstr "PDF Viewer"
+
+#: templates/reports/pages/viewer_pdf.html:60
+#: templates/reports/pages/viewer_table.html:81
+msgid "适应宽度"
+msgstr "Fit Width"
+
+#: templates/reports/pages/viewer_pdf.html:73
+#: templates/reports/pages/viewer_table.html:54
+msgid "搜索关键字..."
+msgstr "Search keywords..."
+
+#: templates/reports/pages/viewer_pdf.html:88
+msgid "页码"
+msgstr "Page"
+
+#: templates/reports/pages/viewer_pdf.html:103
+msgid "正在加载 PDF..."
+msgstr "Loading PDF..."
+
+#: templates/reports/pages/viewer_pdf.html:109
+msgid "无法加载 PDF"
+msgstr "Cannot load PDF"
+
+#: templates/reports/pages/viewer_table.html:4
+#: templates/reports/pages/viewer_table.html:17
+msgid "文件查看器"
+msgstr "File Viewer"
+
+#: templates/reports/pages/viewer_table.html:91
+msgid "全部表格"
+msgstr "All Tables"
+
+#: templates/reports/pages/viewer_table.html:101
+msgid "个表格"
+msgstr "tables"
+
+#: templates/reports/pages/viewer_table.html:116
+msgid "行"
+msgstr "rows"
+
+#: templates/reports/pages/viewer_table.html:148
+msgid "无法解析文件内容"
+msgstr "Cannot parse file content"
+
+#: templates/reports/pages/viewer_table.html:149
+msgid "该文件可能为空或格式不受支持"
+msgstr "File may be empty or format not supported"
+
+#: templates/reports/pages/viewer_table.html:294
+msgid "个结果"
+msgstr "results"
+
+#: templates/reports/pages/viewer_table.html:294
+msgid "无结果"
+msgstr "No results"
+
+#: templates/reports/partials/center_list.html:11
+msgid "操作"
+msgstr "Actions"
+
+#: templates/reports/partials/center_list.html:17
+msgid "打包下载所有"
+msgstr "Download All (ZIP)"
+
+#: templates/reports/partials/center_list.html:23
+msgid "清空所有文件"
+msgstr "Clear All Files"
+
+#: templates/reports/partials/center_list.html:32
+#, fuzzy
+#| msgid "清空所有文件"
+msgid "清空所有报表文件"
+msgstr "Clear All Files"
+
+#: templates/reports/partials/center_list.html:33
+#: templates/reports/partials/center_list.html:46
+msgid "确定要清空所有报表文件吗？此操作不可恢复。"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:34
+msgid "确认清空"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:60
+msgid "个文件"
+msgstr "files"
+
+#: templates/reports/partials/center_list.html:69
+msgid "文件列表"
+msgstr "File List"
+
+#: templates/reports/partials/center_list.html:82
+msgid "查看 PDF"
+msgstr "View PDF"
+
+#: templates/reports/partials/center_list.html:84
+#: templates/reports/partials/center_list.html:91
+#: templates/reports/partials/center_list.html:97
+msgid "查看"
+msgstr "View"
+
+#: templates/reports/partials/center_list.html:89
+msgid "查看图片"
+msgstr "View Image"
+
+#: templates/reports/partials/center_list.html:95
+msgid "查看表格"
+msgstr "View Table"
+
+#: templates/reports/partials/center_list.html:103
+msgid "下载文件"
+msgstr "Download File"
+
+#: templates/reports/partials/center_list.html:137
+msgid "暂无报表文件"
+msgstr "No report files"
+
+#: templates/reports/partials/center_list.html:138
+msgid "请先前往「报表生成器」运行分析任务。"
+msgstr "Please run analysis tasks in 'Report Generator' first."
+
+#: templates/reports/partials/center_list.html:141
+msgid "刷新列表"
+msgstr "Refresh List"
+
+#~ msgid "确认"
+#~ msgstr "Confirm"
+
+#~ msgid "取消"
+#~ msgstr "Cancel"
+
+#~ msgid "保存"
+#~ msgstr "Save"
+
+#~ msgid "编辑"
+#~ msgstr "Edit"
+
+#~ msgid "上传"
+#~ msgstr "Upload"
+
+#~ msgid "搜索"
+#~ msgstr "Search"
+
+#~ msgid "刷新"
+#~ msgstr "Refresh"
+
+#~ msgid "状态"
+#~ msgstr "Status"
+
+#~ msgid "日期"
+#~ msgstr "Date"
+
+#~ msgid "备注"
+#~ msgstr "Notes"

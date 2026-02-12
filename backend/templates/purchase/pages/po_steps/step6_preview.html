@@ -1,0 +1,137 @@
+{% load i18n %}
+{% load security_tags %}
+<!-- Step 6: 录入前预览 -->
+<div id="po-step-preview" class="wizard-step-content">
+    <!-- 合同参数信息 -->
+    <div class="card bg-dark border-info border-opacity-25 mb-4">
+        <div class="card-header bg-info bg-opacity-10 border-0">
+            <i class="fas fa-file-contract me-2 text-info"></i>
+            <span class="text-info fw-bold" data-i18n="ui.text_854">合同参数信息</span>
+        </div>
+        <div class="card-body" id="preview-params-container">
+            <!-- 参数行将由JS动态填充 -->
+        </div>
+    </div>
+
+    <!-- 商品明细 -->
+    <div class="card bg-dark border-success border-opacity-25 mb-4">
+        <div class="card-header bg-success bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-box me-2 text-success"></i>
+                <span class="text-success fw-bold" data-i18n="ui.text_898">商品明细</span>
+            </div>
+            <span class="badge bg-success bg-opacity-25 text-success" id="preview-item-count" data-i18n="ui.text_635">0 件商品</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                <table class="table table-dark table-sm table-hover mb-0">
+                    <thead class="sticky-top" style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.2), rgba(13, 202, 240, 0.1));">
+                        <tr class="text-success small fw-bold">
+                            <th style="width: 50px; border-bottom: 2px solid rgba(25, 135, 84, 0.5);" class="ps-3">#</th>
+                            <th style="border-bottom: 2px solid rgba(25, 135, 84, 0.5);">SKU</th>
+                            <th style="width: 100px; border-bottom: 2px solid rgba(25, 135, 84, 0.5);" class="text-center" data-i18n="common.quantity">数量</th>
+                            <th style="width: 130px; border-bottom: 2px solid rgba(25, 135, 84, 0.5);" class="text-end" data-i18n="common.unit_price">单价</th>
+                            <th style="width: 140px; border-bottom: 2px solid rgba(25, 135, 84, 0.5);" class="text-end pe-3" data-i18n="common.subtotal">小计</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-items-tbody">
+                        <!-- 商品行将由JS动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- 总计行 -->
+            <div class="border-top border-secondary px-4 py-3 d-flex justify-content-between align-items-center">
+                <span class="text-white-50" data-i18n="table.total_amount">订单总金额</span>
+                <span class="fs-5 fw-bold text-success" id="preview-total-amount">RMB 0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 厂商账单上传（可选） -->
+    <div class="card bg-dark border-warning border-opacity-25 mb-4">
+        <div class="card-header bg-warning bg-opacity-10 border-0">
+            <i class="fas fa-file-invoice me-2 text-warning"></i>
+            <span class="text-warning fw-bold" data-i18n="ui.text_901">厂商订货账单</span>
+            <span class="badge bg-secondary ms-2" data-i18n="common.optional">可选</span>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info alert-sm mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <small data-i18n="ui.text_903">您可以上传厂商提供的订货账单作为存档（支持 PDF、图片、Excel 等格式）。此项为非必须上传项目。</small>
+            </div>
+            <!-- 文件上传容器 -->
+            <div id="invoice-upload-container"></div>
+        </div>
+    </div>
+
+    <!-- 安全验证表单 (隐藏) -->
+    <form id="po-submit-form" class="d-none">
+        {% csrf_token %}
+        {% security_inputs "btn_po_create" %}
+    </form>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                    id="btn-wizard-back-6" 
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="common.back_modify" title="返回修改">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_modify">返回修改</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-success btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-submit"
+                    data-bs-toggle="tooltip" 
+                    data-requires-global-modal="true"
+                    data-action-key="btn_po_create"
+                    data-action-display="{% trans 'Submit Purchase Order' %}"
+                    data-i18n-title="tooltip.t3326" title="确认创建采购订单">
+                <i class="fas fa-check-circle me-2"></i><span data-i18n="ui.icon_3285">确认创建订单</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    #po-step-preview .param-item {
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+        padding: 10px 14px;
+        transition: all 0.2s ease;
+    }
+    #po-step-preview .param-item:hover {
+        background: rgba(255,255,255,0.06);
+    }
+    #po-step-preview .param-label {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 2px;
+    }
+    #po-step-preview .param-value {
+        font-size: 0.95rem;
+        color: #fff;
+        font-weight: 500;
+    }
+    #po-step-preview .param-value.text-highlight {
+        color: #0dcaf0;
+    }
+    #preview-items-tbody tr:hover {
+        background: rgba(255,255,255,0.03);
+    }
+    #po-step-preview .table-responsive::-webkit-scrollbar {
+        width: 6px;
+    }
+    #po-step-preview .table-responsive::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #po-step-preview .table-responsive::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 3px;
+    }
+</style>

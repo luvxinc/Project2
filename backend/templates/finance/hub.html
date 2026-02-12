@@ -1,0 +1,162 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+
+{% block title %}Finance - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-white fw-bold mb-1">
+                <i class="fas fa-coins me-2 text-info"></i><span data-i18n="finance.title">Finance</span>
+            </h4>
+            <p class="text-white-50 mb-0 small" data-i18n="finance.hub_desc">
+                财务管理与费用结算：物流费用管理、付款追踪。
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25">
+                <i class="fas fa-coins me-1"></i><span data-i18n="finance.title">财务模块</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- 功能卡片列表 -->
+    <div class="row g-4">
+        {% for item in hub_items %}
+        <div class="col-md-6 col-lg-6">
+            {% if item.has_access %}
+            <a href="{{ item.url }}" class="text-decoration-none">
+                <div class="hub-card rounded-4 p-4 h-100" data-testid="hub-card-{{ item.id }}">
+                    <div class="d-flex align-items-center">
+                        <div class="hub-icon-box me-4 position-relative">
+                            <i class="{{ item.icon }} fa-2x text-white-50"></i>
+                            {% if item.badge > 0 %}
+                            <span class="hub-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ item.badge }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="text-white fw-bold mb-1">{{ item.name }}</h4>
+                            <p class="text-white-50 mb-0 small">{{ item.desc }}</p>
+                        </div>
+                        <div class="ms-3 text-white-50 opacity-25">
+                            <i class="fas fa-arrow-right fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div class="hub-card hub-card-disabled rounded-4 p-4 h-100" data-testid="hub-card-{{ item.id }}" onclick="showNoPermissionModal('{{ item.name }}')">
+                <div class="d-flex align-items-center">
+                    <div class="hub-icon-box me-4">
+                        <i class="{{ item.icon }} fa-2x text-white-50 opacity-50"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h4 class="text-white-50 fw-bold mb-1">{{ item.name }}</h4>
+                        <p class="text-white-50 mb-0 small opacity-50">{{ item.desc }}</p>
+                    </div>
+                    <div class="ms-3 text-danger opacity-75">
+                        <i class="fas fa-lock fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="col-12 text-center text-muted py-5">
+            <i class="fas fa-coins fa-3x mb-3 opacity-50"></i>
+            <p data-i18n="common.no_data">暂无可用功能</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hub-card {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(30, 32, 40, 0.6);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .hub-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--bs-info);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(13, 202, 240, 0.3);
+    }
+
+    .hub-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--bs-info);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .hub-card:hover::before {
+        opacity: 1;
+    }
+
+    .hub-card-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .hub-card-disabled:hover {
+        transform: none;
+        border-color: rgba(255, 255, 255, 0.05);
+        box-shadow: none;
+    }
+
+    .hub-card-disabled:hover::before {
+        opacity: 0;
+    }
+
+    .hub-icon-box {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        transition: background 0.3s;
+    }
+
+    .hub-card:hover .hub-icon-box {
+        background: rgba(13, 202, 240, 0.2);
+    }
+
+    .hub-card:hover .hub-icon-box i {
+        color: #fff !important;
+    }
+
+    .hub-badge {
+        font-size: 1rem;
+        font-weight: 700;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 8px rgba(220, 53, 69, 0.5);
+        animation: badge-pulse 2s infinite;
+    }
+
+    @keyframes badge-pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.1); }
+    }
+</style>
+{% endblock %}

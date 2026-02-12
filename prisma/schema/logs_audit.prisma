@@ -1,0 +1,120 @@
+// ================================
+// Audit & Logging Models
+// 审计日志、业务日志、访问日志、错误日志
+// ================================
+
+/// 审计日志 - 敏感操作完整记录
+model AuditLog {
+  id      String  @id @default(uuid())
+  traceId String? @map("trace_id")
+
+  userId    String? @map("user_id")
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username  String?
+  sessionId String? @map("session_id")
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  module     String
+  action     String
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id")
+
+  oldValue Json? @map("old_value")
+  newValue Json? @map("new_value")
+  details  Json?
+
+  result    AuditResult @default(SUCCESS)
+  riskLevel RiskLevel   @default(LOW)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([traceId])
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+  @@index([riskLevel])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AuditResult {
+  SUCCESS
+  DENIED
+  FAILED
+}
+
+enum RiskLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+/// 业务操作日志
+model BusinessLog {
+  id      String  @id @default(uuid())
+  traceId String? @map("trace_id")
+
+  userId    String? @map("user_id")
+  username  String?
+  ipAddress String? @map("ip_address")
+
+  module  String
+  action  String
+  summary String?
+  details Json?
+
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id")
+
+  status  LogStatus @default(SUCCESS)
+  devMode Boolean   @default(false) @map("dev_mode")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([traceId])
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+  @@index([createdAt])
+  @@index([devMode])
+  @@map("business_logs")
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+/// 访问日志 - HTTP 请求记录
+model AccessLog {
+  id      String  @id @default(uuid())
+  traceId String? @map("trace_id")
+
+  userId    String? @map("user_id")
+  username  String?
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  method      String
+  path        String
+  queryParams String? @map("query_params")
+  statusCode  Int     @map("status_code")
+
+  responseTime Int? @map("response_time")
+  responseSize Int? @map("response_size")
+
+  devMode Boolean @default(false) @map("dev_mode")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([traceId])
+  @@index([userId])
+  @@index([path])
+  @@index([statusCode])
+  @@index([createdAt])
+  @@index([devMode])
+  @@map("access_logs")
+}

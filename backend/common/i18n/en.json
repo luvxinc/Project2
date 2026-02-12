@@ -1,0 +1,80 @@
+{
+    "meta": {
+        "version": "1.0",
+        "description": "English User Interface Translations"
+    },
+    "modal": {
+        "password": {
+            "title": "Password Verification",
+            "desc": "This operation requires identity verification",
+            "placeholder_user": "Enter your login password",
+            "placeholder_l1": "Enter Query Security Code (L1)",
+            "placeholder_l2": "Enter Modify Security Code (L2)",
+            "placeholder_l3": "Enter Database Admin Code (L3)",
+            "placeholder_l4": "Enter System Nuclear Code (L4)",
+            "label_user": "User Password",
+            "label_l1": "Query Code",
+            "label_l2": "Modify Code",
+            "label_l3": "Database Code",
+            "label_l4": "System Code"
+        },
+        "success": {
+            "title": "Operation Successful",
+            "default_msg": "The operation was completed successfully"
+        },
+        "error": {
+            "title": "Operation Failed",
+            "default_msg": "The operation failed. Please review the information and try again.",
+            "check_input": "Please check your input"
+        },
+        "flow": {
+            "title": "Processing",
+            "step_complete": "Complete",
+            "step_pending": "Pending",
+            "step_error": "Error"
+        },
+        "btn": {
+            "confirm": "Confirm",
+            "back": "Back",
+            "reset": "Reset",
+            "cancel": "Cancel",
+            "continue": "Continue",
+            "submit": "Submit"
+        }
+    },
+    "toast": {
+        "success": "Success",
+        "failed": "Failed",
+        "loading": "Loading..."
+    },
+    "status_bar": {
+        "sync": "Syncing",
+        "offline": "Offline",
+        "online": "Online",
+        "api_error": "API Error",
+        "perm_changed": "Your permissions have been updated, please refresh",
+        "lang": "English"
+    },
+    "error_type": {
+        "database": "Database Error",
+        "backend": "Backend Application Error",
+        "celery": "Async Task Error",
+        "js_runtime": "Frontend Runtime Error",
+        "dom": "Frontend Structure Error",
+        "network": "Network Dependency Error"
+    },
+    "common": {
+        "loading": "Loading...",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "search": "Search",
+        "refresh": "Refresh",
+        "close": "Close",
+        "no_permission": "No Permission",
+        "contact_admin": "Please contact administrator"
+    }
+}

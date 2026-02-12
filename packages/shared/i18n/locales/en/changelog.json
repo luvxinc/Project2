@@ -1,0 +1,306 @@
+{
+  "title": "Changelog",
+  "latest": "Latest",
+  "v250": {
+    "version": "V2.5.0",
+    "date": "2026-01-12",
+    "title": "Enterprise Platform Major Upgrade",
+    "sections": [
+      {
+        "name": "Full-Stack i18n Architecture",
+        "items": [
+          "Triple-Track Sync: Django server, frontend JavaScript, metadata config fully aligned",
+          "Template governance: 208+ templates internationalized, 565+ translation keys",
+          "Language quality: 100+ high-frequency UI terms professionally polished, no Chinglish",
+          "Real-time language switch: localStorage-based persistence"
+        ]
+      },
+      {
+        "name": "Unified Observability V7.0",
+        "items": [
+          "4-table database schema: log_error, log_audit, log_business, log_access",
+          "Zero-config auto-collection: 100% exception and operation capture via global middleware",
+          "Apple-style forensic dashboard: 6-tab Glassmorphism design",
+          "Lifecycle management: Access logs 30 days, Business logs 90 days auto-rotation"
+        ]
+      },
+      {
+        "name": "Full-Lifecycle Inbound Supply Chain",
+        "items": [
+          "Purchase Order (PO) Management: Create, modify, delete, restore full flow",
+          "Shipment (Send) Management: Multi-PO merge, weight/volume management",
+          "Receiving Management: Physical goods verification, discrepancy tracking",
+          "Abnormality Center: 6+ strategy paths",
+          "Triple-Resolution Bridge: PO→Send→Receive strict balance validation"
+        ]
+      },
+      {
+        "name": "FIFO Landed Price Oracle",
+        "items": [
+          "3-table cost engine: transactions, FIFO layers, allocation mapping",
+          "Pipeline valuation: Ordered, In-Transit, Received 3-stage costs",
+          "Interactive inventory dashboard: sticky headers, multi-column sort"
+        ]
+      },
+      {
+        "name": "Finance Module Full Deployment",
+        "items": [
+          "Logistics Finance: Batch payment wizard, multi-currency stacking",
+          "Deposit Management: PO deposit prepay, FIFO deduction model",
+          "PO Balance Settlement: Final purchase cost payment",
+          "Supplier Prepay Account: Split-pane ledger mode",
+          "Physical asset audit: GlobalFileViewer + GlobalFileUpload"
+        ]
+      },
+      {
+        "name": "Warehouse 3D Visualization System",
+        "items": [
+          "6-level physical hierarchy: Warehouse-Aisle-Bay-Level-Slot-Position",
+          "Three.js WebGL rendering: Universal Granular Renderer",
+          "Planning wizard: 5-step sequential refinement, real-time 3D preview",
+          "Industrial barcode generation: 4x6 inch thermal labels, Data Matrix 2D"
+        ]
+      },
+      {
+        "name": "GlobalWizard Component Evolution",
+        "items": [
+          "Strong anchor pattern: Explicit positioning, no layout drift",
+          "44+ advanced flow control patterns",
+          "Non-destructive regression: Back step preserves input data"
+        ]
+      },
+      {
+        "name": "Security & Authorization Upgrade",
+        "items": [
+          "V3.0 hierarchical permission tree: module → submodule → tab",
+          "Password policy matrix (L0-L4): Hot-load without restart",
+          "Real-time role sync: role_version instant permission refresh"
+        ]
+      },
+      {
+        "name": "Database Rollback & Restoration",
+        "items": [
+          "Unified rollback_config.json configuration",
+          "3-step D03 restore wizard: Select → Verify → Execute",
+          "Zero-buffer streaming restore: Prevents large snapshot OOM"
+        ]
+      },
+      {
+        "name": "Platform Infrastructure Hardening",
+        "items": [
+          "Unified charset: All 43 tables use utf8mb4_unicode_ci",
+          "Modular view packages: Business views split by sub-function",
+          "GlobalExchangeRate: Date-bound auto-discovery, multi-source fallback",
+          "Legacy retirement: Streamlit, ai_chat, old audit UI all cleaned up"
+        ]
+      }
+    ]
+  },
+  "v200": {
+    "version": "V2.0.0",
+    "date": "2025-12-17",
+    "title": "Full-Stack Migration & Modern UI Overhaul",
+    "sections": [
+      {
+        "name": "Backend Architecture Upgrade",
+        "items": [
+          "Core framework migration: Streamlit to Django, true frontend-backend separation",
+          "Modular app design: Business functions split into independent Django Apps",
+          "Middleware architecture: Global exception capture, session timeout, audit context",
+          "RESTful API layer: Django REST Framework"
+        ]
+      },
+      {
+        "name": "Modern UI Framework",
+        "items": [
+          "Template engine upgrade: Django Template + Jinja2",
+          "Frontend stack: Bootstrap 5 + HTMX + Alpine.js",
+          "Component-based design: Reusable tabs, forms, tables",
+          "Glassmorphism design language: Frosted glass cards, dynamic backgrounds"
+        ]
+      },
+      {
+        "name": "Security & Audit Enhancement",
+        "items": [
+          "Global exception middleware: End-to-end error tracking",
+          "Structured audit log storage: Migrated to database tables",
+          "Context tracking: AuditContextManager"
+        ]
+      }
+    ]
+  },
+  "v160": {
+    "version": "V1.6.0",
+    "date": "2025-12-10",
+    "title": "Distributed Concurrency & Security Governance",
+    "sections": [
+      {
+        "name": "RBAC Redesign",
+        "items": [
+          "Three-tier authorization: Modules, tabs, and actions",
+          "Least privilege principle: Precise module access configuration"
+        ]
+      },
+      {
+        "name": "Distributed Concurrency Control",
+        "items": [
+          "Distributed LockManager",
+          "Strict mutex for core write resources"
+        ]
+      },
+      {
+        "name": "Session-Level Safety Rollback",
+        "items": [
+          "Session lifecycle bound to data integrity",
+          "Auto lock release and dirty data rollback on abnormal exit"
+        ]
+      }
+    ]
+  },
+  "v150": {
+    "version": "V1.5.0",
+    "date": "2025-12-05",
+    "title": "Enterprise Security & Performance Revolution",
+    "sections": [
+      {
+        "name": "Enterprise Security Architecture",
+        "items": [
+          "PBKDF2-SHA256 password encryption with brute-force protection",
+          "Dual verification for sensitive ops: Operation password + confirmation phrase"
+        ]
+      },
+      {
+        "name": "High-Performance ETL Engine",
+        "items": [
+          "Pandas vectorized matrix operations, 20-50x speed boost",
+          "Staging Table atomic write strategy"
+        ]
+      },
+      {
+        "name": "Deep Audit System",
+        "items": [
+          "Microscope-level business audit logs",
+          "Before vs After field-by-field comparison"
+        ]
+      },
+      {
+        "name": "User Access & Ops Enhancement",
+        "items": [
+          "RBAC fine-grained permission control",
+          "DB Admin danger zone: One-click test environment reset"
+        ]
+      }
+    ]
+  },
+  "v141": {
+    "version": "V1.4.1",
+    "date": "2025-12-05",
+    "title": "Core Data Integrity Hotfix",
+    "sections": [
+      {
+        "name": "Data Processing Optimization",
+        "items": [
+          "ETL Smart Upsert: 4-dimensional composite key partition dedup",
+          "Global Normalization: Strict SKU normalization standard",
+          "Data Pipeline Hardening: Fixed silent data loss issue",
+          "Bug fix: Store bucket statistics loss"
+        ]
+      }
+    ]
+  },
+  "v140": {
+    "version": "V1.4.0",
+    "date": "2025-12-04",
+    "title": "Enterprise Architecture Refactor",
+    "sections": [
+      {
+        "name": "Architecture Upgrade",
+        "items": [
+          "Automated ETL Pipeline: Ingest, Parsing, Transformation, Archiving lifecycle",
+          "Disaster Recovery System: Point-in-time restore capability",
+          "Configuration and code complete separation",
+          "Component-based UI pattern"
+        ]
+      }
+    ]
+  },
+  "v130": {
+    "version": "V1.3.0",
+    "date": "2025-12-02",
+    "title": "Web Application Transformation",
+    "sections": [
+      {
+        "name": "UI/UX Upgrade",
+        "items": [
+          "Migrated from CLI scripts to Streamlit Web framework",
+          "Interactive visualization interface"
+        ]
+      },
+      {
+        "name": "CRM Customer Module",
+        "items": [
+          "RFM model-based customer value analysis",
+          "Precise user profiling"
+        ]
+      }
+    ]
+  },
+  "v120": {
+    "version": "V1.2.0",
+    "date": "2025-11-29",
+    "title": "Intelligent Operations Module",
+    "sections": [
+      {
+        "name": "Machine Learning Integration",
+        "items": [
+          "K-Means clustering and PCA dimensionality reduction",
+          "SKU auto-tagging and tiering"
+        ]
+      },
+      {
+        "name": "Advanced Analytics Tools",
+        "items": [
+          "Listing traffic diagnostic tool",
+          "Combo strategy evaluation model"
+        ]
+      }
+    ]
+  },
+  "v110": {
+    "version": "V1.1.0",
+    "date": "2025-09-28",
+    "title": "Finance Module Integration",
+    "sections": [
+      {
+        "name": "Finance Integration",
+        "items": [
+          "Multi-source data integration: Order Earning cash flow",
+          "Business-finance unification",
+          "Hash-based deduplication algorithm"
+        ]
+      },
+      {
+        "name": "Reporting System",
+        "items": [
+          "Multi-dimensional P&L analysis reports"
+        ]
+      }
+    ]
+  },
+  "v100": {
+    "version": "V1.0.0",
+    "date": "2025-08-10",
+    "title": "Foundation Release",
+    "sections": [
+      {
+        "name": "Core Toolset",
+        "items": [
+          "Basic Python script toolkit",
+          "SKU sales statistics",
+          "Inventory upload",
+          "Basic transaction data cleaning and processing"
+        ]
+      }
+    ]
+  }
+}

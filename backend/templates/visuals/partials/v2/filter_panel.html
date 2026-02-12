@@ -1,0 +1,149 @@
+<div class="card glass-card border-0 h-100 shadow-sm" style="min-height: 600px; z-index: 100;">
+    <div class="card-header bg-transparent border-bottom border-white-10 py-3">
+        <h5 class="card-title text-white mb-0 font-monospace"><i class="fas fa-filter me-2 text-info"></i><span data-i18n="ui.icon_3454">数据筛选</span></h5>
+    </div>
+
+    <!-- Filter Overlay (Disabled State for Pie) -->
+    <div id="filter-overlay" class="position-absolute w-100 h-100 bg-dark opacity-50"
+        style="z-index: 99; display: none; cursor: not-allowed;"></div>
+
+    <div class="card-body position-relative">
+
+        <!-- A. Sales Actions (Blue) -->
+        <div class="mb-4">
+            <label class="text-info small fw-bold mb-3 d-block border-bottom border-info border-opacity-25 pb-1" data-i18n="ui.text_1663">销售类型
+                (SALES)</label>
+            <div class="d-flex flex-column gap-2">
+                {% comment %} Loop manually for control {% endcomment %}
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="产品销售" checked onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2743">产品销售 (Sales)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="订单取消" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2744">订单取消 (Cancel)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="无平台介入主动退货" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2745">主动退货 (Return)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="平台介入用户退货" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2746">用户请求 (Request)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="平台介入强制退货" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2747">强制退货 (Case)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="action_filter" value="第三方仅退款" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-blue" data-i18n="ui.text_2748">仅退款 (Dispute)</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- B. Shipping (Yellow) -->
+        <div class="mb-4" id="group-shipping">
+            <label
+                class="text-warning small fw-bold mb-3 d-block border-bottom border-warning border-opacity-25 pb-1" data-i18n="ui.text_1664">物流费用
+                (SHIPPING)</label>
+            <div class="d-flex flex-column gap-2">
+                <label class="hub-option">
+                    <input type="checkbox" name="ship_filter" value="普通邮递" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-yellow" data-i18n="ui.text_2749">普通邮递 (Regular)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="ship_filter" value="邮费罚款" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-yellow" data-i18n="ui.text_2750">邮费罚款 (Fine)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="ship_filter" value="邮费超支" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-yellow" data-i18n="ui.text_2751">邮费超支 (Overpay)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="ship_filter" value="包退货邮费" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-yellow" data-i18n="ui.text_2752">包退货邮费 (Return)</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- C. Fees (Red) -->
+        <div class="mb-2" id="group-fees">
+            <label
+                class="text-danger small fw-bold mb-3 d-block border-bottom border-danger border-opacity-25 pb-1" data-i18n="ui.text_1665">销售成本
+                (EXPENSES)</label>
+            <div class="d-flex flex-column gap-2">
+                <label class="hub-option">
+                    <input type="checkbox" name="fee_filter" value="产品成本" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-red" data-i18n="ui.text_2753">产品成本 (COGS)</div>
+                </label>
+                <label class="hub-option">
+                    <input type="checkbox" name="fee_filter" value="平台费用" onchange="app.refresh()">
+                    <div class="hub-btn hub-btn-red" data-i18n="ui.text_2754">平台佣金 (Fees)</div>
+                </label>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Reset Checkbox */
+    .hub-option input {
+        display: none;
+    }
+
+    /* Base Style */
+    .hub-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Hover glow */
+    .hub-btn:hover {
+        color: white;
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Active State Colors */
+    .hub-option input:checked+.hub-btn {
+        color: white;
+        border-color: transparent;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Blue (Sales) */
+    .hub-option input:checked+.hub-btn-blue {
+        background: #0d6efd;
+        box-shadow: 0 0 15px rgba(13, 110, 253, 0.4);
+    }
+
+    /* Yellow (Shipping) */
+    .hub-option input:checked+.hub-btn-yellow {
+        background: #ffc107;
+        color: #000;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+        text-shadow: none;
+    }
+
+    /* Red (Fees) */
+    .hub-option input:checked+.hub-btn-red {
+        background: #dc3545;
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
+    }
+
+    /* Micro interaction */
+    .hub-option:active .hub-btn {
+        transform: scale(0.98);
+    }
+</style>

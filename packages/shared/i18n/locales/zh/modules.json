@@ -1,0 +1,201 @@
+{
+  "title": "功能模块",
+  "subtitle": "V2 重构进度",
+  "completed": "已完成",
+  "pending": "待迁移",
+  "noPermission": "无权限",
+  "explore": "探索全部",
+  
+  "sales": {
+    "title": "销售",
+    "description": "交易数据与销售分析",
+    "transactions": {
+      "title": "交易数据",
+      "upload": "数据上传"
+    },
+    "reports": {
+      "title": "报表中心",
+      "generate": "报表生成器",
+      "view": "查看报表"
+    },
+    "visuals": {
+      "title": "数据可视化",
+      "dashboard": "销售看板"
+    }
+  },
+  
+  "purchase": {
+    "title": "采购",
+    "description": "供应商与采购流程管理",
+    "supplier": {
+      "title": "供应商管理",
+      "add": "新增供应商",
+      "strategy": "采购策略"
+    },
+    "po": {
+      "title": "采购订单",
+      "create": "创建订单",
+      "manage": "订单管理"
+    },
+    "send": {
+      "title": "发货管理",
+      "create": "创建发货单",
+      "manage": "发货单管理"
+    },
+    "receive": {
+      "title": "入库管理",
+      "goods": "货物入库",
+      "manage": "入库记录"
+    },
+    "abnormal": {
+      "title": "异常处理",
+      "manage": "异常记录处理"
+    }
+  },
+  
+  "inventory": {
+    "title": "库存",
+    "description": "库存盘点与实时追踪",
+    "stocktake": {
+      "title": "库存盘点",
+      "upload": "盘点上传",
+      "modify": "库存调整"
+    },
+    "dynamic": {
+      "title": "动态库存",
+      "view": "实时库存"
+    },
+    "shelf": {
+      "title": "货架管理",
+      "manage": "货架码管理"
+    }
+  },
+  
+  "finance": {
+    "title": "财务",
+    "description": "付款与资金管理",
+    "flow": {
+      "title": "资金流水",
+      "overview": "定发收总览"
+    },
+    "logistic": {
+      "title": "物流费用",
+      "manage": "物流财务管理"
+    },
+    "prepay": {
+      "title": "供应商预付",
+      "manage": "预付款管理"
+    },
+    "deposit": {
+      "title": "定金管理",
+      "manage": "定金付款"
+    },
+    "po_payment": {
+      "title": "订单付款",
+      "manage": "采购付款"
+    }
+  },
+  
+  "products": {
+    "title": "产品",
+    "description": "产品目录与条码管理",
+    "cogs": {
+      "title": "成本维护",
+      "manage": "COGS 管理"
+    },
+    "create": {
+      "title": "新增产品",
+      "add": "创建 SKU"
+    },
+    "barcode": {
+      "title": "条码生成",
+      "generate": "生成条码"
+    }
+  },
+  
+  "vma": {
+    "title": "VMA",
+    "description": "供应商库存追踪与培训管理",
+    "truvalve": {
+      "title": "TruValve",
+      "manage": "TruValve 管理"
+    },
+    "p_valve": {
+      "title": "P-Valve",
+      "manage": "P-Valve 管理"
+    },
+    "employees": {
+      "title": "员工",
+      "manage": "员工管理"
+    },
+    "duties": {
+      "title": "职责",
+      "manage": "职责管理"
+    },
+    "training": {
+      "title": "培训",
+      "manage": "培训管理"
+    }
+  },
+  
+  "users": {
+    "title": "用户",
+    "description": "用户与权限管理",
+    "list": {
+      "title": "用户管理",
+      "view": "用户列表"
+    },
+    "register": {
+      "title": "新增用户",
+      "create": "注册新用户"
+    },
+    "password": {
+      "title": "密码策略",
+      "manage": "安全策略配置"
+    },
+    "capabilities": {
+      "title": "功能开关",
+      "manage": "角色功能配置"
+    }
+  },
+  
+  "db_admin": {
+    "title": "数据库",
+    "description": "备份恢复与数据维护",
+    "backup": {
+      "title": "备份管理",
+      "create": "创建备份",
+      "restore": "数据恢复",
+      "manage": "备份列表"
+    },
+    "cleanup": {
+      "title": "数据清理",
+      "delete": "开发数据清理"
+    }
+  },
+  
+  "logs": {
+    "title": "日志",
+    "description": "系统日志与安全审计",
+    "errors": {
+      "title": "错误日志",
+      "view": "系统异常"
+    },
+    "audits": {
+      "title": "安全审计",
+      "view": "安全事件"
+    },
+    "business": {
+      "title": "业务日志",
+      "view": "操作记录"
+    },
+    "access": {
+      "title": "访问日志",
+      "view": "访问记录"
+    },
+    "maintenance": {
+      "title": "日志维护",
+      "manage": "日志清理"
+    }
+  }
+}

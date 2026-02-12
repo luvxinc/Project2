@@ -1,0 +1,390 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+
+{% block title %}Audit Log - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/dashboard/" class="text-info text-decoration-none" data-i18n="nav.dashboard">首页</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="nav.log">Audit Log</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <!-- God Mode 控制 -->
+            {% if god_mode %}
+            <span class="badge bg-danger bg-opacity-25 text-danger px-3 py-2">
+                <i class="fas fa-eye me-1"></i><span data-i18n="login.unlocked">已解锁</span>
+            </span>
+            <button class="btn btn-outline-danger btn-sm" onclick="lockGodMode()">
+                <i class="fas fa-lock me-1"></i><span data-i18n="log.god_mode.lock">锁定</span>
+            </button>
+            {% else %}
+            <span class="badge bg-secondary bg-opacity-25 text-white-50 px-3 py-2">
+                <i class="fas fa-eye-slash me-1"></i><span data-i18n="log.god_mode.locked">脱敏模式</span>
+            </span>
+            <button class="btn btn-outline-warning btn-sm" onclick="unlockGodMode()">
+                <i class="fas fa-unlock me-1"></i><span data-i18n="log.god_mode.unlock">解锁</span>
+            </button>
+            {% endif %}
+            
+            {% if dev_mode %}
+            <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-2">
+                <i class="fas fa-code me-1"></i><span data-i18n="log.mode.dev">开发模式</span>
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="glass-card p-4 shadow-lg">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+            <div class="d-flex align-items-center">
+                <div class="bg-info bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                    <i class="fas fa-chart-line fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="nav.log">Audit Log</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="log.subtitle">企业级日志管理 - 错误追踪、安全审计、业务操作、访问监控</p>
+                </div>
+            </div>
+            <button class="btn btn-outline-light btn-sm rounded-pill" onclick="refreshCurrentTab()">
+                <i class="fas fa-sync-alt me-1"></i><span data-i18n="common.refresh">刷新</span>
+            </button>
+        </div>
+
+        <!-- Tab 导航 -->
+        <ul class="nav nav-pills mb-4" id="logTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-overview" data-tab="overview" type="button">
+                    <i class="fas fa-gauge-high me-2"></i><span data-i18n="log.tabs.overview">概览</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-error" data-tab="error" type="button">
+                    <i class="fas fa-circle-xmark me-2"></i><span data-i18n="log.tabs.error">错误日志</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-audit" data-tab="audit" type="button">
+                    <i class="fas fa-shield-halved me-2"></i><span data-i18n="log.tabs.audit">安全审计</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-business" data-tab="business" type="button">
+                    <i class="fas fa-clipboard-list me-2"></i><span data-i18n="log.tabs.business">业务操作</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-access" data-tab="access" type="button">
+                    <i class="fas fa-globe me-2"></i><span data-i18n="log.tabs.access">访问日志</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-maintenance" data-tab="maintenance" type="button">
+                    <i class="fas fa-wrench me-2"></i><span data-i18n="log.tabs.maintenance">日志维护</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab 内容 -->
+        <div id="log-content">
+            <div class="text-center py-5">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="text-white-50 mt-3 mb-0" data-i18n="log.loading">正在加载数据...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Tab 导航样式 */
+    #logTabs .nav-link {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+        transition: all 0.2s;
+    }
+    
+    #logTabs .nav-link:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(13, 202, 240, 0.3);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    #logTabs .nav-link.active {
+        background: rgba(13, 202, 240, 0.15);
+        border-color: rgba(13, 202, 240, 0.5);
+        color: #0dcaf0;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var currentTab = 'overview';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 绑定 Tab 点击
+    document.querySelectorAll('#logTabs .nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#logTabs .nav-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentTab = this.dataset.tab;
+            loadTab(currentTab);
+        });
+    });
+    
+    // 初始加载
+    loadTab('overview');
+});
+
+function loadTab(tabName) {
+    var content = document.getElementById('log-content');
+    content.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><p class="text-white-50 mt-3 mb-0" data-i18n="log.loading">正在加载数据...</p></div>';
+    
+    fetch('/log/tab/' + tabName + '/')
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(html) {
+            content.innerHTML = html;
+        })
+        .catch(function(err) {
+            content.innerHTML = '<div class="text-center py-5"><i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i><p class="text-danger" data-i18n="ui.text_1178">加载失败: ' + err.message + '</p></div>';
+        });
+}
+
+/**
+ * 带参数加载 Tab（用于分页）
+ */
+function loadTabWithParams(tabName, params) {
+    var content = document.getElementById('log-content');
+    content.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><p class="text-white-50 mt-3 mb-0" data-i18n="log.loading">正在加载数据...</p></div>';
+    
+    fetch('/log/tab/' + tabName + '/?' + params)
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(html) {
+            content.innerHTML = html;
+        })
+        .catch(function(err) {
+            content.innerHTML = '<div class="text-center py-5"><i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i><p class="text-danger" data-i18n="ui.text_1178">加载失败: ' + err.message + '</p></div>';
+        });
+}
+
+function refreshCurrentTab() {
+    loadTab(currentTab);
+}
+
+/**
+ * 解锁 God Mode - 使用标准安全验证流程
+ */
+function unlockGodMode() {
+    requestPasswordVerify(
+        'btn_unlock_view',
+        function(passwords) {
+            // 构建请求体 - 与 deposit_step3_confirm.html 保持一致
+            var requestBody = {};
+            
+            // 密码注入 - 严格遵循Password Policy
+            if (passwords) {
+                console.log('[unlockGodMode] Injecting passwords:', Object.keys(passwords));
+                for (var slot in passwords) {
+                    // 标准注入: sec_code_l0, sec_code_user 等
+                    requestBody['sec_code_' + slot] = passwords[slot];
+                    
+                    // 兼容性: 确保后端能识别
+                    if (slot === 'user') {
+                        requestBody['sec_code_l0'] = passwords[slot];
+                    }
+                    if (slot === 'l0') {
+                        requestBody['sec_code_user'] = passwords[slot];
+                    }
+                }
+            }
+            
+            console.log('[unlockGodMode] Submitting with keys:', Object.keys(requestBody));
+            
+            fetch('/log/api/mode/god/unlock/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    createAndShowToast(data.message || '{% trans "解锁失败" %}', 'danger');
+                }
+            })
+            .catch(function(err) {
+                createAndShowToast('{% trans "请求失败: " %}' + err, 'danger');
+            });
+        },
+        null,
+        (window.i18n?.t('js.view_sensitive') || 'View Sensitive Info'),
+        function() {} // onCancel
+    );
+}
+
+/**
+ * 锁定 God Mode
+ */
+function lockGodMode() {
+    fetch('/log/api/mode/god/lock/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            createAndShowToast(data.message || '{% trans "锁定失败" %}', 'danger');
+        }
+    });
+}
+
+function getCsrfToken() {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var c = cookies[i].trim();
+        if (c.indexOf('csrftoken=') === 0) {
+            return c.substring('csrftoken='.length);
+        }
+    }
+    return '';
+}
+
+/**
+ * 切换开发模式
+ * @param {boolean} enterDevMode - true 表示进入开发模式（需密码），false 表示退出（无需密码）
+ */
+function toggleDevMode(enterDevMode) {
+    if (enterDevMode) {
+        // 进入开发模式 - 需要密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_toggle_dev_mode',
+                function(passwords) {
+                    var requestBody = { action: 'enter' };
+                    if (passwords) {
+                        for (var slot in passwords) {
+                            requestBody['sec_code_' + slot] = passwords[slot];
+                            if (slot === 'l0') requestBody['sec_code_user'] = passwords[slot];
+                        }
+                    }
+                    
+                    doToggleDevMode(requestBody);
+                },
+                null,
+                (window.i18n?.t('js.switch_dev_mode') || 'Switch to Dev Mode'),
+                function() {}
+            );
+        } else {
+            alert('{% trans "安全验证组件未加载，请刷新页面" %}');
+        }
+    } else {
+        // 退出开发模式 - 无需密码
+        doToggleDevMode({ action: 'exit' });
+    }
+}
+
+function doToggleDevMode(requestBody) {
+    fetch('/log/api/mode/dev/toggle/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            createAndShowToast(data.message, 'success');
+            // 刷新整个页面以更新顶部状态
+            location.reload();
+        } else {
+            createAndShowToast(data.message || '{% trans "操作失败" %}', 'danger');
+        }
+    })
+    .catch(function(err) {
+        createAndShowToast('{% trans "请求失败: " %}' + err, 'danger');
+    });
+}
+
+/**
+ * 清理开发日志
+ */
+function clearDevLogs() {
+    if (typeof GlobalModal !== 'undefined') {
+        GlobalModal.showConfirm({
+            title: '{% trans "清理开发日志" %}',
+            message: '<div class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>{% trans "此操作将删除所有开发模式日志，且" %}<strong>{% trans "无法恢复" %}</strong>！</div><p class="mt-3 mb-0 small text-white-50">{% trans "确认要清理所有开发日志吗？" %}</p>',
+            confirmText: '{% trans "确认清理" %}',
+            confirmClass: 'btn-danger',
+            onConfirm: function() {
+                requestPasswordVerify(
+                    'btn_clear_dev_logs',
+                    function(passwords) {
+                        var requestBody = {};
+                        if (passwords) {
+                            for (var slot in passwords) {
+                                requestBody['sec_code_' + slot] = passwords[slot];
+                                if (slot === 'l0') requestBody['sec_code_user'] = passwords[slot];
+                            }
+                        }
+                        
+                        fetch('/log/api/dev/clear/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCsrfToken()
+                            },
+                            body: JSON.stringify(requestBody)
+                        })
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) {
+                            if (data.success) {
+                                createAndShowToast(data.message, 'success');
+                                loadTab('maintenance');
+                            } else {
+                                createAndShowToast(data.message || '{% trans "操作失败" %}', 'danger');
+                            }
+                        })
+                        .catch(function(err) {
+                            createAndShowToast('{% trans "请求失败: " %}' + err, 'danger');
+                        });
+                    },
+                    null,
+                    '{% trans "清理开发日志" %}',
+                    function() {}
+                );
+            }
+        });
+    } else {
+        alert('{% trans "模态框组件未加载，请刷新页面" %}');
+    }
+}
+</script>
+{% endblock %}

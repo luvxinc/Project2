@@ -1,0 +1,583 @@
+<!-- Step 2: 确认汇率 -->
+<div class="row">
+    <div class="col-12">
+        <!-- 操作须知 -->
+        <div class="card bg-dark bg-opacity-50 border-info border-opacity-25 mb-4">
+            <div class="card-header bg-info bg-opacity-10 border-0 d-flex align-items-center">
+                <i class="fas fa-info-circle text-info me-2"></i>
+                <span class="text-info fw-bold" data-i18n="common.operation_notes">操作须知</span>
+            </div>
+            <div class="card-body">
+                <ul class="text-white-50 small mb-0 ps-3">
+                    <li class="mb-2" data-i18n="desc.d110">请选择结算汇率的日期：<strong class="text-white"
+                            data-i18n="ui.text_1303">使用订单发货日</strong> 或 <strong class="text-white"
+                            data-i18n="ui.text_1304">使用付款日</strong>。</li>
+                    <li class="mb-2" data-i18n="desc.d111">汇率修改将<strong class="text-warning"
+                            data-i18n="ui.text_1305">统一应用</strong>到本次付款的所有物流单。</li>
+                    <li class="mb-2" data-i18n="desc.d112">下方列表中的结算汇率仅作为展示，<strong class="text-danger"
+                            data-i18n="ui.text_1306">不可单独修改</strong>，只能通过上方「修改汇率」区域统一管理。</li>
+                    <li class="mb-2" data-i18n="desc.d113">如有<strong class="text-info"
+                            data-i18n="table.extra_fees">额外费用</strong>（如杂费、手续费等），可点击「新增额外费用」按钮添加。</li>
+                    <li data-i18n="ui.text_1308">确认无误后，点击「下一步」进入最终确认。</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 修改汇率区域 -->
+        <div class="card bg-dark border-warning border-opacity-50 mb-4">
+            <div
+                class="card-header bg-warning bg-opacity-10 border-warning border-opacity-25 d-flex align-items-center">
+                <i class="fas fa-edit text-warning me-2"></i>
+                <span class="text-warning fw-bold" data-i18n="ui.text_1309">修改汇率</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- 付款日期 -->
+                    <div class="col-md-4">
+                        <label class="form-label text-white-50 small mb-2">
+                            <i class="fas fa-calendar-alt me-1"></i><span data-i18n="table.payment_date">付款日期</span>
+                        </label>
+                        <input type="date" class="form-control bg-dark border-secondary text-white" id="payment-date"
+                            onchange="onPaymentDateChange()">
+                    </div>
+
+                    <!-- 结算汇率是否按照付款日结算 -->
+                    <div class="col-md-4">
+                        <label class="form-label text-white-50 small mb-2">
+                            <i class="fas fa-question-circle me-1"></i><span data-i18n="ui.icon_3376">按付款日结算汇率</span>
+                        </label>
+                        <div class="d-flex align-items-center">
+                            <label class="ui-toggle ui-toggle-primary me-3">
+                                <input type="checkbox" id="use-payment-date-rate" onchange="onTogglePaymentDateRate()">
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                            <span class="text-white-50 small" id="toggle-label"
+                                data-i18n="ui.text_1310">使用订单发货日汇率</span>
+                        </div>
+                    </div>
+
+                    <!-- 结算汇率（根据开关状态显示不同内容） -->
+                    <div class="col-md-4">
+                        <label class="form-label text-white-50 small mb-2">
+                            <i class="fas fa-dollar-sign me-1"></i><span data-i18n="ui.icon_3377">结算汇率 (RMB/USD)</span>
+                        </label>
+                        <!-- 可编辑模式（开关为"是"） -->
+                        <div id="rate-editable-mode" style="display: none;">
+                            <!-- 使用 GlobalExchangeRate 组件 -->
+                            <div id="settlement-rate-container"></div>
+                        </div>
+                        <!-- 只读模式（开关为"否"） -->
+                        <div id="rate-readonly-mode">
+                            <div class="d-flex align-items-center p-2 rounded bg-black bg-opacity-25">
+                                <span class="text-white fw-bold" id="readonly-rate-value">-</span>
+                                <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;"
+                                    id="readonly-rate-source" data-i18n="ui.text_1311">订单发货日汇率</span>
+                            </div>
+                            <small class="text-white-50 d-block mt-1"
+                                data-i18n="ui.text_1312">当前为各订单发货日的原始汇率，无需修改</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 保存按钮 -->
+                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 text-end">
+                    <button type="button" class="btn btn-warning rounded-pill px-4" id="btn-save-rate"
+                        onclick="applyRateToList()" disabled>
+                        <i class="fas fa-save me-2"></i><span data-i18n="ui.icon_3378">应用到所有物流单</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 费用明细表 -->
+        <div class="detail-table-container">
+            <table class="table table-dark">
+                <thead>
+                    <tr>
+                        <th class="text-center" data-i18n="table.logistics_no">物流单号</th>
+                        <th class="text-center" data-i18n="purchase.shipping_date">发货日期</th>
+                        <th class="text-center" data-i18n="ui.text_2515">物流重量 (KG)</th>
+                        <th class="text-center" data-i18n="ui.text_2516">单价 (RMB/KG)</th>
+                        <th class="text-center" data-i18n="table.settlement_rate">结算汇率</th>
+                        <th class="text-center" data-i18n="ui.text_2518">费用 (RMB)</th>
+                        <th class="text-center" data-i18n="ui.text_2519">费用 (USD)</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-list-body">
+                    <!-- JS动态填充 -->
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="5" class="text-end fw-bold" data-i18n="ui.text_2520">物流费用小计:</td>
+                        <td class="text-center fw-bold text-warning" id="preview-total-rmb">¥0.00</td>
+                        <td class="text-center fw-bold text-info" id="preview-total-usd">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- 新增额外费用按钮 -->
+        <div class="mt-3" id="add-extra-fee-btn-container">
+            <button type="button" class="btn btn-outline-info btn-sm rounded-pill" id="btn-add-extra-fee"
+                onclick="showExtraFeeSection()">
+                <i class="fas fa-plus me-1"></i><span data-i18n="ui.icon_3379">新增额外费用</span>
+            </button>
+        </div>
+
+        <!-- 额外费用框体（默认隐藏） -->
+        <div class="card bg-dark border-info border-opacity-50 mt-3" id="extra-fee-section" style="display: none;">
+            <div
+                class="card-header bg-info bg-opacity-10 border-info border-opacity-25 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-receipt text-info me-2"></i>
+                    <span class="text-info fw-bold" data-i18n="table.extra_fees">额外费用</span>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill"
+                    onclick="hideExtraFeeSection()">
+                    <i class="fas fa-trash-alt me-1"></i><span data-i18n="common.delete">删除</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label text-white-50 small mb-1">
+                            <i class="fas fa-file-alt me-1"></i><span data-i18n="ui.icon_3381">费用内容</span><span
+                                class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control bg-dark border-secondary text-white" id="extra-fee-note"
+                            data-i18n-placeholder="form.placeholder.generic_21" placeholder="如：杂费、手续费等"
+                            oninput="validateExtraFee()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-white-50 small mb-1">
+                            <i class="fas fa-coins me-1"></i><span data-i18n="ui.icon_3382">币种</span><span
+                                class="text-danger">*</span>
+                        </label>
+                        <select class="form-select bg-dark border-secondary text-white" id="extra-fee-currency"
+                            onchange="validateExtraFee(); updateTotalSummary();">
+                            <option value="" data-i18n="option.o6442">请选择</option>
+                            <option value="RMB" data-i18n="option.o6699">RMB (人民币)</option>
+                            <option value="USD" data-i18n="option.o8781">USD (美元)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-white-50 small mb-1">
+                            <i class="fas fa-dollar-sign me-1"></i><span data-i18n="ui.icon_3383">金额</span><span
+                                class="text-danger">*</span>
+                            <small class="text-white-50 ms-1">(正数=费用, 负数=减免)</small>
+                        </label>
+                        <input type="number" class="form-control bg-dark border-secondary text-white"
+                            id="extra-fee-amount" placeholder="0.00" step="0.01"
+                            oninput="validateExtraFee(); updateTotalSummary();">
+                    </div>
+                </div>
+                <div id="extra-fee-error" class="text-danger small mt-2" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 总计汇总行（当有额外费用时显示） -->
+        <div class="card bg-warning bg-opacity-10 border-warning border-opacity-50 mt-3" id="total-summary-section"
+            style="display: none;">
+            <div class="card-body py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <span class="text-warning fw-bold"><i class="fas fa-calculator me-2"></i><span
+                                data-i18n="ui.icon_3384">本次付款总额</span></span>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex justify-content-end gap-4">
+                            <div>
+                                <span class="text-white-50 small">RMB</span>
+                                <span class="text-warning fw-bold fs-5 ms-2" id="grand-total-rmb">¥0.00</span>
+                            </div>
+                            <div>
+                                <span class="text-white-50 small">USD</span>
+                                <span class="text-info fw-bold fs-5 ms-2" id="grand-total-usd">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wizard Actions -->
+<div class="wizard-actions mt-4">
+    <div class="wizard-actions-left">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-step2-back">
+            <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.prev">上一步</span>
+        </button>
+    </div>
+    <div class="wizard-actions-right">
+        <button type="button" class="btn btn-success rounded-pill px-4" id="btn-step2-next">
+            <span data-i18n="common.next">下一步</span> <i class="fas fa-arrow-right ms-2"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // Step 2: 确认汇率
+    // ========================================
+
+    // 汇率状态 (全局变量，供 Step 3/4 访问)
+    window.step2RateState = {
+        usePaymentDateRate: false,   // 是否按付款日结算
+        paymentDate: '',              // 付款日期
+        settlementRate: 0,            // 结算汇率
+        rateSource: 'original',       // 汇率来源: original(原始), auto(自动获取), manual(手动填写)
+        originalRates: {}             // 原始汇率 { logistic_num: rate }
+    };
+    // 也作为局部引用方便使用
+    const step2RateState = window.step2RateState;
+
+    // 结算汇率组件实例
+    let settlementRateComponent = null;
+
+    // Step 2 初始化
+    function initStep2() {
+        // 设置默认付款日期为今天
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('payment-date').value = today;
+        step2RateState.paymentDate = today;
+
+        // 保存原始汇率
+        step2RateState.originalRates = {};
+        window.paymentItems.forEach(item => {
+            step2RateState.originalRates[item.logistic_num] = item.usd_rmb || 7.0;
+        });
+
+        // 渲染列表
+        renderPreviewList();
+
+        // 默认禁用保存按钮（因为开关默认为(window.i18n?.t('js.no') || 'No')）
+        document.getElementById('btn-save-rate').disabled = true;
+    }
+
+    // 初始化结算汇率组件
+    function initSettlementRateComponent() {
+        if (settlementRateComponent) return;
+
+        settlementRateComponent = new GlobalExchangeRate({
+            container: '#settlement-rate-container',
+            inputId: 'settlement-rate',
+            apiUrl: '{% url "web_ui:purchase:po_exchange_rate" %}',
+            dateInputSelector: '#payment-date',
+            defaultRate: 7.25,
+            showSourceTag: true,
+            showStatusText: true,
+            showFetchButton: true,
+            placeholder: (window.i18n?.t('js.enter_rate') || 'Enter rate'),
+            modalFallback: true,
+            inputClass: 'form-control bg-dark border-warning text-white',
+            onChange: (rate, source) => {
+                step2RateState.settlementRate = rate;
+                step2RateState.rateSource = source === 'A' ? 'auto' : 'manual';
+                document.getElementById('btn-save-rate').disabled = !(rate && rate > 0);
+            },
+            onFetchSuccess: (rate) => {
+                console.log('[PaymentStep2] Rate fetched:', rate);
+            },
+            onFetchError: (error) => {
+                console.warn('[PaymentStep2] Rate fetch failed:', error);
+            }
+        });
+    }
+
+    // 渲染预览列表
+    function renderPreviewList() {
+        const tbody = document.getElementById('preview-list-body');
+
+        let totalRMB = 0;
+        let totalUSD = 0;
+
+        tbody.innerHTML = window.paymentItems.map((item, index) => {
+            const rmb = item.total_price_rmb || 0;
+            const rate = item.usd_rmb || 7.0;
+            const usd = rmb / rate;
+
+            totalRMB += rmb;
+            totalUSD += usd;
+
+            // 汇率来源标签
+            const sourceTag = item._rateSource === 'auto'
+                ? '<span class="badge bg-success" style="font-size:0.55rem;" data-i18n="js.auto_fetch">自动获取</span>'
+                : item._rateSource === 'manual'
+                    ? '<span class="badge bg-warning text-dark" style="font-size:0.55rem;" data-i18n="ui.text_882">手动填写</span>'
+                    : '<span class="badge bg-secondary" style="font-size:0.55rem;" data-i18n="ui.text_1316">订单原值</span>';
+
+            return `
+                <tr data-index="${index}">
+                    <td class="text-center font-monospace fw-bold text-white">${item.logistic_num}</td>
+                    <td class="text-center">${item.date_sent}</td>
+                    <td class="text-center">${item.total_weight ? item.total_weight.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-'}</td>
+                    <td class="text-center">${item.price_kg ? item.price_kg.toFixed(2) : '-'}</td>
+                    <td class="text-center">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="text-white fw-bold">${rate.toFixed(4)}</span>
+                            ${sourceTag}
+                        </div>
+                    </td>
+                    <td class="text-center text-warning">¥${rmb.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-center text-info usd-cell" data-index="${index}">$${usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                </tr>
+            `;
+        }).join('');
+
+        updatePreviewTotals();
+    }
+
+    // 更新合计
+    function updatePreviewTotals() {
+        let totalRMB = 0;
+        let totalUSD = 0;
+
+        window.paymentItems.forEach(item => {
+            const rmb = item.total_price_rmb || 0;
+            const rate = item.usd_rmb || 7.0;
+            totalRMB += rmb;
+            totalUSD += rmb / rate;
+        });
+
+        document.getElementById('preview-total-rmb').textContent = `¥${totalRMB.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('preview-total-usd').textContent = `$${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+
+    // 付款日期变更
+    function onPaymentDateChange() {
+        step2RateState.paymentDate = document.getElementById('payment-date').value;
+
+        // 若开关为(window.i18n?.t('js.yes') || 'Yes')且组件已初始化，重新获取汇率
+        if (step2RateState.usePaymentDateRate && settlementRateComponent) {
+            settlementRateComponent.reset();
+            settlementRateComponent.fetchRate(step2RateState.paymentDate);
+            document.getElementById('btn-save-rate').disabled = true;
+        }
+    }
+
+    // 开关切换
+    function onTogglePaymentDateRate() {
+        const isOn = document.getElementById('use-payment-date-rate').checked;
+        step2RateState.usePaymentDateRate = isOn;
+
+        const editableMode = document.getElementById('rate-editable-mode');
+        const readonlyMode = document.getElementById('rate-readonly-mode');
+        const toggleLabel = document.getElementById('toggle-label');
+
+        if (isOn) {
+            // 开关为(window.i18n?.t('js.yes') || 'Yes')：显示可编辑汇率输入框
+            editableMode.style.display = 'block';
+            readonlyMode.style.display = 'none';
+            toggleLabel.textContent = (window.i18n?.t('js.use_payment_date_rate') || 'Use Payment Date Rate');
+            toggleLabel.className = 'text-warning small';
+            document.getElementById('btn-save-rate').disabled = true;
+
+            // 延迟初始化汇率组件（确保容器可见后再渲染）
+            setTimeout(() => {
+                initSettlementRateComponent();
+                // 初始化后立即获取当前日期的汇率
+                const currentDate = step2RateState.paymentDate;
+                if (currentDate && settlementRateComponent) {
+                    settlementRateComponent.fetchRate(currentDate);
+                }
+            }, 50);
+        } else {
+            // 开关为(window.i18n?.t('js.no') || 'No')：显示只读展示
+            editableMode.style.display = 'none';
+            readonlyMode.style.display = 'block';
+            toggleLabel.textContent = (window.i18n?.t('js.use_shipment_date_rate') || 'Use Shipment Date Rate');
+            toggleLabel.className = 'text-white-50 small';
+
+            // 恢复原始汇率
+            window.paymentItems.forEach(item => {
+                item.usd_rmb = step2RateState.originalRates[item.logistic_num] || 7.0;
+                item._rateSource = 'original';
+            });
+            renderPreviewList();
+            document.getElementById('btn-save-rate').disabled = true;
+        }
+    }
+
+    // 汇率输入变化（由组件自动处理）
+    function onRateInputChange() {
+        // 由组件 onChange 回调处理
+    }
+
+    // 自动获取汇率
+    function fetchSettlementRate() {
+        if (settlementRateComponent) {
+            settlementRateComponent.fetchRate(step2RateState.paymentDate);
+        }
+    }
+
+    // 更新汇率来源标签（由组件自动管理）
+    function updateRateSourceTag(source) {
+        // 由组件自动管理
+    }
+
+    // 应用汇率到所有物流单
+    function applyRateToList() {
+        if (!step2RateState.usePaymentDateRate) {
+            // 开关为(window.i18n?.t('js.no') || 'No')，无需修改
+            return;
+        }
+
+        const rate = step2RateState.settlementRate;
+        if (!rate || rate <= 0) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast((window.i18n?.t('js.enter_valid_rate') || 'Enter valid rate first'), 'warning');
+            }
+            return;
+        }
+
+        // 应用到所有物流单
+        window.paymentItems.forEach(item => {
+            item.usd_rmb = rate;
+            item._rateSource = step2RateState.rateSource;
+        });
+
+        // 重新渲染列表
+        renderPreviewList();
+
+        if (typeof createAndShowToast === 'function') {
+            createAndShowToast(`已将汇率 ${rate.toFixed(4)} 应用到所有物流单`, 'success');
+        }
+    }
+
+    // ========================================
+    // 额外费用管理
+    // ========================================
+
+    // 额外费用状态
+    let extraFeeState = {
+        hasExtraFee: false,
+        note: '',
+        currency: '',
+        amount: 0
+    };
+
+    // 显示额外费用区域
+    function showExtraFeeSection() {
+        document.getElementById('extra-fee-section').style.display = 'block';
+        document.getElementById('add-extra-fee-btn-container').style.display = 'none';
+        document.getElementById('total-summary-section').style.display = 'block';
+        extraFeeState.hasExtraFee = true;
+        updateTotalSummary();
+    }
+
+    // 隐藏额外费用区域
+    function hideExtraFeeSection() {
+        document.getElementById('extra-fee-section').style.display = 'none';
+        document.getElementById('add-extra-fee-btn-container').style.display = 'block';
+        document.getElementById('total-summary-section').style.display = 'none';
+
+        // 清空输入
+        document.getElementById('extra-fee-note').value = '';
+        document.getElementById('extra-fee-currency').value = '';
+        document.getElementById('extra-fee-amount').value = '';
+        document.getElementById('extra-fee-error').style.display = 'none';
+
+        // 重置状态
+        extraFeeState = { hasExtraFee: false, note: '', currency: '', amount: 0 };
+        window.extraFeeData = null;
+    }
+
+    // 验证额外费用
+    function validateExtraFee() {
+        const note = document.getElementById('extra-fee-note').value.trim();
+        const currency = document.getElementById('extra-fee-currency').value;
+        const amountStr = document.getElementById('extra-fee-amount').value;
+        const amount = parseFloat(amountStr);
+        const errorEl = document.getElementById('extra-fee-error');
+
+        let errors = [];
+
+        if (!note) errors.push((window.i18n?.t('js.fee_content_required') || 'Fee content required'));
+        if (!currency) errors.push((window.i18n?.t('js.select_supplier_currency') || 'Select currency'));
+        // 允许正数和负数，但不能为0或空
+        if (amountStr === '' || isNaN(amount) || amount === 0) {
+            errors.push((window.i18n?.t('js.amount_required_nonzero') || 'Amount required (positive or negative, not 0)'));
+        }
+        // 检查最多2位小数
+        if (!isNaN(amount) && amountStr !== '') {
+            const decimalPart = amountStr.split('.')[1];
+            if (decimalPart && decimalPart.length > 2) {
+                errors.push((window.i18n?.t('js.amount_max_2_decimals') || 'Amount max 2 decimals'));
+            }
+        }
+
+        if (errors.length > 0) {
+            errorEl.textContent = errors.join('；');
+            errorEl.style.display = 'block';
+            return false;
+        }
+
+        errorEl.style.display = 'none';
+
+        // 更新状态
+        extraFeeState.note = note;
+        extraFeeState.currency = currency;
+        extraFeeState.amount = amount;
+
+        // 保存到全局供 Step 3 使用
+        // 正数 = 额外费用，负数 = 额外减免
+        window.extraFeeData = {
+            note: note,
+            currency: currency,
+            amount: amount,
+            isDeduction: amount < 0  // 标记是否为减免
+        };
+
+        return true;
+    }
+
+    // 更新总计汇总
+    function updateTotalSummary() {
+        // 获取物流费用小计
+        let logisticsRMB = 0;
+        let logisticsUSD = 0;
+        window.paymentItems.forEach(item => {
+            const rmb = item.total_price_rmb || 0;
+            const rate = item.usd_rmb || 7.0;
+            logisticsRMB += rmb;
+            logisticsUSD += rmb / rate;
+        });
+
+        // 获取额外费用
+        const currency = document.getElementById('extra-fee-currency').value;
+        const amount = parseFloat(document.getElementById('extra-fee-amount').value) || 0;
+
+        // 获取当前汇率（用第一个物流单的汇率）
+        const currentRate = window.paymentItems.length > 0 ? (window.paymentItems[0].usd_rmb || 7.0) : 7.0;
+
+        let extraRMB = 0;
+        let extraUSD = 0;
+
+        // 支持正数（额外费用）和负数（额外减免）
+        if (amount !== 0 && !isNaN(amount) && currency) {
+            if (currency === 'RMB') {
+                extraRMB = amount;
+                extraUSD = amount / currentRate;
+            } else if (currency === 'USD') {
+                extraUSD = amount;
+                extraRMB = amount * currentRate;
+            }
+        }
+
+        // 计算总计（正数加，负数减）
+        const grandTotalRMB = logisticsRMB + extraRMB;
+        const grandTotalUSD = logisticsUSD + extraUSD;
+
+        // 更新显示
+        document.getElementById('grand-total-rmb').textContent = `¥${grandTotalRMB.toFixed(2)}`;
+        document.getElementById('grand-total-usd').textContent = `$${grandTotalUSD.toFixed(2)}`;
+    }
+
+    // Step 2 初始化时重置额外费用
+    const originalInitStep2 = initStep2;
+    initStep2 = function () {
+        originalInitStep2();
+        hideExtraFeeSection();
+    };
+</script>

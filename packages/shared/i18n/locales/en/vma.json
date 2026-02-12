@@ -1,0 +1,472 @@
+{
+  "title": "VMA Management",
+  "description": "Vendor Inventory Tracking & Training Management",
+  "module": {
+    "title": "VMA",
+    "description": "Vendor Inventory Tracking & Management"
+  },
+  "hub": {
+    "explore": "Learn more",
+    "truvalve": {
+      "title": "TruValve",
+      "description": "TruValve vendor inventory tracking and management",
+      "cta": "Manage"
+    },
+    "p_valve": {
+      "title": "P-Valve",
+      "description": "P-Valve vendor inventory tracking and management",
+      "cta": "Manage"
+    },
+    "employees": {
+      "title": "Employees",
+      "description": "Employee profiles, onboarding, and information management",
+      "cta": "Manage"
+    },
+    "duties": {
+      "title": "Duties",
+      "description": "Job duty definition, assignment, and tracking",
+      "cta": "Manage"
+    },
+    "training": {
+      "title": "Training",
+      "description": "Training plans, records, certifications, and skill tracking",
+      "cta": "Go to Training"
+    }
+  },
+  "truvalve": {
+    "title": "TruValve",
+    "description": "TruValve vendor inventory tracking and management"
+  },
+  "p_valve": {
+    "title": "P-Valve",
+    "description": "P-Valve vendor inventory tracking and management",
+    "tabs": {
+      "inventory": {
+        "title": "Inventory",
+        "description": "Track and manage P-Valve and Delivery System inventory levels"
+      },
+      "clinicalCase": {
+        "title": "Clinical Cases",
+        "description": "Record and manage clinical surgical cases and product usage"
+      },
+      "overview": {
+        "title": "Overview",
+        "description": "Inventory dashboard with summary metrics and recent activity"
+      },
+      "demoInventory": {
+        "title": "Demo Inventory",
+        "description": "Track demo products, samples, and demonstration units"
+      },
+      "fridgeShelf": {
+        "title": "Fridge Shelf",
+        "description": "Visualize product placement across fridge storage shelves"
+      },
+      "productManagement": {
+        "title": "Product Management",
+        "description": "Manage P-Valve and Delivery System product catalog"
+      },
+      "siteManagement": {
+        "title": "Site Management",
+        "description": "Manage hospital and clinic site information"
+      }
+    }
+  },
+  "employees": {
+    "title": "Employees",
+    "description": "Employee profiles and information management",
+    "list": {
+      "title": "Employee List",
+      "empty": "No employees found",
+      "search": "Search by name or employee number...",
+      "total": "{count} employees"
+    },
+    "fields": {
+      "employeeNo": "Employee No.",
+      "lastName": "Last Name",
+      "firstName": "First Name",
+      "department": "Department",
+      "duties": "Duties",
+      "hireDate": "Hire Date",
+      "terminationDate": "Termination Date",
+      "terminationDateDesc": "Please select the termination date for this employee",
+      "assignedAt": "Assigned Date",
+      "removedAt": "Removed Date",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "add": "Add Employee",
+      "edit": "Edit",
+      "delete": "Delete",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "confirmDelete": "Confirm delete?",
+      "deleteSuccess": "Employee deleted successfully",
+      "activateSuccess": "Employee activated",
+      "deactivateSuccess": "Employee deactivated",
+      "saveSuccess": "Employee saved successfully"
+    },
+    "form": {
+      "title_create": "Add New Employee",
+      "title_edit": "Edit Employee",
+      "employeeNo_placeholder": "Enter employee number",
+      "lastName_placeholder": "Enter last name",
+      "firstName_placeholder": "Enter first name",
+      "department_placeholder": "Select department",
+      "hireDate_placeholder": "Select hire date",
+      "employeeNo_exists": "This employee number already exists"
+    },
+    "career": {
+      "title": "Career Timeline",
+      "viewCareer": "View Career Timeline",
+      "active": "Active",
+      "ended": "Ended",
+      "historical": "historical",
+      "latest": "Latest",
+      "noAssignments": "No department assignments yet",
+      "addAssignment": "Add Department Assignment",
+      "endAssignment": "End",
+      "addSuccess": "Department assignment added",
+      "editSuccess": "Assignment updated",
+      "removeSuccess": "Assignment ended",
+      "deleteSuccess": "Assignment deleted",
+      "stackRule": "Only latest record can be edited",
+      "start": "Start",
+      "hired": "Hired",
+      "joinedCompany": "Joined the Company",
+      "onboardedAs": "Onboarded as",
+      "modifyHistory": "Modify History",
+      "planNewEvent": "Plan New Career Event",
+      "confirmPlan": "Confirm Plan",
+      "processing": "Processing...",
+      "selectPlaceholder": "Select...",
+      "statusActive": "Active",
+      "statusInactive": "Inactive (Terminated)",
+      "statusLeave": "Leave of Absence",
+      "save": "Save",
+      "create": "Create",
+      "addDuty": "Add Duty +",
+      "removeDuty": "Remove Duty -",
+      "terminateStatus": "Terminate / Status",
+      "cannotRemoveLast": "Cannot remove the last duty. Use \"Terminate\" to end employment or add another duty first.",
+      "effectiveDate": "Effective Date",
+      "selectDepartment": "Select Department",
+      "selectAssignmentEnd": "Select Assignment to End",
+      "assigned": "Assigned",
+      "newStatus": "New Status",
+      "changeDuty": "Change Duty",
+      "changeTo": "Change To:",
+      "cancel": "Cancel",
+      "historyAdjustment": "* History adjustment: This will update the official record for this date.",
+      "cannotDeleteHistory": "Historical records cannot be deleted. You may correct the duty assignment.",
+      "alertOnlyAssigned": "Only 'Assigned Duty' events can be modified to a different function.",
+      "legacyUnknown": "Legacy / Unknown",
+      "noEmployeesInDept": "No employees found in this department",
+      "joined": "Joined",
+      "staff": "Staff",
+      "depts": "depts",
+      "employeesTimeline": "Employees Timeline",
+      "assignedDuty": "Assigned duty:",
+      "relievedFromDuty": "Relieved from duty:",
+      "duration": "Duration:"
+    }
+  },
+  "departments": {
+    "title": "Department Management",
+    "description": "Manage department codes, names, and SOP training requirements",
+    "list": {
+      "empty": "No departments yet",
+      "employeeCount": "{count} employees",
+      "employees": "employees",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "fields": {
+      "code": "Dept. Code",
+      "name": "Department Name",
+      "duties": "Duties",
+      "sopTrainingReq": "SOP Training Requirements",
+      "employeeCount": "Employees",
+      "status": "Status"
+    },
+    "actions": {
+      "add": "Add Department",
+      "addDepartment": "New Department",
+      "addDuty": "Add Duty",
+      "edit": "Edit",
+      "delete": "Delete",
+      "manage": "Manage Departments",
+      "confirmDelete": "Are you sure you want to delete this department?",
+      "cannotDelete": "Cannot delete department with assigned employees",
+      "deleteSuccess": "Department deleted successfully",
+      "saveSuccess": "Department saved successfully",
+      "sopRequirements": "SOP Requirements",
+      "sopReqSaveSuccess": "SOP requirements saved successfully",
+      "sopReqCount": "{count} SOPs required",
+      "sopReqNone": "No SOP requirements"
+    },
+    "form": {
+      "title_create": "Add New Department",
+      "title_edit": "Edit Department",
+      "title_addDuty": "Add Duty",
+      "code_placeholder": "Enter department code",
+      "name_placeholder": "Enter department name",
+      "duties_placeholder": "Enter department duties / responsibilities",
+      "sopTrainingReq_placeholder": "Enter SOP training requirements (optional)",
+      "focusHint": "Enter new duty below",
+      "name_exists": "This department name already exists",
+      "code_exists": "This department code already exists",
+      "code_duties_exists": "This department code + duty combination already exists"
+    }
+  },
+  "duties": {
+    "title": "Departments & Duties",
+    "description": "Department management and job duty assignments"
+  },
+  "sopRequirementsModal": {
+    "title": "SOP Training Requirements",
+    "subtitle": "Select SOPs required for this duty",
+    "search": "Search SOP...",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selected": "{count} selected",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "noResults": "No SOPs found",
+    "editRequirements": "Edit Requirements",
+    "selectOption": "-- Select --"
+  },
+  "sopHistory": {
+    "title": "SOP Requirement History",
+    "viewHistory": "View History",
+    "noHistory": "No history records found",
+    "initial": "Initial Setup",
+    "add": "Added",
+    "remove": "Removed",
+    "change": "Change",
+    "changeDate": "Change Date",
+    "changeGroups": "change groups",
+    "totalRecords": "total records",
+    "deleteRecord": "Delete Record",
+    "confirmDeleteRecord": "Delete SOP history record",
+    "deleteGroup": "Delete Change Group",
+    "confirmDeleteGroup": "Delete all",
+    "recordsOnDate": "records on",
+    "scrollHint": "Scroll to see all milestones",
+    "latest": "Latest",
+    "changes": "SOP Changes",
+    "more": "more",
+    "start": "Start",
+    "edit": "Edit",
+    "addNew": "Add",
+    "dateError": "Date must be after the latest existing milestone date"
+  },
+  "trainingSop": {
+    "title": "Training SOP",
+    "description": "Controlled document management and SOP version tracking",
+    "search": "Search by No., SOP number, document name, or DA#...",
+    "versionHistory": "Version History",
+    "list": {
+      "empty": "No SOPs found",
+      "total": "{count} SOPs",
+      "documents": "documents",
+      "requireTraining": "require training"
+    },
+    "fields": {
+      "seqNo": "No.",
+      "sopNo": "Document No.",
+      "name": "Document Name",
+      "description": "Description",
+      "version": "Rev.",
+      "effectiveDate": "Effective Date",
+      "structureClassification": "Structure",
+      "documentType": "Document Type",
+      "trainingRequired": "Training Required",
+      "status": "Status",
+      "daNo": "DA#",
+      "initial": "Initial"
+    },
+    "documentTypes": {
+      "Procedure Document": "Procedure Document",
+      "Management Regulation": "Management Regulation",
+      "Technical Document": "Technical Document",
+      "Quality Manual": "Quality Manual"
+    },
+    "structureTypes": {
+      "Master Document": "Master Document",
+      "Form": "Form",
+      "Template": "Template",
+      "Attachment": "Attachment",
+      "Master": "Master"
+    },
+    "close": "CLOSE",
+    "status": {
+      "active": "Active",
+      "deprecated": "Deprecated",
+      "latest": "Latest"
+    },
+    "training": {
+      "required": "Training Required",
+      "notRequired": "No Training",
+      "short": "Training"
+    },
+    "actions": {
+      "add": "New SOP",
+      "edit": "Edit",
+      "newRevision": "New Revision",
+      "activate": "Activate",
+      "deprecate": "Deprecate",
+      "saveSuccess": "SOP saved successfully"
+    },
+    "form": {
+      "title_create": "New SOP Document",
+      "title_edit": "Edit SOP Document",
+      "title_revision": "New Revision",
+      "revisionHint": "Creating a new revision for this document. Seq No. is auto-assigned, Document No. is inherited.",
+      "sopNo_placeholder": "e.g. VM-QP-030",
+      "name_placeholder": "Enter document name",
+      "description_placeholder": "Enter description (optional)",
+      "version_placeholder": "e.g. A0, B1, C2",
+      "effectiveDate_placeholder": "Select effective date"
+    }
+  },
+  "training": {
+    "title": "Training",
+    "description": "Training plans and certification management",
+    "stats": {
+      "employees": "{count} employees",
+      "complete": "{count} complete",
+      "missing": "{count} missing"
+    },
+    "fields": {
+      "employeeId": "Employee ID",
+      "employeeName": "Employee Name",
+      "hireDate": "Hire Date",
+      "required": "Required",
+      "status": "Training Status"
+    },
+    "status": {
+      "complete": "Complete",
+      "missing": "Missing ({count})"
+    },
+    "detail": {
+      "trained": "✓ Trained ({count})",
+      "missingSops": "⚠ Missing SOPs ({count})",
+      "noRecords": "No training records",
+      "columns": {
+        "sopNo": "SOP No.",
+        "version": "Version",
+        "trainingNo": "Training No.",
+        "date": "Date",
+        "trainer": "Trainer",
+        "name": "Name",
+        "da": "DA",
+        "effective": "Effective"
+      }
+    },
+    "actions": {
+      "smartFill": "Training",
+      "back": "Back",
+      "roadmap": "Roadmap"
+    },
+    "smartFill": {
+      "title": "Smart Fill Training Records",
+      "cutoffDate": "Cutoff Date (Training up to)",
+      "lecturer": "Lecturer",
+      "selectLecturer": "Select Lecturer",
+      "generating": "Generating...",
+      "button": "Smart Fill All Missing Records",
+      "download": "Download All PDFs",
+      "confirm": "Generate",
+      "confirmTitle": "Smart Fill",
+      "confirmMessage": "Auto-generate all missing training records up to"
+    },
+    "roadmap": {
+      "title": "Training Compliance Roadmap",
+      "description": "Training compliance snapshots at each SOP change event",
+      "subtitle": "Training compliance snapshots at each SOP change event",
+      "milestones": "milestones",
+      "loading": "Computing compliance snapshots...",
+      "noData": "No SOP change events found",
+      "compliant": "compliant",
+      "nonCompliant": "Non-compliant",
+      "latest": "Latest",
+      "initial": "Initial",
+      "scrollHint": "Scroll to see the full compliance timeline",
+      "start": "Start"
+    }
+  },
+  "trainingRecords": {
+    "title": "Training Records",
+    "sessions": "Sessions",
+    "description": "View, edit and download training session records",
+    "stats": {
+      "sessions": "{count} sessions",
+      "trainees": "{count} total trainees"
+    },
+    "fields": {
+      "trainingNo": "Training No.",
+      "trainingDate": "Training Date",
+      "subject": "Subject",
+      "lecturer": "Lecturer",
+      "employees": "Employees",
+      "sops": "SOPs",
+      "download": "Download"
+    },
+    "empty": "No training records yet. Use Smart Fill from the Training tab to generate records.",
+    "evaluation": {
+      "selfTraining": "Self Training",
+      "oralQA": "Oral Q&A"
+    },
+    "detail": {
+      "sops": "SOPs ({count})",
+      "employees": "Employees ({count})",
+      "noSops": "No SOPs in this session",
+      "noEmployees": "No employees in this session",
+      "columns": {
+        "sopNo": "SOP No.",
+        "version": "Version",
+        "trainees": "Trainees",
+        "employeeNo": "Employee No.",
+        "sopsCol": "SOPs",
+        "remove": "Remove"
+      }
+    },
+    "actions": {
+      "edit": "✎ Edit",
+      "done": "✕ Done",
+      "remove": "Remove",
+      "pdf": "PDF"
+    },
+    "delete": {
+      "title": "Delete Training Session?",
+      "message": "This will permanently delete session {trainingNo} and all {count} records. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "trainingMatrix": {
+    "title": "Training Matrix",
+    "employee": "Employee",
+    "employees": "Employees",
+    "rate": "Rate",
+    "completed": "Completed",
+    "missing": "Missing",
+    "na": "Not Required",
+    "compliant": "Compliant",
+    "totalEmployees": "Total Employees",
+    "totalSops": "Total SOPs",
+    "fullyCompliant": "Fully Compliant",
+    "overallRate": "Overall Rate",
+    "generatedAt": "Generated",
+    "required": "Required",
+    "pendingAction": "Pending Action",
+    "triggers": "Triggers",
+    "allCompliant": "All Compliant",
+    "baseline": "BASELINE"
+  }
+}

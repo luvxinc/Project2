@@ -1,0 +1,80 @@
+{
+    "meta": {
+        "version": "1.0",
+        "description": "中文用户界面文案"
+    },
+    "modal": {
+        "password": {
+            "title": "密码验证",
+            "desc": "此操作需要验证您的身份",
+            "placeholder_user": "请输入登录密码",
+            "placeholder_l1": "请输入查询安保码 (L1)",
+            "placeholder_l2": "请输入修改安保码 (L2)",
+            "placeholder_l3": "请输入数据库管理码 (L3)",
+            "placeholder_l4": "请输入系统核弹码 (L4)",
+            "label_user": "用户密码",
+            "label_l1": "查询安保码",
+            "label_l2": "修改安保码",
+            "label_l3": "数据库管理码",
+            "label_l4": "系统核弹码"
+        },
+        "success": {
+            "title": "操作成功",
+            "default_msg": "操作已成功完成"
+        },
+        "error": {
+            "title": "操作失败",
+            "default_msg": "操作失败，请确认信息后重试",
+            "check_input": "请检查输入内容"
+        },
+        "flow": {
+            "title": "处理中",
+            "step_complete": "已完成",
+            "step_pending": "等待中",
+            "step_error": "出错"
+        },
+        "btn": {
+            "confirm": "确定",
+            "back": "返回上一级",
+            "reset": "重置",
+            "cancel": "取消",
+            "continue": "继续",
+            "submit": "提交"
+        }
+    },
+    "toast": {
+        "success": "成功",
+        "failed": "失败",
+        "loading": "加载中..."
+    },
+    "status_bar": {
+        "sync": "同步中",
+        "offline": "离线",
+        "online": "在线",
+        "api_error": "接口异常",
+        "perm_changed": "您的权限已更新，请刷新页面",
+        "lang": "中文"
+    },
+    "error_type": {
+        "database": "数据层错误",
+        "backend": "后端应用错误",
+        "celery": "异步任务错误",
+        "js_runtime": "前端运行时错误",
+        "dom": "前端结构错误",
+        "network": "网络依赖错误"
+    },
+    "common": {
+        "loading": "加载中...",
+        "confirm": "确认",
+        "cancel": "取消",
+        "save": "保存",
+        "delete": "删除",
+        "edit": "编辑",
+        "view": "查看",
+        "search": "搜索",
+        "refresh": "刷新",
+        "close": "关闭",
+        "no_permission": "无权限",
+        "contact_admin": "请联系管理员"
+    }
+}

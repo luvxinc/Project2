@@ -1,0 +1,38 @@
+<!-- 异常处理向导 - 步骤3: 验证修改 -->
+<div id="process-step-3" class="wizard-step-content" style="display: none;">
+
+    <!-- 变更预览 -->
+    <div class="card bg-dark border-warning mb-4">
+        <div class="card-header bg-warning bg-opacity-10 border-warning">
+            <i class="fas fa-exchange-alt me-2 text-warning"></i>
+            <span class="text-white" data-i18n="ui.text_751">变更预览</span>
+        </div>
+        <div class="card-body" id="verify-changes-content">
+            <!-- JS动态填充 -->
+            <div class="text-center py-4">
+                <span class="text-white-50" data-i18n="ui.text_752">正在生成变更预览...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 警告提示 -->
+    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger mb-4">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+            <div>
+                <h6 class="mb-1 text-danger" data-i18n="ui.text_753">操作不可逆警告</h6>
+                <p class="mb-0 small" data-i18n="ui.text_754">此操作将修改数据库记录，请确认变更内容无误后再执行。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="d-flex justify-content-between">
+        <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="goToProcessStep(2)">
+            <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.prev">上一步</span>
+        </button>
+        <button class="btn btn-warning btn-lg px-4 rounded-pill" onclick="confirmProcess()">
+            <i class="fas fa-check-double me-2"></i><span data-i18n="common.confirm">确认执行</span>
+        </button>
+    </div>
+</div>

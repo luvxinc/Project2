@@ -1,0 +1,521 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dynamic Inventory - Inventory - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/apple-table.css">
+<style>
+    /* 日期选择区域 */
+    .date-picker-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .date-picker-container input[type="date"] {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        color: #fff;
+        padding: 8px 14px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .date-picker-container input[type="date"]:focus {
+        outline: none;
+        border-color: var(--bs-info);
+        box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.15);
+    }
+
+    .date-picker-container input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+    }
+
+    /* 表格容器限高滚动 */
+    .dynamic-inv-table-container {
+        max-height: calc(100vh - 320px);
+        overflow-y: auto;
+        overflow-x: auto;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* 固定表头 */
+    .dynamic-inv-table-container thead {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #1a1a2e;
+    }
+
+    .dynamic-inv-table-container thead th {
+        background: #1a1a2e;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 可排序列头 */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.2s;
+    }
+
+    .sortable:hover {
+        color: #0dcaf0;
+    }
+
+    .sortable::after {
+        content: ' ⇅';
+        opacity: 0.3;
+        font-size: 0.8em;
+    }
+
+    .sortable.sort-asc::after {
+        content: ' ↑';
+        opacity: 1;
+    }
+
+    .sortable.sort-desc::after {
+        content: ' ↓';
+        opacity: 1;
+    }
+
+    /* 加载状态 */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        z-index: 10;
+    }
+
+    /* 数值高亮 */
+    .qty-positive {
+        color: #198754;
+    }
+
+    .qty-negative {
+        color: #dc3545;
+    }
+
+    .qty-zero {
+        color: #6c757d;
+    }
+
+    .value-cell {
+        color: #0dcaf0;
+        font-family: 'SF Mono', monospace;
+    }
+
+    .cost-cell {
+        color: #6ee7b7;
+        font-family: 'SF Mono', monospace;
+        font-size: 0.9em;
+    }
+
+    /* 说明面板 */
+    .help-panel {
+        background: rgba(13, 202, 240, 0.05);
+        border: 1px solid rgba(13, 202, 240, 0.15);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+    }
+
+    .help-panel .help-toggle {
+        cursor: pointer;
+        color: #0dcaf0;
+    }
+
+    .help-panel .help-content {
+        display: none;
+        margin-top: 12px;
+    }
+
+    .help-panel.expanded .help-content {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/dashboard/inventory/" class="text-info text-decoration-none"
+                            data-i18n="nav.inventory">Inventory</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="inventory.dynamic_inv">
+                        Dynamic Inventory</li>
+                </ol>
+            </nav>
+            <p class="text-white-50 small mb-0 mt-1" data-i18n="ui.text_293">查看各 SKU 的实时库存状态</p>
+        </div>
+        <div>
+            <a href="/dashboard/inventory/" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="inventory.back_to_hub">返回Inventory</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="glass-card p-4">
+        <!-- Header with Date Picker -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-chart-line fa-lg text-info"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-0" data-i18n="ui.text_294">动态库存一览</h5>
+                    <p class="text-white-50 small mb-0"><span data-i18n="desc.d164">数据截止日期</span>: <span
+                            id="display-date" class="text-info fw-bold">-</span></p>
+                </div>
+            </div>
+            <div class="date-picker-container">
+                <span class="text-white-50 me-2" data-i18n="ui.text_295">截止日期:</span>
+                <input type="date" id="date-picker" value="{{ today }}">
+                <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" id="btn-today">
+                    <i class="fas fa-calendar-day me-1"></i><span data-i18n="ui.icon_3122">今天</span>
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" id="btn-download">
+                    <i class="fas fa-download me-1"></i><span data-i18n="common.download">下载</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 页面说明 -->
+        <div class="help-panel mb-4" style="padding: 16px 20px;">
+            <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-info-circle me-2 text-info"></i>
+                <span class="text-white fw-bold" data-i18n="finance.page_description">页面说明</span>
+            </div>
+            <div class="row g-2 text-white-50 small">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong class="text-info">SKU</strong> - 产品编码 | <strong class="text-info"
+                            data-i18n="inventory.avg_cost">平均成本</strong> - 所有库存批次的加权平均成本 (USD)</p>
+                    <p class="mb-1"><strong class="text-info" data-i18n="inventory.current_cost">当前成本</strong> - FIFO出库时使用的成本
+                        (最早批次) | <strong class="text-info" data-i18n="inventory.actual_qty">实际库存</strong> - 盘点数量</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong class="text-info" data-i18n="inventory.theory_qty">理论库存</strong> - 系统计算的库存 | <strong
+                            class="text-warning" data-i18n="ui.text_301">下订数/价值</strong> - 已下单未发货</p>
+                    <p class="mb-1" style="color: #a855f7;"><strong data-i18n="ui.text_302">在途数/价值</strong> - 已发货未入库
+                        (含运费摊销) | <strong class="text-success" data-i18n="inventory.inv_value">库存价值</strong> - 数量×成本</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="rounded-3 p-3 text-center"
+                    style="background: rgba(13, 202, 240, 0.08); border: 1px solid rgba(13, 202, 240, 0.15);">
+                    <p class="text-white-50 small mb-1" data-i18n="ui.text_304">SKU 总数</p>
+                    <h4 class="text-info mb-0" id="stat-sku-count">-</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-3 p-3 text-center"
+                    style="background: rgba(25, 135, 84, 0.08); border: 1px solid rgba(25, 135, 84, 0.15);">
+                    <p class="text-white-50 small mb-1" data-i18n="ui.text_305">库存总价值</p>
+                    <h4 class="text-success mb-0" id="stat-total-value">-</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-3 p-3 text-center"
+                    style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.15);">
+                    <p class="text-white-50 small mb-1" data-i18n="ui.text_306">下订中数量</p>
+                    <h4 class="text-warning mb-0" id="stat-order-total">-</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-3 p-3 text-center"
+                    style="background: rgba(111, 66, 193, 0.08); border: 1px solid rgba(111, 66, 193, 0.15);">
+                    <p class="text-white-50 small mb-1" data-i18n="ui.text_307">在途中数量</p>
+                    <h4 class="text-purple mb-0" id="stat-transit-total" style="color: #a855f7;">-</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Table Container -->
+        <div class="position-relative">
+            <div class="loading-overlay d-none" id="loading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border text-info mb-2" role="status"></div>
+                    <p class="text-white-50 small mb-0" data-i18n="common.loading">加载中...</p>
+                </div>
+            </div>
+
+            <div class="dynamic-inv-table-container">
+                <table class="apple-table apple-table-compact" id="inv-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="sku" style="min-width: 160px;"
+                                data-i18n-title="tooltip.t4957" title="产品编码">SKU</th>
+                            <th class="text-end" style="min-width: 80px;" data-i18n-title="tooltip.t8349"
+                                title="所有库存批次的加权平均成本 (USD)" data-i18n="inventory.avg_cost">平均成本</th>
+                            <th class="text-end" style="min-width: 80px;" data-i18n-title="tooltip.t3657"
+                                title="FIFO出库时使用的成本 - 最早批次的单价" data-i18n="inventory.current_cost">当前成本</th>
+                            <th class="text-end sortable" data-sort="actual_qty" style="min-width: 90px;"
+                                data-i18n-title="tooltip.t2021" title="盘点后的实际库存数量" data-i18n="inventory.actual_qty">实际库存
+                            </th>
+                            <th class="text-end sortable" data-sort="theory_qty" style="min-width: 90px;"
+                                data-i18n-title="tooltip.t8420" title="系统计算的应有库存 (FIFO层剩余)"
+                                data-i18n="inventory.theory_qty">理论库存</th>
+                            <th class="text-end" style="min-width: 100px;" data-i18n-title="tooltip.t1246"
+                                title="当前库存的总价值 (数量 × 成本)" data-i18n="inventory.inv_value">库存价值</th>
+                            <th class="text-end" style="min-width: 70px;" data-i18n-title="tooltip.t4995"
+                                title="已下单但未发货的数量" data-i18n="inventory.ordered_qty">下订数</th>
+                            <th class="text-end" style="min-width: 90px;" data-i18n-title="tooltip.t1123"
+                                title="下订中产品的预估价值" data-i18n="inventory.ordered_value">下订价值</th>
+                            <th class="text-end" style="min-width: 70px;" data-i18n-title="tooltip.t4391"
+                                title="已发货但未入库的数量" data-i18n="inventory.transit_qty">在途数</th>
+                            <th class="text-end" style="min-width: 90px;" data-i18n-title="tooltip.t4084"
+                                title="在途产品的预估价值 (含运费摊销)" data-i18n="inventory.transit_value">在途价值</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-tbody">
+                        <tr>
+                            <td colspan="10" class="text-center text-white-50 py-4">
+                                <i class="fas fa-spinner fa-spin me-2"></i><span
+                                    data-i18n="log.loading">正在加载数据...</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <p class="text-white-50 small mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                <span data-i18n="ui.inv_source">实际库存来源:</span> <code id="inv-source">-</code>
+            </p>
+            <p class="text-white-50 small mb-0">
+                <span data-i18n="ui.last_update">最后更新:</span> <span id="last-update">-</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var datePicker = document.getElementById('date-picker');
+        var btnToday = document.getElementById('btn-today');
+        var tbody = document.getElementById('inv-tbody');
+        var loadingOverlay = document.getElementById('loading-overlay');
+
+        // Format number with commas
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '-';
+            return num.toLocaleString('en-US');
+        }
+
+        // Format currency
+        function formatCurrency(num) {
+            if (num === null || num === undefined) return '-';
+            return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Get quantity class
+        function getQtyClass(val) {
+            if (val > 0) return 'qty-positive';
+            if (val < 0) return 'qty-negative';
+            return 'qty-zero';
+        }
+
+        // Load data
+        function loadData(dateStr) {
+            loadingOverlay.classList.remove('d-none');
+            document.getElementById('display-date').textContent = dateStr;
+
+            fetch('/dashboard/inventory/dynamic_inv/api/?date=' + dateStr)
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    loadingOverlay.classList.add('d-none');
+
+                    if (resp.error) {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4"><i class="fas fa-exclamation-circle me-2"></i>' + resp.error + '</td></tr>';
+                        return;
+                    }
+
+                    var data = resp.data || [];
+
+                    // Update stats
+                    document.getElementById('stat-sku-count').textContent = formatNumber(data.length);
+
+                    var totalValue = 0, totalOrder = 0, totalTransit = 0;
+                    data.forEach(function (row) {
+                        totalValue += row.inv_value || 0;
+                        totalOrder += row.order_qty || 0;
+                        totalTransit += row.transit_qty || 0;
+                    });
+
+                    document.getElementById('stat-total-value').textContent = formatCurrency(totalValue);
+                    document.getElementById('stat-order-total').textContent = formatNumber(totalOrder);
+                    document.getElementById('stat-transit-total').textContent = formatNumber(totalTransit);
+
+                    // Update source info
+                    document.getElementById('inv-source').textContent = resp.matched_inv_col || (window.i18n?.t('js.no_match') || 'No Match');
+                    document.getElementById('last-update').textContent = new Date().toLocaleTimeString('zh-CN');
+
+                    // Render table
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-white-50 py-4"><i class="fas fa-inbox me-2"></i>无数据</td></tr>';
+                        return;
+                    }
+
+                    var html = '';
+                    data.forEach(function (row) {
+                        html += '<tr>';
+                        html += '<td><code class="text-info">' + row.sku + '</code></td>';
+                        html += '<td class="text-end cost-cell">' + formatCost(row.avg_cost) + '</td>';
+                        html += '<td class="text-end cost-cell">' + formatCost(row.current_cost) + '</td>';
+                        html += '<td class="text-end">' + formatNumber(row.actual_qty) + '</td>';
+                        html += '<td class="text-end">' + formatNumber(row.theory_qty) + '</td>';
+                        html += '<td class="text-end value-cell">' + formatCurrency(row.inv_value) + '</td>';
+                        html += '<td class="text-end ' + getQtyClass(row.order_qty) + '">' + formatNumber(row.order_qty) + '</td>';
+                        html += '<td class="text-end" style="color: #ffc107;">' + formatCurrency(row.order_value) + '</td>';
+                        html += '<td class="text-end ' + getQtyClass(row.transit_qty) + '">' + formatNumber(row.transit_qty) + '</td>';
+                        html += '<td class="text-end" style="color: #a855f7;">' + formatCurrency(row.transit_value) + '</td>';
+                        html += '</tr>';
+                    });
+                    tbody.innerHTML = html;
+
+                    // Save data for sorting
+                    window._invData = data;
+                })
+                .catch(function (err) {
+                    loadingOverlay.classList.add('d-none');
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4"><i class="fas fa-exclamation-circle me-2"></i>加载失败: ' + err + '</td></tr>';
+                });
+        }
+
+        // Format cost (4 decimals)
+        function formatCost(num) {
+            if (num === null || num === undefined || num === 0) return '-';
+            return '$' + num.toFixed(4);
+        }
+
+        // Sorting functionality
+        var currentSort = { field: null, asc: true };
+
+        document.querySelectorAll('.sortable').forEach(function (th) {
+            th.addEventListener('click', function () {
+                var field = this.dataset.sort;
+                if (!window._invData) return;
+
+                // Toggle sort direction
+                if (currentSort.field === field) {
+                    currentSort.asc = !currentSort.asc;
+                } else {
+                    currentSort.field = field;
+                    currentSort.asc = true;
+                }
+
+                // Update UI
+                document.querySelectorAll('.sortable').forEach(function (el) {
+                    el.classList.remove('sort-asc', 'sort-desc');
+                });
+                this.classList.add(currentSort.asc ? 'sort-asc' : 'sort-desc');
+
+                // Sort data
+                var sortedData = window._invData.slice().sort(function (a, b) {
+                    var valA = a[field];
+                    var valB = b[field];
+                    if (typeof valA === 'string') {
+                        return currentSort.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                    return currentSort.asc ? (valA - valB) : (valB - valA);
+                });
+
+                // Re-render
+                var html = '';
+                sortedData.forEach(function (row) {
+                    html += '<tr>';
+                    html += '<td><code class="text-info">' + row.sku + '</code></td>';
+                    html += '<td class="text-end cost-cell">' + formatCost(row.avg_cost) + '</td>';
+                    html += '<td class="text-end cost-cell">' + formatCost(row.current_cost) + '</td>';
+                    html += '<td class="text-end">' + formatNumber(row.actual_qty) + '</td>';
+                    html += '<td class="text-end">' + formatNumber(row.theory_qty) + '</td>';
+                    html += '<td class="text-end value-cell">' + formatCurrency(row.inv_value) + '</td>';
+                    html += '<td class="text-end ' + getQtyClass(row.order_qty) + '">' + formatNumber(row.order_qty) + '</td>';
+                    html += '<td class="text-end" style="color: #ffc107;">' + formatCurrency(row.order_value) + '</td>';
+                    html += '<td class="text-end ' + getQtyClass(row.transit_qty) + '">' + formatNumber(row.transit_qty) + '</td>';
+                    html += '<td class="text-end" style="color: #a855f7;">' + formatCurrency(row.transit_value) + '</td>';
+                    html += '</tr>';
+                });
+                tbody.innerHTML = html;
+            });
+        });
+
+        // Event: Date picker change
+        datePicker.addEventListener('change', function () {
+            loadData(this.value);
+        });
+
+        // Event: Today button
+        btnToday.addEventListener('click', function () {
+            var today = new Date().toISOString().split('T')[0];
+            datePicker.value = today;
+            loadData(today);
+        });
+
+        // Download CSV functionality
+        var btnDownload = document.getElementById('btn-download');
+        btnDownload.addEventListener('click', function() {
+            if (!window._invData || window._invData.length === 0) {
+                alert(window.i18n?.t('js.no_data') || '无数据可下载');
+                return;
+            }
+
+            // CSV 表头 (仅5列)
+            var headers = ['SKU', 'Avg Cost', 'Current Cost', 'Actual Qty', 'Theory Qty'];
+            var csvContent = headers.join(',') + '\n';
+
+            // 数据行
+            window._invData.forEach(function(row) {
+                var line = [
+                    '"' + (row.sku || '').replace(/"/g, '""') + '"',
+                    row.avg_cost || 0,
+                    row.current_cost || 0,
+                    row.actual_qty || 0,
+                    row.theory_qty || 0
+                ].join(',');
+                csvContent += line + '\n';
+            });
+
+            // 创建 Blob 并下载
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'inventory_' + datePicker.value + '.csv');
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        // Initial load
+        loadData(datePicker.value);
+    });
+</script>
+{% endblock %}

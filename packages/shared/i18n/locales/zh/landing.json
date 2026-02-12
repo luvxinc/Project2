@@ -1,0 +1,23 @@
+{
+  "signIn": "登录",
+  "changelog": "更新日志",
+  "tagline": "企业资源管理系统",
+  "phase": "阶段 2.5",
+  "privacy": "隐私政策",
+  "terms": "使用条款",
+  "copyright": "保留所有权利。",
+  "modalTitle": "登录 ERP",
+  "modalSubtitle": "您的账户信息将用于验证身份、保护数据安全。系统采用企业级 PBKDF2-SHA256 加密存储，确保所有敏感操作可追溯、可审计。",
+  "featureTitle": "一站式跨境电商管理平台",
+  "featureDesc": "MGMT ERP 是专为跨境电商卖家打造的企业级管理系统。集成采购、库存、财务、销售分析等核心模块，帮助您高效管理供应链、优化运营决策、提升盈利能力。",
+  "heroTitle": "一站式企业级管理系统",
+  "heroDesc": "集成采购、库存、财务、销售分析等核心模块，帮助您高效管理供应链、优化运营决策、提升盈利能力。",
+  "module_purchase": "采购管理",
+  "module_purchase_desc": "供应商策略 · PO下单 · 发货收货",
+  "module_inventory": "库存管理",
+  "module_inventory_desc": "FIFO成本 · 动态库存 · 3D仓储",
+  "module_finance": "财务管理",
+  "module_finance_desc": "付款结算 · 定金管理 · 成本核算",
+  "module_sales": "销售分析",
+  "module_sales_desc": "订单追踪 · 盈亏报表 · ETL同步"
+}

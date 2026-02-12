@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "description": "Eaglestar ERP 智能打包清单 - 用于定义架构快照范围",
+    "version": "1.0"
+  },
+  "config": {
+    "output_dir_name": "VersionHistory",
+    "filename_prefix": "project_snapshot",
+    "version_file_path": "ui/assets/patch_notes.txt"
+  },
+  "rules": {
+    "include_extensions": [
+      ".py",
+      ".json",
+      ".md",
+      ".sh",
+      ".env",
+      ".txt",
+      ".sql"
+    ],
+    "include_dirs": [
+      "core",
+      "config",
+      "ui",
+      "tools",
+      "backend"
+    ],
+    "include_files": [
+      ".env",
+      "app.py",
+      "start_server.sh",
+      "stop_server.sh",
+      "requirements.txt"
+    ],
+    "exclude_dirs": [
+      "__pycache__",
+      ".git",
+      ".idea",
+      ".vscode",
+      ".venv",
+      "venv",
+      "node_modules",
+      "output",
+      "backup",
+      "logs",
+      "data/archive",
+      "data/chat_history",
+      "VersionHistory"
+    ],
+    "exclude_files": [
+      "project_all_code.txt",
+      "DS_Store"
+    ]
+  }
+}

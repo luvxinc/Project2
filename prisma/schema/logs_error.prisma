@@ -1,0 +1,89 @@
+// ================================
+// Error Log Model
+// 错误日志 - 系统异常完整记录
+// ================================
+
+/// 错误日志 - 系统异常完整记录 (企业级)
+model ErrorLog {
+  id String @id @default(uuid())
+
+  traceId String? @map("trace_id")
+
+  errorType    String  @map("error_type")
+  errorCode    String? @map("error_code")
+  errorMessage String  @map("error_message")
+  stackTrace   String? @map("stack_trace") @db.Text
+  rootCause    String? @map("root_cause")
+
+  requestMethod  String? @map("request_method")
+  requestPath    String? @map("request_path")
+  requestQuery   Json?   @map("request_query")
+  requestBody    Json?   @map("request_body")
+  requestHeaders Json?   @map("request_headers")
+
+  userId    String?  @map("user_id")
+  username  String?
+  userRoles String[] @default([])
+  sessionId String?  @map("session_id")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  hostname      String?
+  appVersion    String? @map("app_version")
+  nodeEnv       String? @map("node_env")
+  systemContext Json?   @map("system_context")
+
+  module          String?
+  operation       String?
+  entityType      String? @map("entity_type")
+  entityId        String? @map("entity_id")
+  businessContext Json?   @map("business_context")
+
+  severity    ErrorSeverity @default(MEDIUM)
+  category    ErrorCategory @default(UNKNOWN)
+  errorHash   String?       @map("error_hash")
+  occurrences Int           @default(1)
+  firstSeenAt DateTime?     @map("first_seen_at")
+  lastSeenAt  DateTime?     @map("last_seen_at")
+
+  isResolved Boolean   @default(false) @map("is_resolved")
+  resolvedAt DateTime? @map("resolved_at")
+  resolvedBy String?   @map("resolved_by")
+  resolution String?   @db.Text
+
+  devMode Boolean @default(false) @map("dev_mode")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([traceId])
+  @@index([errorHash])
+  @@index([severity])
+  @@index([category])
+  @@index([module])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@index([devMode])
+  @@index([module, createdAt])
+  @@index([severity, createdAt])
+  @@index([isResolved, severity])
+  @@index([devMode, createdAt])
+  @@map("error_logs")
+}
+
+enum ErrorSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ErrorCategory {
+  DATABASE
+  NETWORK
+  VALIDATION
+  AUTH
+  BUSINESS
+  EXTERNAL_API
+  SYSTEM
+  UNKNOWN
+}

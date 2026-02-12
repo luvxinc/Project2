@@ -1,0 +1,14 @@
+// ================================
+// Base Configuration
+// 数据源与客户端生成器 — 全局唯一
+// ================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

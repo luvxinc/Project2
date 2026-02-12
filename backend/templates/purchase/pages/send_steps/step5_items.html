@@ -1,0 +1,66 @@
+<!-- Step 5: 录入发货信息 -->
+<div id="send-step-items" class="wizard-step-content">
+    <!-- 操作须知 -->
+    <div class="card bg-dark border-info border-opacity-25 mb-4">
+        <div class="card-header bg-info bg-opacity-10 border-0">
+            <i class="fas fa-info-circle me-2 text-info"></i>
+            <span class="text-info fw-bold" data-i18n="common.operation_notes">操作须知</span>
+        </div>
+        <div class="card-body">
+            <ul class="text-white-50 small mb-0">
+                <li class="mb-1">下方表格按<strong class="text-white" data-i18n="common.supplier">供应商</strong>分组展示（根据订单号前两位字母区分）</li>
+                <li class="mb-1">同一供应商内，<strong class="text-white" data-i18n="ui.text_1014">不同订单号</strong>以不同颜色标识便于区分</li>
+                <li class="mb-1"><strong class="text-white" data-i18n="js.ship_qty">发货量</strong>：<span data-i18n="instructions.desc_66">填写本次实际发货数量，如不发货请</span><strong class="text-warning" data-i18n="ui.text_1016">留空</strong></li>
+                <li class="mb-1"><strong class="text-white" data-i18n="shipping.regularize">规整订货量</strong>：<span data-i18n="shipping.regularize_guide">开启后系统将自动调整订单数据使未发量归零</span></li>
+                <li><strong class="text-white" data-i18n="ui.text_1018">SKU备注</strong>：<span data-i18n="instructions.desc_28">同一SKU存在多个价格版本时会拆分显示，数字越小价格越高</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Excel数据来源提示（仅Excel模式显示） -->
+    <div id="items-excel-notice" class="alert alert-success mb-4" style="display: none;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-file-excel fa-2x me-3 text-success"></i>
+            <div class="flex-grow-1">
+                <strong class="text-success" data-i18n="shipping.auto_filled">发货数据已从Excel文件自动填充</strong>
+                <p class="mb-0 text-white-50 small mt-1" data-i18n="ui.text_1020">
+                    以下数据来源于您上传的发货模板，如需修改请直接编辑对应输入框
+                </p>
+            </div>
+            <span class="badge bg-success bg-opacity-25 text-success" data-i18n="ui.text_1021">自动填充</span>
+        </div>
+    </div>
+
+    <!-- 发货明细容器（限高可滚动） -->
+    <div id="items-container" style="max-height: 500px; overflow-y: auto;">
+        <!-- 供应商分组将通过JS动态填充 -->
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="d-flex justify-content-end mt-3 mb-4">
+        <span class="badge bg-info bg-opacity-25 text-info" id="items-count-badge" data-i18n="ui.text_1022">共 0 条待发记录</span>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary px-4 rounded-pill" 
+                    id="btn-wizard-back-4"
+                    data-bs-toggle="tooltip"
+                    data-i18n-title="tooltip.t9065" title="返回验证物流参数">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_prev">返回上一步</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-success btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-next-4" 
+                    disabled
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t3887" title="继续验证发货信息">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="common.next">下一步</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,132 @@
+{% load security_tags %}
+
+<!-- 操作须知 -->
+<div class="glass-card p-4 mb-4 border border-info border-opacity-25" data-testid="ops-note-validate">
+    <div class="d-flex align-items-start">
+        <div class="bg-info bg-opacity-25 p-2 rounded-circle me-3 flex-shrink-0">
+            <i class="fas fa-info-circle fa-lg text-info"></i>
+        </div>
+        <div>
+            <h6 class="text-info fw-bold mb-2" data-i18n="ui.text_264">操作须知 - 文件检验</h6>
+            <div class="text-white-50 small">
+                <p class="mb-2">
+                    <strong data-i18n="ui.text_207">功能说明：</strong>
+                    系统自动检查上传文件的格式、编码、必要列是否完整，并识别文件类型（Transaction/Earning）。
+                </p>
+                <p class="mb-2">
+                    <strong data-i18n="ui.text_266">检验项目：</strong>
+                    文件类型 → CSV 格式 → 编码（UTF-8/GBK）→ 必要列存在 → 数据完整性
+                </p>
+                <p class="mb-0">
+                    <strong data-i18n="ui.text_267">如何处理错误：</strong>
+                    检验失败时请查看下方错误详情，修正文件后重新上传。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 检验结果卡片 -->
+<div class="glass-card p-4 border border-secondary border-opacity-25" data-testid="validate-card">
+    <h6 class="text-uppercase text-muted small fw-bold mb-3">
+        <i class="fas fa-check-circle text-warning me-2"></i>Step 2: 文件检验
+    </h6>
+
+    {% if validation_passed %}
+    <!-- 检验通过 -->
+    <div class="alert border-success border-opacity-50 mb-4" style="background: rgba(25, 135, 84, 0.1);">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-circle-check fa-2x text-success me-3"></i>
+            <div>
+                <strong class="text-success" data-i18n="ui.text_268">检验通过</strong>
+                <p class="text-white mb-0 mt-1" data-i18n="ui.text_269">所有文件格式正确，可以进入下一步。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件摘要 -->
+    <div class="row g-3 mb-4">
+        {% for file in validated_files %}
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary border-opacity-25">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-file-csv text-info fa-2x me-3"></i>
+                        <div>
+                            <div class="text-white fw-bold">{{ file.name }}</div>
+                            <div class="text-muted small">
+                                类型: <span class="text-info">{{ file.type }}</span> |
+                                行数: <span class="text-info">{{ file.rows }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 继续按钮 -->
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+            hx-get="{% url 'web_ui:sales:transactions:tab_transaction' %}" hx-target="#etl-tab-content"
+            data-testid="btn-back-upload">
+            <i class="fa-solid fa-arrow-left me-2"></i><span data-i18n="ui.icon_3109">返回上传</span>
+        </button>
+
+        <button type="button" class="btn btn-primary rounded-pill px-5"
+            hx-post="{% url 'web_ui:sales:transactions:parse' %}" hx-target="#etl-tab-content"
+            hx-indicator="#validate-spinner" data-testid="btn-next-parse">
+            <i class="fa-solid fa-arrow-right me-2"></i><span data-i18n="ui.icon_3110">开始解析</span>
+        </button>
+    </div>
+
+    {% else %}
+    <!-- 检验失败 -->
+    <div class="alert border-danger border-opacity-50 mb-4" style="background: rgba(220, 53, 69, 0.1);">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-triangle-exclamation fa-2x text-danger me-3"></i>
+            <div>
+                <strong class="text-danger" data-i18n="ui.text_270">检验失败</strong>
+                <p class="text-white mb-0 mt-1" data-i18n="ui.text_271">文件存在问题，请查看下方错误详情并修正后重新上传。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 错误列表 -->
+    <div class="card bg-dark border-danger border-opacity-25 mb-4" data-testid="error-summary">
+        <div class="card-header bg-danger bg-opacity-10 border-0">
+            <i class="fa-solid fa-list-ul me-2 text-danger"></i>
+            <span class="text-danger" data-i18n="ui.text_272">错误详情</span>
+        </div>
+        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+            <ul class="list-unstyled mb-0">
+                {% for error in validation_errors %}
+                <li class="d-flex align-items-start mb-2">
+                    <i class="fa-solid fa-times-circle text-danger me-2 mt-1"></i>
+                    <span class="text-white-50">{{ error }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- 返回重新上传按钮 -->
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+            hx-get="{% url 'web_ui:sales:transactions:tab_transaction' %}" hx-target="#etl-tab-content"
+            data-testid="btn-retry-upload">
+            <i class="fa-solid fa-arrow-left me-2"></i><span data-i18n="ui.icon_3096">返回重新上传</span>
+        </button>
+
+        <button type="button" class="btn btn-secondary rounded-pill px-5" disabled data-testid="btn-next-disabled">
+            <i class="fa-solid fa-arrow-right me-2"></i><span data-i18n="ui.icon_3110">开始解析</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <div id="validate-spinner" class="htmx-indicator text-center mt-3">
+        <div class="spinner-border text-primary me-2" role="status"></div>
+        <span class="text-white-50" data-i18n="ui.text_273">正在处理...</span>
+    </div>
+</div>

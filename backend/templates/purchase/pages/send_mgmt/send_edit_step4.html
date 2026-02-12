@@ -1,0 +1,362 @@
+<!-- 流程4: 验证修改 -->
+<div id="edit-step-4" class="wizard-step-content" style="display: none;">
+    <!-- 验证状态卡片 -->
+    <div class="card bg-dark border-secondary border-opacity-25 mb-4" id="edit-items-verify-card">
+        <div class="card-header bg-secondary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-spinner fa-spin me-2 text-warning" id="edit-items-verify-icon"></i>
+                <span class="text-warning" id="edit-items-verify-title" data-i18n="ui.text_1112">正在验证修改数据...</span>
+            </div>
+            <span class="badge bg-secondary bg-opacity-50 text-white" id="edit-items-verify-status" data-i18n="ui.text_957">验证中</span>
+        </div>
+        <div class="card-body p-0">
+            <!-- 验证结果数据列表 -->
+            <div id="edit-items-verify-container" style="max-height: 350px; overflow-y: auto;">
+                <!-- 数据将通过JS动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 错误信息面板（验证失败时显示） -->
+    <div class="card bg-danger bg-opacity-10 border-danger border-opacity-25 mb-4" id="edit-items-error-panel" style="display: none;">
+        <div class="card-header bg-danger bg-opacity-10 border-0">
+            <i class="fas fa-exclamation-circle me-2 text-danger"></i>
+            <span class="text-danger fw-bold" data-i18n="modal.password.verify_failed">验证失败</span>
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small" id="edit-items-error-list">
+                <!-- 错误信息将通过JS动态填充 -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- 警告信息面板（提醒时显示） -->
+    <div class="card bg-warning bg-opacity-10 border-warning border-opacity-25 mb-4" id="edit-items-warning-panel" style="display: none;">
+        <div class="card-header bg-warning bg-opacity-10 border-0">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            <span class="text-warning fw-bold" data-i18n="ui.icon_3050">注意事项</span>
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small text-white-50" id="edit-items-warning-list">
+                <!-- 警告信息将通过JS动态填充 -->
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 物流参数修改提示（如有修改时显示） -->
+    <div class="card bg-info bg-opacity-10 border-info border-opacity-25 mb-4" id="edit-logistics-modified-panel" style="display: none;">
+        <div class="card-header bg-info bg-opacity-10 border-0">
+            <i class="fas fa-shipping-fast me-2 text-info"></i>
+            <span class="text-info fw-bold" data-i18n="ui.text_1116">物流参数将被修改</span>
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small text-white-50" id="edit-logistics-modified-list">
+                <!-- 修改信息将通过JS动态填充 -->
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 无修改提示面板（没有实际修改时显示） -->
+    <div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 mb-4" id="edit-no-changes-panel" style="display: none;">
+        <div class="card-header bg-secondary bg-opacity-10 border-0">
+            <i class="fas fa-info-circle me-2 text-secondary"></i>
+            <span class="text-white fw-bold" data-i18n="ui.text_1117">未检测到修改</span>
+        </div>
+        <div class="card-body">
+            <p class="text-white-50 mb-3" data-i18n="ui.text_1118">除修改备注外，货物明细和物流参数均无变化。</p>
+            <p class="text-white-50 mb-0" data-i18n="ui.text_1119">您可以选择：</p>
+            <ul class="text-white-50 small mt-2 mb-0">
+                <li><strong data-i18n="common.back_modify">返回修改</strong> - 返回上一步修改货物明细</li>
+                <li><strong data-i18n="ui.text_1121">跳过修改明细</strong> - 放弃修改，返回发货单列表</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="d-flex justify-content-between gap-3">
+        <button type="button" 
+                class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                id="btn-edit-step4-back"
+                onclick="showEditStep(3)">
+            <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_prev">返回上一步</span>
+        </button>
+        <div class="d-flex gap-2">
+            <button type="button" 
+                    class="btn btn-outline-warning btn-lg px-4 rounded-pill" 
+                    id="btn-edit-step4-skip"
+                    style="display: none;"
+                    onclick="editItemsSkipFromStep4()">
+                <i class="fas fa-forward me-2"></i><span data-i18n="ui.text_1121">跳过修改明细</span>
+            </button>
+            <button type="button" 
+                    class="btn btn-success btn-lg px-4 rounded-pill shadow" 
+                    id="btn-edit-step4-next" 
+                    disabled
+                    onclick="goToStep5Preview()">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="common.next">下一步</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // Step4: 验证修改数据
+    // ========================================
+    
+    // 当进入Step4时执行验证
+    function runStep4Verification() {
+        const card = document.getElementById('edit-items-verify-card');
+        const icon = document.getElementById('edit-items-verify-icon');
+        const title = document.getElementById('edit-items-verify-title');
+        const status = document.getElementById('edit-items-verify-status');
+        const container = document.getElementById('edit-items-verify-container');
+        const errorPanel = document.getElementById('edit-items-error-panel');
+        const errorList = document.getElementById('edit-items-error-list');
+        const warningPanel = document.getElementById('edit-items-warning-panel');
+        const warningList = document.getElementById('edit-items-warning-list');
+        const logisticsPanel = document.getElementById('edit-logistics-modified-panel');
+        const logisticsList = document.getElementById('edit-logistics-modified-list');
+        const noChangesPanel = document.getElementById('edit-no-changes-panel');
+        const skipBtn = document.getElementById('btn-edit-step4-skip');
+        const nextBtn = document.getElementById('btn-edit-step4-next');
+        
+        // 重置状态
+        icon.className = 'fas fa-spinner fa-spin me-2 text-warning';
+        title.className = 'text-warning';
+        title.textContent = (window.i18n?.t('js.validating_edit') || 'Validating edit...');
+        status.className = 'badge bg-secondary bg-opacity-50 text-white';
+        status.textContent = (window.i18n?.t('js.validating') || 'Validating');
+        errorPanel.style.display = 'none';
+        warningPanel.style.display = 'none';
+        logisticsPanel.style.display = 'none';
+        noChangesPanel.style.display = 'none';
+        skipBtn.style.display = 'none';
+        nextBtn.disabled = true;
+        
+        // 收集Step3的有效数据
+        const validItems = step3Items
+            .filter(i => !i.is_deleted)
+            .filter(i => i.po_num && i.po_sku && i.po_price !== null && i.sent_qty > 0);
+        
+        const errors = [];
+        const warnings = [];
+        let hasItemChanges = false;  // 是否有货物明细修改
+        
+        // 验证规则
+        if (validItems.length === 0) {
+            errors.push((window.i18n?.t('js.need_one_valid_shipment') || 'Need at least one valid shipment'));
+        }
+        
+        // 检查发货量
+        validItems.forEach(item => {
+            if (!item.sent_qty || item.sent_qty <= 0) {
+                errors.push(`${item.po_sku}: 发货量必须为正整数`);
+            }
+            
+            // 发货量为0时不允许规整
+            if ((item.sent_qty || 0) === 0 && item.is_adjusted) {
+                errors.push(`${item.po_sku}: 发货量为0时无法标记为规整`);
+            }
+            
+            // 检查未发量是否为负
+            const unshipped = (item.ordered_qty || 0) - (item.already_sent || 0) - (item.sent_qty || 0);
+            if (unshipped < 0) {
+                warnings.push(`${item.po_sku}: 发货量超出未发量 ${Math.abs(unshipped)} 件`);
+            }
+            
+            // 检查是否有修改（对比原始数据）
+            if (item.is_new) {
+                hasItemChanges = true;  // 新增的行视为修改
+            }
+        });
+        
+        // 检查是否有删除的原始行
+        const deletedOriginalItems = step3Items.filter(i => i.is_deleted && !i.is_new);
+        if (deletedOriginalItems.length > 0) {
+            hasItemChanges = true;
+        }
+        
+        // 检查是否有发货量或规整状态修改（与原始数据对比）
+        if (step3OriginalItems && step3OriginalItems.length > 0) {
+            validItems.forEach(item => {
+                if (!item.is_new) {
+                    const orig = step3OriginalItems.find(o => 
+                        o.po_num === item.po_num && 
+                        o.po_sku === item.po_sku && 
+                        Math.abs((o.po_price || 0) - (item.po_price || 0)) < 0.001
+                    );
+                    if (orig) {
+                        if (orig.sent_qty !== item.sent_qty || orig.is_adjusted !== item.is_adjusted) {
+                            hasItemChanges = true;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 检查修改备注
+        const note = document.getElementById('edit-items-note')?.value?.trim();
+        if (!note) {
+            errors.push((window.i18n?.t('js.notes_required_for_edit') || 'Notes required for edit'));
+        } else if (note === (window.i18n?.t('js.original_shipment') || 'Original Shipment')) {
+            errors.push((window.i18n?.t('js.note_cannot_be_original_shipment') || '修改备注不能为原始发货'));
+        } else if (note === (window.i18n?.t('js.original_order') || 'Original Order')) {
+            errors.push((window.i18n?.t('js.note_cannot_be_original_order') || '修改备注不能为原始订单'));
+        }
+        
+        // 检查物流参数修改
+        let logisticsChanges = [];
+        let hasLogisticsChanges = false;
+        if (typeof collectLogisticsData === 'function' && editOriginalData && editOriginalData.logistics) {
+            const logisticsData = collectLogisticsData();
+            const orig = editOriginalData.logistics;
+            
+            if (logisticsData.date_eta !== (orig.date_eta || '')) {
+                logisticsChanges.push(`预计到货日期: ${orig.date_eta || '-'} → ${logisticsData.date_eta || '-'}`);
+                hasLogisticsChanges = true;
+            }
+            if (logisticsData.pallets !== (orig.pallets || 0)) {
+                logisticsChanges.push(`托盘数: ${orig.pallets || 0} → ${logisticsData.pallets}`);
+                hasLogisticsChanges = true;
+            }
+            if (Math.abs(logisticsData.price_kg - (orig.price_kg || 0)) > 0.0001) {
+                logisticsChanges.push(`物流单价: ${orig.price_kg || 0} → ${logisticsData.price_kg}`);
+                hasLogisticsChanges = true;
+            }
+            if (Math.abs(logisticsData.total_weight - (orig.total_weight || 0)) > 0.01) {
+                logisticsChanges.push(`发货总重量: ${orig.total_weight || 0} → ${logisticsData.total_weight}`);
+                hasLogisticsChanges = true;
+            }
+            if (Math.abs(logisticsData.usd_rmb - (orig.usd_rmb || 0)) > 0.0001) {
+                logisticsChanges.push(`结算汇率: ${orig.usd_rmb || 0} → ${logisticsData.usd_rmb}`);
+                hasLogisticsChanges = true;
+            }
+        }
+        
+        // 检查是否有任何实际修改（物流参数或货物明细）
+        const hasAnyChanges = hasItemChanges || hasLogisticsChanges;
+        let noChangesError = false;
+        if (!hasAnyChanges) {
+            noChangesError = true;
+        }
+        
+        // 模拟验证延迟
+        setTimeout(() => {
+            // 渲染数据列表
+            container.innerHTML = renderVerifyItemsTable(validItems);
+            
+            // 显示错误
+            if (errors.length > 0) {
+                card.className = 'card bg-dark border-danger border-opacity-50 mb-4';
+                icon.className = 'fas fa-times-circle me-2 text-danger';
+                title.className = 'text-danger';
+                title.textContent = (window.i18n?.t('modal.password.verify_failed') || 'Verification Failed');
+                status.className = 'badge bg-danger text-white';
+                status.textContent = (window.i18n?.t('toast.failed') || 'Failed');
+                
+                errorPanel.style.display = 'block';
+                errorList.innerHTML = errors.map(e => `<li class="text-danger">${e}</li>`).join('');
+                nextBtn.disabled = true;
+            } else if (noChangesError) {
+                // 无实际修改
+                card.className = 'card bg-dark border-secondary border-opacity-50 mb-4';
+                icon.className = 'fas fa-info-circle me-2 text-secondary';
+                title.className = 'text-white';
+                title.textContent = (window.i18n?.t('js.no_actual_change') || 'No actual change');
+                status.className = 'badge bg-secondary text-white';
+                status.textContent = (window.i18n?.t('js.no_changes') || 'No Changes');
+                
+                noChangesPanel.style.display = 'block';
+                skipBtn.style.display = 'inline-block';
+                nextBtn.disabled = true;
+            } else {
+                // 验证通过
+                card.className = 'card bg-dark border-success border-opacity-50 mb-4';
+                icon.className = 'fas fa-check-circle me-2 text-success';
+                title.className = 'text-success';
+                title.textContent = (window.i18n?.t('js.verified') || 'Verified');
+                status.className = 'badge bg-success text-white';
+                status.textContent = (window.i18n?.t('js.passed') || 'Passed');
+                nextBtn.disabled = false;
+            }
+            
+            // 显示警告
+            if (warnings.length > 0) {
+                warningPanel.style.display = 'block';
+                warningList.innerHTML = warnings.map(w => `<li class="text-warning">${w}</li>`).join('');
+            }
+            
+            // 显示物流参数修改
+            if (logisticsChanges.length > 0) {
+                logisticsPanel.style.display = 'block';
+                logisticsList.innerHTML = logisticsChanges.map(c => `<li>${c}</li>`).join('');
+            }
+        }, 500);
+    }
+    
+    // 从Step4跳过修改明细 -> 跳转到预览页面
+    function editItemsSkipFromStep4() {
+        // 标记为跳过明细修改
+        if (!editSkippedLogistics) {
+            editSkippedItems = true;
+        }
+        showEditStep(5);
+    }
+    
+    // 前往Step5预览页面
+    function goToStep5Preview() {
+        showEditStep(5);
+    }
+    
+    // 渲染验证数据表格
+    function renderVerifyItemsTable(items) {
+        if (items.length === 0) {
+            return '<div class="text-center py-4 text-white-50" data-i18n="ui.text_2428">无有效发货记录</div>';
+        }
+        
+        let html = `
+            <table class="table table-dark table-hover mb-0">
+                <thead class="sticky-top" style="background: rgba(40, 45, 55, 1);">
+                    <tr class="text-white-50 small">
+                        <th data-i18n="table.order_date">订单日期</th>
+                        <th>SKU</th>
+                        <th class="text-end" data-i18n="common.unit_price">单价</th>
+                        <th class="text-center" data-i18n="ui.text_2271">订货量</th>
+                        <th class="text-center" data-i18n="ui.text_2423">已发量</th>
+                        <th class="text-center" data-i18n="ui.text_2433">本次发货</th>
+                        <th class="text-center" data-i18n="js.remaining_qty">未发量</th>
+                        <th class="text-center" data-i18n="js.round">规整</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        items.forEach(item => {
+            const unshipped = (item.ordered_qty || 0) - (item.already_sent || 0) - (item.sent_qty || 0);
+            const isNegative = unshipped < 0;
+            
+            html += `
+                <tr>
+                    <td class="small">${item.po_date || '-'}</td>
+                    <td class="font-monospace small">${item.po_sku || '-'}</td>
+                    <td class="text-end small">$${formatVerifyNumber(item.po_price, 2)}</td>
+                    <td class="text-center">${item.ordered_qty || 0}</td>
+                    <td class="text-center">${item.already_sent || 0}</td>
+                    <td class="text-center fw-bold text-success">${item.sent_qty || 0}</td>
+                    <td class="text-center ${isNegative ? 'text-warning fw-bold' : ''}">${unshipped}</td>
+                    <td class="text-center">${item.is_adjusted ? '<i class="fas fa-check text-success"></i>' : '-'}</td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    // 格式化数字
+    function formatVerifyNumber(num, decimals = 2) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        return parseFloat(parseFloat(num).toFixed(decimals)).toString();
+    }
+</script>

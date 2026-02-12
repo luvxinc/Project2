@@ -1,0 +1,464 @@
+{% load i18n %}
+{% load security_tags %}
+
+<!-- Generator Form Partial -->
+
+<!-- Stage Indicator (Progress Visualization) -->
+<div class="d-flex justify-content-center flex-wrap mb-4" id="report-stage-indicator" data-testid="stage-indicator">
+    <!-- Step 0: 开始分析 -->
+    <div class="stage-step" id="report-step-0" data-step="0">
+        <div class="step-box"><i class="fa-solid fa-play"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_start">开始</div>
+    </div>
+    <div class="stage-connector" id="report-conn-0"></div>
+
+    <!-- Step 1 -->
+    <div class="stage-step" id="report-step-1" data-step="1">
+        <div class="step-box"><span class="step-num">1</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="desc.d169">SKU销量</div>
+    </div>
+    <div class="stage-connector" id="report-conn-1"></div>
+
+    <!-- Step 2 -->
+    <div class="stage-step" id="report-step-2" data-step="2">
+        <div class="step-box"><span class="step-num">2</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_profit">利润诊断</div>
+    </div>
+    <div class="stage-connector" id="report-conn-2"></div>
+
+    <!-- Step 3 -->
+    <div class="stage-step" id="report-step-3" data-step="3">
+        <div class="step-box"><span class="step-num">3</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label">Listing</div>
+    </div>
+    <div class="stage-connector" id="report-conn-3"></div>
+
+    <!-- Step 4 -->
+    <div class="stage-step" id="report-step-4" data-step="4">
+        <div class="step-box"><span class="step-num">4</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label">Combo</div>
+    </div>
+    <div class="stage-connector" id="report-conn-4"></div>
+
+    <!-- Step 5 -->
+    <div class="stage-step" id="report-step-5" data-step="5">
+        <div class="step-box"><span class="step-num">5</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_customer">客户画像</div>
+    </div>
+    <div class="stage-connector" id="report-conn-5"></div>
+
+    <!-- Step 6 -->
+    <div class="stage-step" id="report-step-6" data-step="6">
+        <div class="step-box"><span class="step-num">6</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_logistics">物流效益</div>
+    </div>
+    <div class="stage-connector" id="report-conn-6"></div>
+
+    <!-- Step 7 -->
+    <div class="stage-step" id="report-step-7" data-step="7">
+        <div class="step-box"><span class="step-num">7</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_inventory">库存快照</div>
+    </div>
+    <div class="stage-connector" id="report-conn-7"></div>
+
+    <!-- Step 8 -->
+    <div class="stage-step" id="report-step-8" data-step="8">
+        <div class="step-box"><span class="step-num">8</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="desc.d170">AI预测</div>
+    </div>
+    <div class="stage-connector" id="report-conn-8"></div>
+
+    <!-- Step 9 -->
+    <div class="stage-step" id="report-step-9" data-step="9">
+        <div class="step-box"><span class="step-num">9</span><i class="fa-solid fa-check step-check"></i></div>
+        <div class="step-label" data-i18n="reports_gen.step_ordering">补货计算</div>
+    </div>
+    <div class="stage-connector" id="report-conn-9"></div>
+
+    <!-- Step 10: 结束分析 -->
+    <div class="stage-step" id="report-step-10" data-step="10">
+        <div class="step-box"><i class="fa-solid fa-flag-checkered"></i></div>
+        <div class="step-label" data-i18n="js.complete">完成</div>
+    </div>
+</div>
+
+<hr class="border-secondary border-opacity-25 my-4">
+
+<form id="generator-form" hx-post="{% url 'web_ui:sales:reports:start_generation' %}" hx-target="#generation-result"
+    data-loading-border="primary" data-testid="generator-form">
+    {% csrf_token %}
+
+    <!-- Step 1: Date Range -->
+    <div class="glass-card p-3 mb-4 border border-secondary border-opacity-25" data-testid="date-range-card">
+        <h6 class="text-uppercase text-muted small fw-bold mb-3">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>1. 分析周期
+        </h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label text-white-50 small" data-i18n="reports_gen.start_date">开始日期</label>
+                <input type="date" name="start_date" value="{{ default_start }}"
+                    class="form-control bg-dark text-white border-secondary rounded-pill" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label text-white-50 small" data-i18n="reports_gen.end_date">结束日期</label>
+                <input type="date" name="end_date" value="{{ default_end }}"
+                    class="form-control bg-dark text-white border-secondary rounded-pill" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Business Parameters (Collapsible) -->
+    <div class="glass-card p-3 mb-4 border border-secondary border-opacity-25" data-testid="params-card">
+        <h6 class="text-uppercase text-muted small fw-bold mb-3" data-bs-toggle="collapse"
+            data-bs-target="#params-collapse" style="cursor: pointer;">
+            <i class="fas fa-sliders-h text-info me-2"></i>2. 业务参数
+            <i class="fas fa-chevron-down float-end text-muted"></i>
+        </h6>
+        <div class="collapse" id="params-collapse">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <p class="text-white-50 small mb-2"><i class="fas fa-chart-line me-1"></i><span
+                            data-i18n="ui.icon_3013">耗损率 (Loss Rates)</span></p>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small">Case (纠纷): <span class="text-info"
+                                id="lr_case_val">{{ lr_case }}</span></label>
+                        <input type="range" name="lr_case" min="0" max="1" step="0.01" value="{{ lr_case }}"
+                            class="form-range" oninput="document.getElementById('lr_case_val').textContent=this.value">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small">Request (退货请求): <span class="text-info"
+                                id="lr_req_val">{{ lr_request }}</span></label>
+                        <input type="range" name="lr_request" min="0" max="1" step="0.01" value="{{ lr_request }}"
+                            class="form-range" oninput="document.getElementById('lr_req_val').textContent=this.value">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small">Return (退货): <span class="text-info"
+                                id="lr_ret_val">{{ lr_return }}</span></label>
+                        <input type="range" name="lr_return" min="0" max="1" step="0.01" value="{{ lr_return }}"
+                            class="form-range" oninput="document.getElementById('lr_ret_val').textContent=this.value">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small">Dispute (争议): <span class="text-info"
+                                id="lr_disp_val">{{ lr_dispute }}</span></label>
+                        <input type="range" name="lr_dispute" min="0" max="1" step="0.01" value="{{ lr_dispute }}"
+                            class="form-range" oninput="document.getElementById('lr_disp_val').textContent=this.value">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-white-50 small mb-2"><i class="fas fa-box me-1"></i><span
+                            data-i18n="ui.icon_3014">供应链参数</span></p>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small" data-i18n="reports_gen.lead_time">订货提前期 (月)</label>
+                        <input type="number" name="lead_time" value="{{ lead_time }}" step="0.5" min="0"
+                            class="form-control bg-dark text-white border-secondary rounded-pill">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small" data-i18n="reports_gen.safety_stock">安全库存 (月)</label>
+                        <input type="number" name="safety_stock" value="{{ safety_stock }}" step="0.5" min="0"
+                            class="form-control bg-dark text-white border-secondary rounded-pill">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Security Inputs (供 GlobalModal 填充) -->
+    <div id="security-inputs-container" style="display: none;">
+        {% security_inputs "btn_generate_report" %}
+    </div>
+
+    <!-- Submit Button and Progress -->
+    <div class="d-flex gap-3 align-items-center flex-wrap">
+        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5" id="gen-submit-btn"
+            data-requires-global-modal="true" data-action-key="btn_generate_report"
+            data-action-display="{% trans 'Start Analysis Engine' %}" data-testid="btn-submit">
+            <i class="fas fa-play me-2"></i><span data-i18n="reports_gen.start_engine">启动分析引擎</span>
+        </button>
+
+        <!-- Progress Counter -->
+        <div class="flex-grow-1" id="gen-progress-area" style="display: none;" data-testid="progress-area">
+            <div class="glass-card p-3 border border-primary border-opacity-25 w-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span class="text-white-50" id="gen-status-text" data-i18n="reports_gen.initializing">正在初始化...</span>
+                    </div>
+                    <span class="badge bg-primary" id="gen-progress-count">0/9</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary" id="gen-progress-bar" role="progressbar"
+                        style="width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Result Area -->
+<div id="generation-result" class="mt-4" data-testid="result-area"></div>
+
+<style>
+    /* Stage Indicator */
+    #report-stage-indicator .stage-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+    }
+
+    #report-stage-indicator .step-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    #report-stage-indicator .step-box .step-check {
+        display: none;
+    }
+
+    #report-stage-indicator .step-label {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+
+    #report-stage-indicator .stage-connector {
+        width: 40px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-top: 22px;
+        transition: all 0.3s ease;
+    }
+
+    #report-stage-indicator .stage-step.active {
+        opacity: 1;
+    }
+
+    #report-stage-indicator .stage-step.active .step-box {
+        background: transparent;
+        border: 2px solid #0dcaf0;
+        animation: pulseGlow 1.5s ease-in-out infinite;
+        color: #0dcaf0;
+    }
+
+    #report-stage-indicator .stage-step.completed {
+        opacity: 1;
+    }
+
+    #report-stage-indicator .stage-step.completed .step-box {
+        background: linear-gradient(135deg, #198754, #20c997);
+        border: 2px solid #198754;
+        color: #fff;
+    }
+
+    #report-stage-indicator .stage-step.completed .step-box .step-num {
+        display: none;
+    }
+
+    #report-stage-indicator .stage-step.completed .step-box .step-check {
+        display: inline;
+    }
+
+    #report-stage-indicator .stage-connector.completed {
+        background: linear-gradient(90deg, #198754, #20c997);
+    }
+
+    @keyframes pulseGlow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 5px rgba(13, 202, 240, 0.3), 0 0 10px rgba(13, 202, 240, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 15px rgba(13, 202, 240, 0.6), 0 0 25px rgba(13, 202, 240, 0.4), 0 0 35px rgba(13, 202, 240, 0.2);
+        }
+    }
+
+    @media (max-width: 1200px) {
+        #report-stage-indicator .stage-connector {
+            width: 25px;
+        }
+    }
+
+    @media (max-width: 992px) {
+        #report-stage-indicator .stage-connector {
+            width: 15px;
+        }
+
+        #report-stage-indicator .step-box {
+            width: 36px;
+            height: 36px;
+            font-size: 0.75rem;
+        }
+
+        #report-stage-indicator .step-label {
+            font-size: 0.6rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        #report-stage-indicator .stage-connector {
+            width: 8px;
+        }
+
+        #report-stage-indicator .step-box {
+            width: 30px;
+            height: 30px;
+            font-size: 0.65rem;
+        }
+
+        #report-stage-indicator .step-label {
+            font-size: 0.5rem;
+            max-width: 40px;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        var form = document.getElementById('generator-form');
+        var submitBtn = document.getElementById('gen-submit-btn');
+        var progressArea = document.getElementById('gen-progress-area');
+        var progressBar = document.getElementById('gen-progress-bar');
+        var progressCount = document.getElementById('gen-progress-count');
+        var statusText = document.getElementById('gen-status-text');
+
+        var taskNames = [
+            (window.i18n?.t('js.start_analysis') || 'Start Analysis'),
+            (window.i18n?.t('js.sku_sales_stats') || 'SKU Sales Stats'),
+            (window.i18n?.t('js.sku_profit_diag') || 'SKU Profit & Diagnosis'),
+            (window.i18n?.t('js.listing_analysis') || 'Listing Analysis'),
+            (window.i18n?.t('js.combo_analysis') || 'Combo Strategy Analysis'),
+            (window.i18n?.t('js.customer_analysis') || 'Customer Analysis'),
+            (window.i18n?.t('js.logistics_analysis') || 'Logistics Analysis'),
+            (window.i18n?.t('js.inventory_snapshot') || 'Inventory Snapshot'),
+            (window.i18n?.t('js.ai_prediction') || 'AI Sales Prediction'),
+            (window.i18n?.t('js.smart_restock') || 'Smart Restock'),
+            (window.i18n?.t('js.analysis_complete') || 'Analysis Complete')
+        ];
+
+        var totalSteps = 11;
+        var currentStep = 0;
+        var animationInterval = null;
+
+        function resetStepStates() {
+            for (var i = 0; i < totalSteps; i++) {
+                var stepEl = document.getElementById('report-step-' + i);
+                var connEl = document.getElementById('report-conn-' + i);
+                if (stepEl) stepEl.classList.remove('active', 'completed');
+                if (connEl) connEl.classList.remove('completed');
+            }
+            currentStep = 0;
+        }
+
+        function setStepActive(index) {
+            for (var i = 0; i < totalSteps; i++) {
+                var stepEl = document.getElementById('report-step-' + i);
+                var connEl = document.getElementById('report-conn-' + i);
+                if (stepEl) {
+                    stepEl.classList.remove('active', 'completed');
+                    if (i < index) stepEl.classList.add('completed');
+                }
+                if (connEl) {
+                    connEl.classList.remove('completed');
+                    if (i < index) connEl.classList.add('completed');
+                }
+            }
+            var currentEl = document.getElementById('report-step-' + index);
+            if (currentEl) currentEl.classList.add('active');
+        }
+
+        function setAllCompleted() {
+            for (var i = 0; i < totalSteps; i++) {
+                var stepEl = document.getElementById('report-step-' + i);
+                var connEl = document.getElementById('report-conn-' + i);
+                if (stepEl) { stepEl.classList.remove('active'); stepEl.classList.add('completed'); }
+                if (connEl) connEl.classList.add('completed');
+            }
+        }
+
+        function startProgressAnimation() {
+            currentStep = 0;
+            setStepActive(0);
+            setTimeout(function () {
+                currentStep = 1;
+                setStepActive(1);
+                if (statusText) statusText.textContent = (window.i18n?.t('js.executing_colon') || 'Executing: ') + taskNames[1];
+                if (progressCount) progressCount.textContent = '1/9';
+                if (progressBar) progressBar.style.width = '11%';
+                animationInterval = setInterval(function () {
+                    currentStep++;
+                    if (currentStep <= 9) {
+                        setStepActive(currentStep);
+                        if (progressBar) progressBar.style.width = ((currentStep / 9) * 100) + '%';
+                        if (progressCount) progressCount.textContent = currentStep + '/9';
+                        if (statusText) statusText.textContent = (window.i18n?.t('js.executing_colon') || 'Executing: ') + taskNames[currentStep];
+                    }
+                }, 2000);
+            }, 500);
+        }
+
+        function stopProgressAnimation(success) {
+            if (animationInterval) { clearInterval(animationInterval); animationInterval = null; }
+            if (success) {
+                setAllCompleted();
+                if (progressBar) progressBar.style.width = '100%';
+                if (progressCount) progressCount.textContent = '9/9';
+                if (statusText) statusText.textContent = taskNames[10];
+            }
+        }
+
+        function executeGeneration() {
+            if (progressArea) {
+                progressArea.style.display = 'block';
+                if (progressBar) progressBar.style.width = '0%';
+                if (progressCount) progressCount.textContent = '0/9';
+                if (statusText) statusText.textContent = (window.i18n?.t('js.executing_colon') || 'Executing: ') + taskNames[0];
+            }
+            resetStepStates();
+            startProgressAnimation();
+            htmx.trigger(form, 'submit');
+        }
+
+        if (!submitBtn || !form) return;
+
+        submitBtn.addEventListener('click', function () {
+            requestPasswordVerify(
+                'btn_generate_report',
+                function (passwords) {
+                    for (var slot in passwords) {
+                        var input = document.querySelector('input[name="sec_code_' + slot + '"]');
+                        if (input) input.value = passwords[slot];
+                    }
+                    executeGeneration();
+                },
+                form,
+                (window.i18n?.t('js.start_analysis_engine') || 'Start Analysis Engine'),
+                function () { }
+            );
+        });
+
+        form.addEventListener('htmx:afterRequest', function (evt) {
+            var isSuccess = evt.detail.successful;
+            stopProgressAnimation(isSuccess);
+            if (progressArea) progressArea.style.display = 'none';
+            if (isSuccess) {
+                document.body.dispatchEvent(new Event('reports:updated'));
+            }
+        });
+    })();
+</script>

@@ -1,0 +1,1141 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load security_tags %}
+
+{% block title %}Receiving Management - Procurement - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in" id="receive-mgmt-main-container">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:purchase:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="purchase.title">Procurement</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="purchase.receive_mgmt">
+                        Receiving Management</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:purchase:hub' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="purchase.back_to_hub">返回Procurement</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 入库记录列表视图 -->
+    <!-- ===================================== -->
+    <div id="receive-list-view">
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px;">
+                        <i class="fas fa-clipboard-check fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="purchase.receive_mgmt">Receiving Management</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="purchase.receive_mgmt_desc">
+                            查看和管理所有入库记录，支持入库状态追踪和差异管理。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm rounded-pill" onclick="loadReceiveTable()">
+                    <i class="fas fa-sync-alt me-1"></i> <span data-i18n="common.refresh">刷新列表</span>
+                </button>
+            </div>
+
+            <!-- 操作须知 -->
+            <div class="alert alert-info mb-4"
+                style="background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3);">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 mt-1 text-info fa-lg"></i>
+                    <div>
+                        <strong class="text-info d-block mb-2" data-i18n="common.operation_notes">操作须知</strong>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_460">查看入库单</strong>：<span
+                                            data-i18n="mgmt.receive_view_desc">点击 <i class="fas fa-eye text-info"></i>
+                                            查看入库记录完整信息和货物明细</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_461">修改入库单</strong>：<span
+                                            data-i18n="mgmt.send_edit_desc">点击 <i
+                                                class="fas fa-pen text-warning"></i> 进入修改向导</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="common.history">历史记录</strong>：<span
+                                            data-i18n="mgmt.receive_history_desc">点击 <i
+                                                class="fas fa-history text-secondary"></i> 查看入库记录所有版本的修订历史</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_463">删除/恢复</strong>：<span
+                                            data-i18n="mgmt.receive_delete_desc">点击 <i
+                                                class="fas fa-trash text-danger"></i> 删除入库记录</span></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_464">关联文件</strong>：<span
+                                            data-i18n="mgmt.receive_invoice_desc">点击 <i
+                                                class="fas fa-file-invoice text-info"></i> 查看相关文件，<i
+                                                class="fas fa-upload text-warning"></i> 上传/替换文件</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_465">入库状态</strong>：<span
+                                            class="badge bg-success bg-opacity-25 text-success"
+                                            data-i18n="ui.text_466">全部已入库</span> <span
+                                            class="badge bg-warning bg-opacity-25 text-warning"
+                                            data-i18n="ui.text_467">入库有差异</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_468">版本追踪</strong>：<span
+                                            data-i18n="instructions.desc_17">入库明细版本（V##）记录每次修改</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_469">一次入库原则</strong>：<span
+                                            data-i18n="instructions.desc_38">每个发货单只能入库一次</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选区域 -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small">
+                        <i class="fas fa-sort me-1"></i><span data-i18n="purchase.sort_by">排序方式</span>
+                    </label>
+                    <select class="form-select bg-dark border-secondary text-white" id="filter-sort"
+                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t3171" title="选择排序字段">
+                        <option value="receive_date:desc" data-i18n="sort.receive_date_newest">入库日期 (最新优先)</option>
+                        <option value="receive_date:asc" data-i18n="sort.receive_date_oldest">入库日期 (最早优先)</option>
+                        <option value="logistic_num:asc" data-i18n="option.o5107">物流单号 (升序)</option>
+                        <option value="logistic_num:desc" data-i18n="option.o4329">物流单号 (降序)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="fas fa-search me-2"></i><span data-i18n="purchase.apply_filter">应用筛选</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Apple风格表格 -->
+            <div class="po-table-container">
+                <table class="po-table" id="receive-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="logistic_num">
+                                入库物流单号 <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th class="sortable" data-sort="receive_date">
+                                入库日期 <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th data-i18n="ui.text_465">入库状态</th>
+                            <th data-i18n="ui.text_2136">入库明细版号</th>
+                            <th data-i18n="purchase.file">文件</th>
+                            <th data-i18n="common.operation">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receive-table-body">
+                        <!-- JS动态加载 -->
+                    </tbody>
+                </table>
+
+                <!-- Loading State -->
+                <div id="receive-loading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-white-50 mt-3 mb-0" data-i18n="common.loading">正在加载入库记录...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="receive-empty" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-inbox fa-3x text-white-50 opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="purchase.no_receive_data">暂无入库记录</p>
+                    <a href="{% url 'web_ui:purchase:receive_page' %}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus me-1"></i><span data-i18n="ui.icon_3176">新建入库</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <span class="text-white-50 small" id="receive-count" data-i18n="ui.text_470">共 0 条入库记录</span>
+                <a href="{% url 'web_ui:purchase:receive_page' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i><span data-i18n="ui.icon_3176">新建入库</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 入库记录详情视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="receive-detail-view" style="display: none;">
+        {% include "purchase/pages/receive_mgmt/receive_view.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 入库记录修改视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="receive-edit-view" style="display: none;">
+        {% include "purchase/pages/receive_mgmt/receive_edit.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 历史记录视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="receive-history-view" style="display: none;">
+        {% include "purchase/pages/receive_mgmt/receive_history.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 删除确认视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="receive-delete-view" style="display: none;">
+        {% include "purchase/pages/receive_mgmt/receive_delete.html" %}
+    </div>
+</div>
+
+<style>
+    /* ========================================
+       Apple风格订单表格 (与Shipment Management一致)
+       ======================================== */
+    .po-table-container {
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .po-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    /* 表头 */
+    .po-table thead {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .po-table thead th {
+        padding: 16px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.3);
+        white-space: nowrap;
+    }
+
+    .po-table thead th.sortable {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .po-table thead th.sortable:hover {
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* 数据行 */
+    .po-table tbody tr {
+        background: rgba(25, 28, 35, 0.6);
+        transition: all 0.2s ease;
+    }
+
+    .po-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .po-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .po-table tbody td {
+        padding: 14px 12px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* 物流单号加粗 */
+    .po-table tbody td.cell-po-num {
+        font-weight: 700;
+        color: #fff;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    /* 版本Badge */
+    .version-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'SF Mono', monospace;
+    }
+
+    .version-badge.detail {
+        background: rgba(25, 135, 84, 0.15);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    /* 日期显示 */
+    .date-display {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .date-display .date {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* 操作按钮组 */
+    .action-btn-group {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .action-btn.view {
+        background: rgba(13, 110, 253, 0.15);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #0d6efd;
+    }
+
+    .action-btn.view:hover {
+        background: rgba(13, 110, 253, 0.3);
+    }
+
+    .action-btn.edit {
+        background: rgba(255, 193, 7, 0.15);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+
+    .action-btn.edit:hover {
+        background: rgba(255, 193, 7, 0.3);
+    }
+
+    .action-btn.history {
+        background: rgba(108, 117, 125, 0.15);
+        border-color: rgba(108, 117, 125, 0.3);
+        color: #6c757d;
+    }
+
+    .action-btn.history:hover {
+        background: rgba(108, 117, 125, 0.3);
+    }
+
+    .action-btn.delete {
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+
+    .action-btn.delete:hover {
+        background: rgba(220, 53, 69, 0.3);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* 入库状态标签 */
+    .receive-status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .receive-status-tag.status-in-transit {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+    }
+
+    .receive-status-tag.status-all-received {
+        background: rgba(25, 135, 84, 0.2);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.4);
+    }
+
+    .receive-status-tag.status-diff-resolved {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.4);
+    }
+
+    .receive-status-tag.status-diff-pending {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.4);
+        animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    .receive-status-tag.status-deleted {
+        background: rgba(108, 117, 125, 0.2);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.4);
+        text-decoration: line-through;
+    }
+
+    @keyframes statusPulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+</style>
+
+<script>
+    // ========================================
+    // 全局状态
+    // ========================================
+    let currentLogisticNum = null;
+    let receiveData = [];
+    let currentSortBy = 'receive_date';
+    let currentSortOrder = 'desc';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadReceiveTable();
+        bindSortableHeaders();
+        initTooltips();
+    });
+
+    function initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    }
+
+    // 获取入库状态 tag HTML
+    function getReceiveStatusTag(statusCode, statusDisplay) {
+        if (!statusCode) return '';
+
+        let cssClass = '';
+        let icon = '';
+
+        switch (statusCode) {
+            case 'IN_TRANSIT':
+                cssClass = 'status-in-transit';
+                icon = '<i class="fas fa-truck me-1"></i>';
+                break;
+            case 'ALL_RECEIVED':
+                cssClass = 'status-all-received';
+                icon = '<i class="fas fa-check-circle me-1"></i>';
+                break;
+            case 'DIFF_RESOLVED':
+                cssClass = 'status-diff-resolved';
+                icon = '<i class="fas fa-check me-1"></i>';
+                break;
+            case 'DIFF_UNRESOLVED':
+                cssClass = 'status-diff-pending';
+                icon = '<i class="fas fa-exclamation-triangle me-1"></i>';
+                break;
+            case 'DELETED':
+                cssClass = 'status-deleted';
+                icon = '<i class="fas fa-trash-alt me-1"></i>';
+                break;
+            default:
+                // Fallback for old data or unknown status
+                if (statusDisplay === (window.i18n?.t('js.goods_in_transit') || 'Goods in transit')) { cssClass = 'status-in-transit'; icon = '<i class="fas fa-truck me-1"></i>'; }
+                else if (statusDisplay === (window.i18n?.t('js.all_received') || 'All received')) { cssClass = 'status-all-received'; icon = '<i class="fas fa-check-circle me-1"></i>'; }
+                else if (statusDisplay === (window.i18n?.t('js.diff_resolved') || 'Diff: Resolved')) { cssClass = 'status-diff-resolved'; icon = '<i class="fas fa-check me-1"></i>'; }
+                else if (statusDisplay === (window.i18n?.t('js.diff_unresolved') || 'Diff: Unresolved')) { cssClass = 'status-diff-pending'; icon = '<i class="fas fa-exclamation-triangle me-1"></i>'; }
+                else if (statusDisplay === (window.i18n?.t('js.deleted') || 'Deleted')) { cssClass = 'status-deleted'; icon = '<i class="fas fa-trash-alt me-1"></i>'; }
+                else return `<span class="badge bg-secondary">${statusDisplay || statusCode}</span>`;
+        }
+
+        return `<span class="receive-status-tag ${cssClass}">${icon}${statusDisplay}</span>`;
+    }
+
+    // ========================================
+    // 加载入库记录列表
+    // ========================================
+    function loadReceiveTable() {
+        const tbody = document.getElementById('receive-table-body');
+        const loading = document.getElementById('receive-loading');
+        const empty = document.getElementById('receive-empty');
+        const table = document.getElementById('receive-table');
+        const countEl = document.getElementById('receive-count');
+
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        table.style.display = 'none';
+
+        let url = `{% url 'web_ui:purchase:receive_mgmt_list' %}?sort_by=${currentSortBy}&sort_order=${currentSortOrder}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">${data.message}</p>`;
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                receiveData = data.data || [];
+                countEl.textContent = `共 ${data.count || 0} 条入库记录`;
+
+                if (receiveData.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                table.style.display = 'table';
+                receiveData.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.dataset.logisticNum = item.logistic_num;
+
+                    // 已删除的行添加删除样式
+                    if (item.is_deleted) {
+                        tr.style.opacity = '0.6';
+                        tr.style.background = 'rgba(220, 53, 69, 0.05)';
+                    }
+
+                    tr.innerHTML = `
+                        <td class="cell-po-num">
+                            ${item.is_deleted ? '<i class="fas fa-trash-alt text-danger me-2" style="font-size: 10px;"></i>' : ''}
+                            ${item.logistic_num}
+                        </td>
+                        <td>
+                            <div class="date-display">
+                                <span class="date">${item.receive_date}</span>
+                            </div>
+                        </td>
+                        <td>
+                            ${getReceiveStatusTag(item.receive_status_code, item.receive_status)}
+                        </td>
+                        <td>
+                            <div class="date-display small text-white-50">${item.update_date}</div>
+                            <span class="version-badge detail">${item.detail_seq}</span>
+                        </td>
+                        <td>
+                            <div class="action-btn-group">
+                                <button class="action-btn ${item.has_file ? 'view' : ''}" 
+                                        onclick="viewReceiveFile('${item.logistic_num}', '${item.receive_date}')"
+                                        data-bs-toggle="tooltip" 
+                                        title="${item.has_file ? "{% trans '查看入库文件' %}" : "{% trans '未上传入库文件' %}"}"
+                                        ${!item.has_file ? 'disabled' : ''}>
+                                    <i class="fas fa-file-invoice"></i>
+                                </button>
+                                <button class="action-btn edit" onclick="uploadReceiveFile('${item.logistic_num}', '${item.receive_date}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t6564" title="{% trans '上传入库文件' %}"
+                                        ${item.is_deleted ? 'disabled' : ''}>
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-btn-group">
+                                <button class="action-btn view" onclick="viewReceive('${item.logistic_num}')" 
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t2278" title="{% trans '查看入库单' %}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn edit" onclick="editReceive('${item.logistic_num}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t8090" title="{% trans '修改入库单' %}"
+                                        ${item.is_deleted ? 'disabled' : ''}>
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="action-btn history" onclick="viewHistory('${item.logistic_num}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t6992" title="{% trans "历史记录" %}">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <button class="action-btn ${item.is_deleted ? 'view' : 'delete'}" 
+                                        onclick="deleteReceive('${item.logistic_num}', ${item.is_deleted || false})"
+                                        data-bs-toggle="tooltip" title="${item.is_deleted ? "{% trans '恢复入库单' %}" : "{% trans '删除入库单' %}"}">
+                                    <i class="fas fa-${item.is_deleted ? 'undo' : 'trash'}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 重新初始化tooltips
+                initTooltips();
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">{% trans "加载失败" %}: ${err}</p>`;
+                empty.style.display = 'block';
+            });
+    }
+
+    // ========================================
+    // 筛选和排序
+    // ========================================
+    function applyFilters() {
+        const sortValue = document.getElementById('filter-sort').value;
+        const [sortBy, sortOrder] = sortValue.split(':');
+        currentSortBy = sortBy;
+        currentSortOrder = sortOrder;
+        loadReceiveTable();
+    }
+
+    function bindSortableHeaders() {
+        document.querySelectorAll('.po-table th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortField = th.dataset.sort;
+                if (currentSortBy === sortField) {
+                    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortBy = sortField;
+                    currentSortOrder = 'asc';
+                }
+                loadReceiveTable();
+            });
+        });
+    }
+
+    // ========================================
+    // 页面切换 (待开发)
+    // ========================================
+    function showListView() {
+        document.getElementById('receive-list-view').style.display = 'block';
+        document.getElementById('receive-detail-view').style.display = 'none';
+        document.getElementById('receive-edit-view').style.display = 'none';
+        document.getElementById('receive-history-view').style.display = 'none';
+        document.getElementById('receive-delete-view').style.display = 'none';
+
+        // 隐藏动态创建的视图
+        const fileView = document.getElementById('receive-file-view');
+        if (fileView) fileView.style.display = 'none';
+        const uploadView = document.getElementById('receive-upload-view');
+        if (uploadView) uploadView.style.display = 'none';
+
+        currentLogisticNum = null;
+        loadReceiveTable();
+    }
+
+    function viewReceive(logisticNum) {
+        currentLogisticNum = logisticNum;
+        document.getElementById('receive-list-view').style.display = 'none';
+        document.getElementById('receive-detail-view').style.display = 'block';
+        loadReceiveDetail(logisticNum);
+    }
+
+    function editReceive(logisticNum) {
+        currentLogisticNum = logisticNum;
+        document.getElementById('receive-list-view').style.display = 'none';
+        document.getElementById('receive-detail-view').style.display = 'none';
+        document.getElementById('receive-edit-view').style.display = 'block';
+        loadReceiveForEdit(logisticNum);
+    }
+
+    function viewHistory(logisticNum) {
+        currentLogisticNum = logisticNum;
+        document.getElementById('receive-list-view').style.display = 'none';
+        document.getElementById('receive-detail-view').style.display = 'none';
+        document.getElementById('receive-edit-view').style.display = 'none';
+        document.getElementById('receive-history-view').style.display = 'block';
+        document.getElementById('receive-delete-view').style.display = 'none';
+        loadReceiveHistory(logisticNum);
+    }
+
+    function deleteReceive(logisticNum, isDeleted) {
+        if (isDeleted) {
+            // 恢复入库单
+            undeleteReceive(logisticNum);
+        } else {
+            // 删除入库单
+            currentLogisticNum = logisticNum;
+            document.getElementById('receive-list-view').style.display = 'none';
+            document.getElementById('receive-detail-view').style.display = 'none';
+            document.getElementById('receive-edit-view').style.display = 'none';
+            document.getElementById('receive-history-view').style.display = 'none';
+            document.getElementById('receive-delete-view').style.display = 'block';
+            loadReceiveForDelete(logisticNum);
+        }
+    }
+
+    function undeleteReceive(logisticNum) {
+        // 使用密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_receive_undelete',
+                (passwords) => submitUndeleteReceive(logisticNum, passwords),
+                null,
+                "{% trans '恢复入库单' %}",
+                () => { }
+            );
+        } else {
+            if (confirm("{% trans '确定要恢复此入库单吗？' %}")) {
+                submitUndeleteReceive(logisticNum, {});
+            }
+        }
+    }
+
+    function submitUndeleteReceive(logisticNum, passwords) {
+        // 构建请求体
+        const requestBody = {
+            logistic_num: logisticNum
+        };
+
+        // 添加密码到请求
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+
+        fetch(`{% url 'web_ui:purchase:receive_mgmt_submit_undelete' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast("{% trans '入库单已恢复' %}", 'success');
+                    } else {
+                        alert("{% trans '入库单已恢复' %}");
+                    }
+                    loadReceiveTable();
+                } else {
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast(data.message || "{% trans '恢复失败' %}", 'danger');
+                    } else {
+                        alert(data.message || "{% trans '恢复失败' %}");
+                    }
+                }
+            })
+            .catch(err => {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast('{% trans "网络错误" %}' + ': ' + err, 'danger');
+                } else {
+                    alert('{% trans "网络错误" %}' + ': ' + err);
+                }
+            });
+
+        return Promise.resolve();
+    }
+
+    // ========================================
+    // 入库文件查看功能 (使用公共组件)
+    // ========================================
+    let currentFileLogisticNum = null;
+    let currentFileReceiveDate = null;
+    let receiveFileViewer = null;
+
+    function viewReceiveFile(logisticNum, receiveDate) {
+        currentFileLogisticNum = logisticNum;
+        currentFileReceiveDate = receiveDate;
+
+        // 获取文件信息
+        fetch(`/dashboard/purchase/api/receive_mgmt/file_info/?logistic_num=${encodeURIComponent(logisticNum)}&receive_date=${encodeURIComponent(receiveDate)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.data.has_file) {
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast("{% trans '该入库单暂无入库文件' %}", 'warning');
+                    }
+                    return;
+                }
+
+                // 显示文件查看页面
+                showReceiveFileViewer(logisticNum, receiveDate, data.data.latest_file, data.data.files);
+            })
+            .catch(err => {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast("{% trans '获取文件信息失败' %}: " + err, 'danger');
+                }
+            });
+    }
+
+    function showReceiveFileViewer(logisticNum, receiveDate, filename, allFiles) {
+        // 隐藏其他视图
+        document.getElementById('receive-list-view').style.display = 'none';
+        document.getElementById('receive-detail-view').style.display = 'none';
+        document.getElementById('receive-edit-view').style.display = 'none';
+        document.getElementById('receive-history-view').style.display = 'none';
+        document.getElementById('receive-delete-view').style.display = 'none';
+
+        // 显示/创建文件查看视图
+        let viewer = document.getElementById('receive-file-view');
+        if (!viewer) {
+            viewer = document.createElement('div');
+            viewer.id = 'receive-file-view';
+            document.querySelector('#receive-mgmt-main-container').appendChild(viewer);
+        }
+        viewer.style.display = 'block';
+
+        // 使用公共组件
+        if (typeof GlobalFileViewer !== 'undefined') {
+            receiveFileViewer = new GlobalFileViewer({
+                containerId: 'receive-file-view',
+                title: (window.i18n?.t('js.view_receiving_file') || 'View Receiving File'),
+                identifierLabel: (window.i18n?.t('table.logistics_no') || 'Logistics No'),
+                identifierValue: logisticNum,
+                extraInfo: `入库日期: ${receiveDate}`,
+                files: allFiles,
+                currentFile: filename,
+                getFileUrl: (fname, year) => `/dashboard/purchase/api/receive_mgmt/serve_file/?filename=${encodeURIComponent(fname)}&year=${year}`,
+                onUpload: () => uploadReceiveFile(logisticNum, receiveDate),
+                onBack: () => showListView(),
+                // 删除功能配置 (入库文件需要year参数，由组件自动从files中获取)
+                deleteUrl: '{% url "web_ui:purchase:receive_mgmt_delete_file" %}',
+                // [Fix 2026-01-03] 启用密码验证
+                requireDeletePassword: true,
+                deletePasswordActionKey: 'btn_receive_delete_file'
+            });
+        }
+    }
+
+    // ========================================
+    // 入库文件上传向导
+    // ========================================
+    let receiveFileUploadWizard = null;
+    let receiveFileUploadLogisticNum = null;
+    let receiveFileUploadReceiveDate = null;
+    let receiveFileUploadFile = null;
+
+    function uploadReceiveFile(logisticNum, receiveDate) {
+        receiveFileUploadLogisticNum = logisticNum;
+        receiveFileUploadReceiveDate = receiveDate;
+        receiveFileUploadFile = null;
+
+        // 隐藏其他视图
+        document.getElementById('receive-list-view').style.display = 'none';
+        document.getElementById('receive-detail-view').style.display = 'none';
+        document.getElementById('receive-edit-view').style.display = 'none';
+        document.getElementById('receive-history-view').style.display = 'none';
+        document.getElementById('receive-delete-view').style.display = 'none';
+        const fileView = document.getElementById('receive-file-view');
+        if (fileView) fileView.style.display = 'none';
+
+        // 显示/创建上传向导视图
+        let uploadView = document.getElementById('receive-upload-view');
+        if (!uploadView) {
+            uploadView = document.createElement('div');
+            uploadView.id = 'receive-upload-view';
+            document.querySelector('#receive-mgmt-main-container').appendChild(uploadView);
+        }
+
+        uploadView.innerHTML = `
+            <div class="glass-card p-4 shadow-lg" id="receive-file-upload-wizard-container">
+                <div class="wizard-header d-flex flex-column mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="fas fa-file-upload fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-1" data-i18n="ui.text_472">上传/替换入库文件</h5>
+                            <p class="text-white-50 small mb-0" data-i18n="ui.text_473">物流单号: ${logisticNum} | 入库日期: ${receiveDate}</p>
+                        </div>
+                    </div>
+                    <hr class="border-secondary border-opacity-25 my-4 w-100">
+                </div>
+                <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+                
+                <!-- Step 1: 选择文件 -->
+                <div id="receive-file-step-1" class="wizard-step-content">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle me-3 mt-1 text-info"></i>
+                            <div>
+                                <strong class="text-info" data-i18n="common.operation_notes">操作须知</strong>
+                                <ul class="mb-0 mt-2 ps-3">
+                                    <li data-i18n="ui.text_475">支持上传 PDF、图片（JPG/PNG/HEIC）、Excel、Word 等格式</li>
+                                    <li data-i18n="ui.text_476">文件大小限制为 10MB</li>
+                                    <li data-i18n="ui.text_477">上传后将自动生成新版本号（Ver01, Ver02...）</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="receive-file-upload-dropzone"></div>
+                </div>
+                
+                <!-- Step 2: 确认上传 -->
+                <div id="receive-file-step-2" class="wizard-step-content" style="display: none;">
+                    <div class="alert alert-warning mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle me-3 mt-1 text-warning"></i>
+                            <div>
+                                <strong class="text-warning" data-i18n="common.operation_notes">操作须知</strong>
+                                <ul class="mb-0 mt-2 ps-3">
+                                    <li data-i18n="ui.text_479">请确认文件信息无误后点击「确认上传」</li>
+                                    <li id="receive-file-existing-warning" style="display: none;" data-i18n="ui.text_480">该入库单已存在文件，上传后将生成新版本</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-header bg-warning bg-opacity-10 border-secondary">
+                            <i class="fas fa-file me-2 text-warning"></i>
+                            <span class="text-white" data-i18n="ui.text_481">待上传文件</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_482">文件名:</span></div>
+                                <div class="col-6"><span class="text-white" id="receive-file-confirm-filename">-</span></div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_483">文件大小:</span></div>
+                                <div class="col-6"><span class="text-white" id="receive-file-confirm-size">-</span></div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_484">目标版本:</span></div>
+                                <div class="col-6"><span class="text-success fw-bold" id="receive-file-confirm-version">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: 完成 -->
+                <div id="receive-file-step-3" class="wizard-step-content" style="display: none;">
+                    <div class="text-center py-5" id="receive-file-result-container">
+                        <!-- JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+        `;
+
+        uploadView.style.display = 'block';
+
+        // 初始化向导
+        if (typeof GlobalWizard !== 'undefined') {
+            receiveFileUploadWizard = new GlobalWizard({
+                containerId: 'receive-file-upload-wizard-container',
+                steps: [
+                    { id: 'select', label: (window.i18n?.t('js.select_file') || 'Select File'), contentSelector: '#receive-file-step-1' },
+                    { id: 'confirm', label: (window.i18n?.t('js.confirm_file') || 'Confirm File'), contentSelector: '#receive-file-step-2' },
+                    { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#receive-file-step-3' }
+                ],
+                onStepChange: (from, to) => {
+                    for (let i = 1; i <= 3; i++) {
+                        document.getElementById(`receive-file-step-${i}`).style.display = i === to + 1 ? 'block' : 'none';
+                    }
+                }
+            });
+        }
+
+        // 初始化文件上传组件
+        setTimeout(() => {
+            initReceiveFileUploadDropzone();
+        }, 100);
+    }
+
+    function initReceiveFileUploadDropzone() {
+        const container = document.getElementById('receive-file-upload-dropzone');
+        if (!container) {
+            console.error('[Receive File Upload] Container not found');
+            return;
+        }
+
+        if (typeof GlobalFileUpload !== 'undefined') {
+            window.receiveFileUploader = new GlobalFileUpload({
+                containerId: 'receive-file-upload-dropzone',
+                inputName: 'receive_file',
+                title: '上传入库文件',
+                accept: '.pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.xls,.xlsx,.doc,.docx,.csv',
+                maxSizeMB: 10,
+                required: true,
+                onFileSelect: (file) => {
+                    receiveFileUploadFile = file;
+                }
+            });
+        } else {
+            console.error('[Receive File Upload] GlobalFileUpload not available');
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>文件上传组件未加载
+                </div>
+            `;
+        }
+
+        // 添加下一步按钮
+        container.insertAdjacentHTML('afterend', `
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                    <i class="fas fa-times me-2"></i>取消
+                </button>
+                <button class="btn btn-warning btn-lg px-4 rounded-pill" onclick="receiveFileUploadStep1Next()">
+                    <i class="fas fa-arrow-right me-2"></i>下一步
+                </button>
+            </div>
+        `);
+    }
+
+    function receiveFileUploadStep1Next() {
+        if (!receiveFileUploadFile) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "请先选择要上传的文件" %}', 'warning');
+            }
+            return;
+        }
+
+        // 显示步骤2
+        document.getElementById('receive-file-step-1').style.display = 'none';
+        document.getElementById('receive-file-step-2').style.display = 'block';
+        if (receiveFileUploadWizard) receiveFileUploadWizard.goToStep('confirm');
+
+        // 填充确认信息
+        document.getElementById('receive-file-confirm-filename').textContent = receiveFileUploadFile.name;
+        document.getElementById('receive-file-confirm-size').textContent = (receiveFileUploadFile.size / 1024 / 1024).toFixed(2) + ' MB';
+
+        // 检查是否已存在文件
+        fetch(`/dashboard/purchase/api/receive_mgmt/file_info/?logistic_num=${encodeURIComponent(receiveFileUploadLogisticNum)}&receive_date=${encodeURIComponent(receiveFileUploadReceiveDate)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data.has_file) {
+                    document.getElementById('receive-file-existing-warning').style.display = 'list-item';
+                    // 计算新版本号
+                    const files = data.data.files;
+                    let maxVer = 0;
+                    files.forEach(f => {
+                        const match = f.filename.match(/_Ver(\d+)/);
+                        if (match) maxVer = Math.max(maxVer, parseInt(match[1]));
+                    });
+                    document.getElementById('receive-file-confirm-version').textContent = `Ver${String(maxVer + 1).padStart(2, '0')}`;
+                } else {
+                    document.getElementById('receive-file-confirm-version').textContent = 'Ver01';
+                }
+            });
+
+        // 添加确认按钮
+        const step2 = document.getElementById('receive-file-step-2');
+        if (!step2.querySelector('.wizard-actions')) {
+            step2.insertAdjacentHTML('beforeend', `
+                <div class="wizard-actions d-flex justify-content-end gap-3 mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="receiveFileUploadStep2Back()">
+                        <i class="fas fa-arrow-left me-2"></i>上一步
+                    </button>
+                    <button class="btn btn-success btn-lg px-4 rounded-pill" onclick="receiveFileUploadConfirm()">
+                        <i class="fas fa-upload me-2"></i>确认上传
+                    </button>
+                </div>
+            `);
+        }
+    }
+
+    function receiveFileUploadStep2Back() {
+        document.getElementById('receive-file-step-1').style.display = 'block';
+        document.getElementById('receive-file-step-2').style.display = 'none';
+        if (receiveFileUploadWizard) receiveFileUploadWizard.goToStep('select');
+    }
+
+    function receiveFileUploadConfirm() {
+        // 直接执行上传（入库文件不需要密码验证）
+        executeReceiveFileUpload();
+    }
+
+    function executeReceiveFileUpload() {
+        if (!receiveFileUploadFile || !receiveFileUploadLogisticNum) return;
+
+        const formData = new FormData();
+        formData.append('logistic_num', receiveFileUploadLogisticNum);
+        formData.append('receive_date', receiveFileUploadReceiveDate);
+        formData.append('receive_file', receiveFileUploadFile);
+
+        fetch('/dashboard/purchase/api/receive_mgmt/upload_file/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: formData
+        })
+            .then(r => r.json())
+            .then(data => {
+                // 显示步骤3
+                document.getElementById('receive-file-step-2').style.display = 'none';
+                document.getElementById('receive-file-step-3').style.display = 'block';
+                if (receiveFileUploadWizard) receiveFileUploadWizard.goToStep('done');
+
+                const resultContainer = document.getElementById('receive-file-result-container');
+                if (data.success) {
+                    resultContainer.innerHTML = `
+                    <div class="bg-success bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                        <i class="fas fa-check-circle fa-4x text-success"></i>
+                    </div>
+                    <h4 class="text-white mb-2" data-i18n="toast.upload_success">上传成功</h4>
+                    <p class="text-white-50 mb-4" data-i18n="ui.text_486">文件已保存为 ${data.filename}</p>
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </button>
+                `;
+                } else {
+                    resultContainer.innerHTML = `
+                    <div class="bg-danger bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                        <i class="fas fa-times-circle fa-4x text-danger"></i>
+                    </div>
+                    <h4 class="text-white mb-2" data-i18n="toast.upload_failed">上传失败</h4>
+                    <p class="text-danger mb-4">${data.message || '{% trans "未知错误" %}'}</p>
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </button>
+                `;
+                }
+            })
+            .catch(err => {
+                document.getElementById('receive-file-step-2').style.display = 'none';
+                document.getElementById('receive-file-step-3').style.display = 'block';
+                document.getElementById('receive-file-result-container').innerHTML = `
+                <div class="bg-danger bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                    <i class="fas fa-times-circle fa-4x text-danger"></i>
+                </div>
+                <h4 class="text-white mb-2" data-i18n="toast.upload_failed">上传失败</h4>
+                <p class="text-danger mb-4" data-i18n="ui.text_490">网络错误: ${err}</p>
+                <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                    <i class="fas fa-arrow-left me-2"></i>返回列表
+                </button>
+            `;
+            });
+    }
+
+    function viewFile(logisticNum) {
+        // 已废弃，使用 viewReceiveFile
+        console.warn('viewFile is deprecated, use viewReceiveFile');
+    }
+
+    function uploadFile(logisticNum) {
+        // 已废弃，使用 uploadReceiveFile
+        console.warn('uploadFile is deprecated, use uploadReceiveFile');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+<form hx-get="{% url 'web_ui:audit_tab_content' tab_name=tab_name %}"
+      hx-target="#audit-content-area"
+      hx-swap="innerHTML"
+      hx-indicator="#loading-indicator"
+      class="mb-0"
+      {# [Fix] 让 Form 统一监听所有 input/select 的 change 事件，以及 input 的回车 #}
+      hx-trigger="change, keyup delay:500ms from:input, submit">
+
+    <div class="row g-3 align-items-center">
+        {# 1. 快速查询 #}
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-dark border-secondary text-white-50"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" name="q" class="form-control bg-dark text-white border-secondary"
+                       placeholder="搜索 Ref / Action / Message..."
+                       value="{{ filter.q|default:'' }}">
+            </div>
+        </div>
+
+        {# 2. 状态筛选 #}
+        <div class="col-md-2">
+            <select name="status" class="form-select form-select-sm bg-dark text-white border-secondary cursor-pointer">
+                <option value="ALL" {% if filter.status == 'ALL' %}selected{% endif %}>所有状态</option>
+                <option value="SUCCESS" {% if filter.status == 'SUCCESS' %}selected{% endif %}>✅ 成功 (Success)</option>
+                <option value="FAILED" {% if filter.status == 'FAILED' %}selected{% endif %}>❌ 失败 (Failed)</option>
+            </select>
+        </div>
+
+        {# 3. 时间区间 #}
+        <div class="col-md-2">
+            <select name="days" class="form-select form-select-sm bg-dark text-white border-secondary cursor-pointer">
+                <option value="7" {% if filter.days == '7' %}selected{% endif %}>近 7 天</option>
+                <option value="30" {% if filter.days == '30' %}selected{% endif %}>近 30 天</option>
+                <option value="90" {% if filter.days == '90' %}selected{% endif %}>近 90 天</option>
+                <option value="10000" {% if filter.days == '10000' %}selected{% endif %}>全部记录</option>
+            </select>
+        </div>
+
+        {# 4. 用户筛选 #}
+        <div class="col-md-3">
+            <select name="user" class="form-select form-select-sm bg-dark text-white border-secondary cursor-pointer">
+                <option value="ALL" {% if filter.user == 'ALL' %}selected{% endif %}>所有用户</option>
+                {% for u in user_options %}
+                    <option value="{{ u }}" {% if filter.user == u %}selected{% endif %}>{{ u }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Loading #}
+        <div class="col-md-1">
+             <div id="loading-indicator" class="htmx-indicator spinner-border spinner-border-sm text-info" role="status"></div>
+        </div>
+    </div>
+</form>

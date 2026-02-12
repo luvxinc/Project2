@@ -1,0 +1,448 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 16:53-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: apps/db_admin/views.py:224
+msgid "未知操作"
+msgstr ""
+
+#: django_config/settings.py:163
+msgid "简体中文"
+msgstr ""
+
+#: django_config/settings.py:164
+msgid "English"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:5
+#: templates/db_admin/pages/rollback_restore.html:69
+#: templates/db_admin/pages/rollback_restore.html:78
+msgid "数据修改找回"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:5
+#: templates/db_admin/pages/rollback_restore.html:68
+msgid "数据库运维"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:79
+msgid "从历史回滚点恢复数据，撤销之前的修改操作。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:82
+msgid "返回"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:94
+msgid "操作须知"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:97
+msgid "必须从最近的回档点开始"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:97
+msgid "，不允许跳过顺序。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:98
+msgid "回档会覆盖当前数据，操作前系统会自动创建新的回滚点。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:99
+msgid "如果选择的回档点来自「数据修改找回」，则本次不会创建新的回滚点。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:100
+msgid "需要验证用户密码和管理员密码才能执行回档。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:101
+msgid "回档期间请勿进行其他数据库操作。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:106
+msgid "当前状态"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:110
+msgid "可用回档点"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:114
+msgid "系统正常"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:131
+msgid "数据修改找回向导"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:132
+msgid "请按步骤恢复历史数据。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:145
+msgid "选择要回档的时间点"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:159
+#: templates/db_admin/pages/rollback_restore.html:342
+msgid "操作内容"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:163
+msgid "最新"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:175
+msgid "下一步"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:185
+msgid "验证回档顺序"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:190
+msgid "已选择的回档点"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:204
+msgid "正在验证..."
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:207
+msgid "必须先回档最近的回滚点，不允许跳过顺序。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:214
+msgid "验证通过"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:215
+msgid "选择的回档点为最新，可以执行回档操作。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:220
+msgid "密码验证失败，无法完成回档。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:233
+msgid "上一步"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:239
+msgid "确认回档"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:251
+msgid "正在执行回档"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:256
+#: templates/db_admin/pages/rollback_restore.html:343
+msgid "准备中..."
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:263
+msgid "回档成功"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:264
+msgid "数据已成功恢复到指定时间点。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:269
+msgid "数据变化摘要"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:274
+msgid "已删除记录"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:280
+msgid "已恢复记录"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:289
+msgid "已创建新的回滚点，便于撤回本次操作。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:292
+msgid "这是撤销之前的回档，无需建立新的备份。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:299
+msgid "回档失败"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:300
+msgid "执行过程中发生错误，请稍后重试。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:307
+msgid "重新开始"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:312
+#: templates/db_admin/pages/rollback_restore.html:327
+msgid "返回数据库运维"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:324
+msgid "暂无可用回档点"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:325
+msgid "系统中没有可用的回滚点，请先进行数据修改操作后再使用此功能。"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:344
+msgid "执行中..."
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:345
+msgid "校验中..."
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:346
+#: templates/db_admin/pages/rollback_restore.html:368
+msgid "完成"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:347
+msgid "网络错误，请重试"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:348
+msgid "回档执行失败"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:349
+msgid "涉及数据表"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:366
+msgid "选择回档"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:367
+msgid "验证确认"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:500
+msgid "执行数据回档"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:588
+msgid "个"
+msgstr ""
+
+#: templates/db_admin/pages/rollback_restore.html:603
+msgid "已创建新的回滚点"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:4
+#: templates/reports/pages/viewer_image.html:17
+msgid "图片查看器"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:14
+#: templates/reports/pages/viewer_pdf.html:14
+#: templates/reports/pages/viewer_table.html:14
+msgid "销售板块"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:16
+#: templates/reports/pages/viewer_pdf.html:16
+#: templates/reports/pages/viewer_table.html:16
+msgid "报表中心"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:27
+#: templates/reports/pages/viewer_pdf.html:27
+#: templates/reports/pages/viewer_table.html:27
+msgid "大小"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:27
+#: templates/reports/pages/viewer_pdf.html:27
+#: templates/reports/pages/viewer_table.html:27
+msgid "修改时间"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:34
+#: templates/reports/pages/viewer_pdf.html:34
+#: templates/reports/pages/viewer_table.html:35
+#: templates/reports/partials/center_list.html:103
+msgid "下载"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:38
+#: templates/reports/pages/viewer_pdf.html:38
+#: templates/reports/pages/viewer_table.html:39
+msgid "返回文件列表"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:49
+#: templates/reports/pages/viewer_pdf.html:49
+#: templates/reports/pages/viewer_table.html:70
+msgid "缩放"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:60
+msgid "适应窗口"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:64
+msgid "实际大小"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:73
+msgid "向左旋转"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:77
+msgid "向右旋转"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:95
+msgid "无法加载图片"
+msgstr ""
+
+#: templates/reports/pages/viewer_image.html:96
+#: templates/reports/pages/viewer_pdf.html:110
+msgid "请尝试下载后查看"
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:4
+#: templates/reports/pages/viewer_pdf.html:17
+msgid "PDF 查看器"
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:60
+#: templates/reports/pages/viewer_table.html:81
+msgid "适应宽度"
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:73
+#: templates/reports/pages/viewer_table.html:54
+msgid "搜索关键字..."
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:88
+msgid "页码"
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:103
+msgid "正在加载 PDF..."
+msgstr ""
+
+#: templates/reports/pages/viewer_pdf.html:109
+msgid "无法加载 PDF"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:4
+#: templates/reports/pages/viewer_table.html:17
+msgid "文件查看器"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:91
+msgid "全部表格"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:101
+msgid "个表格"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:116
+msgid "行"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:148
+msgid "无法解析文件内容"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:149
+msgid "该文件可能为空或格式不受支持"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:294
+msgid "个结果"
+msgstr ""
+
+#: templates/reports/pages/viewer_table.html:294
+msgid "无结果"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:10
+msgid "操作"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:16
+msgid "打包下载所有"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:22
+msgid "清空所有文件"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:59
+msgid "共"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:59
+msgid "个文件"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:68
+msgid "文件列表"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:81
+msgid "查看 PDF"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:83
+#: templates/reports/partials/center_list.html:90
+#: templates/reports/partials/center_list.html:96
+msgid "查看"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:88
+msgid "查看图片"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:94
+msgid "查看表格"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:102
+msgid "下载文件"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:136
+msgid "暂无报表文件"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:137
+msgid "请先前往「报表生成器」运行分析任务。"
+msgstr ""
+
+#: templates/reports/partials/center_list.html:140
+msgid "刷新列表"
+msgstr ""

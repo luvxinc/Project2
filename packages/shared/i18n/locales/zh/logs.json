@@ -1,0 +1,412 @@
+{
+  "pageTitle": "日志",
+  "hub": {
+    "explore": "进入"
+  },
+  "nav": {
+    "errors": "错误日志",
+    "audits": "安全审计",
+    "business": "业务日志",
+    "access": "访问日志",
+    "maintenance": "日志维护"
+  },
+  "features": {
+    "errors": {
+      "title": "错误日志",
+      "description": "追踪系统异常，分析错误堆栈，标记已解决问题",
+      "cta": "查看错误"
+    },
+    "audits": {
+      "title": "安全审计",
+      "description": "记录敏感操作，追踪用户行为，确保合规审计",
+      "cta": "查看审计"
+    },
+    "business": {
+      "title": "业务日志",
+      "description": "追踪业务操作流程，记录模块间交互细节",
+      "cta": "查看业务"
+    },
+    "access": {
+      "title": "访问日志",
+      "description": "监控 HTTP 请求，分析响应时间，检测异常访问",
+      "cta": "查看访问"
+    },
+    "maintenance": {
+      "title": "日志维护",
+      "description": "清理开发日志，管理存储空间，执行保留策略",
+      "cta": "日志管理"
+    }
+  },
+  "overview": {
+    "title": "系统日志概览",
+    "description": "实时监控系统运行状态和关键指标",
+    "stats": {
+      "errors": "未解决错误",
+      "unresolved": "待处理",
+      "critical": "严重错误",
+      "requiresAttention": "需要关注",
+      "auditsToday": "今日审计",
+      "securityEvents": "安全事件",
+      "accessToday": "今日访问",
+      "requests": "请求数"
+    },
+    "summary": {
+      "title": "总计统计",
+      "totalErrors": "错误总数",
+      "totalAudits": "审计总数",
+      "totalBusiness": "业务日志总数",
+      "totalAccess": "访问日志总数"
+    }
+  },
+  "errors": {
+    "title": "错误日志",
+    "description": "系统异常记录与追踪",
+    "filters": {
+      "severity": "严重程度",
+      "resolved": "已解决",
+      "unresolved": "未解决",
+      "all": "全部",
+      "allStatus": "全部状态",
+      "search": "搜索错误类型或消息..."
+    },
+    "columns": {
+      "time": "时间",
+      "type": "类型",
+      "message": "错误消息",
+      "severity": "严重程度",
+      "module": "模块",
+      "path": "请求路径",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "severity": {
+      "CRITICAL": "严重",
+      "HIGH": "高",
+      "MEDIUM": "中",
+      "LOW": "低"
+    },
+    "detail": {
+      "title": {
+        "error": "错误详情",
+        "audit": "审计详情",
+        "business": "业务日志详情",
+        "access": "访问日志详情"
+      },
+      "traceback": "完整堆栈",
+      "location": "错误位置",
+      "context": "上下文信息"
+    },
+    "actions": {
+      "resolve": "标记已解决",
+      "viewDetail": "查看详情"
+    },
+    "empty": "暂无错误日志"
+  },
+  "audit": {
+    "title": "安全审计日志",
+    "description": "敏感操作记录与合规追踪",
+    "filters": {
+      "module": "模块",
+      "action": "操作类型",
+      "search": "搜索操作或实体..."
+    },
+    "columns": {
+      "time": "时间",
+      "user": "操作人",
+      "action": "操作",
+      "module": "模块",
+      "entity": "实体",
+      "target": "目标",
+      "ip": "IP 地址",
+      "result": "结果",
+      "risk": "风险"
+    },
+    "empty": "暂无审计日志"
+  },
+  "audits": {
+    "title": "安全审计日志",
+    "description": "敏感操作记录与合规追踪",
+    "filters": {
+      "module": "模块",
+      "action": "操作类型",
+      "search": "搜索操作或实体..."
+    },
+    "columns": {
+      "time": "时间",
+      "user": "操作人",
+      "action": "操作",
+      "module": "模块",
+      "entity": "实体",
+      "target": "目标",
+      "ip": "IP 地址",
+      "result": "结果",
+      "risk": "风险"
+    },
+    "empty": "暂无审计日志"
+  },
+  "business": {
+    "title": "业务操作日志",
+    "description": "业务流程追踪与模块交互记录",
+    "filters": {
+      "module": "模块",
+      "action": "操作",
+      "status": "状态",
+      "search": "搜索操作或摘要...",
+      "allModules": "全部模块",
+      "allActions": "全部操作",
+      "allStatus": "全部状态"
+    },
+    "columns": {
+      "time": "时间",
+      "user": "操作人",
+      "module": "模块",
+      "action": "操作",
+      "summary": "摘要",
+      "status": "状态"
+    },
+    "status": {
+      "SUCCESS": "成功",
+      "FAILED": "失败",
+      "PENDING": "处理中"
+    },
+    "empty": "暂无业务日志"
+  },
+  "access": {
+    "title": "访问日志",
+    "description": "HTTP 请求监控与性能分析",
+    "filters": {
+      "statusCode": "状态码",
+      "method": "请求方法",
+      "search": "搜索路径或 IP...",
+      "allStatus": "全部状态码",
+      "allMethods": "全部方法"
+    },
+    "columns": {
+      "time": "时间",
+      "method": "方法",
+      "path": "路径",
+      "status": "状态码",
+      "duration": "响应时间",
+      "responseTime": "响应时间",
+      "ip": "IP 地址",
+      "user": "用户"
+    },
+    "empty": "暂无访问日志"
+  },
+  "maintenance": {
+    "title": "日志维护",
+    "description": "系统日志配置与维护操作",
+    "groups": {
+      "systemMode": "系统模式",
+      "operations": "维护操作",
+      "devLogs": "开发日志",
+      "prodLogs": "生产日志"
+    },
+    "devMode": {
+      "title": "开发/部署模式",
+      "currentDev": "当前: 开发模式 (日志标记为 dev_mode)",
+      "currentProd": "当前: 部署模式 (生产日志)",
+      "enabled": "已切换到开发模式",
+      "disabled": "已切换到部署模式", 
+      "toggleFailed": "模式切换失败，请检查 L4 密码",
+      "enterL4": "切换模式需要 L4 安全码验证"
+    },
+    "godMode": {
+      "title": "敏感信息查看",
+      "activeUntil": "已启用，有效期至",
+      "inactive": "已关闭 (数据已脱敏)",
+      "enabled": "敏感信息查看已启用 (30分钟内有效)",
+      "disabled": "敏感信息查看已关闭",
+      "unlockFailed": "解锁失败，请检查 L3 密码",
+      "lockFailed": "锁定失败",
+      "enterL3": "解锁敏感信息需要 L3 安全码验证"
+    },
+    "stats": {
+      "errors": "错误",
+      "audits": "审计",
+      "business": "业务",
+      "access": "访问"
+    },
+    "actions": {
+      "clearDevLogs": "清理开发日志",
+      "requiresL4": "需要 L4",
+      "enterL4": "清理开发日志需要 L4 安全码验证",
+      "clearSuccess": "开发日志已清理",
+      "l4Failed": "操作失败，请检查 L4 密码"
+    },
+    "policy": {
+      "title": "保留策略",
+      "errorLogs": "错误日志",
+      "auditLogs": "审计日志",
+      "businessLogs": "业务日志",
+      "accessLogs": "访问日志"
+    },
+    "archive": {
+      "title": "日志归档",
+      "description": "归档旧日志以释放数据库空间",
+      "stats": {
+        "totalArchived": "已归档总数",
+        "totalSize": "归档文件大小",
+        "totalBatches": "归档批次",
+        "archiveDir": "归档目录",
+        "pendingArchive": "待归档"
+      },
+      "retention": {
+        "title": "保留策略",
+        "error": "错误日志保留",
+        "audit": "审计日志保留",
+        "business": "业务日志保留",
+        "access": "访问日志保留",
+        "days": "天"
+      },
+      "pending": {
+        "title": "待归档统计",
+        "logType": "日志类型",
+        "retentionDays": "保留天数",
+        "pendingCount": "待归档数量",
+        "noRecords": "暂无待归档记录"
+      },
+      "history": {
+        "title": "归档历史",
+        "empty": "暂无归档记录",
+        "columns": {
+          "time": "归档时间",
+          "type": "日志类型",
+          "records": "记录数",
+          "size": "文件大小",
+          "status": "状态"
+        }
+      },
+      "execute": {
+        "button": "立即归档",
+        "confirm": "确认执行归档？",
+        "confirmDesc": "此操作将归档超过保留期限的日志并从数据库中删除。归档文件将保存至服务器。",
+        "enterL4": "执行归档需要 L4 安全码验证",
+        "success": "归档完成",
+        "failed": "归档失败"
+      },
+      "status": {
+        "PENDING": "等待中",
+        "IN_PROGRESS": "进行中",
+        "COMPLETED": "已完成",
+        "FAILED": "失败"
+      }
+    },
+    "accessDenied": "此功能需要 Superadmin 权限才能访问"
+  },
+  "common": {
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "empty": "暂无数据",
+    "page": "页",
+    "refresh": "刷新",
+    "export": "导出",
+    "exporting": "导出中...",
+    "filter": "筛选",
+    "dateRange": "日期范围",
+    "today": "今天",
+    "last7Days": "最近 7 天",
+    "last30Days": "最近 30 天",
+    "custom": "自定义"
+  },
+  "godMode": {
+    "title": "敏感信息查看",
+    "enabled": "God Mode 已启用",
+    "disabled": "God Mode 已锁定",
+    "unlock": "解锁",
+    "lock": "锁定",
+    "remaining": "剩余",
+    "expiresAt": "有效期至",
+    "unlockTitle": "解锁敏感信息",
+    "unlockDesc": "解锁后可查看完整的 IP 地址、用户名、请求数据等敏感信息。解锁状态将在 30 分钟后自动失效。",
+    "l3Placeholder": "请输入 L3 安全验证码",
+    "securityCodeLabel": "L3 安全验证码",
+    "securityCodePlaceholder": "请输入 L3 安全验证码",
+    "confirmUnlock": "确认解锁",
+    "verifying": "验证中...",
+    "unlockSuccess": "敏感信息已解锁",
+    "lockSuccess": "已恢复脱敏保护",
+    "unlockFailed": "解锁失败",
+    "lockFailed": "锁定失败"
+  },
+  "alerts": {
+    "title": "系统告警",
+    "active": "活跃告警",
+    "noAlerts": "没有活跃告警",
+    "acknowledge": "确认",
+    "acknowledged": "已确认",
+    "severity": {
+      "critical": "严重",
+      "warning": "警告",
+      "info": "信息"
+    },
+    "rules": {
+      "highErrorRate": "错误率过高",
+      "criticalErrors": "严重错误",
+      "highLatency": "延迟过高",
+      "authFailures": "认证失败过多"
+    },
+    "health": {
+      "healthy": "健康",
+      "warning": "警告",
+      "critical": "严重"
+    }
+  },
+  "detail": {
+    "title": {
+      "error": "错误详情",
+      "audit": "审计详情",
+      "business": "业务日志详情",
+      "access": "访问日志详情"
+    },
+    "groups": {
+      "basic": "基本信息",
+      "detail": "详细信息",
+      "request": "请求上下文",
+      "user": "用户信息",
+      "system": "系统环境",
+      "business": "业务上下文"
+    },
+    "fields": {
+      "traceId": "Trace ID",
+      "createdAt": "时间",
+      "severity": "严重程度",
+      "category": "分类",
+      "occurrences": "出现次数",
+      "isResolved": "状态",
+      "errorType": "错误类型",
+      "errorCode": "错误代码",
+      "errorMessage": "错误消息",
+      "rootCause": "根因",
+      "stackTrace": "调用堆栈",
+      "requestMethod": "请求方法",
+      "requestPath": "请求路径",
+      "requestQuery": "查询参数",
+      "requestBody": "请求体",
+      "userId": "用户 ID",
+      "username": "用户名",
+      "ipAddress": "IP 地址",
+      "userAgent": "User Agent",
+      "module": "模块",
+      "operation": "操作",
+      "entityType": "实体类型",
+      "entityId": "实体 ID",
+      "result": "结果",
+      "riskLevel": "风险等级",
+      "action": "操作",
+      "oldValue": "修改前",
+      "newValue": "修改后",
+      "details": "详情",
+      "sessionId": "会话 ID",
+      "status": "状态",
+      "summary": "摘要",
+      "statusCode": "状态码",
+      "responseTime": "响应时间",
+      "method": "请求方法",
+      "path": "请求路径",
+      "queryParams": "查询参数",
+      "responseSize": "响应大小"
+    },
+    "close": "按 ESC 关闭"
+  }
+}

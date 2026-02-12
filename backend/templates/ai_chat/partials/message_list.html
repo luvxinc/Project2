@@ -1,0 +1,23 @@
+<!-- 消息列表 (Partial) -->
+{% if messages %}
+{% for msg in messages %}
+<div class="message {{ msg.role }}">
+    <div class="message-avatar">
+        <i class="fa-solid {% if msg.role == 'user' %}fa-user{% else %}fa-robot{% endif %}"></i>
+    </div>
+    <div class="message-content">
+        <div class="message-header">
+            <span class="message-role">{% if msg.role == 'user' %}你{% else %}AI 助手{% endif %}</span>
+            <span class="message-time">{{ msg.time|slice:"-8:" }}</span>
+        </div>
+        <div class="message-text">{{ msg.content|linebreaksbr }}</div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <i class="fa-solid fa-robot"></i>
+    <h3>开始新对话</h3>
+    <p>在下方输入您的问题，AI 助手将为您解答</p>
+</div>
+{% endif %}

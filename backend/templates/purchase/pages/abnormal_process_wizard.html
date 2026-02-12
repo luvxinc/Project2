@@ -1,0 +1,961 @@
+{% load i18n %}
+<!-- 入库异常处理向导 - GlobalWizard版本 -->
+<div class="glass-card p-4 shadow-lg">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex align-items-center">
+            <div class="bg-warning bg-opacity-25 p-3 rounded-circle me-3">
+                <i class="fas fa-tools fa-2x text-warning"></i>
+            </div>
+            <div>
+                <h5 class="text-white mb-1" data-i18n="abnormal.process_title">处理入库异常</h5>
+                <p class="text-white-50 small mb-0" id="process-logistic-label" data-i18n="ui.text_393">物流单号: - | 入库日期: -</p>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="showListView()">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <!-- GlobalWizard容器 -->
+    <div id="process-wizard-container" style="display: none;">
+        <!-- 步骤条锚点 -->
+        <div data-wizard-stepbar-anchor></div>
+
+        <!-- 流程1: 处理说明 -->
+        {% include "purchase/pages/abnormal_process/step1_intro.html" %}
+
+        <!-- 流程2: 选取方式 -->
+        {% include "purchase/pages/abnormal_process/step2_select.html" %}
+
+        <!-- 流程3: 验证修改 -->
+        {% include "purchase/pages/abnormal_process/step3_verify.html" %}
+
+        <!-- 流程4: 完成 -->
+        {% include "purchase/pages/abnormal_process/step4_done.html" %}
+    </div>
+
+    <!-- 加载中 -->
+    <div id="process-loading" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status"></div>
+        <p class="text-white-50 mt-3 mb-0" data-i18n="abnormal.loading">正在加载异常数据...</p>
+    </div>
+</div>
+
+<style>
+    /* 处理方式卡片样式 */
+    .process-method-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .process-method-card:hover {
+        border-color: rgba(13, 110, 253, 0.5) !important;
+        transform: translateY(-2px);
+    }
+    .process-method-card.selected {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+    .process-method-card.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    // ========================================
+    // 异常处理向导状态
+    // ========================================
+    let processCurrentLogisticNum = null;
+    let processCurrentReceiveDate = null;
+    let processAbnormalData = null;
+    let processSelectedMethod = null;
+    let processWizard = null;
+
+    // 加载异常数据用于处理
+    function loadAbnormalForProcess(logisticNum, receiveDate) {
+        processCurrentLogisticNum = logisticNum;
+        processCurrentReceiveDate = receiveDate;
+        processSelectedMethod = null;
+        
+        document.getElementById('process-logistic-label').textContent = 
+            `物流单号: ${logisticNum} | 入库日期: ${receiveDate}`;
+        
+        const loading = document.getElementById('process-loading');
+        const container = document.getElementById('process-wizard-container');
+        
+        loading.style.display = 'block';
+        container.style.display = 'none';
+        
+        // 获取异常详情
+        fetch(`{% url 'web_ui:purchase:abnormal_detail' %}?logistic_num=${encodeURIComponent(logisticNum)}&receive_date=${encodeURIComponent(receiveDate)}`)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (!data.success) {
+                    alert(data.message || '{% trans "加载异常数据失败" %}');
+                    showListView();
+                    return;
+                }
+                
+                processAbnormalData = data;
+                container.style.display = 'block';
+                
+                // 初始化向导
+                initProcessWizard();
+                
+                // 填充概况数据
+                populateProcessSummary(data);
+                
+                // 填充明细表格
+                populateProcessItems(data.data);
+                
+                // 重置方式选择
+                resetMethodSelection();
+                
+                // 显示第一步
+                goToProcessStep(1);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                alert('{% trans "加载异常数据失败" %}: ' + err);
+                showListView();
+            });
+    }
+
+    // 初始化GlobalWizard
+    function initProcessWizard() {
+        if (processWizard) return;
+        
+        if (typeof GlobalWizard === 'undefined') {
+            console.error('[ProcessWizard] GlobalWizard not available');
+            return;
+        }
+        
+        processWizard = new GlobalWizard({
+            containerId: 'process-wizard-container',
+            steps: [
+                { id: 'intro', label: (window.i18n?.t('js.processing_notes') || 'Processing Notes'), type: 'normal', contentSelector: '#process-step-1' },
+                { id: 'select', label: (window.i18n?.t('js.selection_method') || 'Selection Method'), type: 'normal', contentSelector: '#process-step-2' },
+                { id: 'verify', label: (window.i18n?.t('js.verify_changes') || 'Verify Changes'), type: 'normal', contentSelector: '#process-step-3' },
+                { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#process-step-4' }
+            ],
+            onStepChange: () => {}
+        });
+    }
+
+    // 填充概况数据
+    function populateProcessSummary(data) {
+        const summary = data.summary || {};
+        const items = data.data || [];
+        
+        document.getElementById('process-summary-sku-count').textContent = summary.total_skus || items.length || 0;
+        document.getElementById('process-summary-total-diff').textContent = summary.total_diff || 0;
+        
+        // 计算多收/少收
+        let over = 0, short = 0;
+        items.forEach(item => {
+            const diff = item.diff_quantity || 0;
+            if (diff > 0) over += diff;     // 入库多于发货=多收
+            if (diff < 0) short += Math.abs(diff);  // 入库少于发货=少收
+        });
+        
+        document.getElementById('process-summary-over').textContent = over > 0 ? `+${over}` : '0';
+        document.getElementById('process-summary-short').textContent = short > 0 ? `-${short}` : '0';
+        
+        // 如果全是多收（没有少收），禁用方式3
+        const method3Card = document.getElementById('method-card-3');
+        if (method3Card) {
+            if (short === 0) {
+                method3Card.classList.add('disabled');
+                method3Card.setAttribute('title', (window.i18n?.t('js.only_for_shortage') || 'Only for shortage cases'));
+            } else {
+                method3Card.classList.remove('disabled');
+                method3Card.removeAttribute('title');
+            }
+        }
+    }
+
+    // 每个订单的选择状态 {po_num: method}
+    let processPoMethodMap = {};
+    
+    // 按订单分组的数据 {po_num: [items...]}
+    let processPoGroupedData = {};
+
+    // 货币 badge 样式映射
+    const currencyBadgeClass = {
+        'USD': 'bg-success',
+        'RMB': 'bg-warning text-dark',
+        'CNY': 'bg-warning text-dark'
+    };
+
+    // 方法配置
+    const methodConfig = {
+        1: { name: (window.i18n?.t('js.correct_shipment_only') || 'Correct Shipment Only'), btnClass: 'btn-outline-primary', tooltip: '修正发货数量使差异为0，不修正订单。发货数≤订货数时无影响；发货数>订货数时差异顺延至下次订货，可能导致计价混乱' },
+        2: { name: (window.i18n?.t('js.sync_correct_order') || 'Sync Correct Order'), btnClass: 'btn-outline-success', tooltip: '根据实际收货数量同时修改发货数量和订单数量，使三者匹配，不产生误差' },
+        3: { name: (window.i18n?.t('js.delayed_receive') || 'Delayed Receive'), btnClass: 'btn-outline-warning', tooltip: '将差异数量的货物新建发货单延迟入库，使当前差异为0' },
+        4: { name: (window.i18n?.t('js.vendor_error') || 'Vendor Error'), btnClass: 'btn-outline-danger', tooltip: '入库数大于发货数时，多收货物以成本0入库；入库数小于发货数时，差异按价格入库后立即出库算作耗损' }
+    };
+
+    // 填充按订单分组的板块
+    function populateProcessItems(items) {
+        document.getElementById('process-items-count').textContent = `${items.length} 条记录`;
+        
+        // 重置状态
+        processPoMethodMap = {};
+        processPoGroupedData = {};
+        
+        // 按订单号分组
+        items.forEach(item => {
+            const poNum = item.po_num;
+            if (!processPoGroupedData[poNum]) {
+                processPoGroupedData[poNum] = [];
+            }
+            processPoGroupedData[poNum].push(item);
+        });
+        
+        const container = document.getElementById('process-po-groups-container');
+        container.innerHTML = '';
+        
+        const poNums = Object.keys(processPoGroupedData).sort();
+        
+        poNums.forEach((poNum, idx) => {
+            const poItems = processPoGroupedData[poNum];
+            const poCard = createPoGroupCard(poNum, poItems, idx);
+            container.appendChild(poCard);
+        });
+        
+        // 更新进度
+        updateSelectionProgress();
+    }
+
+    // 创建单个订单分组卡片（正负差异分开选择策略）
+    function createPoGroupCard(poNum, items, idx) {
+        const card = document.createElement('div');
+        card.className = 'card bg-dark border-secondary mb-3 po-group-card';
+        card.id = `po-group-${idx}`;
+        card.dataset.poNum = poNum;
+        
+        // 获取货币（所有item应该相同）
+        const currency = items[0]?.currency || 'RMB';
+        const badgeClass = currencyBadgeClass[currency] || 'bg-secondary';
+        
+        // 计算正负差异
+        let positiveItems = items.filter(item => (item.diff_quantity || 0) > 0);
+        let negativeItems = items.filter(item => (item.diff_quantity || 0) < 0);
+        let positiveDiff = positiveItems.reduce((sum, item) => sum + (item.diff_quantity || 0), 0);
+        let negativeDiff = negativeItems.reduce((sum, item) => sum + (item.diff_quantity || 0), 0);
+        
+        const hasPositive = positiveItems.length > 0;
+        const hasNegative = negativeItems.length > 0;
+        
+        // 初始化该订单的选择状态结构
+        if (!processPoMethodMap[poNum]) {
+            processPoMethodMap[poNum] = {};
+        }
+        
+        card.innerHTML = `
+            <div class="card-header bg-secondary bg-opacity-25 border-secondary d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-secondary me-2">${idx + 1}</span>
+                    <span class="text-white font-monospace fw-bold">${escapeHtml(poNum)}</span>
+                    <span class="badge ${badgeClass} rounded-pill ms-2">${escapeHtml(currency)}</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="text-white-50 small me-3" data-i18n="ui.text_395">${items.length} 个SKU</span>
+                    ${hasPositive ? `<span class="badge bg-success me-1">+${positiveDiff}</span>` : ''}
+                    ${hasNegative ? `<span class="badge bg-danger">${negativeDiff}</span>` : ''}
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- SKU明细表格 -->
+                <div class="table-responsive mb-3" style="max-height: 150px; overflow-y: auto;">
+                    <table class="table table-sm table-dark mb-0">
+                        <thead class="sticky-top bg-dark">
+                            <tr class="text-white-50 small">
+                                <th>SKU</th>
+                                <th class="text-end" data-i18n="common.unit_price">单价</th>
+                                <th class="text-center" data-i18n="table.ordered_qty">订单数量</th>
+                                <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                                <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                                <th class="text-center" data-i18n="table.variance">差异</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(item => {
+                                const diff = item.diff_quantity || 0;
+                                const dClass = diff > 0 ? 'text-success' : (diff < 0 ? 'text-danger' : 'text-white-50');
+                                const dSign = diff > 0 ? '+' : '';
+                                const price = (item.po_price || 0).toFixed(2);
+                                return `
+                                    <tr>
+                                        <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                                        <td class="text-end text-white">${price}</td>
+                                        <td class="text-center text-white-50">${item.po_quantity}</td>
+                                        <td class="text-center text-info">${item.sent_quantity}</td>
+                                        <td class="text-center text-success">${item.receive_quantity}</td>
+                                        <td class="text-center ${dClass} fw-bold">${dSign}${diff}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 策略选择区域 -->
+                <div class="strategy-selection-area">
+                    ${hasPositive ? `
+                    <!-- 正差异（少收: 入库<发货）策略选择 -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-warning text-dark me-2">-${positiveDiff}</span>
+                            <span class="text-warning small fw-bold" data-i18n="abnormal.shortage">少收处理</span>
+                            <span class="text-white-50 small ms-2" data-i18n="ui.text_397">(${positiveItems.length} 个SKU，入库少于发货)</span>
+                        </div>
+                        <div class="btn-group" role="group">
+                            ${[1, 2, 3, 4].map(m => {
+                                const cfg = methodConfig[m];
+                                return `
+                                    <button type="button" 
+                                        class="btn btn-sm ${cfg.btnClass} method-btn"
+                                        data-po-num="${escapeHtml(poNum)}"
+                                        data-diff-type="positive"
+                                        data-method="${m}"
+                                        onclick="selectPoMethod('${escapeHtml(poNum)}', 'positive', ${m})"
+                                        title="${cfg.tooltip}">
+                                        ${cfg.name}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${hasNegative ? `
+                    <!-- 负差异（多收: 入库>发货）策略选择 -->
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2">+${Math.abs(negativeDiff)}</span>
+                            <span class="text-success small fw-bold" data-i18n="abnormal.overage">多收处理</span>
+                            <span class="text-white-50 small ms-2" data-i18n="ui.text_399">(${negativeItems.length} 个SKU，入库多于发货)</span>
+                        </div>
+                        <div class="btn-group" role="group">
+                            ${[1, 2, 4].map(m => {
+                                const cfg = methodConfig[m];
+                                return `
+                                    <button type="button" 
+                                        class="btn btn-sm ${cfg.btnClass} method-btn"
+                                        data-po-num="${escapeHtml(poNum)}"
+                                        data-diff-type="negative"
+                                        data-method="${m}"
+                                        onclick="selectPoMethod('${escapeHtml(poNum)}', 'negative', ${m})"
+                                        title="${cfg.tooltip}">
+                                        ${cfg.name}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        // 记录该订单需要选择的类型
+        card.dataset.hasPositive = hasPositive;
+        card.dataset.hasNegative = hasNegative;
+        
+        return card;
+    }
+
+    // 为单个订单的正/负差异选择处理方式
+    function selectPoMethod(poNum, diffType, method) {
+        // 初始化订单结构
+        if (!processPoMethodMap[poNum]) {
+            processPoMethodMap[poNum] = {};
+        }
+        processPoMethodMap[poNum][diffType] = method;
+        
+        // 更新按钮状态
+        const card = document.querySelector(`.po-group-card[data-po-num="${poNum}"]`);
+        if (card) {
+            // 只更新对应 diffType 的按钮
+            card.querySelectorAll(`.method-btn[data-diff-type="${diffType}"]`).forEach(btn => {
+                btn.classList.remove('active');
+                const m = parseInt(btn.dataset.method);
+                const cfg = methodConfig[m];
+                btn.className = `btn btn-sm ${cfg.btnClass} method-btn`;
+                btn.dataset.diffType = diffType;
+            });
+            // 高亮选中的按钮
+            const selectedBtn = card.querySelector(`.method-btn[data-diff-type="${diffType}"][data-method="${method}"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+                const cfg = methodConfig[method];
+                selectedBtn.className = `btn btn-sm ${cfg.btnClass.replace('outline-', '')} method-btn active`;
+            }
+            
+            // 检查该订单是否全部选择完成
+            const hasPositive = card.dataset.hasPositive === 'true';
+            const hasNegative = card.dataset.hasNegative === 'true';
+            const poSelection = processPoMethodMap[poNum] || {};
+            const positiveSelected = !hasPositive || poSelection.positive !== undefined;
+            const negativeSelected = !hasNegative || poSelection.negative !== undefined;
+            
+            if (positiveSelected && negativeSelected) {
+                card.classList.add('method-selected');
+            } else {
+                card.classList.remove('method-selected');
+            }
+        }
+        
+        // 更新进度
+        updateSelectionProgress();
+    }
+
+    // 更新选择进度
+    function updateSelectionProgress() {
+        const poNums = Object.keys(processPoGroupedData);
+        const totalPos = poNums.length;
+        
+        // 计算已完成选择的订单数
+        let completedCount = 0;
+        let hasDelayMethod = false;
+        
+        poNums.forEach(poNum => {
+            const card = document.querySelector(`.po-group-card[data-po-num="${poNum}"]`);
+            if (!card) return;
+            
+            const hasPositive = card.dataset.hasPositive === 'true';
+            const hasNegative = card.dataset.hasNegative === 'true';
+            const poSelection = processPoMethodMap[poNum] || {};
+            
+            const positiveSelected = !hasPositive || poSelection.positive !== undefined;
+            const negativeSelected = !hasNegative || poSelection.negative !== undefined;
+            
+            if (positiveSelected && negativeSelected) {
+                completedCount++;
+            }
+            
+            // 检查是否有选择策略3
+            if (poSelection.positive === 3 || poSelection.negative === 3) {
+                hasDelayMethod = true;
+            }
+        });
+        
+        document.getElementById('process-selection-progress').textContent = `${completedCount} / ${totalPos}`;
+        
+        // 控制延迟日期输入框显示
+        const delayCard = document.getElementById('delay-date-card');
+        const delayDateInput = document.getElementById('process-delay-date');
+        const delayDateError = document.getElementById('delay-date-error');
+        const delayDateMinDisplay = document.getElementById('delay-date-min-display');
+        
+        if (delayCard) {
+            delayCard.style.display = hasDelayMethod ? 'block' : 'none';
+            
+            // 设置 min 属性为当前入库日期的下一天
+            if (hasDelayMethod && delayDateInput && processCurrentReceiveDate) {
+                const receiveDate = new Date(processCurrentReceiveDate);
+                const minDate = new Date(receiveDate);
+                minDate.setDate(minDate.getDate() + 1);  // 下一天
+                const minDateStr = minDate.toISOString().split('T')[0];
+                delayDateInput.min = minDateStr;
+                
+                // 显示最小日期提示
+                if (delayDateMinDisplay) {
+                    delayDateMinDisplay.textContent = minDateStr;
+                }
+            }
+        }
+        
+        // 检查是否全部选择
+        const allSelected = (completedCount === totalPos && totalPos > 0);
+        
+        // 如果选择了策略3，检查延迟日期是否已填写（min属性已限制不能选早于入库日期的日期）
+        let delayDateValid = true;
+        if (hasDelayMethod && delayDateInput) {
+            delayDateValid = delayDateInput.value.trim() !== '';
+        }
+        
+        document.getElementById('btn-goto-verify').disabled = !(allSelected && delayDateValid);
+    }
+    
+    // 延迟日期输入变化时更新验证
+    document.addEventListener('DOMContentLoaded', function() {
+        const delayDateInput = document.getElementById('process-delay-date');
+        if (delayDateInput) {
+            delayDateInput.addEventListener('change', function() {
+                updateSelectionProgress();
+            });
+        }
+    });
+
+    // 重置方式选择
+    function resetMethodSelection() {
+        processPoMethodMap = {};
+        document.querySelectorAll('.po-group-card').forEach(card => {
+            card.classList.remove('method-selected');
+            card.querySelectorAll('.method-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const m = parseInt(btn.dataset.method);
+                const cfg = methodConfig[m];
+                btn.className = `btn btn-sm ${cfg.btnClass} method-btn`;
+            });
+        });
+        updateSelectionProgress();
+    }
+
+    // 跳转到指定步骤
+    function goToProcessStep(stepNum) {
+        // 进入步骤3时生成变更预览
+        if (stepNum === 3) {
+            generateVerifyPreview();
+        }
+        
+        // 隐藏所有步骤
+        for (let i = 1; i <= 4; i++) {
+            const el = document.getElementById(`process-step-${i}`);
+            if (el) el.style.display = 'none';
+        }
+        // 显示目标步骤
+        const target = document.getElementById(`process-step-${stepNum}`);
+        if (target) target.style.display = 'block';
+        
+        // 更新向导进度条
+        if (processWizard) {
+            processWizard.goToStep(stepNum - 1);
+        }
+    }
+
+    // 生成变更预览（按订单分组、正负差异分开显示）
+    function generateVerifyPreview() {
+        const content = document.getElementById('verify-changes-content');
+        const note = document.getElementById('process-note-input').value.trim();
+        const delayDate = document.getElementById('process-delay-date')?.value || '';
+        
+        // 生成新的延迟入库物流单号
+        const delayLogisticNum = processCurrentLogisticNum + '-D';
+        
+        let html = `
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="text-white-50 small mb-1" data-i18n="table.logistics_no">物流单号</div>
+                    <div class="text-white font-monospace">${processCurrentLogisticNum}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-white-50 small mb-1" data-i18n="table.receive_date">入库日期</div>
+                    <div class="text-white">${processCurrentReceiveDate}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-white-50 small mb-1" data-i18n="abnormal.process_note">处理备注</div>
+                    <div class="text-white">${note || (window.i18n?.t('js.none_parenthesis') || '(None)')}</div>
+                </div>
+            </div>
+            <hr class="border-secondary">
+        `;
+        
+        // 按订单分组显示
+        const poNums = Object.keys(processPoGroupedData).sort();
+        poNums.forEach(poNum => {
+            const poSelection = processPoMethodMap[poNum] || {};
+            const poItems = processPoGroupedData[poNum];
+            const currency = poItems[0]?.currency || 'RMB';
+            const badgeClass = currencyBadgeClass[currency] || 'bg-secondary';
+            
+            // 分离正负差异
+            const positiveItems = poItems.filter(item => (item.diff_quantity || 0) > 0);
+            const negativeItems = poItems.filter(item => (item.diff_quantity || 0) < 0);
+            const hasPositive = positiveItems.length > 0;
+            const hasNegative = negativeItems.length > 0;
+            
+            html += `
+                <div class="card bg-secondary bg-opacity-10 border-secondary mb-3">
+                    <div class="card-header bg-dark border-secondary py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="font-monospace text-white fw-bold">${escapeHtml(poNum)}</span>
+                            <span class="badge ${badgeClass} rounded-pill ms-2">${escapeHtml(currency)}</span>
+                        </div>
+                    </div>
+                    <div class="card-body py-2 px-3">
+            `;
+            
+            // 渲染正差异（少收: 入库<发货）部分
+            if (hasPositive && poSelection.positive) {
+                const posMethod = poSelection.positive;
+                const posCfg = methodConfig[posMethod];
+                html += `
+                    <div class="mb-3 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-warning small fw-bold"><i class="fas fa-minus-circle me-1"></i>少收处理 (${positiveItems.length} 个SKU)</span>
+                            <span class="badge ${posCfg.btnClass.replace('outline-', 'bg-')}">${posCfg.name}</span>
+                        </div>
+                `;
+                html += renderMethodPreview(positiveItems, posMethod, delayLogisticNum, delayDate);
+                html += '</div>';
+            }
+            
+            // 渲染负差异（多收: 入库>发货）部分
+            if (hasNegative && poSelection.negative) {
+                const negMethod = poSelection.negative;
+                const negCfg = methodConfig[negMethod];
+                html += `
+                    <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-success small fw-bold"><i class="fas fa-plus-circle me-1"></i>多收处理 (${negativeItems.length} 个SKU)</span>
+                            <span class="badge ${negCfg.btnClass.replace('outline-', 'bg-')}">${negCfg.name}</span>
+                        </div>
+                `;
+                html += renderMethodPreview(negativeItems, negMethod, delayLogisticNum, delayDate);
+                html += '</div>';
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+    }
+    
+    // 根据策略渲染预览
+    function renderMethodPreview(items, method, delayLogisticNum, delayDate) {
+        if (method === 1) {
+            return renderMethod1Preview(items);
+        } else if (method === 2) {
+            return renderMethod2Preview(items);
+        } else if (method === 3) {
+            return renderMethod3Preview(items, delayLogisticNum, delayDate);
+        } else if (method === 4) {
+            return renderMethod4Preview(items);
+        }
+        return '';
+    }
+    
+    // 策略1预览：仅修正发货单（发货量变更）
+    function renderMethod1Preview(items) {
+        let html = `
+            <table class="table table-sm table-dark mb-0">
+                <thead><tr class="text-white-50 small">
+                    <th>SKU</th><th class="text-end" data-i18n="common.unit_price">单价</th>
+                    <th class="text-center" data-i18n="table.ordered_qty">订单数量</th>
+                    <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                    <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                </tr></thead>
+                <tbody>
+        `;
+        items.forEach(item => {
+            const newSent = item.receive_quantity; // 发货量改为入库量
+            const price = (item.po_price || 0).toFixed(2);
+            html += `
+                <tr>
+                    <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                    <td class="text-end">${price}</td>
+                    <td class="text-center text-white-50">${item.po_quantity}</td>
+                    <td class="text-center">
+                        <span class="text-info">${item.sent_quantity}</span>
+                        <i class="fas fa-arrow-right mx-1 text-warning small"></i>
+                        <span class="text-success fw-bold">${newSent}</span>
+                    </td>
+                    <td class="text-center text-success">${item.receive_quantity}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    // 策略2预览：同步修正订单（发货量+订货量变更）
+    function renderMethod2Preview(items) {
+        let html = `
+            <table class="table table-sm table-dark mb-0">
+                <thead><tr class="text-white-50 small">
+                    <th>SKU</th><th class="text-end" data-i18n="common.unit_price">单价</th>
+                    <th class="text-center" data-i18n="table.ordered_qty">订单数量</th>
+                    <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                    <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                </tr></thead>
+                <tbody>
+        `;
+        items.forEach(item => {
+            const diff = item.diff_quantity || 0;
+            const newPo = item.po_quantity + diff;  // 订货量 + 差异
+            const newSent = item.receive_quantity;  // 发货量改为入库量
+            const price = (item.po_price || 0).toFixed(2);
+            html += `
+                <tr>
+                    <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                    <td class="text-end">${price}</td>
+                    <td class="text-center">
+                        <span class="text-info">${item.po_quantity}</span>
+                        <i class="fas fa-arrow-right mx-1 text-warning small"></i>
+                        <span class="text-success fw-bold">${newPo}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-info">${item.sent_quantity}</span>
+                        <i class="fas fa-arrow-right mx-1 text-warning small"></i>
+                        <span class="text-success fw-bold">${newSent}</span>
+                    </td>
+                    <td class="text-center text-success">${item.receive_quantity}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    // 策略3预览：延迟入库（原数据不变 + 延迟入库子单）
+    function renderMethod3Preview(items, delayLogisticNum, delayDate) {
+        // 原数据表格
+        let html = `
+            <div class="text-white-50 small mb-2" data-i18n="ui.text_2110">原数据（保持不变）：</div>
+            <table class="table table-sm table-dark mb-3">
+                <thead><tr class="text-white-50 small">
+                    <th>SKU</th><th class="text-end" data-i18n="common.unit_price">单价</th>
+                    <th class="text-center" data-i18n="table.ordered_qty">订单数量</th>
+                    <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                    <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                    <th class="text-center" data-i18n="table.variance">差异</th>
+                </tr></thead>
+                <tbody>
+        `;
+        items.forEach(item => {
+            const diff = item.diff_quantity || 0;
+            const dClass = diff > 0 ? 'text-success' : 'text-danger';
+            const price = (item.po_price || 0).toFixed(2);
+            html += `
+                <tr>
+                    <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                    <td class="text-end">${price}</td>
+                    <td class="text-center text-white-50">${item.po_quantity}</td>
+                    <td class="text-center text-info">${item.sent_quantity}</td>
+                    <td class="text-center text-success">${item.receive_quantity}</td>
+                    <td class="text-center ${dClass} fw-bold">${diff > 0 ? '+' : ''}${diff}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table>';
+        
+        // 延迟入库子单
+        html += `
+            <div class="card bg-warning bg-opacity-10 border-warning">
+                <div class="card-header bg-warning bg-opacity-25 border-warning py-2">
+                    <i class="fas fa-clock me-2 text-warning"></i>
+                    <span class="text-white fw-bold" data-i18n="abnormal.delayed_shipment">新建延迟入库发货单</span>
+                </div>
+                <div class="card-body py-2">
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <span class="text-white-50 small" data-i18n="ui.text_401">物流单号：</span>
+                            <span class="text-warning font-monospace">${escapeHtml(delayLogisticNum)}</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-white-50 small" data-i18n="ui.text_402">预计到货日期：</span>
+                            <span class="text-warning" data-i18n="ui.text_403">${delayDate || (window.i18n?.t('js.not_set') || 'Not Set')}</span>
+                        </div>
+                    </div>
+                    <table class="table table-sm table-dark mb-0">
+                        <thead><tr class="text-white-50 small">
+                            <th>SKU</th><th class="text-end" data-i18n="common.unit_price">单价</th>
+                            <th class="text-center" data-i18n="abnormal.delayed_qty">延迟入库数量</th>
+                        </tr></thead>
+                        <tbody>
+        `;
+        items.forEach(item => {
+            const diff = item.diff_quantity || 0;
+            // 只有少收（diff < 0）的才延迟入库
+            if (diff < 0) {
+                const delayQty = Math.abs(diff);
+                const price = (item.po_price || 0).toFixed(2);
+                html += `
+                    <tr>
+                        <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                        <td class="text-end">${price}</td>
+                        <td class="text-center text-warning fw-bold">${delayQty}</td>
+                    </tr>
+                `;
+            }
+        });
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+    
+    // 策略4预览：厂商错误（入库量变更 + 新增行）
+    function renderMethod4Preview(items) {
+        let html = `
+            <table class="table table-sm table-dark mb-0">
+                <thead><tr class="text-white-50 small">
+                    <th>SKU</th><th class="text-end" data-i18n="common.unit_price">单价</th>
+                    <th class="text-center" data-i18n="table.ordered_qty">订单数量</th>
+                    <th class="text-center" data-i18n="table.shipped_qty">发货数量</th>
+                    <th class="text-center" data-i18n="table.received_qty">入库数量</th>
+                    <th data-i18n="common.remark">备注</th>
+                </tr></thead>
+                <tbody>
+        `;
+        items.forEach(item => {
+            const diff = item.diff_quantity || 0;
+            const newReceive = item.sent_quantity;  // 入库量改为发货量
+            const price = (item.po_price || 0).toFixed(2);
+            
+            // 原始行（入库量变更）
+            html += `
+                <tr>
+                    <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                    <td class="text-end">${price}</td>
+                    <td class="text-center text-white-50">${item.po_quantity}</td>
+                    <td class="text-center text-info">${item.sent_quantity}</td>
+                    <td class="text-center">
+                        <span class="text-info">${item.receive_quantity}</span>
+                        <i class="fas fa-arrow-right mx-1 text-warning small"></i>
+                        <span class="text-success fw-bold">${newReceive}</span>
+                    </td>
+                    <td class="text-white-50">-</td>
+                </tr>
+            `;
+            
+            // 新增行
+            if (diff > 0) {
+                // 收大于发：0成本入库
+                html += `
+                    <tr class="bg-success bg-opacity-10">
+                        <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                        <td class="text-end text-success fw-bold">0.00</td>
+                        <td class="text-center text-success">${diff}</td>
+                        <td class="text-center text-success">${diff}</td>
+                        <td class="text-center text-success">${diff}</td>
+                        <td><span class="badge bg-success" data-i18n="abnormal.zero_cost">新增: 0成本入库</span></td>
+                    </tr>
+                `;
+            } else if (diff < 0) {
+                // 发大于收：原价出库耗损
+                const absDiff = Math.abs(diff);
+                html += `
+                    <tr class="bg-danger bg-opacity-10">
+                        <td class="font-monospace">${escapeHtml(item.po_sku)}</td>
+                        <td class="text-end">${price}</td>
+                        <td class="text-center text-danger">-${absDiff}</td>
+                        <td class="text-center text-danger">-${absDiff}</td>
+                        <td class="text-center text-danger">-${absDiff}</td>
+                        <td><span class="badge bg-danger" data-i18n="abnormal.original_cost">新增: 原价出库耗损</span></td>
+                    </tr>
+                `;
+            }
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+
+    // 确认执行处理
+    function confirmProcess() {
+        // 使用密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_abnormal_process',        // actionKey
+                (passwords) => submitProcessAsync(passwords),  // onSuccess，接收密码对象
+                null,                          // contextEl
+                (window.i18n?.t('js.handle_receive_abnormal') || 'Handle Receiving Abnormal'),                // actionDisplayName
+                (reason) => {}                 // onCancel
+            );
+        } else {
+            // 无密码验证，直接确认
+            if (confirm('{% trans "确定要执行此异常处理操作吗？" %}')) {
+                submitProcessAsync({});
+            }
+        }
+    }
+
+    // 异步提交处理
+    function submitProcessAsync(passwords) {
+        return new Promise((resolve, reject) => {
+            submitProcess(passwords, resolve, reject);
+        });
+    }
+
+    // 提交处理
+    function submitProcess(passwords, onSuccess, onError) {
+        const note = document.getElementById('process-note-input').value.trim();
+        
+        // 跳转到完成步骤
+        goToProcessStep(4);
+        
+        // 显示处理中状态
+        document.getElementById('process-result-icon').innerHTML = `
+            <div class="spinner-border text-warning mb-3" style="width: 80px; height: 80px;" role="status"></div>
+        `;
+        document.getElementById('process-result-title').textContent = '{% trans "正在处理..." %}';
+        document.getElementById('process-result-message').textContent = '{% trans "请稍候，正在执行异常处理..." %}';
+        
+        // 构建请求体，包含每个订单的策略选择
+        const delayDate = document.getElementById('process-delay-date')?.value || '';
+        const requestBody = {
+            logistic_num: processCurrentLogisticNum,
+            receive_date: processCurrentReceiveDate,
+            po_methods: processPoMethodMap,  // {po_num: method} 每个订单的处理策略
+            delay_date: delayDate,  // 延迟入库日期（如果有选择策略3）
+            note: note
+        };
+        
+        // 添加密码到请求
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+        
+        fetch(`{% url 'web_ui:purchase:abnormal_process' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // 成功
+                document.getElementById('process-result-icon').innerHTML = `
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-check fa-2x text-success"></i>
+                    </div>
+                `;
+                document.getElementById('process-result-title').textContent = '{% trans "处理成功" %}';
+                document.getElementById('process-result-title').className = 'text-success mb-3';
+                document.getElementById('process-result-message').textContent = 
+                    data.message || '{% trans "异常处理已完成。" %}';
+                
+                if (onSuccess) onSuccess();
+            } else {
+                // 失败
+                document.getElementById('process-result-icon').innerHTML = `
+                    <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-times fa-2x text-danger"></i>
+                    </div>
+                `;
+                document.getElementById('process-result-title').textContent = '{% trans "处理失败" %}';
+                document.getElementById('process-result-title').className = 'text-danger mb-3';
+                document.getElementById('process-result-message').textContent = 
+                    data.message || '{% trans "异常处理时发生错误" %}';
+                
+                if (onError) onError();
+            }
+        })
+        .catch(err => {
+            // 错误
+            document.getElementById('process-result-icon').innerHTML = `
+                <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-25 rounded-circle mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+            `;
+            document.getElementById('process-result-title').textContent = '{% trans "请求失败" %}';
+            document.getElementById('process-result-title').className = 'text-danger mb-3';
+            document.getElementById('process-result-message').textContent = 
+                '{% trans "网络错误" %}: ' + err;
+            
+            if (onError) onError();
+        });
+    }
+</script>

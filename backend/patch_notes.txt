@@ -1,0 +1,137 @@
+VERSION=V2.5.0
+
+[V1.0.0] 2025-08-10
+奠基版本发布
+- 核心工具集：发布了基础 Python 脚本工具包。
+- 基础功能：支持 SKU 销量统计、库存上传以及基础交易数据的清洗与处理。
+
+[V1.1.0] 2025-09-28
+财务模块集成
+- 多源数据集成：集成了 Order Earning 资金流数据源，实现了业财一体化。
+- 逻辑优化：在交易处理逻辑中引入了基于哈希 (Hash) 的去重算法，提升了数据处理的准确性。
+- 报表系统：发布了多维度的盈亏分析报表体系。
+
+[V1.2.0] 2025-11-29
+智能化运维模块
+- 机器学习集成：集成了 K-Means 聚类和 PCA 降维算法，实现了 SKU 的自动化打标与分层。
+- 高级分析工具：新增了 Listing 流量诊断工具与 Combo 组合策略评估模型。
+
+[V1.3.0] 2025-12-02
+Web 应用化转型
+- UI/UX 全面升级：从命令行脚本迁移至 Streamlit Web 框架，实现了交互式可视化操作界面。
+- CRM 客户管理模块：引入了基于 RFM (最近一次消费、消费频率、消费金额) 模型的客户价值分析功能，支持精准用户画像。
+
+[V1.4.0] 2025-12-04
+企业级架构重构
+- 自动化 ETL 流水线：发布了覆盖数据加载 (Ingest)、解析 (Parsing)、转换 (Transformation) 和归档 (Archiving) 的全生命周期自动化处理流程。
+- 灾难恢复系统：引入了具备时间点恢复能力的数据库备份与还原中心 (Backup & Restore Center)。
+- 基础设施升级：实现了配置与代码的完全分离 (Configuration Decoupling)；前端架构全面迁移至组件化 UI 模式 (Component-Based UI)。
+
+[V1.4.1] 2025-12-05
+核心数据完整性与算法热修复
+- ETL 智能去重 (Smart Upsert)：实施了基于时间窗口剪枝和四维复合主键 (Seller + Order + Item + Action) 匹配的分区去重策略，实现了毫秒级精准覆盖，彻底消除了误删历史数据的风险。
+- 全链路归一化 (Global Normalization)：在所有分析器 (Sales, Profit, Ordering, Prediction) 中强制实施严格的 SKU 归一化标准（大写/去空格），解决了报表首列重复和统计偏差问题。
+- 数据流加固 (Data Pipeline Hardening)：修复了 Repository 到 Analyzer 传输过程中的静默数据丢失问题；增强了数据仓库中日期格式解析的容错能力。
+- Bug 修复：修正了销量统计分析中店铺分桶统计丢失的问题，并补全了智能补货计划中的状态备注字段。
+
+[V1.5.0] 2025-12-05
+企业级安全架构与性能革命
+- 企业级安全架构 (Enterprise Security Architecture)：实施了 PBKDF2-SHA256 密码加密存储与防暴力破解策略；敏感操作引入"操作密码+确认短语"双重校验机制，全面提升系统安全性。
+- 高性能 ETL 引擎 (High-Performance ETL Engine)：核心转换逻辑升级为 Pandas 向量化矩阵运算，摒弃低效循环，处理速度提升 20-50 倍；引入 Staging Table 原子写入策略，确保多店铺数据并发上传时的绝对一致性。
+- 深度审计系统 (Deep Audit System)：发布了显微镜级业务审计日志，支持数据变更的"修改前 vs 修改后"逐字段比对，实现全链路操作可追溯。
+- 用户权限与运维增强 (User Access & Ops Enhancement)：构建了基于 RBAC 的细粒度权限控制体系，支持针对 ETL、报表等模块的独立鉴权；新增数据库运维"危险区域"，支持一键重置测试环境（仅清空流水，保留用户与基础档案）。
+
+[V1.6.0] 2025-12-10
+分布式并发架构与安全权限重塑 (Distributed Concurrency & Security Governance)
+用户权限模型重设计 (RBAC Redesign)：
+- 在原有的粗粒度 RBAC 基础上，全面升级了对模块、Tab 页面及操作动作的三级授权设计。
+- 这一设计允许管理员精确配置用户对核心功能如 ETL、报表等模块的访问权限，实现了真正的最小权限原则。
+分布式并发控制架构 (Distributed Concurrency Control)：
+- 架构核心引入了基于数据库持久化的分布式锁管理器 (LockManager)。
+- 对 ETL 交易数据导入、库存同步和 SKU 档案维护等核心写入资源实施了严格的互斥锁机制。
+会话级安全回滚机制 (Session-Level Safety Rollback)：
+- 系统现在深度绑定了会话生命周期与数据完整性。
+- 一旦检测到用户在 ETL 流程中途异常退出或强制登出，系统将自动检查并释放其持有的锁，并立即触发脏数据回滚程序，清空原始表中的未提交数据，防止数据污染。
+
+[V2.0.0] 2025-12-17
+全栈架构迁移与现代化 UI 重塑 (Full-Stack Migration & Modern UI Overhaul)
+后端架构升级 (Backend Architecture Upgrade)：
+- 核心框架迁移：从 Streamlit 单体应用全面迁移至 Django 后端框架，实现了真正的前后端分离架构，解决了 Streamlit 在并发处理、路由控制和中间件扩展方面的固有局限。
+- 模块化应用设计：业务功能拆分为独立的 Django Apps (ETL, Reports, Audit, User Admin, DB Admin, Visuals)，每个模块拥有独立的 URL 路由、视图层和业务逻辑，显著提升了代码的可维护性和可扩展性。
+- 中间件架构：引入 Django Middleware 机制，实现了全局异常捕获、会话超时检测、审计上下文注入等横切关注点的统一处理。
+- RESTful API 层：引入 Django REST Framework，为未来移动端和第三方系统集成预留了标准化 JSON 接口。
+现代化 UI 框架 (Modern UI Framework)：
+- 模板引擎升级：从 Streamlit 内置组件迁移至 Django Template + Jinja2，获得了对 HTML/CSS/JS 的完全控制能力。
+- 前端技术栈：采用 Bootstrap 5 + HTMX + Alpine.js 组合，在保持服务端渲染 (SSR) 架构的同时，实现了媲美 SPA 的无刷新交互体验。
+- 组件化设计：Tab 页面、表单、表格等 UI 元素均采用可复用的 Django Template Includes，统一了全站视觉风格。
+- 玻璃拟态设计语言：采用 Glassmorphism 视觉风格，引入半透明磨砂玻璃卡片、动态视频背景和 CSS 微动画。
+安全与审计增强 (Security & Audit Enhancement)：
+- 全局异常中间件：前端 JavaScript 运行时错误与后端 HTTP 4xx/5xx 异常统一通过 API 上报至系统故障日志表，实现端到端的错误追踪。
+- 审计日志结构化存储：操作日志从文件存储迁移至数据库表，支持按用户、时间、操作类型的实时检索与筛选。
+- 上下文追踪机制：通过 AuditContextManager 在请求生命周期内维护 trace_id、用户、IP 等信息，确保日志的完整关联性。
+
+[V2.5.0] 2026-01-12
+企业级平台全面升级 (Enterprise Platform Major Upgrade)
+【全栈国际化架构 (Full-Stack i18n Architecture)】
+- 三轨同步体系 (Triple-Track Synchronization)：实现 Django 服务端 (gettext)、前端 JavaScript (i18n.js)、元数据配置 (modules.json) 的完全对齐，达成平台级 100% 国际化覆盖率。
+- 模板全面治理：208+ 模板完成国际化改造，包含 565+ 翻译键、439 个本地化属性 (data-i18n)、25 个动态 JS 触发器。
+- 语言质量标准：全部 100+ 高频 UI 术语经过专业润色，严格遵循"无中式英语 (No Chinglish)"标准，确保语义专业、表达自然。
+- 实时语言切换：基于 localStorage 持久化的语言切换机制，实现页面刷新后 Django 后端上下文同步更新。
+企业级审计日志系统 V7.0 (Unified Observability V7.0)
+- 4 表数据库架构：构建 log_error (系统故障)、log_audit (安全审计)、log_business (业务追踪)、log_access (访问指标) 的结构化日志体系。
+- 零配置自动采集：通过全局中间件 (GlobalExceptionMiddleware、AccessLogMiddleware) 和 Django Signals，实现 100% 异常和操作的自动化捕获。
+- Apple 风格法证仪表盘：6 标签页 Glassmorphism 设计，支持 God Mode 敏感数据脱敏/解锁、开发模式隔离、错误哈希聚合去重。
+- 生命周期管理：Access 日志 30 天、Business 日志 90 天自动轮换，Error/Audit 日志永久归档。
+- 完全替代遗留系统：原 apps.audit 模块已降级为导航兼容层，平台 100% 使用新 V7.0 基础设施。
+全生命周期入库供应链管理 (Full-Lifecycle Inbound Supply Chain)
+- 采购订单管理 (PO)：支持创建、修改、删除、恢复全流程，Excel 模板上传、SKU 模糊匹配修正、策略价格版本控制。
+- 发货单管理 (Send)：多 PO 合并发货、重量体积管理、整单删除级联恢复 PO 余额。
+- 收货管理 (Receive)：实体货物核验、差异追踪、短装/超装智能分流处理。
+- 异常处理中心 (Abnormality)：混合法证模型，支持延迟收货、供应商补货、核销处理等 6+ 策略路径。
+- 审计版本标准：采用 L##/V##/D## 序列号实现全操作链可追溯。
+- 三态同步机制 (Triple-Resolution Bridge)：PO→Send→Receive 严格余额校验，防止超发超收。
+FIFO 动态库存成本核算系统 (FIFO Landed Price Oracle)
+- 三表成本引擎：in_dynamic_tran (交易流水)、in_dynamic_fifo_layers (成本分层)、in_dynamic_fifo_alloc (分配映射) 实现精准成本追踪。
+- 管道估值逻辑 (Pipeline Valuation)：区分"已订购"、"在途中"、"已入库"三阶段成本，提供供应链全链路财务可视化。
+- 交互式库存仪表盘：支持粘性表头、多列排序、可折叠成本术语表、平均成本/当前成本双指标对比。
+- 出库成本基准：基于最老 FIFO 分层的分配价格，确保先进先出原则下的精准成本消耗。
+财务模块全功能部署 (Finance Module Full Deployment)
+- 物流结算 (Logistics Finance)：发货单批量付款向导，支持统一汇率应用、多币种堆叠显示、额外费用管理。
+- 采购定金管理 (Deposit)：PO 定金预付、FIFO 扣减模型、六维汇总投影器。
+- 订单尾款结算 (PO Balance)：最终采购成本支付，异常订单核销门控。
+- 供应商预付账户 (Prepay)：分体式账页探索模式 (Split-Pane Ledger)，起始余额、流水余额逐行累计。
+- 终端删除策略 (Terminal Deletion Policy)：财务disbursement 一旦确认即不可编辑，只能删除重建，保障估值诚信和审计简洁性。
+- 实物资产审计：GlobalFileViewer + GlobalFileUpload 支持收据/票据全视口查看，L0 密码门控。
+仓库货架管理 3D 可视化系统 (Warehouse Shelf Management 3D)
+- 6 层物理层级：仓库-通道-跨-层-格-位的精准物理建模。
+- Three.js WebGL 渲染：通用颗粒渲染器 (Universal Granular Renderer)，支持槽位级几何递归细分。
+- 规划向导：5 步顺序细化流程，支持异构跨配置、实时 3D 预览反馈。
+- 交互式选址：点击 3D 网格即时检索位置数据，支持发光高亮选中。
+- 工业条码生成：4x6 英寸热敏标签、Data Matrix 2D 条码、-90° 旋转排版、ZIP 批量导出带进度反馈。
+GlobalWizard 组件架构升级 (GlobalWizard Component Evolution)
+- 强锚定模式 (Strong Anchor Pattern)：data-wizard-stepbar-anchor 显式定位，杜绝布局漂移。
+- 44+ 高级流程控制模式：认证门控步骤、模态回退、条件跳过、模块化步骤分片、统一输入控制箱、多实体分组块等。
+- 无损回退 (Non-Destructive Regression)：返回上一步不清除已输入数据，支持状态优先水合。
+- 终端生命周期转换：完成步骤的"返回"按钮自动转化为"新建"或"返回首页"操作。
+企业级权限与安全矩阵升级 (Security & Authorization Upgrade)
+- V3.0 分层权限树：module → submodule → tab 三级颗粒度，支持完全委托授权。
+- 密码策略矩阵 (L0-L4)：L0 身份模式 (用户密码)、L1-L4 共享密钥模式，完全热加载无需重启。
+- 实时角色同步：role_version 机制实现用户端即时权限刷新，无需登出登入。
+- 自动化一致性审计：100% 路径连通性验证，7 处"安全剧场"遗漏已堵塞。
+- 现代化 AJAX 门控：Parse → Verify 顺序标准，防止请求体流耗尽问题。
+数据库回滚与恢复系统 (Database Rollback & Restoration)
+- 统一 rollback_config.json：功能→表映射、白名单、轮换规则 (10 文件/90 天) 集中配置。
+- 3 步 D03 回档向导：选择→顺序验证 (最新优先)→执行，Apple 风格进度条。
+- 零缓冲流式恢复：防止大快照内存溢出。
+- 消费后自动清理：成功恢复的 .sql 文件自动删除，确保状态机一致性。
+平台基础设施强化 (Platform Infrastructure Hardening)
+- 统一字符集标准：全库 43 表统一为 utf8mb4_unicode_ci，杜绝 JOIN 排序规则冲突。
+- 模块化视图包：业务视图按子功能拆分为独立 Python 包，提升可维护性。
+- 留页子视图模式 (Stay-on-Page Sub-view)：批量操作无跳转，保持父页 URL 和过滤状态。
+- 全局汇率组件 (GlobalExchangeRate)：日期绑定自动发现、A/M 来源标签、多源降级 (ER-API→Frankfurter)。
+- 遗留系统退役：Streamlit 框架、ai_chat 模块、旧审计应用 UI 全部清理。
+开发规范与工程标准
+- 日志优先法则 (Log-First Foundation Rule)：所有业务逻辑前置日志记录。
+- 前缀根导入标准：from backend.xxx 绝对路径导入。
+- 整数数量标准：库存和订单数量强制使用整数类型。
+- 72+ 常见陷阱文档：涵盖阶段数据反同步、请求体流耗尽、SQL 绑定失败、JOIN 模式假设等。

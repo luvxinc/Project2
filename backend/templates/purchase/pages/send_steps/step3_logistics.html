@@ -1,0 +1,205 @@
+<!-- Step 3: 录入物流参数 -->
+<div id="send-step-logistics" class="wizard-step-content">
+    <form id="form-send-logistics" autocomplete="off" onkeydown="return event.key != 'Enter';">
+        {% csrf_token %}
+
+        <!-- 日期行 -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <label class="form-label text-white-50 small">
+                    发货日期 <span class="badge bg-secondary bg-opacity-50 ms-2" data-i18n="ui.text_1023">已在上一步设置</span>
+                </label>
+                <input type="date" 
+                       class="form-control bg-secondary bg-opacity-25 border-secondary text-white" 
+                       id="send_date_sent_display" 
+                       readonly 
+                       disabled>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t4926" title="请选择预计到达日期">
+                    预计到达日期 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                </label>
+                <input type="date" 
+                       class="form-control bg-dark border-secondary text-white" 
+                       id="send_date_eta" 
+                       name="date_eta" 
+                       required 
+                       data-bs-toggle="tooltip" 
+                       data-i18n-title="tooltip.t4926" title="请选择预计到达日期">
+            </div>
+        </div>
+
+        <!-- Excel数据来源提示（仅Excel模式显示） -->
+        <div id="excel-data-notice" class="alert alert-success mb-4" style="display: none;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-file-excel fa-2x me-3 text-success"></i>
+                <div class="flex-grow-1">
+                    <strong class="text-success" data-i18n="ui.text_1024">物流参数已从Excel文件自动填充</strong>
+                    <p class="mb-0 text-white-50 small mt-1" data-i18n="ui.text_1025">
+                        以下数据来源于您上传的发货模板，如需修改请点击对应输入框进行编辑
+                    </p>
+                </div>
+                <span class="badge bg-success bg-opacity-25 text-success" data-i18n="ui.text_1021">自动填充</span>
+            </div>
+        </div>
+
+        <!-- 物流参数名片卡片 -->
+        <div id="logistics-params-card" class="card bg-dark border-secondary border-opacity-25 mb-4">
+            <div class="card-header bg-secondary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-truck me-2 text-info"></i>
+                    <span class="text-white" data-i18n="wizard.send_logistics">物流参数</span>
+                </span>
+                <span class="badge bg-info bg-opacity-25 text-info" data-i18n="ui.text_1028">请填写以下信息</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3" id="logistics-display-grid">
+                    <!-- 物流单号 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t4335" title="请输入物流订单号">
+                            物流单号 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control bg-dark border-secondary text-white" 
+                               id="send_logistic_num" 
+                               name="logistic_num"
+                               data-i18n-placeholder="form.placeholder.generic_17" placeholder="请输入物流单号"
+                               required 
+                               data-bs-toggle="tooltip" 
+                               data-i18n-title="tooltip.t4335" title="请输入物流订单号">
+                    </div>
+                    
+                    <!-- 托盘数 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t4078" title="请输入发货托盘总数，散货请填0">
+                            托盘数 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" 
+                               class="form-control bg-dark border-secondary text-white" 
+                               id="send_pallets" 
+                               name="pallets"
+                               min="0"
+                               step="1"
+                               value="0"
+                               required 
+                               data-bs-toggle="tooltip" 
+                               data-i18n-title="tooltip.t4078" title="请输入发货托盘总数，散货请填0">
+                    </div>
+                    
+                    <!-- 发货总重量 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t8047" title="请输入发货总重量，单位为公斤KG，系统将进一法取整">
+                            发货总重量(KG) <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" 
+                                   class="form-control bg-dark border-secondary text-white" 
+                                   id="send_total_weight" 
+                                   name="total_weight"
+                                   min="0.01"
+                                   step="0.01"
+                                   data-i18n-placeholder="form.placeholder.generic_16" placeholder="输入重量"
+                                   required 
+                                   data-bs-toggle="tooltip" 
+                                   data-i18n-title="tooltip.t1040" title="请输入发货总重量，单位为公斤KG">
+                            <span class="input-group-text bg-dark border-secondary text-white-50">KG</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 物流单价 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t55" title="请输入物流单价，单位为元RMB/公斤KG">
+                            物流单价(RMB/KG) <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-warning">¥</span>
+                            <input type="number" 
+                                   class="form-control bg-dark border-secondary text-white" 
+                                   id="send_price_kg" 
+                                   name="price_kg"
+                                   min="0.01"
+                                   step="0.01"
+                                   data-i18n-placeholder="form.placeholder.generic_15" placeholder="输入单价"
+                                   required 
+                                   data-bs-toggle="tooltip" 
+                                   data-i18n-title="tooltip.t55" title="请输入物流单价，单位为元RMB/公斤KG">
+                            <span class="input-group-text bg-dark border-secondary text-white-50">/KG</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 物流总价格（自动计算） -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t8103" title="物流总价格，自动计算 = 总重量(取整) × 单价">
+                            物流总价格(RMB) <i class="fas fa-calculator ms-1 text-success"></i>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-success bg-opacity-25 border-success text-success">¥</span>
+                            <input type="text" 
+                                   class="form-control bg-success bg-opacity-10 border-success text-success fw-bold" 
+                                   id="send_total_price" 
+                                   readonly
+                                   value="0.00"
+                                   data-bs-toggle="tooltip" 
+                                   data-i18n-title="tooltip.t2626" title="物流总价格，单位为元RMB（自动计算）">
+                        </div>
+                        <small class="text-success mt-1 d-block">
+                            <i class="fas fa-info-circle me-1"></i><span data-i18n="ui.icon_3323">总价格 = 总重量(进一取整) × 单价</span>
+                        </small>
+                    </div>
+                    
+                    <!-- 结算汇率 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t1331" title="根据发货日期自动获取USD/RMB汇率买入价，若无法获取需手动填写">
+                            结算汇率(USD/RMB) <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" 
+                                   class="form-control bg-dark border-secondary text-white" 
+                                   id="send_usd_rmb" 
+                                   name="usd_rmb"
+                                   min="1"
+                                   step="0.0001"
+                                   data-i18n-placeholder="form.placeholder.generic_14" placeholder="自动获取中..."
+                                   readonly
+                                   data-bs-toggle="tooltip" 
+                                   data-i18n-title="tooltip.t3205" title="根据发货日期自动获取USD/RMB汇率买入价">
+                            <button type="button" 
+                                    class="btn btn-outline-warning" 
+                                    id="btn-refresh-rate"
+                                    data-bs-toggle="tooltip"
+                                    data-i18n-title="tooltip.t5061" title="重新获取汇率">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <small id="rate-status" class="text-white-50 mt-1 d-block">
+                            <i class="fas fa-clock me-1"></i><span data-i18n="js.select_date_first">请先选择发货日期</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                    id="btn-wizard-back-2"
+                    data-bs-toggle="tooltip"
+                    data-i18n-title="common.back_prev" title="返回上一步">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back">返回</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-success btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-next-2" 
+                    disabled
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t5198" title="进入下一步验证物流参数">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="ui.icon_3260">下一步：验证参数</span>
+            </button>
+        </div>
+    </div>
+</div>

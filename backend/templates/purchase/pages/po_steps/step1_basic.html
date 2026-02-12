@@ -1,0 +1,139 @@
+<!-- Step 1: 基本信息（日期+供应商+下载模板） -->
+<div id="po-step-basic" class="wizard-step-content">
+    <div class="card bg-dark border-info border-opacity-25 mb-4">
+        <div class="card-header bg-info bg-opacity-10 border-0">
+            <i class="fas fa-info-circle me-2 text-info"></i>
+            <span class="text-info fw-bold" data-i18n="common.operation_notes">操作须知</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <h6 class="text-white mb-3"><i class="fas fa-clipboard-list me-2"></i><span data-i18n="shipping.workflow_title">操作流程</span></h6>
+                    <ol class="text-white-50 small mb-0">
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_934">选择基本信息</strong>：<span data-i18n="instructions.po_basic_select">选择订单日期和供应商</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_905">下载模板</strong>：<span data-i18n="instructions.po_basic_download">点击下方按钮下载已预填日期和供应商的采购订单Excel模板</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_936">选择录入方式</strong>：<span data-i18n="instructions.po_basic_mode">选择手动填写或上传Excel文件</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="ui.text_937">配置合同策略</strong>：<span data-i18n="instructions.po_basic_contract">系统自动匹配合同策略，可选择使用或自定义</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info" data-i18n="wizard.po_items">录入商品</strong>：<span data-i18n="instructions.po_basic_items">上传Excel或手动填写商品明细</span>
+                        </li>
+                        <li>
+                            <strong class="text-info" data-i18n="ui.text_909">生成订单</strong>：<span data-i18n="instructions.po_basic_generate">系统校验后生成正式采购订单（PO）</span>
+                        </li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i><span data-i18n="ui.icon_3050">注意事项</span>
+                    </h6>
+                    <ul class="text-white-50 small mb-0">
+                        <li class="mb-2">
+                            <span data-i18n="instructions.po_notes_excel">上传的Excel仅用于商品明细录入，</span><strong class="text-warning" data-i18n="ui.text_910">非最终采购订单</strong>
+                        </li>
+                        <li class="mb-2" data-i18n="ui.text_911">
+                            最终正式PO将由系统生成并提供下载
+                        </li>
+                        <li class="mb-2">
+                            <span data-i18n="instructions.po_notes_add_supplier">如需新增供应商，请先前往</span>
+                            <a href="{% url 'web_ui:purchase:supplier_add_page' %}" class="text-info" data-i18n="purchase.supplier_create">新增供应商</a> <span data-i18n="notes.page_to_create">页面完成创建</span>
+                        </li>
+                        <li class="mb-2">
+                            <span data-i18n="instructions.po_notes_add_sku">如需新增SKU，请先前往</span>
+                            <a href="/dashboard/products/add/" class="text-info" data-i18n="nav.products_add">Add Product</a> <span data-i18n="notes.page_to_create">页面完成创建</span>
+                        </li>
+                        <li>
+                            <span data-i18n="instructions.po_notes_manual">您也可以在后续步骤手动逐行填写商品信息</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 日期和供应商选择 -->
+    <div class="card bg-dark border-primary border-opacity-25 mb-4">
+        <div class="card-header bg-primary bg-opacity-10 border-0">
+            <i class="fas fa-cog me-2 text-primary"></i>
+            <span class="text-primary fw-bold" data-i18n="wizard.po_basic">基本信息</span>
+            <span class="text-danger ms-2">*</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t6308" title="选择采购订单日期">
+                        <span data-i18n="table.order_date">订单日期</span> <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" 
+                           class="form-control bg-dark border-secondary text-white" 
+                           id="id_po_date_step1" 
+                           name="po_date_step1" 
+                           required 
+                           data-bs-toggle="tooltip" 
+                           data-i18n-title="tooltip.t4669" title="选择订单生效日期">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t3729" title="选择该订单的供应商">
+                        <span data-i18n="form.label.select_supplier">选择供应商</span> <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select bg-dark border-secondary text-white" 
+                            id="id_supplier_code_step1" 
+                            name="supplier_code_step1" 
+                            required 
+                            data-bs-toggle="tooltip" 
+                            data-i18n-title="tooltip.t5825" title="从列表中选择供应商">
+                        <option value="" data-i18n="option.o8319">-- 请选择供应商 --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 下载模板区域（填写日期和供应商后显示） -->
+    <div id="po-download-template-card" class="card bg-dark border-success border-opacity-25 mb-4" style="display: none;">
+        <div class="card-header bg-success bg-opacity-10 border-0">
+            <i class="fas fa-download me-2 text-success"></i>
+            <span class="text-success fw-bold" data-i18n="ui.text_916">下载订单模板</span>
+        </div>
+        <div class="card-body text-center py-4">
+            <p class="text-white-50 mb-3">
+                <i class="fas fa-file-excel fa-3x text-success opacity-50 mb-3 d-block"></i>
+                模板已预填日期「<span id="template-preview-date" class="text-info fw-bold"></span>」和供应商「<span id="template-preview-supplier" class="text-success fw-bold"></span>」<br>
+                点击下方按钮下载模板，按格式填写商品明细后上传
+            </p>
+            <button type="button" 
+                    class="btn btn-success btn-lg rounded-pill px-5 shadow"
+                    id="btn-download-prefilled-template"
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t9538" title="下载预填好日期和供应商的采购订单Excel模板">
+                <i class="fas fa-file-excel me-2"></i><span data-i18n="ui.icon_3288">下载采购订单模板</span>
+            </button>
+            <p class="text-white-50 small mt-3 mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                若选择手动填写，可跳过下载直接点击"开始创建"按钮
+            </p>
+        </div>
+    </div>
+    
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left"></div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-primary btn-lg px-5 shadow rounded-pill" 
+                    id="btn-wizard-next-1"
+                    disabled
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="modal.select_date_supplier" title="请先选择日期和供应商">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="ui.icon_3289">开始创建</span>
+            </button>
+        </div>
+    </div>
+</div>

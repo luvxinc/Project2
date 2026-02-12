@@ -1,0 +1,328 @@
+{% load security_tags %}
+
+<div class="glass-card p-4">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-success bg-opacity-25 p-3 rounded-circle me-3">
+            <i class="fas fa-boxes-stacked fa-2x text-success"></i>
+        </div>
+        <div>
+            <h5 class="text-white mb-1" data-i18n="inventory.upload_wizard_title">盘存数据处理向导</h5>
+            <p class="text-white-50 small mb-0" data-i18n="etl.inventory_desc">上传盘点 CSV 文件，系统将<span data-i18n="ui.execute">执行</span>: <span data-i18n="instructions.desc_87">校验 → 修正 → 同步</span></p>
+        </div>
+    </div>
+
+    <!-- Stage Indicator (similar to Transaction wizard) -->
+    <div class="d-flex justify-content-center mb-4" id="inv-stage-indicator">
+
+        <!-- Step 1: Upload -->
+        <div class="stage-step {% if stage == 'upload' or not stage %}active{% endif %}{% if stage == 'validate' or stage == 'fix' or stage == 'done' %} completed{% endif %}"
+            data-stage="upload">
+            <div class="step-box">
+                {% if stage == 'validate' or stage == 'fix' or stage == 'done' %}
+                <i class="fa-solid fa-check"></i>
+                {% else %}
+                1
+                {% endif %}
+            </div>
+            <div class="step-label" data-i18n="common.upload">上传</div>
+        </div>
+        <div
+            class="stage-connector{% if stage == 'validate' or stage == 'fix' or stage == 'done' %} completed{% endif %}">
+        </div>
+
+        <!-- Step 2: Validate -->
+        <div class="stage-step {% if stage == 'validate' %}active{% endif %}{% if stage == 'fix' or stage == 'done' %} completed{% endif %}"
+            data-stage="validate">
+            <div class="step-box">
+                {% if stage == 'fix' or stage == 'done' %}
+                <i class="fa-solid fa-check"></i>
+                {% else %}
+                2
+                {% endif %}
+            </div>
+            <div class="step-label" data-i18n="etl.step_validate">校验</div>
+        </div>
+        <div class="stage-connector{% if stage == 'fix' or stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 3: Fix (optional) -->
+        <div class="stage-step {% if stage == 'fix' %}active{% endif %}{% if stage == 'done' %} completed{% endif %}"
+            data-stage="fix">
+            <div class="step-box">
+                {% if stage == 'done' %}
+                <i class="fa-solid fa-check"></i>
+                {% else %}
+                3
+                {% endif %}
+            </div>
+            <div class="step-label" data-i18n="js.correct">修正</div>
+        </div>
+        <div class="stage-connector{% if stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 4: Done -->
+        <div class="stage-step {% if stage == 'done' %}completed{% endif %}" data-stage="done">
+            <div class="step-box"><i class="fa-solid fa-flag-checkered"></i></div>
+            <div class="step-label" data-i18n="js.complete">完成</div>
+        </div>
+
+    </div>
+
+    <hr class="border-secondary border-opacity-25 my-4">
+
+    <!-- Data Cutoff Date Notice (Inventory version) -->
+    <div class="alert border-success border-opacity-50 mb-4" style="background: rgba(25, 135, 84, 0.1);">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-calendar-check fa-2x text-success me-3"></i>
+            <div>
+                <strong class="text-success" data-i18n="etl.cutoff_date">当前盘存数据截止日期</strong>
+                <p class="text-white mb-0 mt-1">
+                    <span data-i18n="etl.latest_record">盘存表最新记录至:</span>
+                    <span class="badge bg-success text-white fs-6 ms-2">{{ inv_latest_date }}</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Content Area -->
+    <div id="inv-process-area">
+        {% if stage == 'done' %}
+        <!-- Success State -->
+        <div class="text-center py-5">
+            <i class="fa-solid fa-check-circle display-3 text-success mb-3"></i>
+            <h4 class="text-white" data-i18n="etl.sync_complete">库存同步完成!</h4>
+            <p class="text-muted">{{ result_message }}</p>
+            <button class="btn btn-outline-primary mt-3"
+                hx-get="{% url 'web_ui:inventory:stocktake_etl:tab_inventory' %}" hx-target="#inv-process-area">
+                <i class="fa-solid fa-rotate me-2"></i><span data-i18n="etl.start_new_sync">开始新同步</span>
+            </button>
+        </div>
+        {% else %}
+        <!-- Upload Form -->
+        <form id="inv-form" hx-post="{% url 'web_ui:inventory:stocktake_etl:inv_validate' %}"
+            hx-target="#inv-process-area" hx-encoding="multipart/form-data" hx-indicator="#inv-spinner">
+
+            {% csrf_token %}
+
+            <div class="row g-4 mb-4">
+                <!-- File Upload Zone (matching Transaction style) -->
+                <div class="col-md-8">
+                    <div class="upload-zone p-4 text-center rounded-3"
+                        style="border: 2px dashed rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); min-height: 180px;"
+                        ondragover="this.style.borderColor='#198754'; event.preventDefault();"
+                        ondragleave="this.style.borderColor='rgba(255,255,255,0.2)';" ondrop="handleInvDrop(event)">
+
+                        <i class="fa-solid fa-file-csv display-5 text-success mb-3"></i>
+                        <p class="text-white mb-2" data-i18n="etl.drag_csv">拖拽 CSV 文件到此处，或点击选择</p>
+                        <p class="text-muted small mb-3" data-i18n="etl.require_columns">需包含 SKU 和 Quantity 列</p>
+
+                        <input type="file" name="inv_file" id="inv-file" class="d-none" accept=".csv" required
+                            onchange="updateInvFileDisplay()">
+
+                        <button type="button" class="btn btn-outline-success px-4"
+                            onclick="document.getElementById('inv-file').click()">
+                            <i class="fa-solid fa-folder-open me-2"></i><span data-i18n="etl.select_file">选择文件</span>
+                        </button>
+                    </div>
+
+                    <!-- Selected File Preview -->
+                    <div id="inv-file-display" class="mt-3 d-none">
+                        <span class="badge bg-success bg-opacity-25 text-success py-2 px-3 fs-6">
+                            <i class="fa-solid fa-file me-1"></i>
+                            <span id="inv-file-name"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Date Picker -->
+                <div class="col-md-4">
+                    <label class="form-label text-white">
+                        <i class="fa-solid fa-calendar me-1"></i><span data-i18n="etl.target_date">归属日期</span>
+                    </label>
+                    <input type="date" name="target_date" id="inv-target-date"
+                        class="form-control bg-dark text-white border-secondary" value="{{ today }}" required
+                        onchange="checkDateExists(this.value)">
+                    <div class="form-text text-muted" data-i18n="etl.date_hint">选择该盘存数据对应的日期</div>
+
+                    <!-- Date Exists Warning -->
+                    <div id="date-exists-warning" class="mt-2 d-none">
+                        <div class="alert alert-warning py-2 px-3 mb-0"
+                            style="background: rgba(255, 193, 7, 0.15); border-color: #ffc107;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            <small data-i18n="etl.date_exists_warning">该日期已存在记录，继续将会覆盖原有记录。</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 校验不需要密码验证 -->
+
+            <div class="d-flex justify-content-end gap-3">
+                <div id="inv-spinner" class="htmx-indicator">
+                    <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                    <span class="text-success ms-2" data-i18n="etl.validating">校验中...</span>
+                </div>
+
+                <button type="submit" class="btn btn-success px-4">
+                    <i class="fa-solid fa-magnifying-glass me-2"></i><span data-i18n="etl.start_validate">开始校验</span>
+                </button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .stage-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+    }
+
+    /* Active step: pulsing green glow border */
+    .stage-step.active {
+        opacity: 1;
+    }
+
+    .stage-step.active .step-box {
+        background: transparent;
+        border: 2px solid #20c997;
+        animation: pulseGlowGreen 1.5s ease-in-out infinite;
+        color: #20c997;
+    }
+
+    /* Completed step: green background */
+    .stage-step.completed {
+        opacity: 1;
+    }
+
+    .stage-step.completed .step-box {
+        background: linear-gradient(135deg, #198754, #20c997);
+        border: 2px solid #198754;
+        color: #fff;
+    }
+
+    /* Step box - now square with rounded corners */
+    .step-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .step-label {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stage-connector {
+        width: 50px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-top: 22px;
+        transition: all 0.3s ease;
+    }
+
+    .stage-connector.completed {
+        background: linear-gradient(90deg, #198754, #20c997);
+    }
+
+    /* Pulsing glow animation (green for inventory) */
+    @keyframes pulseGlowGreen {
+
+        0%,
+        100% {
+            box-shadow: 0 0 5px rgba(32, 201, 151, 0.3), 0 0 10px rgba(32, 201, 151, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 15px rgba(32, 201, 151, 0.6), 0 0 25px rgba(32, 201, 151, 0.4), 0 0 35px rgba(32, 201, 151, 0.2);
+        }
+    }
+</style>
+
+<script>
+    function updateInvFileDisplay() {
+        const input = document.getElementById('inv-file');
+        const displayContainer = document.getElementById('inv-file-display');
+        const fileNameSpan = document.getElementById('inv-file-name');
+        const uploadZone = document.querySelector('.upload-zone');
+
+        if (input.files.length > 0) {
+            displayContainer.classList.remove('d-none');
+            fileNameSpan.textContent = input.files[0].name;
+            uploadZone.style.borderColor = '#198754';
+        } else {
+            displayContainer.classList.add('d-none');
+            uploadZone.style.borderColor = 'rgba(255,255,255,0.2)';
+        }
+    }
+
+    function handleInvDrop(event) {
+        event.preventDefault();
+        event.target.style.borderColor = 'rgba(255,255,255,0.2)';
+
+        const input = document.getElementById('inv-file');
+        const dt = new DataTransfer();
+
+        Array.from(event.dataTransfer.files).forEach(file => {
+            if (file.name.endsWith('.csv')) {
+                dt.items.add(file);
+            }
+        });
+
+        if (dt.files.length > 0) {
+            input.files = dt.files;
+            updateInvFileDisplay();
+        }
+    }
+
+    // Check if date column already exists in Data_Inventory
+    function checkDateExists(dateValue) {
+        const warningEl = document.getElementById('date-exists-warning');
+        if (!warningEl || !dateValue) {
+            if (warningEl) warningEl.classList.add('d-none');
+            return;
+        }
+
+        fetch(`{% url 'web_ui:inventory:stocktake_etl:inv_check_date' %}?date=${encodeURIComponent(dateValue)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    warningEl.classList.remove('d-none');
+                } else {
+                    warningEl.classList.add('d-none');
+                }
+            })
+            .catch(() => {
+                warningEl.classList.add('d-none');
+            });
+    }
+
+    // Check on page load for today's date
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('inv-target-date');
+        if (dateInput && dateInput.value) {
+            checkDateExists(dateInput.value);
+        }
+    });
+
+    // Also check immediately (for HTMX-loaded content)
+    (function () {
+        const dateInput = document.getElementById('inv-target-date');
+        if (dateInput && dateInput.value) {
+            checkDateExists(dateInput.value);
+        }
+    })();
+</script>

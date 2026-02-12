@@ -1,0 +1,333 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-white-50 mb-0 small" data-i18n="ui.text_24">
+                库存调整、成本管理和SKU维护。
+            </p>
+        </div>
+        <div>
+            <span
+                class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 backdrop-blur">
+                <i class="fas fa-lock me-1"></i><span data-i18n="ui.icon_3016">审计监控中</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Module Hub Menu -->
+    {% with hub_id="data-mod-hub" hub_items=hub_items module_icon="fas fa-tools" module_title="数据修改中心 (Data Ops)" %}
+    {% include "components/module_hub.html" %}
+    {% endwith %}
+
+    <!-- TAB 1: 库存向导 -->
+    <div id="tab-inv" class="tab-content-panel" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-magic fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1">Inventory Edit Wizard</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_25">安全地修改业务数据: 选择日期 → 选择操作 → <span data-i18n="ui.execute">执行</span></p>
+                </div>
+            </div>
+
+            <!-- Stage Indicator (matching Inventory Upload Wizard style) -->
+            <div class="d-flex justify-content-center mb-4" id="dataops-modify-stage-indicator">
+                <!-- Step 1: 选择日期 -->
+                <div class="stage-step active" id="dataops-step-1" data-step="1">
+                    <div class="step-box">1</div>
+                    <div class="step-label" data-i18n="form.placeholder.generic_10">选择日期</div>
+                </div>
+                <div class="stage-connector" id="dataops-conn-1"></div>
+
+                <!-- Step 2: 选择操作 -->
+                <div class="stage-step" id="dataops-step-2" data-step="2">
+                    <div class="step-box">2</div>
+                    <div class="step-label" data-i18n="js.select_operation">选择操作</div>
+                </div>
+                <div class="stage-connector" id="dataops-conn-2"></div>
+
+                <!-- Step 3: <span data-i18n="ui.execute">执行</span> -->
+                <div class="stage-step" id="dataops-step-3" data-step="3">
+                    <div class="step-box">3</div>
+                    <div class="step-label" data-i18n="ui.text_2012"><span data-i18n="ui.execute">执行</span></div>
+                </div>
+                <div class="stage-connector" id="dataops-conn-3"></div>
+
+                <!-- Step 4: 完成 -->
+                <div class="stage-step" id="dataops-step-4" data-step="4">
+                    <div class="step-box"><i class="fa-solid fa-flag-checkered"></i></div>
+                    <div class="step-label" data-i18n="js.complete">完成</div>
+                </div>
+            </div>
+
+            <hr class="border-secondary border-opacity-25 my-4">
+
+            <div id="wizard_container">
+                <div class="wizard-step fade-in">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3" data-i18n="ui.text_26">第一步：选择目标日期</h6>
+                    <form hx-post="{% url request.resolver_match.namespace|add:':wizard_step_2' %}"
+                        hx-target="#wizard_container" hx-indicator="#step-spinner">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label text-white" data-i18n="ui.text_27">目标库存列</label>
+                            <select name="selected_date"
+                                class="form-select bg-dark text-white border-secondary form-select-lg">
+                                {% for col in inv_columns %}
+                                <option value="{{ col }}">{{ col }}</option>
+                                {% empty %}
+                                <option disabled data-i18n="option.o9499">无可用库存列</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info btn-lg text-dark fw-bold">
+                                下一步 <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                        <div class="htmx-indicator mt-3 text-center" id="step-spinner">
+                            <div class="spinner-border text-info" role="status"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- TAB 2: COGS 维护 -->
+    <div id="tab-cogs" class="tab-content-panel" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-file-invoice-dollar fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-success mb-1">Product Data Maintenance</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_28">批量编辑产品成本与分类信息。</p>
+                    </div>
+                </div>
+                <div class="htmx-indicator" id="cogs-spinner">
+                    <div class="spinner-border text-success" role="status"></div>
+                </div>
+            </div>
+
+            <div id="cogs-content" hx-get="{% url request.resolver_match.namespace|add:':cogs_load_table' %}"
+                hx-trigger="intersect once" hx-indicator="#cogs-spinner">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="text-white-50 mt-3" data-i18n="log.loading">正在加载数据...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: 新增 SKU -->
+    <div id="tab-create" class="tab-content-panel" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-plus-circle fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h5 class="text-primary mb-1">Add Product</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_30">创建新的产品档案并初始化库存。</p>
+                </div>
+            </div>
+
+            <div id="create-content" hx-get="{% url request.resolver_match.namespace|add:':cogs_get_form' %}"
+                hx-trigger="intersect once">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-white-50 mt-3" data-i18n="ui.text_31">正在加载表单...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* Stage Indicator for DataOps Modify Wizard */
+    #dataops-modify-stage-indicator .stage-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+    }
+
+    #dataops-modify-stage-indicator .step-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    #dataops-modify-stage-indicator .step-label {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    #dataops-modify-stage-indicator .stage-connector {
+        width: 50px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-top: 22px;
+        transition: all 0.3s ease;
+    }
+
+    /* Active step: pulsing info glow */
+    #dataops-modify-stage-indicator .stage-step.active {
+        opacity: 1;
+    }
+
+    #dataops-modify-stage-indicator .stage-step.active .step-box {
+        background: transparent;
+        border: 2px solid #0dcaf0;
+        animation: dataopsPulseGlow 1.5s ease-in-out infinite;
+        color: #0dcaf0;
+    }
+
+    /* Completed step: green background */
+    #dataops-modify-stage-indicator .stage-step.completed {
+        opacity: 1;
+    }
+
+    #dataops-modify-stage-indicator .stage-step.completed .step-box {
+        background: linear-gradient(135deg, #198754, #20c997);
+        border: 2px solid #198754;
+        color: #fff;
+    }
+
+    #dataops-modify-stage-indicator .stage-connector.completed {
+        background: linear-gradient(90deg, #198754, #20c997);
+    }
+
+    @keyframes dataopsPulseGlow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 5px rgba(13, 202, 240, 0.3), 0 0 10px rgba(13, 202, 240, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 15px rgba(13, 202, 240, 0.6), 0 0 25px rgba(13, 202, 240, 0.4), 0 0 35px rgba(13, 202, 240, 0.2);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        #dataops-modify-stage-indicator .stage-connector {
+            width: 25px;
+        }
+
+        #dataops-modify-stage-indicator .step-box {
+            width: 36px;
+            height: 36px;
+            font-size: 0.8rem;
+        }
+
+        #dataops-modify-stage-indicator .step-label {
+            font-size: 0.6rem;
+        }
+    }
+</style>
+
+<script>
+    // DataOps Modify Wizard Step Tracking
+    (function () {
+        function updateDataOpsWizardStep(stepNumber) {
+            for (var i = 1; i <= 4; i++) {
+                var stepEl = document.getElementById('dataops-step-' + i);
+                var connEl = document.getElementById('dataops-conn-' + i);
+                if (stepEl) {
+                    stepEl.classList.remove('active', 'completed');
+                    if (i < stepNumber) {
+                        stepEl.classList.add('completed');
+                    } else if (i === stepNumber) {
+                        stepEl.classList.add('active');
+                    }
+                }
+                if (connEl) {
+                    connEl.classList.remove('completed');
+                    if (i < stepNumber) {
+                        connEl.classList.add('completed');
+                    }
+                }
+            }
+        }
+
+        // Listen for HTMX after swap to detect step changes
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            if (evt.detail.target && evt.detail.target.id === 'wizard_container') {
+                var content = evt.detail.target.innerHTML;
+                // Detect current step from content
+                if (content.indexOf((window.i18n?.t('js.step_1') || 'Step 1')) !== -1 || content.indexOf((window.i18n?.t('js.select_target_date') || 'Select Target Date')) !== -1) {
+                    updateDataOpsWizardStep(1);
+                } else if (content.indexOf((window.i18n?.t('js.step_2') || 'Step 2')) !== -1 || content.indexOf((window.i18n?.t('js.select_operation') || 'Select Operation')) !== -1) {
+                    updateDataOpsWizardStep(2);
+                } else if (content.indexOf((window.i18n?.t('js.step_3') || 'Step 3')) !== -1 || content.indexOf((window.i18n?.t('js.update_sku') || 'Update SKU')) !== -1 || content.indexOf('删除列') !== -1) {
+                    updateDataOpsWizardStep(3);
+                } else if (content.indexOf((window.i18n?.t('js.success') || 'Success')) !== -1 || content.indexOf((window.i18n?.t('js.complete') || 'Complete')) !== -1) {
+                    updateDataOpsWizardStep(4);
+                }
+            }
+        });
+    })();
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Store original functions (defined in module_hub.html)
+        var originalEnterTab = window.enterTab;
+        var originalExitTab = window.exitTab;
+
+        // Override enterTab to also show tab panels
+        window.enterTab = function (tabId, tabName, tabIcon) {
+            // Hide all tab panels
+            var panels = document.querySelectorAll('.tab-content-panel');
+            for (var i = 0; i < panels.length; i++) {
+                panels[i].style.display = 'none';
+            }
+            // Show selected panel
+            var panel = document.getElementById('tab-' + tabId);
+            if (panel) {
+                panel.style.display = 'block';
+            }
+            // Call original if exists
+            if (typeof originalEnterTab === 'function') {
+                originalEnterTab(tabId, tabName, tabIcon);
+            }
+        };
+
+        // Override exitTab to hide panels
+        window.exitTab = function () {
+            var panels = document.querySelectorAll('.tab-content-panel');
+            for (var i = 0; i < panels.length; i++) {
+                panels[i].style.display = 'none';
+            }
+            if (typeof originalExitTab === 'function') {
+                originalExitTab();
+            }
+        };
+    });
+</script>
+{% endblock %}

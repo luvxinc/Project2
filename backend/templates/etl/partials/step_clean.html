@@ -1,0 +1,128 @@
+{% load i18n %}
+{% load security_tags %}
+
+<div class="card bg-dark border-warning border-opacity-25">
+    <div
+        class="card-header bg-warning bg-opacity-10 border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 text-white">
+            <i class="fa-solid fa-broom me-2 text-warning"></i>
+            Step 3: 数据清洗 (Clean) - 待处理: {{ pending_count }}
+        </h6>
+        <!-- Cancel Button in Header -->
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+            hx-post="{% url 'web_ui:sales:transactions:cancel' %}" hx-target="#etl-tab-content"
+            hx-confirm="{% trans 'Are you sure you want to cancel? All unsaved data will be lost.' %}">
+            <i class="fa-solid fa-times me-1"></i><span data-i18n="common.cancel">取消</span>
+        </button>
+    </div>
+    <div class="card-body">
+        {% if pending_item %}
+        <!-- Fix Card -->
+        <div class="card bg-black bg-opacity-50 border-danger border-opacity-25 mb-4">
+            <div class="card-header bg-danger bg-opacity-10">
+                <span class="text-danger">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    异常 SKU: <code>{{ pending_item.bad_sku }}</code>
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-i18n="purchase.order_num">订单号</label>
+                        <div class="text-white">{{ pending_item.order_id }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_232">原始标签</label>
+                        <code class="d-block bg-dark p-2 rounded small">{{ pending_item.label }}</code>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_233">商品标题</label>
+                        <div class="text-white small">{{ pending_item.title|truncatechars:80 }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_234">原数量</label>
+                        <div class="text-white">{{ pending_item.bad_qty }}</div>
+                    </div>
+                </div>
+
+                <hr class="border-secondary border-opacity-25">
+
+                {% if suggestions %}
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small" data-i18n="ui.text_235">建议修正:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for sug in suggestions %}
+                        <button type="button" class="btn btn-sm btn-outline-info suggestion-btn"
+                            onclick="document.getElementById('fix-sku').value='{{ sug }}'">
+                            {{ sug }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form hx-post="{% url 'web_ui:sales:transactions:fix_sku' %}" hx-target="#etl-tab-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="order_id" value="{{ pending_item.order_id }}">
+                    <input type="hidden" name="slot_idx" value="{{ pending_item.slot_idx }}">
+                    <input type="hidden" name="old_sku" value="{{ pending_item.bad_sku }}">
+                    <input type="hidden" name="old_qty" value="{{ pending_item.bad_qty }}">
+                    <input type="hidden" name="label" value="{{ pending_item.label }}">
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label text-white" data-i18n="ui.text_236">正确 SKU</label>
+                            <input type="text" name="new_sku" id="fix-sku"
+                                class="form-control bg-dark text-white border-secondary" required
+                                data-i18n-placeholder="form.placeholder.generic_2" placeholder="输入正确的 SKU">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-white" data-i18n="ui.text_237">正确数量</label>
+                            <input type="number" name="new_qty" class="form-control bg-dark text-white border-secondary"
+                                value="{{ pending_item.bad_qty|default:'1' }}" min="1" required>
+                        </div>
+                        <div class="col-md-5">
+                            {% security_inputs 'btn_commit_sku_fix' %}
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fa-solid fa-check me-1"></i><span data-i18n="ui.icon_3098">确认修正</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- All Fixed -->
+        <div class="text-center py-4">
+            <i class="fa-solid fa-check-circle display-4 text-success mb-3"></i>
+            <h5 class="text-white" data-i18n="ui.text_238">所有异常已修复！</h5>
+            <p class="text-muted mb-4" data-i18n="ui.text_239">可以继续<span data-i18n="ui.execute">执行</span>数据转换。</p>
+
+            <form hx-post="{% url 'web_ui:sales:transactions:transform' %}" hx-target="#etl-tab-content"
+                hx-indicator="#transform-spinner">
+                {% csrf_token %}
+
+                <div id="transform-spinner" class="htmx-indicator mb-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span class="text-primary ms-2" data-i18n="ui.text_240">正在准备预览...</span>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        hx-post="{% url 'web_ui:sales:transactions:cancel' %}" hx-target="#etl-tab-content"
+                        hx-confirm="{% trans 'Are you sure you want to cancel? All unsaved data will be lost.' %}">
+                        <i class="fa-solid fa-times me-2"></i><span data-i18n="common.cancel">取消</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="fa-solid fa-wand-magic-sparkles me-2"></i><span data-i18n="ui.icon_3100">继续</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>

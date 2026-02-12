@@ -1,0 +1,150 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+{% block title %}全景数据审计 - 安全审计 - ERP系统{% endblock %}
+{% block content %}
+{% if is_god_mode %}
+<div class="god-mode-border"></div>
+<div class="god-mode-badge"><i class="fa-solid fa-eye me-2"></i>GOD MODE (UNMASKED)</div>
+{% endif %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:dashboard' %}" class="text-info text-decoration-none">系统管理</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:audit_dashboard' %}" class="text-info text-decoration-none">安全审计日志</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">全景数据审计</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center mt-2">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fa-solid fa-database fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h4 class="text-white fw-bold mb-1">全景数据审计 (Infra Logs)</h4>
+                    <p class="text-white-50 small mb-0">底层数据变更追踪，合并展示应用日志与数据库原子操作。</p>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            {% if is_superuser %}
+                {% if is_god_mode %}
+                <a href="{% url 'web_ui:audit_lock' %}" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-lock me-2"></i>立即上锁</a>
+                {% else %}
+                <button type="button" class="btn btn-outline-warning rounded-pill px-4" onclick="showGodModeModal()"><i class="fa-solid fa-eye me-2"></i>解锁上帝模式</button>
+                {% endif %}
+            {% endif %}
+            <a href="{% url 'web_ui:audit_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-arrow-left me-2"></i>返回审计中心</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-4">
+        <div class="col-xl-9 col-lg-8">
+            <div class="glass-card overflow-hidden shadow-lg h-100">
+                <div class="px-4 py-3 border-bottom border-secondary border-opacity-10">
+                    <form method="GET" class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label text-white-50 small mb-1">关键词</label>
+                            <input type="text" name="q" class="form-control form-control-sm bg-dark text-white border-secondary rounded-3" placeholder="搜索表名/SQL..." value="{{ request.GET.q }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-white-50 small mb-1">时间范围</label>
+                            <select name="days" class="form-select form-select-sm bg-dark text-white border-secondary rounded-3">
+                                <option value="7">最近7天</option><option value="30">最近30天</option><option value="90">最近90天</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-white-50 small mb-1">状态</label>
+                            <select name="status" class="form-select form-select-sm bg-dark text-white border-secondary rounded-3">
+                                <option value="ALL">全部</option><option value="Success">成功</option><option value="Failed">失败</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-info w-100 rounded-pill"><i class="fas fa-search me-1"></i>筛选</button></div>
+                        <div class="col-md-3 text-end"><span class="badge bg-info bg-opacity-25 text-info px-3 py-2">共 {{ logs|length|default:0 }} 条</span></div>
+                    </form>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle audit-table">
+                        <thead><tr><th class="ps-4">时间</th><th>用户</th><th>来源</th><th>表/模块</th><th>操作类型</th><th>变更摘要</th><th class="text-end pe-4">状态</th></tr></thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td class="ps-4 font-monospace small text-white-50">{{ log.time }}</td>
+                                <td class="text-white">{{ log.user }}</td>
+                                <td><span class="badge bg-primary">{{ log.source|default:"APP" }}</span></td>
+                                <td class="text-info font-monospace small">{{ log.page }}</td>
+                                <td class="fw-bold">{{ log.action }}</td>
+                                <td class="text-truncate small" style="max-width:250px" title="{{ log.target }}">{{ log.target }}</td>
+                                <td class="text-end pe-4">{% if 'Failed' in log.status %}<span class="badge bg-danger">{{ log.status }}</span>{% else %}<span class="badge bg-success">{{ log.status }}</span>{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center py-5"><i class="fas fa-database fa-3x text-secondary opacity-50 mb-3"></i><p class="text-white-50 mb-0">暂无数据变更记录</p></td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-4">
+            <div class="alert alert-info bg-opacity-10 border-info border-opacity-25 d-flex flex-column mb-0 shadow-sm rounded-3 h-100">
+                <div class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle-info text-info me-2 fa-lg"></i><strong class="text-info">操作须知</strong></div>
+                <div class="text-white-50 small">
+                    <div class="mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                        <div class="text-white-50 fw-bold mb-2"><i class="fa-solid fa-filter me-1"></i>筛选说明</div>
+                        <ul class="mb-0 ps-3 d-flex flex-column gap-1">
+                            <li><strong class="text-info">关键词</strong>：匹配表名、SQL、变更摘要</li>
+                            <li><strong class="text-info">时间范围</strong>：按天数筛选记录</li>
+                        </ul>
+                    </div>
+                    <div class="text-white-50 fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation me-1"></i>注意事项</div>
+                    <ul class="mb-0 ps-3 d-flex flex-column gap-2">
+                        <li><strong class="text-white-50">记录范围：</strong><br>INSERT/UPDATE/DELETE 等数据变更</li>
+                        <li><strong class="text-white-50">权限限制：</strong><br>需 module.audit.infra 权限</li>
+                        <li><strong class="text-white-50">上帝模式：</strong><br>解锁后可查看脱敏前的原始数据</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.audit-table { background: transparent; border-collapse: separate; border-spacing: 0; }
+.audit-table thead tr { background: rgba(255,255,255,0.03); }
+.audit-table thead th { padding: 14px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+.audit-table tbody tr { transition: all 0.15s ease; }
+.audit-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+.audit-table tbody td { padding: 14px 16px; color: rgba(255,255,255,0.85); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+.audit-table tbody tr:last-child td { border-bottom: none; }
+.god-mode-border { position: fixed; top: 0; left: 0; right: 0; bottom: 0; border: 4px solid rgba(220,53,69,0.6); pointer-events: none; z-index: 0; animation: pulse-border 2s infinite; }
+.god-mode-badge { position: fixed; top: 10px; right: 20px; background: #dc3545; color: white; padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; z-index: 9999; box-shadow: 0 0 15px rgba(220,53,69,0.8); }
+@keyframes pulse-border { 0% { border-color: rgba(220,53,69,0.3); } 50% { border-color: rgba(220,53,69,0.8); } 100% { border-color: rgba(220,53,69,0.3); } }
+</style>
+
+<script>
+function showGodModeModal() {
+    GlobalModal.showCustom({
+        html: `
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>身份核验 (Security Check)</h5>
+            </div>
+            <div class="modal-body pt-3">
+                <p class="text-white-50 small mb-3">查看日志全部隐藏内容</p>
+                <form id="godModeForm" action="{% url 'web_ui:audit_unlock' %}" method="POST">
+                    {% csrf_token %}
+                    {% security_inputs "btn_unlock_view" %}
+                    <div class="d-flex justify-content-end gap-3 mt-4">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="GlobalModal.hide()">取消</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold"><i class="fa-solid fa-unlock me-2"></i>确认解锁</button>
+                    </div>
+                </form>
+            </div>
+        `,
+        borderColor: '#dc3545',
+        glowEffect: 'blink'
+    });
+}
+</script>
+{% endblock %}

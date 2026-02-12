@@ -1,0 +1,192 @@
+{
+  "btn_create_user": [
+    "user"
+  ],
+  "btn_lock_user": [
+    "db"
+  ],
+  "btn_update_perms": [
+    "user"
+  ],
+  "btn_unlock_user": [
+    "db"
+  ],
+  "btn_purge_business": [
+    "modify",
+    "db"
+  ],
+  "btn_unlock_view": [],
+  "btn_purge_infra": [
+    "modify",
+    "db",
+    "system"
+  ],
+  "btn_purge_system": [
+    "modify",
+    "db",
+    "system"
+  ],
+  "btn_create_backup": [
+    "user"
+  ],
+  "btn_restore_db": [
+    "user"
+  ],
+  "btn_clean_data": [
+    "user"
+  ],
+  "btn_delete_backup": [
+    "user"
+  ],
+  "btn_reset_pwd": [
+    "user"
+  ],
+  "btn_update_single_inv": [
+    "user"
+  ],
+  "btn_drop_inv_col": [
+    "user"
+  ],
+  "btn_drop_inv_col_recent": [
+    "modify"
+  ],
+  "btn_batch_update_cogs": [
+    "user"
+  ],
+  "btn_create_skus": [
+    "user"
+  ],
+  "btn_generate_report": [],
+  "btn_start_etl_pipeline": [],
+  "btn_commit_sku_fix": [
+    "user"
+  ],
+  "btn_sync_inventory": [
+    "user"
+  ],
+  "btn_toggle_user_lock": [
+    "user"
+  ],
+  "btn_delete_user": [
+    "user"
+  ],
+  "btn_purge_logs": [
+    "user"
+  ],
+  "btn_rollback_data": [],
+  "btn_change_user_role": [
+    "user"
+  ],
+  "btn_patch_system_log": [
+    "query"
+  ],
+  "btn_login": [
+    "user"
+  ],
+  "btn_unlock_visuals": [
+    "user"
+  ],
+  "btn_run_transform": [
+    "user"
+  ],
+  "btn_validate_inventory": [
+    "user"
+  ],
+  "btn_add_supplier": [
+    "user"
+  ],
+  "btn_clear_reports": [
+    "user"
+  ],
+  "btn_modify_strategy": [
+    "user"
+  ],
+  "btn_d03_rollback_restore": [
+    "user"
+  ],
+  "btn_generate_barcode": [],
+  "btn_po_submit": [
+    "user"
+  ],
+  "btn_po_modify": [
+    "user"
+  ],
+  "btn_po_delete": [
+    "user"
+  ],
+  "btn_po_undelete": [
+    "user"
+  ],
+  "btn_po_upload_invoice": [
+    "user"
+  ],
+  "send_order_create": [
+    "user"
+  ],
+  "po_order_create": [
+    "user"
+  ],
+  "btn_send_modify": [
+    "user"
+  ],
+  "btn_send_delete": [
+    "user"
+  ],
+  "btn_send_undelete": [
+    "user"
+  ],
+  "btn_send_upload_invoice": [
+    "user"
+  ],
+  "btn_receive_confirm": [
+    "user"
+  ],
+  "btn_receive_mgmt_edit": [
+    "user"
+  ],
+  "btn_receive_undelete": [
+    "user"
+  ],
+  "btn_receive_delete": [
+    "user"
+  ],
+  "logistic_payment_confirm": [
+    "user"
+  ],
+  "btn_po_delete_invoice": [
+    "user"
+  ],
+  "btn_send_delete_invoice": [
+    "user"
+  ],
+  "btn_abnormal_process": [
+    "user"
+  ],
+  "btn_receive_delete_file": [
+    "user"
+  ],
+  "btn_abnormal_delete": [
+    "user"
+  ],
+  "logistic_payment_delete": [
+    "user"
+  ],
+  "logistic_payment_file_delete": [
+    "user"
+  ],
+  "logistic_payment_file_upload": [
+    "user"
+  ],
+  "logistic_payment_edit": [
+    "user"
+  ],
+  "btn_prepay_submit": [
+    "user"
+  ],
+  "btn_prepay_delete": [
+    "user"
+  ],
+  "btn_prepay_undelete": [
+    "user"
+  ]
+}

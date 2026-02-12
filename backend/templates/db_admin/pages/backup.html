@@ -1,0 +1,238 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+{% load security_tags %}
+
+{% block title %}Data Backup - Database Admin - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/dashboard/db_admin/"
+                            class="text-info text-decoration-none" data-i18n="nav.db_admin">Database Admin</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="db_admin.backup">Data Backup</li>
+                </ol>
+            </nav>
+            <p class="text-white-50 small mb-0 mt-1" data-i18n="ui.text_1697">创建系统数据快照，确保数据安全可恢复。</p>
+        </div>
+        <div>
+            <a href="/dashboard/db_admin/" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="db_admin.back_to_hub">返回Database Admin</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Operations Guide + Primary Action -->
+        <div class="col-lg-6">
+            <!-- Operations Guide Card -->
+            <div class="glass-card p-4 mb-4" data-testid="ops-guide-card">
+                <div class="mb-3">
+                    <h6 class="text-info fw-bold mb-1">
+                        <i class="fas fa-info-circle text-info me-2"></i><span data-i18n="common.operation_notes">操作须知</span>
+                    </h6>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_1698">了解备份操作的注意事项</p>
+                </div>
+                <ul class="text-white-50 small mb-0 ps-3">
+                    <li class="mb-2" data-i18n="ui.text_1699">备份将创建当前数据库的完整快照，过程可能需要数分钟。</li>
+                    <li class="mb-2" data-i18n="ui.text_1700">建议在业务低峰期执行备份操作。</li>
+                    <li class="mb-2" data-i18n="ui.text_1701">备份标签应具有描述性，便于后续识别和管理。</li>
+                    <li class="mb-2" data-i18n="ui.text_1702">系统会自动记录备份时间和操作人信息。</li>
+                    <li data-i18n="ui.text_1703">完成后可在「Backup Management」中查看和管理备份文件。</li>
+                </ul>
+            </div>
+
+            <!-- Primary Action Card -->
+            <div class="glass-card p-4" data-testid="primary-action-card">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-cloud-upload-alt fa-lg text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1 fw-bold" data-i18n="db_admin.backup_create_title">创建备份</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_1704">生成当前数据库状态的快照</p>
+                    </div>
+                </div>
+
+                <form id="backup-form">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label text-white-50 small text-uppercase fw-bold" data-i18n="ui.text_1705">备份标签</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-white-50">
+                                <i class="fas fa-tag"></i>
+                            </span>
+                            <input type="text" name="tag" id="backup-tag"
+                                class="form-control bg-dark text-white border-secondary" data-i18n-placeholder="form.placeholder.generic_27" placeholder="例如：日常备份_v1.0"
+                                required>
+                        </div>
+                        <div class="form-text text-white-50 small mt-2">
+                            <i class="fas fa-lightbulb me-1 text-warning"></i>
+                            建议使用有意义的标签，便于识别备份内容
+                        </div>
+                    </div>
+
+                    <!-- Hidden security inputs -->
+                    <div class="d-none">
+                        {% security_inputs 'btn_create_backup' %}
+                    </div>
+
+                    <div class="d-grid">
+                        {% if perms.can_backup %}
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill shadow-sm"
+                            id="btn-create-backup" data-requires-global-modal="true" data-action-key="btn_create_backup"
+                            data-action-display="{% trans 'Create Backup' %}">
+                            <i class="fas fa-play me-2"></i><span data-i18n="db_admin.execute_backup">执行备份</span>
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-secondary btn-lg rounded-pill" disabled>
+                            <i class="fas fa-lock me-2"></i><span data-i18n="api.forbidden">权限不足</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+
+                <div id="backup-result" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Right Column: Result Panel -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100" data-testid="result-panel" id="result-panel">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h6 class="text-white fw-bold mb-0">
+                            <i class="fas fa-circle-check text-success me-2"></i><span data-i18n="ui.icon_3473">备份状态</span>
+                        </h6>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_1706">最近的备份记录</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                        onclick="refreshResultPanel()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                {% if backups %}
+                <div class="backup-status-card p-3 rounded-3 mb-3"
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success fa-lg me-3"></i>
+                        <div>
+                            <div class="text-white fw-bold" data-i18n="ui.text_2760">最近备份</div>
+                            <div class="text-white-50 small">{{ backups.0.display }}</div>
+                            <div class="text-white-50 small">{{ backups.0.size_kb }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-white-50 small mb-2">
+                    <i class="fas fa-database me-1"></i><span>共 {{ backups|length }} 个备份文件</span>
+                </div>
+
+                <div class="recent-backups" style="max-height: 280px; overflow-y: auto;">
+                    {% for b in backups|slice:":5" %}
+                    <div class="d-flex align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                        <i class="fas fa-file-archive text-primary me-3 opacity-50"></i>
+                        <div class="flex-grow-1">
+                            <div class="text-white small">{{ b.display }}</div>
+                            <div class="text-white-50 small">{{ b.size_kb }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-secondary opacity-25 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="ui.text_1707">暂无备份记录</p>
+                    <p class="text-muted small" data-i18n="ui.text_1708">创建您的第一个备份</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const backupBtn = document.getElementById('btn-create-backup');
+        if (!backupBtn) return;
+
+        backupBtn.addEventListener('click', function () {
+            const tagInput = document.getElementById('backup-tag');
+            if (!tagInput.value.trim()) {
+                createAndShowToast((window.i18n?.t('js.enter_backup_label') || 'Enter backup label'), 'warning');
+                tagInput.focus();
+                return;
+            }
+
+            // Use GlobalModal for verification
+            requestPasswordVerify(
+                'btn_create_backup',
+                function (passwords) {
+                    // Fill security inputs
+                    fillSecurityInputs(passwords);
+                    // Execute backup
+                    executeBackup();
+                },
+                document.getElementById('backup-form'),
+                (window.i18n?.t('js.create_backup') || 'Create Backup'),
+                function () {
+                    // Cancel callback
+                    console.log('Backup cancelled');
+                }
+            );
+        });
+    });
+
+    function fillSecurityInputs(passwords) {
+        for (const [slot, code] of Object.entries(passwords)) {
+            const input = document.querySelector(`input[name="sec_code_${slot}"]`);
+            if (input) input.value = code;
+        }
+    }
+
+    function executeBackup() {
+        const form = document.getElementById('backup-form');
+        const formData = new FormData(form);
+        const resultDiv = document.getElementById('backup-result');
+        const btn = document.getElementById('btn-create-backup');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>备份中...';
+
+        fetch('/dashboard/db_admin/action/backup/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.text())
+            .then(html => {
+                resultDiv.innerHTML = html;
+                if (html.includes('alert-success')) {
+                    createAndShowToast((window.i18n?.t('js.backup_created') || 'Backup Created'), 'success');
+                    document.getElementById('backup-tag').value = '';
+                    setTimeout(refreshResultPanel, 1000);
+                } else {
+                    createAndShowToast((window.i18n?.t('js.backup_failed') || 'Backup Failed'), 'danger');
+                }
+            })
+            .catch(error => {
+                createAndShowToast((window.i18n?.t('js.operation_failed_retry') || 'Operation failed, retry'), 'danger');
+                console.error('Backup error:', error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play me-2"></i>执行备份';
+            });
+    }
+
+    function refreshResultPanel() {
+        window.location.reload();
+    }
+</script>
+{% endblock %}

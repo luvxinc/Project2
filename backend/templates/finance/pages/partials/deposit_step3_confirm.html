@@ -1,0 +1,1181 @@
+{% load i18n %}
+<!-- Step 3: 确认付款 (Deposit) -->
+<div class="row">
+    <div class="col-12">
+        <!-- 操作须知 (New) -->
+        <div class="card bg-dark bg-opacity-50 border-info border-opacity-25 mb-4">
+            <div class="card-header bg-info bg-opacity-10 border-0 d-flex align-items-center">
+                <i class="fas fa-info-circle text-info me-2"></i>
+                <span class="text-info fw-bold" data-i18n="common.operation_notes">操作须知</span>
+            </div>
+            <div class="card-body">
+                <ul class="text-white-50 small mb-0 ps-3">
+                    <li class="mb-2">
+                        1. <strong data-i18n="js.final_confirm">最终确认</strong>：<span data-i18n="desc.d083">核对<strong
+                                class="text-success" data-i18n="ui.text_1512">「本次抵扣」</strong>（预付款扣除）与<strong
+                                class="text-info" data-i18n="ui.text_1513">「本次支付」</strong>（实际现金），确保金额正确。</span>
+                    </li>
+                    <li class="mb-2">
+                        2. <strong data-i18n="table.pmt_no">付款单号</strong>：<span data-i18n="instructions.desc_82">本批次所有订单将共享同一个付款单号
+                            (</span><code>DPMT_YYYYMMDD_N##</code><span data-i18n="desc.d084">)便于后续追溯。</span>
+                    </li>
+                    <li class="mb-2">
+                        3. <strong data-i18n="ui.text_1515">上传回执</strong>：<span
+                            data-i18n="desc.d085">（可选）点击上方上传区域添加银行水单，文件将在提交成功后归档至对应付款单号目录。</span>
+                    </li>
+                    <li>
+                        4. <strong data-i18n="ui.text_1516">验证提交</strong>：<span data-i18n="instructions.desc_86">点击「确认付款」→ 输入登录密码 →
+                            完成交易。提交后定金记录即时生效。</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Payment Date Check (New) -->
+        <div class="card bg-dark bg-opacity-50 border-warning border-opacity-10 mb-4">
+            <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="fas fa-calendar-alt text-warning fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-white-50 small mb-0" data-i18n="ui.text_2643">入账日期 (Payment Date)</div>
+                        <div class="text-white fw-bold fs-5 font-monospace" id="s3-payment-date-display"></div>
+                    </div>
+                </div>
+                <div class="text-white-50 small border-start border-secondary border-opacity-25 ps-3">
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    <span id="s3-date-status-text" data-i18n="ui.text_1517">已确认</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section (Aligned with Step 2) -->
+        <div class="bg-black bg-opacity-25 p-4 border rounded border-secondary border-opacity-25 mb-4">
+            <div class="row row-cols-1 row-cols-md-6 g-3">
+                <!-- 定金合计 -->
+                <div class="col border-end border-secondary border-opacity-25">
+                    <div class="text-white-50 small mb-2 text-center" data-i18n="ui.text_2536">定金合计</div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-white fw-bold fs-5" id="confirm-summ-deposit-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-white-50 fw-bold" id="confirm-summ-deposit-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 已付定金 -->
+                <div class="col border-end border-secondary border-opacity-25">
+                    <div class="text-white-50 small mb-2 text-center" data-i18n="table.deposit_paid">已付定金</div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-success fw-bold fs-5" id="confirm-summ-paid-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-success text-opacity-75 fw-bold"
+                                    id="confirm-summ-paid-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 本次抵扣 (New) -->
+                <div class="col border-end border-secondary border-opacity-25">
+                    <div class="text-success small mb-2 text-center" data-i18n="ui.text_2538">本次抵扣</div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-success fw-bold fs-5" id="confirm-summ-deduction-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-success fw-bold" id="confirm-summ-deduction-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 本次待付 -->
+                <div class="col border-end border-secondary border-opacity-25">
+                    <div class="text-white-50 small mb-2 text-center" data-i18n="ui.text_2539">本次待付</div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-warning fw-bold fs-5" id="confirm-summ-pending-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-warning text-opacity-75 fw-bold"
+                                    id="confirm-summ-pending-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 本次支付 (Simple Box) -->
+                <div class="col border-end border-secondary border-opacity-25 bg-info bg-opacity-10">
+                    <div class="text-info small mb-2 text-center text-uppercase fw-bold" data-i18n="finance.this_payment">本次支付
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-info fw-bold fs-4" id="confirm-summ-payment-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-info fw-bold fs-5" id="confirm-summ-payment-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 当前待付 -->
+                <div class="col">
+                    <div class="text-white-50 small mb-2 text-center" data-i18n="ui.text_2541">当前待付</div>
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success" style="font-size: 0.7rem; width: 36px;">USD</span>
+                                <span class="text-white fw-bold fs-5" id="confirm-summ-current-pending-usd">$0.00</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info" style="font-size: 0.7rem; width: 36px;">RMB</span>
+                                <span class="text-white-50 fw-bold" id="confirm-summ-current-pending-rmb">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 费用明细表 (Moved Down) -->
+        <div class="detail-table-container mb-4">
+            <table class="table table-dark mb-0 align-middle">
+                <thead>
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 9.5%;" data-i18n="table.order_no">订货单号</th>
+                            <th class="text-center" style="width: 9.5%;" data-i18n="table.order_date">订单日期</th>
+                            <th class="text-center" style="width: 9.5%;" data-i18n="ui.text_2544">订单结算货币</th>
+                            <th class="text-center" style="width: 9.5%;" data-i18n="table.settlement_rate">结算汇率</th>
+                            <th class="text-end pe-3" style="width: 9.5%;" data-i18n="table.deposit_amount">定金费用</th>
+                            <th class="text-end pe-3" style="width: 9.5%;" data-i18n="table.deposit_paid">已付定金</th>
+                            <th class="text-end pe-3 text-success" style="width: 9.5%;" data-i18n="ui.text_2538">本次抵扣
+                            </th>
+                            <th class="text-end pe-3" style="width: 9.5%;" data-i18n="table.deposit_due">定金待付</th>
+                            <th class="text-end pe-3 bg-info bg-opacity-10 text-info" style="width: 9.5%;"
+                                data-i18n="finance.this_payment">本次支付</th>
+
+                            <th class="text-end pe-3 text-warning" style="width: 9.5%;" data-i18n="ui.text_2541">当前待付
+                            </th>
+                            <th class="text-center" style="width: 4.8%;" data-i18n="table.override">覆盖</th>
+                        </tr>
+                    </thead>
+                </thead>
+                <tbody id="confirm-list-body">
+                    <!-- JS动态填充 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Extra Fee & Total Summary (Hidden by default, shown via JS) -->
+        <div class="card bg-info bg-opacity-10 border-info border-opacity-25 mb-4" id="step3-total-summary-card"
+            style="display: none;">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-end align-items-center gap-5">
+                    <!-- Items Subtotal -->
+                    <div class="text-end">
+                        <!-- Prepay Deduction -->
+                        <div class="d-flex flex-column align-items-end mb-2">
+                            <span class="text-white-50 small" data-i18n="ui.text_2621">预付款抵扣</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-white-50 fw-bold" id="s3-deduct-text-1"></span>
+                                <span class="text-white-50 small" id="s3-deduct-text-2"></span>
+                            </div>
+                        </div>
+                        <!-- This Payment (Highlighted) -->
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="text-info small fw-bold" data-i18n="finance.this_payment">本次支付</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-info fw-bold fs-5" id="s3-payment-text-1"></span>
+                                <span class="text-info text-opacity-75 small fw-bold" id="s3-payment-text-2"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plus Sign -->
+                    <div class="text-info fs-4"><i class="fas fa-plus"></i></div>
+
+                    <!-- Extra Fee (Shows Note) -->
+                    <div class="text-end">
+                        <div class="text-info small mb-1 fw-bold" id="s3-extra-fee-note" data-i18n="table.extra_fees">额外费用
+                        </div>
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="text-white fw-bold" id="s3-extra-fee-text-1"></span>
+                            <span class="text-white-50 small" id="s3-extra-fee-text-2"></span>
+                        </div>
+                    </div>
+
+                    <!-- Equals Sign -->
+                    <div class="text-warning fs-4"><i class="fas fa-equals"></i></div>
+
+                    <!-- Grand Total -->
+                    <div class="text-end">
+                        <div class="text-warning small mb-1 fw-bold" data-i18n="ui.text_2662">总计付款</div>
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="text-warning fw-bold fs-4" id="s3-grand-total-text-1"></span>
+                            <span class="text-warning text-opacity-75 small fw-bold" id="s3-grand-total-text-2"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 付款回执上传 (Restored to Step 3) -->
+        <div class="card bg-dark border-secondary border-opacity-25 mb-4">
+            <div
+                class="card-header bg-secondary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-file-invoice me-2 text-warning"></i>
+                    <span class="text-warning fw-bold" data-i18n="ui.text_1417">付款回执</span>
+                </div>
+                <span class="badge bg-secondary bg-opacity-50 text-white" data-i18n="common.optional">可选</span>
+            </div>
+            <div class="card-body">
+                <p class="text-white-50 small mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    可上传付款回执/银行转账凭证等文件。文件将在<strong data-i18n="ui.text_1522">确认付款成功后</strong>自动保存。
+                </p>
+                <!-- GlobalFileUpload 组件容器 -->
+                <div id="payment-receipt-upload-container"></div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<!-- Wizard Actions -->
+<div class="wizard-actions mt-4">
+    <div class="wizard-actions-left">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-step3-back"
+            onclick="if(window.paymentWizard) window.paymentWizard.back()">
+            <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.prev">上一步</span>
+        </button>
+    </div>
+    <div class="wizard-actions-right">
+        <button type="button" class="btn btn-warning rounded-pill px-4" id="btn-step3-next"
+            onclick="confirmDepositPayment()">
+            <i class="fas fa-check me-2"></i><span data-i18n="ui.icon_3425">确认付款</span>
+        </button>
+    </div>
+</div>
+
+<script>
+    // 付款回执上传器实例
+    let paymentReceiptUploader = null;
+
+    // Step 3 初始化
+    function initStep3() {
+        console.log('[DepositWizard] initStep3 called');
+        console.log('[DepositWizard] window.paymentItems at Step3 init:', window.paymentItems);
+
+        // Wire up Back Button to Step 2
+        // Back Button handled via inline onclick for stability
+
+        // Populate Payment Date
+        const pDate = (window.step2RateState && window.step2RateState.paymentDate)
+            ? window.step2RateState.paymentDate
+            : (new Date().toISOString().split('T')[0]);
+        const dateEl = document.getElementById('s3-payment-date-display');
+        if (dateEl) dateEl.textContent = pDate;
+
+        renderConfirmList();
+        renderConfirmList();
+        initPaymentReceiptUpload();
+    }
+
+    // 初始化付款回执上传组件 (Restored for Deferred Upload)
+    var step3UploaderInstance = null;
+    function initPaymentReceiptUpload() {
+        if (typeof GlobalFileUpload !== 'undefined') {
+            if (step3UploaderInstance) {
+                // Already initialized
+                return;
+            }
+
+            step3UploaderInstance = new GlobalFileUpload({
+                containerId: 'payment-receipt-upload-container',
+                inputName: 'payment_receipt',
+                title: (window.i18n?.t('js.click_or_drag_upload') || 'Click or drag to upload'),
+                accept: '.pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.xls,.xlsx,.doc,.docx,.csv',
+                maxSizeMB: 10,
+                autoUpload: false, // Critical: Deferred Upload
+                required: false,
+                onFileSelect: (file) => {
+                    console.log('[DepositWizard] Receipt file selected:', file.name);
+                    window.paymentReceiptFile = file;
+                },
+                onFileRemove: () => {
+                    console.log('[DepositWizard] Receipt file removed');
+                    window.paymentReceiptFile = null;
+                },
+                onError: (message) => {
+                    console.error('[DepositWizard] File upload error:', message);
+                }
+            });
+        } else {
+            console.warn('[DepositWizard] GlobalFileUpload not available');
+        }
+    }
+
+    function renderStep3Summary(t) { // Updated signature to accept totals
+        const summaryCard = document.getElementById('step3-total-summary-card');
+        if (!summaryCard) return;
+
+        // Check Extra Fee
+        const extraData = window.extraFeeData;
+
+        let hasExtra = false;
+        let extraAmount = 0;
+        let extraCur = '';
+        let extraNote = '';
+
+        if (extraData && extraData.amount > 0) {
+            hasExtra = true;
+            extraAmount = extraData.amount;
+            extraCur = extraData.currency;
+            extraNote = extraData.note;
+        }
+
+        /*
+        if (!hasExtra) {
+            summaryCard.style.display = 'none';
+            return;
+        }
+        */
+        summaryCard.style.display = 'block';
+
+        summaryCard.style.display = 'block';
+
+        // const totals = window.step2RateState.totals || {}; // Removed, now passed as argument
+
+        // Data from Step 2 Totals
+        // Use passed totals 't', fallback to Step 2 State Totals if 't' is empty or zero-ish
+        // This ensures that even if renderConfirmList fails to iterate (wrong length), we show Step 2's authoritative totals.
+        const storedTotals = (window.step2RateState && window.step2RateState.totals) ? window.step2RateState.totals : {};
+        const mergedTotals = { ...storedTotals, ...(t || {}) };
+        t = mergedTotals;
+
+        // If t.payRMB is missing/zero but storedTotals has it, we used stored.
+        // However, we want 't' (current calc) to override if it exists.
+        // The spread above does that: t overrides storedTotals.
+        // But if t fields are 0 and stored fields are distinct?
+        // Let's rely on the spread. If renderConfirmList sent 0s, it overrides. 
+        // Wait, if renderConfirmList found NO items, it sends 0s. 
+        // We want to use storedTotals ONLY if items are missing?
+        // No, let's just default to storedTotals for the initial display.
+
+        const payRMB = t.payRMB || storedTotals.payRMB || 0;
+        const payUSD = t.payUSD || storedTotals.payUSD || 0;
+        const deductRMB = t.deductRMB || storedTotals.deductRMB || 0;
+        const deductUSD = t.deductUSD || storedTotals.deductUSD || 0;
+
+        const depRMB = t.depRMB || storedTotals.depRMB || 0;
+        const depUSD = t.depUSD || storedTotals.depUSD || 0;
+        const paidRMB = t.paidRMB || storedTotals.paidRMB || 0;
+        const paidUSD = t.paidUSD || storedTotals.paidUSD || 0;
+        const penRMB = t.penRMB || storedTotals.penRMB || 0;
+        const penUSD = t.penUSD || storedTotals.penUSD || 0;
+        const currPenRMB = t.currPenRMB || storedTotals.currPenRMB || 0;
+        const currPenUSD = t.currPenUSD || storedTotals.currPenUSD || 0;
+
+        const rate = (window.paymentItems && window.paymentItems.length > 0) ? (window.paymentItems[0].cur_usd_rmb || 7.0) : 7.0;
+
+        // Populate Top Summary Bar
+        document.getElementById('confirm-summ-deposit-rmb').textContent = '¥' + formatNumber(depRMB);
+        document.getElementById('confirm-summ-deposit-usd').textContent = '$' + formatNumber(depUSD);
+
+        document.getElementById('confirm-summ-paid-rmb').textContent = '¥' + formatNumber(paidRMB);
+        document.getElementById('confirm-summ-paid-usd').textContent = '$' + formatNumber(paidUSD);
+
+        document.getElementById('confirm-summ-deduction-rmb').textContent = '¥' + formatNumber(deductRMB);
+        document.getElementById('confirm-summ-deduction-usd').textContent = '$' + formatNumber(deductUSD);
+
+        document.getElementById('confirm-summ-pending-rmb').textContent = '¥' + formatNumber(penRMB);
+        document.getElementById('confirm-summ-pending-usd').textContent = '$' + formatNumber(penUSD);
+
+        document.getElementById('confirm-summ-payment-rmb').textContent = '¥' + formatNumber(payRMB);
+        document.getElementById('confirm-summ-payment-usd').textContent = '$' + formatNumber(payUSD);
+
+        document.getElementById('confirm-summ-current-pending-rmb').textContent = '¥' + formatNumber(currPenRMB);
+        document.getElementById('confirm-summ-current-pending-usd').textContent = '$' + formatNumber(currPenUSD);
+
+        // Populate Bottom Summary Bar (Order Subtotal Split)
+        // 1. Deduction
+        document.getElementById('s3-deduct-text-1').textContent = `¥${formatNumber(deductRMB)}`;
+        document.getElementById('s3-deduct-text-2').textContent = `≈ $${formatNumber(deductUSD)}`;
+
+        // 2. This Payment (Cash)
+        document.getElementById('s3-payment-text-1').textContent = `¥${formatNumber(payRMB)}`;
+        document.getElementById('s3-payment-text-2').textContent = `≈ $${formatNumber(payUSD)}`;
+
+        // Extra Fee Logic
+        let extraRMB = 0;
+        let extraUSD = 0;
+        if (extraCur === 'RMB') {
+            extraRMB = extraAmount;
+            extraUSD = extraAmount / rate;
+        } else {
+            extraUSD = extraAmount;
+            extraRMB = extraAmount * rate;
+        }
+
+        // Grand Total = Cash Payment + Extra (Prepay is already deducted from obligation)
+        const grandTotalRMB = payRMB + extraRMB;
+        const grandTotalUSD = payUSD + extraUSD;
+
+        document.getElementById('s3-extra-fee-note').textContent = extraNote || (window.i18n?.t('js.extra_fees') || 'Extra Fees');
+        if (extraCur === 'RMB') {
+            document.getElementById('s3-extra-fee-text-1').textContent = `¥${formatNumber(extraAmount)}`;
+            document.getElementById('s3-extra-fee-text-2').textContent = `≈ $${formatNumber(extraUSD)}`;
+        } else {
+            document.getElementById('s3-extra-fee-text-1').textContent = `$${formatNumber(extraAmount)}`;
+            document.getElementById('s3-extra-fee-text-2').textContent = `≈ ¥${formatNumber(extraRMB)}`;
+        }
+
+        document.getElementById('s3-grand-total-text-1').textContent = `¥${formatNumber(grandTotalRMB)}`;
+        document.getElementById('s3-grand-total-text-2').textContent = `$${formatNumber(grandTotalUSD)}`;
+    }
+
+    // UI Helpers (Strict Copy from Step 2)
+    function formatNumber(num) {
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderRowAmount3(val, valUsd, cur, cls) {
+        const v = parseFloat(val) || 0;
+        const vUsd = parseFloat(valUsd) || 0;
+        let html = `<div class="d-flex flex-column align-items-end">`; // Use simplified stack for confirm table
+
+        const badgeColor = cur === 'USD' ? 'bg-success' : 'bg-info';
+        const textColor = cur === 'USD' ? 'text-success' : 'text-info';
+
+        // Primary Currency Line
+        html += `<div class="d-flex align-items-center gap-2">
+                    <span class="badge ${badgeColor}" style="font-size:0.6rem; width:36px;">${cur}</span>
+                    <span class="${cls || textColor} fw-bold">${formatNumber(v)}</span>
+                  </div>`;
+
+        // Secondary Currency Line (if not USD)
+        if (cur !== 'USD') {
+            html += `<div class="d-flex align-items-center gap-2 mt-1">
+                        <span class="badge bg-success" style="font-size:0.6rem; width:36px;">USD</span>
+                        <span class="text-white-50 small">${formatNumber(vUsd)}</span>
+                      </div>`;
+        }
+        html += `</div>`;
+        return html;
+    }
+
+    // 渲染确认列表
+    function renderConfirmList() {
+        const tbody = document.getElementById('confirm-list-body');
+        const nextBtn = document.getElementById('btn-step3-next');
+        let blockStep4 = false;
+
+        let totalDepositUSD = 0, totalDepositRMB = 0;
+        let totalPaidUSD = 0, totalPaidRMB = 0;
+        let totalDeductUSD = 0, totalDeductRMB = 0;
+        let totalPendingUSD = 0, totalPendingRMB = 0;
+        let totalPaymentUSD = 0, totalPaymentRMB = 0;
+        let totalCurrentPendingUSD = 0, totalCurrentPendingRMB = 0;
+
+        // Reset Global Totals for Breakdown
+        window.totalCashRMB = 0; window.totalCashUSD = 0;
+        window.totalPrepayRMB = 0; window.totalPrepayUSD = 0;
+
+        if (!window.paymentItems || window.paymentItems.length === 0) {
+            console.warn("Step 3: No paymentItems found!");
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-white-50 py-4" data-i18n="ui.text_2663">无付款项目数据 (No Items)</td></tr>';
+            // Even if no items, try to render summary from Step 2 state
+            renderStep3Summary({});
+            return;
+        }
+
+        tbody.innerHTML = window.paymentItems.map((item, index) => {
+            const cur = item.cur_currency || 'RMB';
+            const rate = item.cur_usd_rmb || 7.0;
+
+            // --- Logic Parity with Step 2 Recalc ---
+            const total = parseFloat(item.total_amount) || 0; // Original Order Amount
+
+            const depAmount = parseFloat(item.deposit_amount) || 0;
+            const depAmountUsd = (cur === 'USD') ? depAmount : depAmount / rate;
+            const paid = parseFloat(item.actual_paid) || 0;
+            const paidUsd = (cur === 'USD') ? paid : paid / rate;
+
+            // Pending (Net after Deduction) calculation
+            // In Step 2, pendingRmb IS the value AFTER deduction
+            // Let's verify Step 2 logic:
+            // "pendingRmb = Math.max(0, pendingBaseRmb - deductAmt);"
+            // So 'pendingRmb' here should also be Net Pending.
+            // Let's recalculate accurately matching Step 2.
+
+            const deductAmt = parseFloat(item.allocated_deduction) || 0;
+            let pendingBaseRmb = 0, pendingBaseUsd = 0;
+            if (cur === 'RMB') {
+                pendingBaseRmb = depAmount - paid;
+                pendingBaseUsd = pendingBaseRmb / rate;
+            } else {
+                pendingBaseUsd = depAmount - paid;
+                pendingBaseRmb = pendingBaseUsd * rate;
+            }
+
+            let pendingRmb = 0;
+            let pendingUsd = 0;
+            if (cur === 'RMB') {
+                pendingRmb = Math.max(0, pendingBaseRmb - deductAmt);
+                pendingUsd = pendingRmb / rate;
+            } else {
+                pendingUsd = Math.max(0, pendingBaseUsd - deductAmt);
+                pendingRmb = pendingUsd * rate;
+            }
+
+            // Payment Calculation (Cash Only in Step 2 Logic for 'payAmount')
+            // Step 2: "payAmountRmb = cashPaymentRmb"
+            const isOriginal = !item.payment_mode || item.payment_mode === 'original';
+            let payAmountRmb = 0;
+            let payAmountUsd = 0;
+            let currPendingRmb = 0;
+            let currPendingUsd = 0;
+
+            if (isOriginal) {
+                payAmountRmb = pendingRmb;
+                payAmountUsd = pendingUsd;
+            } else {
+                const custAmt = parseFloat(item.custom_amount) || 0;
+                const custCur = item.custom_currency || cur;
+                if (custCur === 'RMB') {
+                    payAmountRmb = custAmt;
+                    payAmountUsd = custAmt / rate;
+                } else {
+                    payAmountUsd = custAmt;
+                    payAmountRmb = custAmt * rate;
+                }
+            }
+
+            currPendingRmb = pendingRmb - payAmountRmb;
+            currPendingUsd = pendingUsd - payAmountUsd;
+
+            // Accumulate Totals
+            // Accumulate Totals
+            if (cur === 'USD') {
+                totalDepositUSD += depAmount;
+                totalDepositRMB += depAmount * rate;
+                totalPaidUSD += paid;
+                totalPaidRMB += paid * rate;
+
+                const dAmt = item.allocated_deduction || 0;
+                // Deduction is in base currency logic.
+                if (cur === 'RMB') {
+                    totalDeductRMB += dAmt;
+                    totalDeductUSD += dAmt / rate;
+                } else {
+                    totalDeductUSD += dAmt;
+                    totalDeductRMB += dAmt * rate;
+                }
+
+                totalPendingUSD += pendingUsd;
+                totalPendingRMB += pendingUsd * rate;
+
+                totalPaymentUSD += payAmountUsd;
+                totalPaymentRMB += payAmountRmb;
+                totalCurrentPendingUSD += currPendingUsd;
+                totalCurrentPendingRMB += currPendingRmb;
+            } else {
+                // RMB Items
+                totalDepositRMB += depAmount;
+                totalDepositUSD += depAmount / rate;
+                totalPaidRMB += paid;
+                totalPaidUSD += paid / rate;
+
+                const dAmt = item.allocated_deduction || 0;
+                if (cur === 'RMB') {
+                    totalDeductRMB += dAmt;
+                    totalDeductUSD += dAmt / rate;
+                } else {
+                    totalDeductUSD += dAmt;
+                    totalDeductRMB += dAmt * rate;
+                }
+
+                totalPendingRMB += pendingRmb;
+                totalPendingUSD += pendingRmb / rate;
+
+                totalPaymentRMB += payAmountRmb;
+                totalPaymentUSD += payAmountUsd;
+
+                // Fix Swap for RMB Items
+                totalCurrentPendingRMB += currPendingRmb;
+                totalCurrentPendingUSD += currPendingUsd;
+            }
+
+            // Breakdown Accumulation
+            const cashRmb = (cur === 'RMB' ? payAmountRmb : payAmountRmb); // payAmountRmb IS Total? Wait.
+            // payAmountRmb/Usd calculated above were TOTAL (Cash + Prepay).
+            // Need to separate Cash vs Prepay for summary.
+
+            // Re-calculate Cash Part
+            let cashPartRmb = 0, cashPartUsd = 0;
+            // From Item logic: item.custom_amount -> Cash Part.
+            // If Original: Cash = Pending.
+            // But wait, in Step 2 we said "Cash = Pending - Prepay".
+            // So logic here in Step 3 needs to replicate Step 2 final state.
+
+            let finalCashRmb = 0;
+            let finalCashUsd = 0;
+
+            if (isOriginal) {
+                // Original Mode: Cash = Pending - Prepay
+                // But Step 2 logic for "Original" didn't subtract Prepay?
+                // Step 2 Logic: "If original, cashPayment = pending".
+                // Then "payAmount = cash + prepay".
+                // Result: user pays Pending + Prepay? That's OVERPAYING.
+                // Ah, Step 2 logic I wrote (Step 875):
+                // "if original ... cashPayment = pending ... total = cash + prepay".
+                // Error in Step 2! "Original Mode" implies "Standard Payment Behavior".
+                // Standard Behavior + Prepay -> Should reduce Cash.
+                // So Step 2 Logic was slightly flawed if "Original" means "Full Standard Pay".
+                // But `recalcCashPayment` sets mode to `custom`.
+                // So if Prepay is used, mode MUST be `custom`.
+                // Correct. If `_usePrepay` is true, Prepay is active.
+                // If mode is `original`, `custom_amount` is null.
+                // So if `_usePrepay` is true but mode is `original`:
+                // Logic should probably be: Cash = Pending - Prepay.
+                // My Step 2 logic: "if original, cash = pending". Then "Total = Cash + Prepay".
+                // This means Pay = Pending + Prepay. (Overpay).
+                // I should fix logic here to be consistent with Intention.
+                // Step 3 Logic: Recalculate correctly.
+
+                // Correct Logic:
+                // Target = Pending.
+                // Prepay = _prepayVal (converted).
+                // Cash = Target - Prepay.
+
+                const targetRmb = pendingRmb;
+                const targetUsd = pendingUsd;
+
+                let pUsedRmb = 0;
+                let pUsedUsd = 0;
+                if (item._usePrepay) {
+                    const pVal = parseFloat(item._prepayVal) || 0;
+                    const pCur = item.prepay_currency || 'RMB';
+                    if (pCur === 'RMB') {
+                        pUsedRmb = pVal;
+                        pUsedUsd = pVal / rate;
+                    } else {
+                        pUsedUsd = pVal;
+                        pUsedRmb = pVal * rate;
+                    }
+                }
+
+                finalCashRmb = targetRmb - pUsedRmb;
+                finalCashUsd = targetUsd - pUsedUsd;
+                if (finalCashRmb < 0) finalCashRmb = 0;
+                if (finalCashUsd < 0) finalCashUsd = 0;
+
+                // Override calculated totals
+                if (cur === 'RMB') {
+                    payAmountRmb = finalCashRmb + pUsedRmb;
+                    payAmountUsd = finalCashUsd + pUsedUsd;
+                } else {
+                    payAmountUsd = finalCashUsd + pUsedUsd;
+                    payAmountRmb = finalCashRmb + pUsedRmb;
+                }
+
+            } else {
+                // Custom Mode: Cash is Explicit
+                const custAmt = parseFloat(item.custom_amount) || 0;
+                const custCur = item.custom_currency || cur;
+
+                let cRmb = 0, cUsd = 0;
+                if (custCur === 'RMB') {
+                    cRmb = custAmt;
+                    cUsd = custAmt / rate;
+                } else {
+                    cUsd = custAmt;
+                    cRmb = custAmt * rate;
+                }
+                finalCashRmb = cRmb;
+                finalCashUsd = cUsd;
+            }
+
+            // Prepay Part
+            let finalPrepayRmb = 0;
+            let finalPrepayUsd = 0;
+            if (item._usePrepay) {
+                const pVal = parseFloat(item._prepayVal) || 0;
+                const pCur = item.prepay_currency || 'RMB';
+                if (pCur === 'RMB') {
+                    finalPrepayRmb = pVal;
+                    finalPrepayUsd = pVal / rate;
+                } else {
+                    finalPrepayUsd = pVal;
+                    finalPrepayRmb = pVal * rate;
+                }
+            }
+
+            // Accumulate Breakdown
+            if (cur === 'USD') {
+                window.totalCashUSD = (window.totalCashUSD || 0) + finalCashUsd;
+                window.totalCashRMB = (window.totalCashRMB || 0) + finalCashRmb;
+                window.totalPrepayUSD = (window.totalPrepayUSD || 0) + finalPrepayUsd;
+                window.totalPrepayRMB = (window.totalPrepayRMB || 0) + finalPrepayRmb;
+            } else {
+                window.totalCashRMB = (window.totalCashRMB || 0) + finalCashRmb;
+                window.totalCashUSD = (window.totalCashUSD || 0) + finalCashUsd;
+                window.totalPrepayRMB = (window.totalPrepayRMB || 0) + finalPrepayRmb;
+                window.totalPrepayUSD = (window.totalPrepayUSD || 0) + finalPrepayUsd;
+            }
+
+            // --- Validation Logic ---
+
+            // 1. Blocker: Payment > Total Order Amount
+            // We need to compare in same currency. Use Segment Currency 'cur'.
+            const thisPayMainCur = (cur === 'RMB') ? payAmountRmb : payAmountUsd;
+            const isBlocked = thisPayMainCur > (total + 0.01); // 0.01 tolerance
+            if (isBlocked) blockStep4 = true;
+
+            // 2. Warning: Payment != Pending (Over/Under paying standard deposit)
+            const standardPendingMainCur = (cur === 'RMB') ? pendingRmb : pendingUsd;
+            const diff = Math.abs(thisPayMainCur - standardPendingMainCur);
+            const isWarning = diff > 0.01;
+
+            // Styles
+            const blockStyle = isBlocked ? 'background: rgba(220, 53, 69, 0.15) !important;' : '';
+            const warnStyle = (isWarning && !isBlocked) ? 'background: rgba(255, 193, 7, 0.1) !important;' : '';
+            const rowClass = isBlocked ? 'border-danger' : (isWarning ? 'border-warning' : '');
+
+            const warningIcon = isWarning ? '<i class="fas fa-exclamation-triangle text-warning ms-2" data-i18n-title="tooltip.t441" title="Payment mismatch with deposit"></i>' : '';
+            const blockIcon = isBlocked ? '<i class="fas fa-times-circle text-danger ms-2" data-i18n-title="tooltip.t9177" title="Payment exceeds order total"></i>' : '';
+
+            // Cover Standard Display
+            const isCover = item._coverStandard === true;
+            const coverHtml = isCover
+                ? '<span class="badge bg-success text-white" data-i18n="ui.text_1523">是</span>'
+                : '<span class="badge bg-secondary text-white-50" data-i18n="ui.text_1524">否</span>';
+
+            let sourceTag = '';
+            if (item._rateSource === 'auto') {
+                sourceTag = '<span class="badge bg-success" style="font-size:0.55rem;" data-i18n="js.auto_fetch">自动获取</span>';
+            } else if (item._rateSource === 'manual') {
+                sourceTag = '<span class="badge bg-warning text-dark" style="font-size:0.55rem;" data-i18n="ui.text_882">手动填写</span>';
+            } else {
+                // Original Mode
+                const isAuto = (item.rate_source_code === 'AUTO');
+                const txt = isAuto ? '原始 (自动)' : (window.i18n?.t('js.original_manual') || 'Original (Manual)');
+                const color = isAuto ? 'bg-info bg-opacity-25 text-info' : 'bg-secondary bg-opacity-50 text-white-50';
+                sourceTag = `<span class="badge ${color} border border-opacity-25" style="font-size:0.55rem;">${txt}</span>`;
+            }
+
+            return `
+                <tr class="${rowClass}" style="${blockStyle} ${warnStyle}">
+                    <td class="text-center font-monospace fw-bold text-white">${item.po_num}</td>
+                    <td class="text-center">${item.po_date}</td>
+                    
+                    <!-- Currency -->
+                    <td class="text-center">
+                        <span class="badge ${cur === 'RMB' ? 'bg-info' : 'bg-success'} text-white border border-opacity-25" style="width: 50px;">
+                            ${cur}
+                        </span>
+                    </td>
+                    
+                    <!-- Rate -->
+                    <td class="text-center">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="text-white fw-bold">${rate.toFixed(4)}</span>
+                            ${sourceTag}
+                        </div>
+                    </td>
+
+                    <!-- Deposit Fee -->
+                     <td class="text-end pe-3">${renderRowAmount3(depAmount, depAmountUsd, cur)}</td>
+                    
+                    <!-- Paid -->
+                     <td class="text-end pe-3">${renderRowAmount3(paid, paidUsd, cur, 'text-success-emphasis')}</td>
+                     
+                    <!-- Deduction -->
+                    <td class="text-end pe-3">
+                         ${(item.allocated_deduction && item.allocated_deduction > 0.001)
+                    ? renderRowAmount3((cur === 'RMB' ? item.allocated_deduction : item.allocated_deduction * rate), (cur === 'USD' ? item.allocated_deduction : item.allocated_deduction / rate), cur, 'text-success text-opacity-75')
+                    : '<span class="text-white-50 small">-</span>'}
+                    </td>
+                    
+                    <!-- Pending (After Deduction) -->
+                     <td class="text-end pe-3">${renderRowAmount3((cur === 'RMB' ? pendingRmb : pendingUsd), pendingUsd, cur, 'text-warning')}</td>
+
+                    <!-- This Payment (Cash) -->
+                    <td class="text-end pe-3 bg-info bg-opacity-10 border-start border-info border-opacity-25">
+                         <div class="d-flex align-items-center justify-content-end">
+                            ${renderRowAmount3(payAmountRmb, payAmountUsd, cur, isBlocked ? 'text-danger' : (isWarning ? 'text-warning fw-bold' : 'text-info fw-bold'))}
+                            ${blockIcon || warningIcon}
+                         </div>
+                    </td>
+                    
+                    <!-- Current Pending -->
+                    <td class="text-end pe-3 bg-white bg-opacity-10 border-start border-white border-opacity-10">
+                        ${renderRowAmount3(currPendingRmb, currPendingUsd, cur, 'text-warning')}
+                    </td>
+                    
+                    <!-- Cover Standard -->
+                    <td class="text-center align-middle">
+                        ${coverHtml}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Explicitly Call Summary Render with Calculated Totals
+        renderStep3Summary({
+            depRMB: totalDepositRMB, depUSD: totalDepositUSD,
+            paidRMB: totalPaidRMB, paidUSD: totalPaidUSD,
+            deductRMB: totalDeductRMB, deductUSD: totalDeductUSD,
+            penRMB: totalPendingRMB, penUSD: totalPendingUSD,
+            payRMB: totalPaymentRMB, payUSD: totalPaymentUSD,
+            currPenRMB: totalCurrentPendingRMB, currPenUSD: totalCurrentPendingUSD
+        });
+
+        // Handle Blocker
+        if (blockStep4) {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<i class="fas fa-ban me-2"></i>支付金额超过订单总额';
+            nextBtn.classList.replace('btn-warning', 'btn-danger');
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast((window.i18n?.t('js.some_orders_exceed_total') || 'Some orders exceed total, go back to modify'), 'error');
+            }
+        } else {
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = '<i class="fas fa-check me-2"></i>确认付款';
+            nextBtn.classList.replace('btn-danger', 'btn-warning');
+        }
+    }
+
+    // Updated Summary Render - Accepts Args
+    function renderStep3Summary(t) {
+        const summaryCard = document.getElementById('step3-total-summary-card');
+        if (!summaryCard) return;
+
+        // Check Extra Fee
+        const extraData = window.extraFeeData;
+        let hasExtra = false;
+        let extraAmount = 0;
+        let extraCur = '';
+        let extraNote = '';
+
+        if (extraData && extraData.amount > 0) {
+            hasExtra = true;
+            extraAmount = extraData.amount;
+            extraCur = extraData.currency;
+            extraNote = extraData.note;
+        }
+
+        // Always Show
+        summaryCard.style.display = 'block';
+
+        // Use passed totals 't', fallback to Step 2 State Totals if 't' is empty or zero-ish
+        // This ensures that even if renderConfirmList fails to iterate (wrong length), we show Step 2's authoritative totals.
+        const storedTotals = (window.step2RateState && window.step2RateState.totals) ? window.step2RateState.totals : {};
+        t = { ...storedTotals, ...(t || {}) };
+
+        // If t.payRMB is missing/zero but storedTotals has it, we used stored.
+        // However, we want 't' (current calc) to override if it exists.
+        // The spread above does that: t overrides storedTotals.
+        // But if t fields are 0 and stored fields are distinct?
+        // Let's rely on the spread. If renderConfirmList sent 0s, it overrides. 
+        // Wait, if renderConfirmList found NO items, it sends 0s. 
+        // We want to use storedTotals ONLY if items are missing?
+        // No, let's just default to storedTotals for the initial display.
+
+        const payRMB = t.payRMB || storedTotals.payRMB || 0;
+        const payUSD = t.payUSD || storedTotals.payUSD || 0;
+        const deductRMB = t.deductRMB || storedTotals.deductRMB || 0;
+        const deductUSD = t.deductUSD || storedTotals.deductUSD || 0;
+
+        const depRMB = t.depRMB || storedTotals.depRMB || 0;
+        const depUSD = t.depUSD || storedTotals.depUSD || 0;
+        const paidRMB = t.paidRMB || storedTotals.paidRMB || 0;
+        const paidUSD = t.paidUSD || storedTotals.paidUSD || 0;
+        const penRMB = t.penRMB || storedTotals.penRMB || 0;
+        const penUSD = t.penUSD || storedTotals.penUSD || 0;
+        const currPenRMB = t.currPenRMB || storedTotals.currPenRMB || 0;
+        const currPenUSD = t.currPenUSD || storedTotals.currPenUSD || 0;
+
+        const rate = (window.paymentItems && window.paymentItems.length > 0) ? (window.paymentItems[0].cur_usd_rmb || 7.0) : 7.0;
+
+        // Populate Top Summary Bar
+        document.getElementById('confirm-summ-deposit-rmb').textContent = '¥' + formatNumber(depRMB);
+        document.getElementById('confirm-summ-deposit-usd').textContent = '$' + formatNumber(depUSD);
+
+        document.getElementById('confirm-summ-paid-rmb').textContent = '¥' + formatNumber(paidRMB);
+        document.getElementById('confirm-summ-paid-usd').textContent = '$' + formatNumber(paidUSD);
+
+        document.getElementById('confirm-summ-deduction-rmb').textContent = '¥' + formatNumber(deductRMB);
+        document.getElementById('confirm-summ-deduction-usd').textContent = '$' + formatNumber(deductUSD);
+
+        document.getElementById('confirm-summ-pending-rmb').textContent = '¥' + formatNumber(penRMB);
+        document.getElementById('confirm-summ-pending-usd').textContent = '$' + formatNumber(penUSD);
+
+        document.getElementById('confirm-summ-payment-rmb').textContent = '¥' + formatNumber(payRMB);
+        document.getElementById('confirm-summ-payment-usd').textContent = '$' + formatNumber(payUSD);
+
+        document.getElementById('confirm-summ-current-pending-rmb').textContent = '¥' + formatNumber(currPenRMB);
+        document.getElementById('confirm-summ-current-pending-usd').textContent = '$' + formatNumber(currPenUSD);
+
+        // Populate Bottom Summary Bar (Order Subtotal Split)
+        // 1. Deduction
+        document.getElementById('s3-deduct-text-1').textContent = `¥${formatNumber(deductRMB)}`;
+        document.getElementById('s3-deduct-text-2').textContent = `≈ $${formatNumber(deductUSD)}`;
+
+        // 2. This Payment (Cash)
+        document.getElementById('s3-payment-text-1').textContent = `¥${formatNumber(payRMB)}`;
+        document.getElementById('s3-payment-text-2').textContent = `≈ $${formatNumber(payUSD)}`;
+
+        // Extra Fee Logic
+        let extraRMB = 0;
+        let extraUSD = 0;
+        if (extraCur === 'RMB') {
+            extraRMB = extraAmount;
+            extraUSD = extraAmount / rate;
+        } else {
+            extraUSD = extraAmount;
+            extraRMB = extraAmount * rate;
+        }
+
+        // Grand Total = Cash Payment + Extra (Prepay is already deducted from obligation)
+        const grandTotalRMB = payRMB + extraRMB;
+        const grandTotalUSD = payUSD + extraUSD;
+
+        document.getElementById('s3-extra-fee-note').textContent = extraNote || (window.i18n?.t('js.extra_fees') || 'Extra Fees');
+        if (extraCur === 'RMB') {
+            document.getElementById('s3-extra-fee-text-1').textContent = `¥${formatNumber(extraAmount)}`;
+            document.getElementById('s3-extra-fee-text-2').textContent = `≈ $${formatNumber(extraUSD)}`;
+        } else {
+            document.getElementById('s3-extra-fee-text-1').textContent = `$${formatNumber(extraAmount)}`;
+            document.getElementById('s3-extra-fee-text-2').textContent = `≈ ¥${formatNumber(extraRMB)}`;
+        }
+
+        document.getElementById('s3-grand-total-text-1').textContent = `¥${formatNumber(grandTotalRMB)}`;
+        document.getElementById('s3-grand-total-text-2').textContent = `$${formatNumber(grandTotalUSD)}`;
+    }
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 确认付款
+    function confirmDepositPayment() {
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'deposit_payment_submit',
+                (passwords) => {
+                    submitPayment(passwords);
+                },
+                null,
+                (window.i18n?.t('js.confirm_payment') || 'Confirm Payment'),
+                () => console.log('Cancelled')
+            );
+        } else {
+            // Fallback if no security component
+            // But we enforce security in backend, so this will fail 403.
+            // User must have security component loaded.
+            if (confirm("{% trans '确认提交付款? (Password Verification Disabled)' %}")) {
+                submitPayment(null);
+            }
+        }
+    }
+
+    function submitPayment(passwords) {
+        const btn = document.getElementById('btn-step3-next');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>处理中...';
+
+        // Debug: 检查 paymentItems 状态
+        console.log('[DepositWizard] submitPayment called');
+        console.log('[DepositWizard] window.paymentItems:', window.paymentItems);
+        console.log('[DepositWizard] window.step2RateState:', window.step2RateState);
+
+        const poNums = (window.paymentItems || []).map(item => item.po_num);
+        console.log('[DepositWizard] poNums:', poNums);
+
+        const paymentDate = (window.step2RateState && window.step2RateState.paymentDate)
+            ? window.step2RateState.paymentDate
+            : '';
+        const usePaymentDateRate = (window.step2RateState && window.step2RateState.usePaymentDateRate) || false;
+        const settlementRate = (window.step2RateState && window.step2RateState.settlementRate) || 0;
+
+        if (!poNums || poNums.length === 0) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast((window.i18n?.t('js.no_orders_selected') || 'No Orders Selected'), 'warning');
+            } else {
+                alert("{% trans '未选择任何订单' %}");
+            }
+            return;
+        }
+
+        let extraFee = null;
+        if (window.extraFeeData && window.extraFeeData.amount > 0) {
+            extraFee = {
+                note: window.extraFeeData.note,
+                currency: window.extraFeeData.currency,
+                amount: window.extraFeeData.amount
+            };
+        }
+
+        const requestBody = {
+            po_nums: poNums,
+            payment_date: paymentDate,
+            use_payment_date_rate: usePaymentDateRate,
+            settlement_rate: settlementRate,
+            extra_fee: extraFee,
+            items: window.paymentItems.map(item => ({
+                po_num: item.po_num,
+                payment_mode: item.payment_mode || 'original',
+                custom_currency: item.custom_currency,
+                custom_amount: item.custom_amount ? parseFloat(item.custom_amount) : null,
+                cover_standard: item._coverStandard || item.custom_cover_standard || false,
+                use_prepay: item._usePrepay || false,
+                prepay_amount: item._prepayVal || 0,
+                prepay_currency: item.prepay_currency || 'RMB'
+            }))
+        };
+
+        // Password Handling: Ensure correct key format for backend
+        // Password Handling
+        // Password Handling - Strict Compliance with 'aid/safety/Password Policy.md'
+        // Standard: extracted key is 'user', payload key is 'sec_code_user' (or 'sec_code_l0')
+        // Password Handling - Traverse and inject all keys
+        // Matches pattern in logistic.html and standard docs
+        if (passwords) {
+            console.log('[DepositWizard] Injecting passwords:', Object.keys(passwords));
+            for (const [slot, code] of Object.entries(passwords)) {
+                // Standard injection: sec_code_user, sec_code_0, etc.
+                requestBody[`sec_code_${slot}`] = code;
+
+                // Redundancy: Ensure backend sees it even if specific aliases are expected
+                if (slot === 'user') {
+                    requestBody['sec_code_0'] = code; // Legacy Compat
+                    requestBody['sec_code_l0'] = code; // Spec Compat
+                }
+            }
+        }
+
+        console.log('[DepositWizard] Submitting with password gate:', !!passwords);
+
+        fetch("{% url 'web_ui:finance:deposit_payment_submit' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+
+                    // Save PMT Nos
+                    window.generatedPmtNos = (data.data && data.data.pmt_nos) ? data.data.pmt_nos : [];
+
+                    // Check if we have a file to upload
+                    if (window.paymentReceiptFile && window.generatedPmtNos.length > 0) {
+                        // Perform deferred upload
+                        const pmtNo = window.generatedPmtNos[0];
+                        if (typeof createAndShowToast === 'function') {
+                            createAndShowToast((window.i18n?.t('js.payment_success_uploading_receipt') || 'Payment success, uploading receipt...'), 'info');
+                        }
+
+                        uploadReceiptFileDeferred(window.paymentReceiptFile, pmtNo)
+                            .then(() => {
+                                createAndShowToast((window.i18n?.t('js.payment_and_receipt_done') || 'Payment and receipt done'), 'success');
+                                transitionToStep4();
+                            })
+                            .catch(err => {
+                                createAndShowToast((window.i18n?.t('js.payment_ok_receipt_failed_colon') || 'Payment OK but receipt failed: ') + err, 'warning');
+                                transitionToStep4(); // Proceed anyway
+                            });
+
+                    } else {
+                        if (typeof createAndShowToast === 'function') {
+                            createAndShowToast((window.i18n?.t('js.payment_submitted') || 'Payment Submitted'), 'success');
+                        }
+                        transitionToStep4();
+                    }
+
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast(data.message || 'Error', 'error');
+                    } else {
+                        alert("{% trans 'Error' %}: " + (data.message || "{% trans 'Unknown error' %}"));
+                    }
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                console.error('Error:', error);
+                alert("{% trans 'System Error' %}: " + error);
+            });
+    }
+
+    function transitionToStep4() {
+        if (window.paymentWizard) {
+            window.paymentWizard.next();
+        } else {
+            setTimeout(() => window.location.reload(), 1500);
+        }
+    }
+
+    function uploadReceiptFileDeferred(file, pmtNo) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('pmt_no', pmtNo);
+            formData.append('payment_receipt', file);
+
+            fetch("{% url 'web_ui:finance:deposit_receipt_upload' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) resolve(data);
+                    else reject(data.message);
+                })
+                .catch(err => reject(err));
+        });
+    }
+</script>

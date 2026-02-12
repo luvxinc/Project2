@@ -1,0 +1,51 @@
+{% for row in page_obj %}
+<tr>
+    <td class="text-end text-muted pe-3 index-col" style="width: 60px;">
+        {{ forloop.counter0|add:page_obj.start_index }}
+    </td>
+
+    <td class="text-white-50">{{ row.order_date|date:"Y-m-d H:i" }}</td>
+
+    <td class="text-white user-select-all">{{ row.order_id }}</td>
+    <td class="text-info user-select-all">{{ row.sku }}</td>
+
+    <td>
+        {% if row.transaction_type == 'Order' %}
+            <span class="text-success">Order</span>
+        {% elif row.transaction_type == 'Refund' %}
+            <span class="text-danger">Refund</span>
+        {% else %}
+            <span class="text-muted">{{ row.transaction_type }}</span>
+        {% endif %}
+    </td>
+
+    <td class="text-white-50">{{ row.marketplace }}</td>
+
+    <td class="text-end">{{ row.quantity }}</td>
+    <td class="text-end">{{ row.total_amount }}</td>
+    <td class="text-end text-muted">{{ row.total_fees }}</td>
+
+    <td class="text-end pe-3 fw-bold
+        {% if row.net_profit > 0 %}text-success{% elif row.net_profit < 0 %}text-danger{% else %}text-muted{% endif %}"
+        style="background: {% if row.net_profit > 0 %}rgba(25, 135, 84, 0.1){% elif row.net_profit < 0 %}rgba(220, 53, 69, 0.1){% endif %};">
+        {{ row.net_profit }}
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="10" class="text-center py-5 text-muted fst-italic">
+        Empty dataframe.
+    </td>
+</tr>
+{% endfor %}
+
+{% if page_obj.has_next %}
+<tr hx-get="{% url 'web_ui:analysis_data' %}?page={{ page_obj.next_page_number }}&q={{ search_term }}&sort={{ current_sort }}&dir={{ current_dir }}"
+    hx-trigger="revealed"
+    hx-swap="afterend">
+    <td colspan="10" class="text-center py-2 text-muted small">
+        <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+        Loading more rows...
+    </td>
+</tr>
+{% endif %}
