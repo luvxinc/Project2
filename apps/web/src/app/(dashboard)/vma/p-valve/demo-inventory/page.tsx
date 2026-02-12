@@ -121,7 +121,7 @@ export default function DemoInventoryPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API}/vma/demo-inventory`, { headers: getAuthHeaders() });
+      const r = await fetch(`${API}/vma/inventory-transactions/demo`, { headers: getAuthHeaders() });
       if (r.ok) setRows(await r.json());
     } catch { /* */ }
     setLoading(false);
@@ -131,7 +131,7 @@ export default function DemoInventoryPage() {
 
   // Fetch operators once
   useEffect(() => {
-    fetch(`${API}/vma/inventory-operators`, { headers: getAuthHeaders() })
+    fetch(`${API}/vma/inventory-transactions/operators`, { headers: getAuthHeaders() })
       .then(r => r.ok ? r.json() : [])
       .then(setOperatorOptions)
       .catch(() => {});
@@ -142,8 +142,8 @@ export default function DemoInventoryPage() {
     setDemoDate(new Date().toISOString().split('T')[0]);
     setDemoOperator('');
     const [pvR, dsR] = await Promise.all([
-      fetch(`${API}/vma/inventory-spec-options?productType=PVALVE`, { headers: getAuthHeaders() }),
-      fetch(`${API}/vma/inventory-spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() }),
+      fetch(`${API}/vma/inventory-transactions/spec-options?productType=PVALVE`, { headers: getAuthHeaders() }),
+      fetch(`${API}/vma/inventory-transactions/spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() }),
     ]);
     const pvSpecs: SpecOption[] = pvR.ok ? await pvR.json() : [];
     const dsSpecs: SpecOption[] = dsR.ok ? await dsR.json() : [];
@@ -161,7 +161,7 @@ export default function DemoInventoryPage() {
     setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, specNo, serialNo: '', batchNo: '', recDate: '', expDate: '', qty: 1, maxQty: 1, _selectedRowIdx: -1, _loadingRows: true, _availableRows: [] } : l));
     if (!specNo) return;
     try {
-      const res = await fetch(`${API}/vma/inventory-detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API}/vma/inventory-transactions/detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`, { headers: getAuthHeaders() });
       if (res.ok) {
         const data: InventoryDetail = await res.json();
         const avail = [...data.available, ...data.nearExp, ...data.expired];

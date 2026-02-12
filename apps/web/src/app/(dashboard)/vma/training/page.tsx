@@ -6,8 +6,9 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { animate, stagger } from 'animejs';
 import { useModal } from '@/components/modal/GlobalModal';
 import VmaTabSelector from '../components/VmaTabSelector';
+import { getAuthHeaders } from '@/lib/vma-api';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1`;
 
 // ================================
 // Types
@@ -107,7 +108,7 @@ export default function TrainingPage() {
   });
   const [lecturerNo, setLecturerNo] = useState('');
   const [smartFillRunning, setSmartFillRunning] = useState(false);
-  const [smartFillResult, setSmartFillResult] = useState<{ message: string; downloadUrl?: string } | null>(null);
+  const [smartFillResult, setSmartFillResult] = useState<{ message: string; sessions?: { trainingNo: string }[] } | null>(null);
 
   // Roadmap state
   const [showRoadmap, setShowRoadmap] = useState(false);
@@ -115,12 +116,8 @@ export default function TrainingPage() {
   const [roadmapLoading, setRoadmapLoading] = useState(false);
 
   const api = useCallback(async (path: string) => {
-    const token = document.cookie.match(/auth_session=([^;]+)/)?.[1];
     const res = await fetch(`${API}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json();
@@ -164,18 +161,14 @@ export default function TrainingPage() {
     setSmartFillRunning(true);
     setSmartFillResult(null);
     try {
-      const token = document.cookie.match(/auth_session=([^;]+)/)?.[1];
       const res = await fetch(`${API}/vma/training-records/smart-fill`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ cutoffDate: trainingDate, lecturerNo }),
       });
       const result = await res.json();
       if (res.ok) {
-        setSmartFillResult({ message: result.message || 'Training records generated!', downloadUrl: result.downloadUrl });
+        setSmartFillResult({ message: result.message || 'Training records generated!', sessions: result.sessions });
         loadData();
       } else {
         setSmartFillResult({ message: 'Error: ' + (result.message || 'Unknown error') });
@@ -288,7 +281,7 @@ export default function TrainingPage() {
               <p style={{ color: colors.textSecondary }} className="text-sm">
                 {t('training.stats.employees', { count: employees.length })} ·{' '}
                 {t('training.stats.complete', { count: employees.filter(e => e.status === 'COMPLETE').length })} ·{' '}
-                <span style={{ color: '#EF4444' }}>
+                <span style={{ color: colors.red }}>
                   {t('training.stats.missing', { count: employees.filter(e => e.status === 'MISSING').length })}
                 </span>
               </p>
@@ -297,7 +290,7 @@ export default function TrainingPage() {
               onClick={openModal}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95"
               style={{
-                backgroundColor: theme === 'dark' ? '#3B82F6' : '#2563EB',
+                backgroundColor: colors.blue,
                 color: '#FFFFFF',
               }}
             >
@@ -379,8 +372,8 @@ export default function TrainingPage() {
                                 <span
                                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
                                   style={{
-                                    backgroundColor: theme === 'dark' ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.1)',
-                                    color: '#22C55E',
+                                    backgroundColor: theme === 'dark' ? `${colors.green}26` : `${colors.green}1a`,
+                                    color: colors.green,
                                   }}
                                 >
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -391,7 +384,7 @@ export default function TrainingPage() {
                               ) : (
                                 <span
                                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                  style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                                  style={{ backgroundColor: colors.red, color: '#FFFFFF' }}
                                 >
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -433,8 +426,8 @@ export default function TrainingPage() {
                         <span
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
                           style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.1)',
-                            color: '#22C55E',
+                            backgroundColor: theme === 'dark' ? `${colors.green}26` : `${colors.green}1a`,
+                            color: colors.green,
                           }}
                         >
                           ✓ {t('training.status.complete')}
@@ -442,7 +435,7 @@ export default function TrainingPage() {
                       ) : (
                         <span
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                          style={{ backgroundColor: colors.red, color: '#FFFFFF' }}
                         >
                           {t('training.status.missing', { count: selectedEmployee.missingCount })}
                         </span>
@@ -515,7 +508,7 @@ export default function TrainingPage() {
                       >
                         <div
                           className="px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wider"
-                          style={{ color: '#EF4444', borderColor: colors.border, backgroundColor: 'rgba(239,68,68,0.06)' }}
+                          style={{ color: colors.red, borderColor: colors.border, backgroundColor: `${colors.red}0f` }}
                         >
                           {t('training.detail.missingSops', { count: selectedEmployee.missingCount })}
                         </div>
@@ -541,7 +534,7 @@ export default function TrainingPage() {
                                   style={{ borderColor: colors.border }}
                                   className="border-b last:border-b-0"
                                 >
-                                  <td className="px-4 py-2.5 text-sm font-mono font-medium whitespace-nowrap" style={{ color: '#EF4444' }}>{sop.sopNo}</td>
+                                  <td className="px-4 py-2.5 text-sm font-mono font-medium whitespace-nowrap" style={{ color: colors.red }}>{sop.sopNo}</td>
                                   <td className="px-4 py-2.5 text-sm" style={{ color: colors.text, lineHeight: '1.4' }}>{sop.name}</td>
                                   <td className="px-4 py-2.5 text-sm" style={{ color: colors.textSecondary }}>{sop.version.replace(/^Rev\s*/i, '')}</td>
                                   <td className="px-4 py-2.5 text-sm font-mono whitespace-nowrap" style={{ color: colors.textSecondary }}>{sop.daNo === 'DA-2500' ? 'Initial' : sop.daNo}</td>
@@ -642,7 +635,7 @@ export default function TrainingPage() {
               disabled={smartFillRunning || !lecturerNo}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all"
               style={{
-                backgroundColor: smartFillRunning ? '#6B7280' : '#22C55E',
+                backgroundColor: smartFillRunning ? colors.gray : colors.green,
                 color: '#FFFFFF',
                 opacity: !lecturerNo ? 0.5 : 1,
               }}
@@ -666,30 +659,34 @@ export default function TrainingPage() {
             {smartFillResult && (
               <div className="mt-4 p-3 rounded-lg text-sm" style={{ backgroundColor: colors.bg, color: colors.text }}>
                 <p>{smartFillResult.message}</p>
-                {smartFillResult.downloadUrl && (
+                {smartFillResult.sessions && smartFillResult.sessions.length > 0 && (
                   <button
                     onClick={async () => {
                       try {
-                        const token = document.cookie.match(/auth_session=([^;]+)/)?.[1];
-                        const resp = await fetch(`${API}${smartFillResult.downloadUrl}`, {
-                          headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        });
-                        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                        const blob = await resp.blob();
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = smartFillResult.downloadUrl!.split('/').pop() || 'training.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
+                        const headers = getAuthHeaders();
+                        delete headers['Content-Type'];
+                        for (const session of smartFillResult.sessions!) {
+                          const resp = await fetch(`${API}/vma/training-sessions/${session.trainingNo}/pdf`, {
+                            headers,
+                          });
+                          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                          const blob = await resp.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.style.display = 'none';
+                          a.href = url;
+                          a.download = `training_${session.trainingNo}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }
                       } catch (err) {
                         console.error('Download failed:', err);
                       }
                     }}
                     className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
-                    style={{ backgroundColor: '#3B82F6', color: '#FFFFFF' }}
+                    style={{ backgroundColor: colors.blue, color: '#FFFFFF' }}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -837,9 +834,9 @@ function TrainingRoadmapModal({
 
   // Compliance rate color
   const rateColor = (rate: number) => {
-    if (rate >= 90) return '#22C55E';
-    if (rate >= 70) return '#F59E0B';
-    return '#EF4444';
+    if (rate >= 90) return colors.green;
+    if (rate >= 70) return colors.orange;
+    return colors.red;
   };
 
   return (
@@ -869,8 +866,8 @@ function TrainingRoadmapModal({
           <div className="flex items-center gap-3">
             {!loading && milestones.length > 0 && (
               <span className="text-xs px-3 py-1 rounded-full" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.1)',
-                color: '#8b5cf6',
+                backgroundColor: theme === 'dark' ? `${colors.indigo}33` : `${colors.indigo}1a`,
+                color: colors.indigo,
               }}>
                 {milestones.length} {t('training.roadmap.milestones') || 'milestones'}
               </span>
@@ -915,7 +912,7 @@ function TrainingRoadmapModal({
                 style={{
                   top: '185px',
                   height: '3px',
-                  background: `linear-gradient(90deg, ${colors.border} 0%, #8b5cf6 30%, #8b5cf6 70%, ${colors.border} 100%)`,
+                  background: `linear-gradient(90deg, ${colors.border} 0%, ${colors.indigo} 30%, ${colors.indigo} 70%, ${colors.border} 100%)`,
                   transformOrigin: 'left center',
                 }}
               />
@@ -1029,7 +1026,7 @@ function TrainingRoadmapModal({
                                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                                 style={{
                                   backgroundColor: c.changeType === 'ADD' || c.changeType === 'INITIAL'
-                                    ? '#22C55E' : '#EF4444',
+                                    ? colors.green : colors.red,
                                 }}
                               />
                               <span style={{ color: colors.textSecondary }} className="truncate">
@@ -1047,7 +1044,7 @@ function TrainingRoadmapModal({
                         {/* Non-compliant employees */}
                         {ms.topNonCompliant.length > 0 && (
                           <div className="mt-1 pt-1 border-t" style={{ borderColor: colors.border }}>
-                            <div className="text-[8px] font-semibold uppercase mb-0.5" style={{ color: '#EF4444' }}>
+                            <div className="text-[8px] font-semibold uppercase mb-0.5" style={{ color: colors.red }}>
                               ⚠ {t('training.roadmap.nonCompliant') || 'Non-compliant'}
                             </div>
                             {ms.topNonCompliant.slice(0, 3).map((nc, ni) => (
@@ -1077,7 +1074,7 @@ function TrainingRoadmapModal({
                         {fmtDate(ms.date)}
                       </span>
                       {ms.changeType === 'INITIAL' && (
-                        <div className="text-[8px]" style={{ color: '#8b5cf6' }}>
+                        <div className="text-[8px]" style={{ color: colors.indigo }}>
                           {t('training.roadmap.initial') || 'Initial'}
                         </div>
                       )}
@@ -1101,15 +1098,15 @@ function TrainingRoadmapModal({
             </span>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22C55E' }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.green }} />
                 ≥90%
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.orange }} />
                 70-89%
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.red }} />
                 &lt;70%
               </span>
             </div>

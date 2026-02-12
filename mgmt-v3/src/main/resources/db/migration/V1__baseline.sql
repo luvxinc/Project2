@@ -1,0 +1,31 @@
+-- ===========================================================
+-- V3 Flyway Baseline — mirrors V2 production schema exactly
+-- This is a BASELINE migration: Flyway skips it for existing DBs
+-- ===========================================================
+
+-- No SQL needed: baseline-on-migrate=true with baseline-version=0
+-- means Flyway will treat the existing DB as already migrated.
+--
+-- This file exists as documentation of what the current schema contains.
+-- The real schema is managed by the existing Prisma migrations.
+--
+-- Tables present in production:
+--   users, refresh_tokens, security_codes
+--   roles, role_permission_boundaries
+--   products
+--   audit_logs, business_logs, access_logs, error_logs
+--   log_alerts
+--   vma_employees, vma_departments, vma_duties
+--   vma_employee_department_assignments, vma_employee_duty_assignments
+--   vma_training_sops, vma_sop_versions, vma_sop_duty_requirements
+--   vma_training_sessions, vma_training_records
+--   vma_pvalve_products, vma_delivery_systems, vma_product_fits
+--   vma_inventory_transactions
+--   vma_clinical_cases
+--   vma_sites
+--   security_verification_logs
+--
+-- Flyway will start tracking from V2 onwards.
+-- V2+ migrations will contain actual schema changes.
+
+SELECT 1; -- Flyway requires at least one statement

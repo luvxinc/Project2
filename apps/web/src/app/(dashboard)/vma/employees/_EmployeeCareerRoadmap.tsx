@@ -272,7 +272,7 @@ export default function EmployeeCareerRoadmap({
   const fmtDate = (d: string) => d === 'Unknown' ? 'Unknown' : new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
   const isDark = theme === 'dark';
   const cardBg = isDark ? 'rgba(30,30,45,0.85)' : 'rgba(255,255,255,0.85)';
-  const cardBorder = isDark ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)';
+  const cardBorder = `${colors.blue}4d`;
 
   const getEventColor = (type: string) => {
     switch (type) {
@@ -312,20 +312,20 @@ export default function EmployeeCareerRoadmap({
         <div className="pointer-events-auto flex items-center gap-4">
            {employee && (
                <>
-                <h2 className="text-3xl font-bold tracking-tight drop-shadow-xl flex items-center gap-3" style={{ color: isDark ? '#fff' : '#1f2937' }}>
+                <h2 className="text-3xl font-bold tracking-tight drop-shadow-xl flex items-center gap-3" style={{ color: colors.text }}>
                     <span>{employee.firstName} {employee.lastName}</span>
                     <span className={`text-sm px-3 py-1 rounded-full font-medium ${employee.status === 'ACTIVE' ? 'bg-green-500/20 text-green-600' : 'bg-gray-500/20 text-gray-500'}`}>
                         {employee.status}
                     </span>
                 </h2>
-                <div className="text-lg opacity-60 mt-1 font-mono" style={{ color: isDark ? '#bbb' : '#6b7280' }}>
+                <div className="text-lg opacity-60 mt-1 font-mono" style={{ color: colors.textSecondary }}>
                     #{employee.employeeNo} · Career Timeline
                 </div>
                </>
            )}
         </div>
         <div className="pointer-events-auto">
-            <button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-black/10 transition backdrop-blur-md border border-transparent hover:border-white/10" style={{ color: isDark ? '#fff' : '#000' }}>
+            <button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-black/10 transition backdrop-blur-md border border-transparent hover:border-white/10" style={{ color: colors.text }}>
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -372,8 +372,8 @@ export default function EmployeeCareerRoadmap({
                                                     {getEventIcon(evt.type)}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="font-bold text-sm mb-0.5" style={{ color: isDark ? '#fff' : '#1f2937' }}>{evt.title}</div>
-                                                    <div className="text-xs opacity-70" style={{ color: isDark ? '#ccc' : '#4b5563' }}>{evt.subtitle}</div>
+                                                    <div className="font-bold text-sm mb-0.5" style={{ color: colors.text }}>{evt.title}</div>
+                                                    <div className="text-xs opacity-70" style={{ color: colors.textSecondary }}>{evt.subtitle}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -388,7 +388,7 @@ export default function EmployeeCareerRoadmap({
                          <div className="timeline-line absolute top-1/2 left-0 right-0 -translate-y-1/2 rounded-full"
                               style={{ 
                                   height: '8px', 
-                                  background: 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)',
+                                  background: `linear-gradient(90deg, ${colors.blue} 0%, ${colors.cyan || '#06b6d4'} 100%)`,
                                   transformOrigin: 'left center', 
                                   width: `${(history.length + 1) * SLOT_W}px` 
                               }} />
@@ -403,7 +403,7 @@ export default function EmployeeCareerRoadmap({
                                         <div className="absolute bottom-4 left-1/2 w-[2px] h-[60px] bg-blue-500/30 -ml-[1px]" />
                                     </div>
                                     <div className={`ms-date-${gi} absolute top-10 left-1/2 -translate-x-1/2 text-center w-[200px] opacity-0`}>
-                                        <div className="text-sm font-bold" style={{ color: isDark ? '#fff' : '#111' }}>{fmtDate(group.date)}</div>
+                                        <div className="text-sm font-bold" style={{ color: colors.text }}>{fmtDate(group.date)}</div>
                                     </div>
                                  </div>
                              );
@@ -487,7 +487,7 @@ export default function EmployeeCareerRoadmap({
                                 )}
                             </div>
                             <div className="mt-8">
-                                <button onClick={handleCreate} disabled={saving || (!canRemoveDuty && actionType === 'REMOVE')} className="w-full py-4 rounded-xl font-bold text-lg text-white shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: actionType === 'ASSIGN' ? '#3b82f6' : actionType === 'REMOVE' ? '#f97316' : '#a855f7' }}>{saving ? (t('employees.career.processing') || 'Processing...') : (t('employees.career.confirmPlan') || 'Confirm Plan')}</button>
+                                <button onClick={handleCreate} disabled={saving || (!canRemoveDuty && actionType === 'REMOVE')} className="w-full py-4 rounded-xl font-bold text-lg text-white shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: actionType === 'ASSIGN' ? colors.blue : actionType === 'REMOVE' ? colors.orange : colors.indigo }}>{saving ? (t('employees.career.processing') || 'Processing...') : (t('employees.career.confirmPlan') || 'Confirm Plan')}</button>
                             </div>
                         </>
                     ) : (

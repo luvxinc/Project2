@@ -136,7 +136,7 @@ export default function TrainingMatrixRoadmap({
 
   const getDaColor = (milestone: RoadmapMilestone) => {
       const da = milestone.sopChanges.find(c => c.daNo)?.daNo;
-      if (!da) return '#8e8e93'; 
+      if (!da) return colors.gray; 
       let hash = 0;
       for (let i = 0; i < da.length; i++) hash = da.charCodeAt(i) + ((hash << 5) - hash);
       return DA_COLORS[Math.abs(hash) % DA_COLORS.length];
@@ -192,13 +192,13 @@ export default function TrainingMatrixRoadmap({
                 }}>
                 {t('training.roadmap.title') || 'Compliance Roadmap'}
             </h2>
-            <div className="text-lg opacity-80 mt-2 font-medium tracking-wide" style={{ color: isDark ? '#d4d4d8' : '#52525b' }}>
+            <div className="text-lg opacity-80 mt-2 font-medium tracking-wide" style={{ color: colors.textSecondary }}>
                {t('training.roadmap.subtitle') || 'Training compliance snapshots at each SOP change event'}
             </div>
         </div>
         <div className="pointer-events-auto">
             <button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition backdrop-blur-md border border-white/10 group">
-               <svg className="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke={isDark ? '#fff' : '#000'} viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+               <svg className="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke={colors.text} viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function TrainingMatrixRoadmap({
                                          boxShadow: isSelected ? `0 0 40px -10px ${daColor}80` : undefined, // Neon Glow
                                          height: '45vh',
                                          transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-                                         color: isDark ? '#fff' : '#000'
+                                         color: colors.text
                                      }}>
                                     
                                     <div className="px-6 py-6 border-b flex items-start justify-between" 
@@ -365,7 +365,7 @@ export default function TrainingMatrixRoadmap({
                                         <div className={`w-5 h-5 rounded-full border-[3px] shadow-[0_0_20px_5px_rgba(255,255,255,0.2)] z-20 transition-transform duration-300 hover:scale-150 ${i===milestones.length-1 ? 'pulse-node-rm' : ''}`}
                                              style={{ 
                                                  borderColor: daColor, 
-                                                 backgroundColor: isDark ? '#000' : '#fff',
+                                                 backgroundColor: colors.bg,
                                                  boxShadow: `0 0 15px ${daColor}`
                                              }} />
                                         

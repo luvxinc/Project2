@@ -105,7 +105,7 @@ export function useClinicalCases() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/vma/inventory-spec-options?productType=PVALVE`, { headers: getAuthHeaders() });
+        const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=PVALVE`, { headers: getAuthHeaders() });
         if (res.ok) setPvSpecOptions(await res.json());
       } catch (e) { console.error(e); }
     })();
@@ -290,7 +290,7 @@ export function useClinicalCases() {
     });
     setEditError('');
     try {
-      const res = await fetch(`${API}/vma/inventory-spec-options?productType=${txn.productType}`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=${txn.productType}`, { headers: getAuthHeaders() });
       if (res.ok) setEditSpecOptions(await res.json());
     } catch (e) { console.error(e); }
     fetchEditAvailable(txn.specNo, txn.productType, txn.serialNo || undefined);
@@ -393,18 +393,24 @@ export function useClinicalCases() {
   const handleDownloadPdf = async () => {
     if (!selectedCase) return;
     try {
+      const headers = getAuthHeaders();
+      // Remove Content-Type for download requests (not sending JSON body)
+      delete headers['Content-Type'];
       const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/pdf`, {
-        headers: { ...(getAuthHeaders()), 'Content-Type': undefined as unknown as string },
+        headers,
       });
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         const cd = res.headers.get('Content-Disposition') || '';
         const m = cd.match(/filename="?([^"]+)"?/);
         a.download = m ? m[1] : `PackingList_${selectedCase.caseId}.pdf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       }
     } catch (e) { console.error(e); }
@@ -586,11 +592,14 @@ export function useClinicalCases() {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         const cd = res.headers.get('Content-Disposition') || '';
         const m = cd.match(/filename="?([^"]+)"?/);
         a.download = m ? m[1] : `PackingList_UVP-${siteId}-${patientId}.pdf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         setModalOpen(false);
         resetModal();

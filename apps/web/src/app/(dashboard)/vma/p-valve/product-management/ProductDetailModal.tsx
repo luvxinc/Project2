@@ -12,14 +12,14 @@ interface PValveProduct {
   expandedLengthD: number | null;
   expandedLengthE: number | null;
   crimpedTotalLength: number | null;
-  deliverySystemFits: { deliverySystem: { id: string; model: string; specification: string } }[];
+  fits: { id: string; model: string; specification: string }[];
 }
 
 interface DeliverySystemProduct {
   id: string;
   model: string;
   specification: string;
-  pvalveFits: { pvalve: { id: string; model: string; specification: string } }[];
+  fits: { id: string; model: string; specification: string }[];
 }
 
 type ModalProduct =
@@ -79,15 +79,13 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
       <div className="absolute top-5 left-6 z-10">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider" style={{
-            backgroundColor: isPValve
-              ? (theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)')
-              : (theme === 'dark' ? 'rgba(168,85,247,0.15)' : 'rgba(168,85,247,0.08)'),
-            color: isPValve ? '#3b82f6' : '#a855f7',
+            backgroundColor: isPValve ? `${colors.blue}26` : `${colors.indigo}26`,
+            color: isPValve ? colors.blue : colors.indigo,
           }}>
             {isPValve ? 'P-Valve' : 'Delivery System'}
           </span>
           <div>
-            <h2 className="text-[20px] font-bold" style={{ color: theme === 'dark' ? '#eaeff6' : '#1a1a2e' }}>
+            <h2 className="text-[20px] font-bold" style={{ color: colors.text }}>
               {item.product.specification}
             </h2>
             <p className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
@@ -103,8 +101,8 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
         {isPValve && pv && pv.diameterA && pv.diameterB && pv.diameterC && pv.expandedLengthD && pv.expandedLengthE && pv.crimpedTotalLength ? (
           <div className="w-1/2 flex items-center justify-center" style={{
             background: theme === 'dark'
-              ? 'radial-gradient(circle at 50% 50%, rgba(59,130,246,0.05), transparent 60%)'
-              : 'radial-gradient(circle at 50% 50%, rgba(59,130,246,0.04), transparent 60%)',
+              ? `radial-gradient(circle at 50% 50%, ${colors.blue}0d, transparent 60%)`
+              : `radial-gradient(circle at 50% 50%, ${colors.blue}0a, transparent 60%)`,
           }}>
             <ValveWireframe
               diameterA={pv.diameterA}
@@ -137,12 +135,12 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                   }}>
                     <div className="flex items-center gap-3">
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold" style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(107,170,236,0.12)' : 'rgba(42,122,222,0.08)',
-                        color: theme === 'dark' ? '#6baaec' : '#2a7ade',
+                        backgroundColor: `${colors.blue}1f`,
+                        color: colors.blue,
                       }}>{spec.key}</span>
                       <div>
                         <p className="text-[13px] font-medium" style={{
-                          color: theme === 'dark' ? '#d4dae5' : '#2a2a3e',
+                          color: colors.text,
                         }}>{spec.label}</p>
                         <p className="text-[11px]" style={{
                           color: theme === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.3)',
@@ -150,7 +148,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                       </div>
                     </div>
                     <span className="text-[16px] font-bold tabular-nums ml-4" style={{
-                      color: theme === 'dark' ? '#6baaec' : '#2a7ade',
+                      color: colors.blue,
                     }}>
                       {spec.value != null ? `${spec.value} ${spec.unit}` : '—'}
                     </span>
@@ -162,15 +160,15 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
               }}>Compatible Delivery Systems</h3>
               <div className="flex flex-wrap gap-2">
-                {pv.deliverySystemFits.length > 0 ? pv.deliverySystemFits.map(f => (
-                  <span key={f.deliverySystem.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(168,85,247,0.12)' : 'rgba(168,85,247,0.06)',
-                    color: theme === 'dark' ? '#c084fc' : '#9333ea',
+                {(pv.fits || []).length > 0 ? pv.fits.map(f => (
+                  <span key={f.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
+                    backgroundColor: `${colors.indigo}1f`,
+                    color: colors.indigo,
                   }}>
-                    {f.deliverySystem.specification}
+                    {f.specification}
                     <span className="ml-1.5 font-normal text-[11px]" style={{
                       color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-                    }}>({f.deliverySystem.model})</span>
+                    }}>({f.model})</span>
                   </span>
                 )) : (
                   <p className="text-[13px]" style={{
@@ -187,12 +185,12 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between">
                   <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>Model</span>
-                  <span className="text-[16px] font-bold" style={{ color: theme === 'dark' ? '#d4dae5' : '#2a2a3e' }}>{ds.model}</span>
+                  <span className="text-[16px] font-bold" style={{ color: colors.text }}>{ds.model}</span>
                 </div>
                 <div className="h-px" style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
                 <div className="flex items-center justify-between">
                   <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>Specification</span>
-                  <span className="text-[16px] font-bold" style={{ color: theme === 'dark' ? '#6baaec' : '#2a7ade' }}>{ds.specification}</span>
+                  <span className="text-[16px] font-bold" style={{ color: colors.blue }}>{ds.specification}</span>
                 </div>
               </div>
 
@@ -200,15 +198,15 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
               }}>Compatible P-Valves</h3>
               <div className="flex flex-wrap gap-2">
-                {ds.pvalveFits.length > 0 ? ds.pvalveFits.map(f => (
-                  <span key={f.pvalve.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.06)',
-                    color: theme === 'dark' ? '#93c5fd' : '#2563eb',
+                {(ds.fits || []).length > 0 ? ds.fits.map(f => (
+                  <span key={f.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
+                    backgroundColor: `${colors.blue}1f`,
+                    color: colors.blue,
                   }}>
-                    {f.pvalve.specification}
+                    {f.specification}
                     <span className="ml-1.5 font-normal text-[11px]" style={{
                       color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-                    }}>({f.pvalve.model})</span>
+                    }}>({f.model})</span>
                   </span>
                 )) : (
                   <p className="text-[13px]" style={{

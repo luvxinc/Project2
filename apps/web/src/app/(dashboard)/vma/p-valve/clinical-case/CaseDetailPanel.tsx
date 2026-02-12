@@ -89,8 +89,8 @@ export default function CaseDetailPanel({
             <span
               className="ml-3 px-2 py-0.5 rounded-full text-[10px] font-semibold"
               style={{
-                backgroundColor: isCompleted ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)',
-                color: isCompleted ? '#34C759' : '#FF9F0A',
+                backgroundColor: isCompleted ? `${colors.green}26` : `${colors.orange}26`,
+                color: isCompleted ? colors.green : colors.orange,
               }}
             >
               {isCompleted ? 'Completed' : 'In Progress'}
@@ -130,7 +130,7 @@ export default function CaseDetailPanel({
           <button
             onClick={openCompletionReview}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition"
-            style={{ backgroundColor: '#34C759', color: '#fff' }}
+            style={{ backgroundColor: colors.green, color: '#fff' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -143,7 +143,7 @@ export default function CaseDetailPanel({
           <button
             onClick={() => setReverseModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition"
-            style={{ backgroundColor: '#FF9F0A', color: '#fff' }}
+            style={{ backgroundColor: colors.orange, color: '#fff' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
@@ -245,8 +245,8 @@ export default function CaseDetailPanel({
                         <span
                           className="px-2 py-0.5 rounded text-[10px] font-semibold"
                           style={{
-                            backgroundColor: txn.productType === 'PVALVE' ? 'rgba(0,122,255,0.12)' : 'rgba(175,82,222,0.12)',
-                            color: txn.productType === 'PVALVE' ? '#007AFF' : '#AF52DE',
+                            backgroundColor: txn.productType === 'PVALVE' ? `${colors.blue}1f` : `${colors.indigo}1f`,
+                            color: txn.productType === 'PVALVE' ? colors.blue : colors.indigo,
                           }}
                         >
                           {txn.productType === 'PVALVE' ? 'P-Valve' : 'DS'}
@@ -310,7 +310,7 @@ export default function CaseDetailPanel({
                       setAddDsLines(() => [{ specNo: '', qty: 1, picked: [], loading: false }]);
                       (async () => {
                         try {
-                          const res = await fetch(`${API}/vma/inventory-spec-options?productType=PVALVE`, { headers: getAuthHeaders() });
+                          const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=PVALVE`, { headers: getAuthHeaders() });
                           if (res.ok) {
                             const data = await res.json();
                             setAddPvSpecOptions(() => data);

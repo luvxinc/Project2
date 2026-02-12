@@ -46,8 +46,8 @@ export default function EditItemModal({
         <div className="px-5 pt-4 pb-2">
           <span className="px-2.5 py-1 rounded text-[11px] font-semibold"
             style={{
-              backgroundColor: editTxn.productType === 'PVALVE' ? 'rgba(0,122,255,0.12)' : 'rgba(175,82,222,0.12)',
-              color: editTxn.productType === 'PVALVE' ? '#007AFF' : '#AF52DE',
+              backgroundColor: editTxn.productType === 'PVALVE' ? `${colors.blue}1f` : `${colors.indigo}1f`,
+              color: editTxn.productType === 'PVALVE' ? colors.blue : colors.indigo,
             }}>
             {editTxn.productType === 'PVALVE' ? 'P-Valve' : 'Delivery System'}
           </span>

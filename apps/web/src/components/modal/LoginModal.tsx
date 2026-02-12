@@ -52,7 +52,7 @@ export function LoginModal({ isOpen, onClose, locale = 'zh' }: LoginModalProps) 
 
     try {
       // 🔒 使用环境变量配置 API URL（支持生产环境部署）
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
       const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

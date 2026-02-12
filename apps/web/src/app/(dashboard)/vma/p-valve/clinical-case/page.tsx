@@ -206,7 +206,7 @@ export default function ClinicalCasePage() {
         <div
           style={{
             position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(220, 38, 38, 0.95)', color: '#fff',
+            backgroundColor: `${colors.red}f2`, color: '#fff',
             padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 500,
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)', zIndex: 9999,
             display: 'flex', alignItems: 'center', gap: 12, maxWidth: 480,
