@@ -1,0 +1,157 @@
+{
+  "title": "Product Management",
+  "description": "Manage product catalog, COGS, and barcode generation",
+  "module": {
+    "title": "Products",
+    "description": "Product catalog and inventory management"
+  },
+  "hub": {
+    "explore": "Learn more",
+    "cogs": {
+      "title": "COGS Maintenance",
+      "description": "Manage product cost of goods sold and pricing data",
+      "cta": "Manage COGS"
+    },
+    "create": {
+      "title": "Create Product",
+      "description": "Add new products to the catalog with initial inventory",
+      "cta": "Add Product"
+    },
+    "barcode": {
+      "title": "Barcode Generator",
+      "description": "Generate and download product barcode labels",
+      "cta": "Generate Barcodes"
+    }
+  },
+  "list": {
+    "title": "Product Catalog",
+    "description": "View and manage all products in the system",
+    "searchPlaceholder": "Search by SKU or name",
+    "noProducts": "No products found",
+    "productCount": "products",
+    "loading": "Loading...",
+    "loadFailed": "Failed to load products",
+    "retry": "Retry",
+    "columns": {
+      "sku": "SKU",
+      "name": "Product Name",
+      "category": "Category",
+      "cogs": "COGS",
+      "upc": "UPC",
+      "status": "Status",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "actions": "Actions"
+    }
+  },
+  "cogs": {
+    "title": "COGS Management",
+    "description": "Batch update cost of goods sold for products",
+    "batchUpdate": "Batch Update",
+    "batchUpdateSuccess": "Successfully updated {count} products",
+    "batchUpdateFailed": "Failed to update some products",
+    "editMode": "Edit Mode",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard",
+    "unsavedChanges": "You have unsaved changes",
+    "modifiedRows": "{count} modified",
+    "instructions": {
+      "title": "Editing Instructions",
+      "editCostFreight": "Edit Cost and Freight values in the table below",
+      "autoCalculate": "COG is automatically calculated as Cost + Freight",
+      "saveChanges": "Click \"Save Changes\" to submit your edits"
+    }
+  },
+
+  "create": {
+    "title": "Create Product",
+    "description": "Add a new product to the catalog",
+    "step1": "Basic Information",
+    "step2": "Pricing",
+    "step3": "Confirmation",
+    "batchCreate": "Batch Create",
+    "batchTitle": "Batch Create Products",
+    "batchDescription": "Create multiple products at once"
+  },
+  "barcode": {
+    "title": "Barcode Generator",
+    "description": "Generate barcode labels for products",
+    "selectProducts": "Select Products",
+    "format": "Barcode Format",
+    "copies": "Copies per SKU",
+    "generate": "Generate",
+    "download": "Download PDF",
+    "formats": {
+      "CODE128": "Code 128 (Recommended)",
+      "EAN13": "EAN-13",
+      "UPC": "UPC-A"
+    }
+  },
+  "form": {
+    "sku": {
+      "label": "SKU",
+      "placeholder": "Enter SKU code",
+      "hint": "3-50 characters, uppercase letters, numbers, and hyphens only"
+    },
+    "name": {
+      "label": "Product Name",
+      "placeholder": "Enter product name"
+    },
+    "category": {
+      "label": "Category",
+      "placeholder": "Select or enter category"
+    },
+    "cogs": {
+      "label": "COGS",
+      "placeholder": "0.00",
+      "hint": "Cost of goods sold"
+    },
+    "upc": {
+      "label": "UPC",
+      "placeholder": "Enter UPC barcode"
+    },
+    "status": {
+      "label": "Status"
+    }
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "create": "Create Product",
+    "update": "Edit",
+    "delete": "Delete Product",
+    "view": "View Details",
+    "duplicate": "Duplicate",
+    "export": "Export",
+    "generateBarcode": "Generate Barcode"
+  },
+  "messages": {
+    "createSuccess": "Product created successfully",
+    "updateSuccess": "Product updated successfully",
+    "deleteSuccess": "Product deleted successfully",
+    "batchCreateSuccess": "Batch create completed: {success}/{total} products",
+    "batchUpdateSuccess": "Batch update completed: {success}/{total} products",
+    "confirmDelete": "Are you sure you want to delete this product? This action cannot be undone.",
+    "skuCopied": "SKU copied to clipboard"
+  },
+  "errors": {
+    "notFound": "Product not found",
+    "skuExists": "SKU already exists",
+    "invalidSku": "Invalid SKU format",
+    "invalidCogs": "COGS must be a positive number",
+    "loadFailed": "Failed to load products",
+    "saveFailed": "Failed to save changes"
+  },
+  "security": {
+    "requiresL1": "This action requires L1 security verification",
+    "requiresL2": "This action requires L2 security verification",
+    "requiresL3": "This action requires L3 security verification"
+  },
+  "pagination": {
+    "total": "{count} products total",
+    "prev": "Previous",
+    "next": "Next"
+  }
+}

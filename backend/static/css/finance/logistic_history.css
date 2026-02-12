@@ -1,0 +1,117 @@
+/* logistic_history.css - 物流付款历史记录样式 */
+
+.version-card {
+    background: rgba(30, 35, 45, 0.8);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.version-header {
+    padding: 12px 16px;
+    background: rgba(108, 117, 125, 0.1);
+    border-bottom: 1px solid rgba(108, 117, 125, 0.15);
+}
+
+.version-header.initial {
+    background: linear-gradient(90deg, rgba(13, 110, 253, 0.2), transparent);
+    border-left: 3px solid rgba(13, 110, 253, 0.5);
+}
+
+.version-header.delete-order {
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.2), transparent);
+    border-left: 3px solid #dc3545;
+}
+
+.version-seq {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.version-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 6px;
+}
+
+.version-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.version-meta i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.version-body {
+    padding: 12px 16px;
+}
+
+.initial-card-table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.initial-card-table td {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.initial-card-table td:first-child {
+    color: rgba(255, 255, 255, 0.5);
+    width: 100px;
+}
+
+.initial-card-table tr:last-child td {
+    border-bottom: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* 变更对比样式 */
+.change-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.change-item.adjust {
+    border-left: 3px solid #ffc107;
+}
+
+.change-item.add {
+    border-left: 3px solid #198754;
+}
+
+.change-item.delete {
+    border-left: 3px solid #dc3545;
+}
+
+.change-arrow {
+    color: #6c757d;
+    margin: 0 0.5rem;
+}
+
+.change-old {
+    color: #dc3545;
+    text-decoration: line-through;
+}
+
+.change-new {
+    color: #198754;
+}

@@ -1,0 +1,215 @@
+/**
+ * Apple-style Table CSS
+ * 
+ * 轻量级暗色主题表格样式
+ * - 干净、圆角、细分隔线
+ * - 低饱和强调色
+ * - 适配深色背景
+ */
+
+/* ============================================ */
+/* Base Apple Table Styles                      */
+/* ============================================ */
+
+.apple-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgba(20, 22, 28, 0.6);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.875rem;
+}
+
+/* Header */
+.apple-table thead {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.apple-table thead th {
+    padding: 0.875rem 1rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.apple-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.apple-table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+/* Body */
+.apple-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.apple-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.apple-table tbody td {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+}
+
+.apple-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.apple-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 12px;
+}
+
+.apple-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 12px;
+}
+
+/* ============================================ */
+/* Input Fields within Apple Table             */
+/* ============================================ */
+
+.apple-table input[type="number"],
+.apple-table input[type="text"],
+.apple-table select {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.375rem 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.apple-table input:focus,
+.apple-table select:focus {
+    outline: none;
+    border-color: rgba(13, 202, 240, 0.5);
+    box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+    background: rgba(13, 202, 240, 0.05);
+}
+
+.apple-table input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================ */
+/* Validation States                            */
+/* ============================================ */
+
+/* Row with validation error */
+.apple-table tr.row-invalid {
+    background: rgba(220, 53, 69, 0.08) !important;
+}
+
+.apple-table tr.row-invalid:hover {
+    background: rgba(220, 53, 69, 0.12) !important;
+}
+
+/* Cell with validation error */
+.apple-table td.cell-invalid {
+    background: rgba(220, 53, 69, 0.15);
+    border-left: 2px solid #dc3545;
+}
+
+.apple-table td.cell-invalid input,
+.apple-table td.cell-invalid select {
+    border-color: rgba(220, 53, 69, 0.5);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* ============================================ */
+/* Diff Table Specific Styles                  */
+/* ============================================ */
+
+.apple-table .diff-arrow {
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0 0.5rem;
+}
+
+.apple-table .diff-from {
+    color: rgba(220, 53, 69, 0.8);
+    text-decoration: line-through;
+}
+
+.apple-table .diff-to {
+    color: #20c997;
+    font-weight: 600;
+}
+
+/* ============================================ */
+/* Compact Variant                              */
+/* ============================================ */
+
+.apple-table.apple-table-compact thead th {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.7rem;
+}
+
+.apple-table.apple-table-compact tbody td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+/* ============================================ */
+/* Striped Variant                              */
+/* ============================================ */
+
+.apple-table.apple-table-striped tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ============================================ */
+/* Bordered Variant                             */
+/* ============================================ */
+
+.apple-table.apple-table-bordered {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.apple-table.apple-table-bordered td,
+.apple-table.apple-table-bordered th {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================ */
+/* Responsive Wrapper                           */
+/* ============================================ */
+
+.apple-table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+}
+
+.apple-table-responsive .apple-table {
+    min-width: 600px;
+}
+
+/* Custom scrollbar for table wrapper */
+.apple-table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.apple-table-responsive::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 3px;
+}
+
+.apple-table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.apple-table-responsive::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

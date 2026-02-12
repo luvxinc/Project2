@@ -1,0 +1,156 @@
+{% load security_tags %}
+
+<!-- ETL 向导容器 -->
+<div id="etl-wizard" data-testid="etl-wizard">
+    <!-- Stage Indicator (6 步骤) -->
+    <div class="d-flex justify-content-center mb-4" id="stage-indicator" data-testid="stage-indicator">
+
+        <!-- Step 1: Upload -->
+        <div class="stage-step {% if stage == 'upload' or not stage %}active{% endif %}{% if stage == 'validate' or stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}" data-stage="upload">
+            <div class="step-box">
+                {% if stage == 'validate' or stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %}<i class="fa-solid fa-check"></i>{% else %}1{% endif %}
+            </div>
+            <div class="step-label" data-i18n="common.upload">上传</div>
+        </div>
+        <div class="stage-connector{% if stage == 'validate' or stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 2: Validate -->
+        <div class="stage-step {% if stage == 'validate' %}active{% endif %}{% if stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}" data-stage="validate">
+            <div class="step-box">
+                {% if stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %}<i class="fa-solid fa-check"></i>{% else %}2{% endif %}
+            </div>
+            <div class="step-label" data-i18n="ui.text_2002">检验</div>
+        </div>
+        <div class="stage-connector{% if stage == 'parse' or stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 3: Parse -->
+        <div class="stage-step {% if stage == 'parse' %}active{% endif %}{% if stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}" data-stage="parse">
+            <div class="step-box">
+                {% if stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %}<i class="fa-solid fa-check"></i>{% else %}3{% endif %}
+            </div>
+            <div class="step-label" data-i18n="ui.text_2003">解析</div>
+        </div>
+        <div class="stage-connector{% if stage == 'clean' or stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 4: Clean -->
+        <div class="stage-step {% if stage == 'clean' %}active{% endif %}{% if stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}" data-stage="clean">
+            <div class="step-box">
+                {% if stage == 'transform' or stage == 'processing' or stage == 'done' %}<i class="fa-solid fa-check"></i>{% else %}4{% endif %}
+            </div>
+            <div class="step-label" data-i18n="ui.text_2004">清洗</div>
+        </div>
+        <div class="stage-connector{% if stage == 'transform' or stage == 'processing' or stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 5: Transform -->
+        <div class="stage-step {% if stage == 'transform' or stage == 'processing' %}active{% endif %}{% if stage == 'done' %} completed{% endif %}" data-stage="transform">
+            <div class="step-box">
+                {% if stage == 'done' %}<i class="fa-solid fa-check"></i>{% else %}5{% endif %}
+            </div>
+            <div class="step-label" data-i18n="ui.text_2005">入库</div>
+        </div>
+        <div class="stage-connector{% if stage == 'done' %} completed{% endif %}"></div>
+
+        <!-- Step 6: Done -->
+        <div class="stage-step {% if stage == 'done' %}completed{% endif %}" data-stage="done">
+            <div class="step-box"><i class="fa-solid fa-flag-checkered"></i></div>
+            <div class="step-label" data-i18n="js.complete">完成</div>
+        </div>
+
+    </div>
+
+    <hr class="border-secondary border-opacity-25 my-4">
+
+    <!-- Dynamic Content Area -->
+    <div id="etl-process-area" data-testid="etl-process-area">
+        {% if stage == 'upload' or not stage %}
+        {% include 'etl/partials/step_upload.html' %}
+        {% elif stage == 'validate' %}
+        {% include 'etl/partials/step_validate.html' %}
+        {% elif stage == 'parse' %}
+        {% include 'etl/partials/step_parse.html' %}
+        {% elif stage == 'clean' %}
+        {% include 'etl/partials/step_clean.html' %}
+        {% elif stage == 'transform' %}
+        {% include 'etl/partials/step_transform.html' %}
+        {% elif stage == 'processing' %}
+        {% include 'etl/partials/step_processing.html' %}
+        {% elif stage == 'done' %}
+        {% include 'etl/partials/step_done.html' %}
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .stage-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+    }
+
+    .stage-step.active {
+        opacity: 1;
+    }
+
+    .stage-step.active .step-box {
+        background: transparent;
+        border: 2px solid #0dcaf0;
+        animation: pulseGlow 1.5s ease-in-out infinite;
+        color: #0dcaf0;
+    }
+
+    .stage-step.completed {
+        opacity: 1;
+    }
+
+    .stage-step.completed .step-box {
+        background: linear-gradient(135deg, #198754, #20c997);
+        border: 2px solid #198754;
+        color: #fff;
+    }
+
+    .step-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .step-label {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stage-connector {
+        width: 40px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-top: 22px;
+        transition: all 0.3s ease;
+    }
+
+    .stage-connector.completed {
+        background: linear-gradient(90deg, #198754, #20c997);
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% {
+            box-shadow: 0 0 5px rgba(13, 202, 240, 0.3), 0 0 10px rgba(13, 202, 240, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 15px rgba(13, 202, 240, 0.6), 0 0 25px rgba(13, 202, 240, 0.4), 0 0 35px rgba(13, 202, 240, 0.2);
+        }
+    }
+</style>

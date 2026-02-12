@@ -1,0 +1,70 @@
+{
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "view": "View",
+  "refresh": "Refresh",
+  "close": "Close",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page",
+  "ok": "OK",
+  "networkError": "Network error",
+  "loading": "Loading...",
+  "success": "Operation successful",
+  "error": "Operation failed",
+  "enabled": "enabled",
+  "optional": "optional",
+  "isRequired": "is required",
+  "redirecting": "Redirecting",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "saving": "Saving...",
+  "signIn": "Sign In",
+  "noPermission": "No Permission",
+  "confirmPassword": "Confirm Password",
+  "confirmPasswordPlaceholder": "Enter password again",
+  "passwordMismatch": "Passwords do not match",
+  "securityCode": {
+    "title": "Security Verification",
+    "placeholder": "Enter security code",
+    "required": "Security verification required",
+    "invalid": "Invalid security code",
+    "invalidWithRemaining": "Invalid security code ({remaining} attempts remaining)",
+    "blocked": "Too many failed attempts, please try again later",
+    "blockedWithTime": "Verification blocked, please try again in {minutes} minutes"
+  },
+  "nav": {
+    "users": "Users",
+    "products": "Products",
+    "inventory": "Inventory",
+    "purchase": "Purchase",
+    "signIn": "Sign In"
+  },
+  "status": {
+    "title": "System Status",
+    "api": {
+      "title": "API Service",
+      "description": "NestJS + Prisma + PostgreSQL",
+      "running": "Running"
+    },
+    "database": {
+      "title": "Database",
+      "description": "PostgreSQL 15",
+      "connected": "Connected"
+    },
+    "auth": {
+      "title": "Auth System",
+      "description": "JWT + Multi-level Security",
+      "testsPassed": "Tests Passed"
+    }
+  },
+  "footer": {
+    "phase": "Phase 2.3",
+    "module": "User Admin Module"
+  },
+  "days": "days",
+  "notice": "Notice"
+}

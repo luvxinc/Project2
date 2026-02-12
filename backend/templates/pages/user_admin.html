@@ -1,0 +1,281 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+
+{% block title %}User Admin - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+    {# MAIN CONTENT SWAP AREA #}
+    <div id="user-admin-content">
+        {% include "user_admin/components/users/user_list_panel.html" %}
+    </div>
+
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border border-primary border-opacity-50 shadow-lg"
+                style="backdrop-filter: blur(20px); background: rgba(30,32,40,0.75);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="fa-solid fa-user-plus me-2 text-primary"></i><span data-i18n="user_admin.add_user">Register New User</span>
+                    </h5>
+                    <button type="button" id="btn-close-create" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div id="create-user-error" class="alert alert-danger d-none small mb-3 p-2 rounded-3"></div>
+
+                    <form id="createUserForm" hx-post="{% url 'web_ui:user_create' %}" hx-target="#user-table-body"
+                        hx-swap="beforeend" hx-on::response-error="
+                        document.getElementById('create-user-error').classList.remove('d-none');
+                        document.getElementById('create-user-error').innerText = event.detail.xhr.responseText;
+                      " hx-on::after-request="
+                        if(event.detail.successful) {
+                            this.reset();
+                            document.getElementById('create-user-error').classList.add('d-none');
+                            document.getElementById('btn-close-create').click();
+                        }
+                      ">
+
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small text-uppercase fw-bold ls-1" data-i18n="user.username">Username</label>
+                            <input type="text" name="username"
+                                class="form-control bg-dark border-secondary text-white rounded-pill px-3" required
+                                autocomplete="off" placeholder="New Username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small text-uppercase fw-bold ls-1" data-i18n="user_admin.initial_password">Initial Password</label>
+                            <input type="password" name="password"
+                                class="form-control bg-dark border-secondary text-white rounded-pill px-3" required
+                                autocomplete="new-password" placeholder="Initial Password">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small text-uppercase fw-bold ls-1" data-i18n="user.role">Role</label>
+                            <select name="role"
+                                class="form-select bg-dark border-secondary text-white rounded-pill px-3">
+                                <option value="user" data-i18n="user_admin.role_user">User</option>
+                                <option value="admin" data-i18n="user.is_admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 shadow" data-i18n="user_admin.confirm_create">Confirm Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border border-warning border-opacity-50 shadow-lg"
+                style="backdrop-filter: blur(20px); background: rgba(30,32,40,0.75);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="fa-solid fa-key me-2 text-warning"></i><span data-i18n="user_admin.reset_password">Reset Password</span>
+                    </h5>
+                    <button type="button" id="btn-close-reset" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div
+                        class="alert alert-warning small bg-opacity-10 border-warning border-opacity-25 text-warning mb-4 rounded-3 text-center">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <span data-i18n="user_admin.reset_password_warning">You are about to force reset password for user</span> <strong id="reset-target-display" class="text-white text-uppercase"></strong>.
+                    </div>
+
+                    <div id="reset-pwd-error" class="alert alert-danger d-none small mb-3 p-2 rounded-3"></div>
+
+                    <form id="resetPasswordForm" hx-post="{% url 'web_ui:user_reset_password' %}" hx-swap="none"
+                        hx-on::response-error="
+                        document.getElementById('reset-pwd-error').classList.remove('d-none');
+                        document.getElementById('reset-pwd-error').innerText = event.detail.xhr.responseText;
+                      " hx-on::after-request="
+                        if(event.detail.successful) {
+                            this.reset();
+                            document.getElementById('reset-pwd-error').classList.add('d-none');
+                            document.getElementById('btn-close-reset').click();
+                            alert(window.i18n?.t('user_admin.password_reset_success') || 'Password reset successful!');
+                        }
+                      ">
+                        {% csrf_token %}
+                        <input type="hidden" name="username" id="reset-target-input">
+                        <div class="mb-4 text-center">
+                            <label class="form-label text-white-50 small mb-2" data-i18n="modal.change_password.new_password">New Password</label>
+                            <input type="text" name="new_password"
+                                class="form-control bg-dark border-secondary text-white rounded-pill px-3 text-center fs-5"
+                                required data-i18n-placeholder="user_admin.enter_new_password" placeholder="Enter new password">
+                        </div>
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+                            <button type="submit"
+                                class="btn btn-warning text-dark fw-bold rounded-pill px-5 shadow" data-i18n="user_admin.confirm_reset">Confirm Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="permissionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content glass-card border-0" id="permission-modal-content">
+                <div class="p-5 text-center text-white-50">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p>Loading Permissions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border border-danger border-opacity-50 shadow-lg"
+                style="backdrop-filter: blur(20px); background: rgba(30,32,40,0.75);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="fa-solid fa-trash me-2 text-danger"></i><span data-i18n="user_admin.modal.delete_user">Delete User</span>
+                    </h5>
+                    <button type="button" id="btn-close-delete" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div
+                        class="alert alert-danger small bg-opacity-10 border-danger border-opacity-25 text-danger mb-4 rounded-3 text-center">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <span data-i18n="user_admin.delete_user_warning">You are about to permanently delete user</span> <strong id="delete-target-display"
+                            class="text-white text-uppercase"></strong>, <span data-i18n="user_admin.cannot_undo">this action cannot be undone!</span>
+                    </div>
+
+                    <div id="delete-user-error" class="alert alert-danger d-none small mb-3 p-2 rounded-3"></div>
+
+                    <form id="deleteUserForm" hx-post="" hx-swap="none" hx-on::response-error="
+                        document.getElementById('delete-user-error').classList.remove('d-none');
+                        document.getElementById('delete-user-error').innerText = event.detail.xhr.responseText;
+                      " hx-on::after-request="
+                        if(event.detail.successful) {
+                            document.getElementById('delete-user-error').classList.add('d-none');
+                            var rowId = document.getElementById('delete-target-row-id').value;
+                            var row = document.getElementById(rowId);
+                            if(row) {
+                                row.style.transition = 'opacity 0.5s';
+                                row.style.opacity = '0';
+                                setTimeout(function() { row.remove(); }, 500);
+                            }
+                            document.getElementById('btn-close-delete').click();
+                        }
+                      ">
+                        {% csrf_token %}
+                        <input type="hidden" name="target_row_id" id="delete-target-row-id">
+
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small text-uppercase fw-bold ls-1" data-i18n="user_admin.delete_reason">Delete Reason
+                                <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control bg-dark border-secondary text-white rounded-3"
+                                rows="2" required data-i18n-placeholder="user_admin.delete_reason_placeholder" placeholder="Please explain why you are deleting this user..."></textarea>
+                        </div>
+
+                        <div class="mb-4 text-center">
+                            <div class="text-warning small mb-2"><i class="fa-solid fa-shield-halved me-1"></i> <span data-i18n="user_admin.security_verify">Security Verification</span>
+                            </div>
+                            <input type="password" name="sec_code_l0"
+                                class="form-control bg-dark border-secondary text-white rounded-pill px-3 text-center fs-5"
+                                required data-i18n-placeholder="user_admin.enter_your_password" placeholder="Enter your login password" autocomplete="current-password">
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+                            <button type="submit" class="btn btn-danger rounded-pill px-5 shadow">
+                                <i class="fa-solid fa-trash me-1"></i><span data-i18n="modal.confirm_delete.title">Confirm Delete</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Reset Password Modal
+        const resetModal = document.getElementById('resetPasswordModal')
+        if (resetModal) {
+            resetModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget
+                const username = button.getAttribute('data-username')
+                document.getElementById('reset-target-display').textContent = username
+                document.getElementById('reset-target-input').value = username
+            })
+        }
+
+        // Delete User Modal
+        const deleteModal = document.getElementById('deleteUserModal')
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget
+                const username = button.getAttribute('data-username')
+                const deleteUrl = button.getAttribute('data-delete-url')
+                const rowId = button.getAttribute('data-row-id')
+
+                document.getElementById('delete-target-display').textContent = username
+                document.getElementById('delete-target-row-id').value = rowId
+
+                // [Fix] Remove htmx.process to prevent potential infinite loops or double-binding.
+                // HTMX reads attributes at trigger time (click/submit), so setAttribute is sufficient.
+                document.getElementById('deleteUserForm').setAttribute('hx-post', deleteUrl)
+
+                // Clear previous error
+                document.getElementById('delete-user-error').classList.add('d-none')
+                document.getElementById('deleteUserForm').reset()
+            })
+        }
+    </script>
+
+    <style>
+        /* 样式复用 */
+        .tactical-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-content.glass-card {
+            background: rgba(30, 30, 35, 0.98) !important;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .bg-success.status-dot {
+            background-color: #28a745 !important;
+        }
+
+        .bg-danger.status-dot {
+            background-color: #dc3545 !important;
+        }
+
+        .hover-white:hover {
+            color: #fff !important;
+        }
+
+        .hover-danger:hover {
+            color: #dc3545 !important;
+        }
+
+        .hover-warning:hover {
+            color: #ffc107 !important;
+        }
+    </style>
+    {% endblock %}

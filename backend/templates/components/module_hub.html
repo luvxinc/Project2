@@ -1,0 +1,356 @@
+{# Generic Hub Navigation Template #}
+{% load security_tags %}
+{# Inputs: hub_id (string), hub_items (list of dicts) #}
+{# Item dict format: {'id': 'tab-id', 'name': 'Tab Name', 'icon': 'fa-icon', 'desc': 'Short Desc'} #}
+
+{# CSS Styles #}
+<style>
+    .hub-card {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(30, 32, 40, 0.6);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .hub-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--bs-info);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(13, 202, 240, 0.3);
+    }
+
+    .hub-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--bs-info);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .hub-card:hover::before {
+        opacity: 1;
+    }
+
+    .hub-icon-box {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        transition: background 0.3s;
+    }
+
+    .hub-card:hover .hub-icon-box {
+        background: rgba(13, 202, 240, 0.2);
+        color: #fff !important;
+    }
+
+    /* Hide Tab Headers when in content mode (Only in Main Content, preserve Sidebar) */
+    body.tab-active .main-content .nav-pills {
+        display: none !important;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+</style>
+
+{# 1. Main Hub Grid Container #}
+<div id="{{ hub_id }}" class="container-fluid p-4 fade-in">
+    <div class="row g-4">
+        {% for item in hub_items %}
+        <div class="col-md-6 col-lg-6">
+            {# Check access: use default_if_none to preserve False values (not just empty) #}
+            {% with item_access=item.has_access|default_if_none:True %}
+
+            {% if not item_access %}
+            {# ========== No Access Item - 灰色字体 + 锁图标，点击弹窗提示 ========== #}
+            <div class="hub-card rounded-4 p-4 h-100 opacity-50 position-relative" style="cursor: not-allowed;"
+                onclick="showNoPermissionModal('{{ item.name|escapejs }}')">
+                <div class="d-flex align-items-center">
+                    <div class="hub-icon-box me-4 position-relative" style="background: rgba(108,117,125,0.2);">
+                        <i class="{{ item.icon }} fa-2x text-secondary"></i>
+                        <i class="fas fa-lock position-absolute text-danger"
+                            style="bottom: -5px; right: -5px; font-size: 0.9rem; text-shadow: 0 0 3px #000;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h4 class="text-secondary fw-bold mb-1">{{ item.name }}</h4>
+                        <p class="text-muted mb-0 small line-clamp-2">{{ item.desc }}</p>
+                    </div>
+                    <div class="ms-3 text-danger opacity-75">
+                        <i class="fas fa-lock fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            {# ========== Has Access Item - Normal click behavior ========== #}
+            {% if item.url %}
+            {# Direct URL navigation - 真实页面跳转，无拦截 #}
+            <a href="{{ item.url }}" class="text-decoration-none">
+                <div class="hub-card rounded-4 p-4 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="hub-icon-box me-4">
+                            <i class="{{ item.icon }} fa-2x text-white-50"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="text-white fw-bold mb-1">{{ item.name }}</h4>
+                            <p class="text-white-50 mb-0 small line-clamp-2">{{ item.desc }}</p>
+                        </div>
+                        <div class="ms-3 text-white-50 opacity-25">
+                            <i class="fas fa-external-link-alt fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% elif item.action_type|eq:'modal' %}
+            <div class="hub-card rounded-4 p-4 h-100" data-bs-toggle="modal" data-bs-target="{{ item.target_modal }}">
+                {% elif item.action_type|eq:'link' %}
+                <div class="hub-card rounded-4 p-4 h-100" onclick="window.location.href='{% url item.link %}'">
+                    {% else %}
+                    <div class="hub-card rounded-4 p-4 h-100"
+                        onclick="enterTab('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.icon|escapejs }}')">
+                        {% endif %}
+                        {% if not item.url %}
+                        <div class="d-flex align-items-center">
+                            <div class="hub-icon-box me-4">
+                                <i class="{{ item.icon }} fa-2x text-white-50"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="text-white fw-bold mb-1">{{ item.name }}</h4>
+                                <p class="text-white-50 mb-0 small line-clamp-2">{{ item.desc }}</p>
+                            </div>
+                            <div class="ms-3 text-white-50 opacity-25">
+                                {% if item.action_type|eq:'link' %}
+                                <i class="fas fa-external-link-alt fa-lg"></i>
+                                {% else %}
+                                <i class="fas fa-chevron-right fa-lg"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% endwith %}
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="fas fa-box-open fa-3x mb-3 opacity-50"></i>
+                    <p>No Hub Items Available (Empty List)</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# 2. Tab Content Header (Visible ONLY when Hub Hidden) #}
+        {# Back Button on the RIGHT side #}
+        <div id="hub-content-header" class="container-fluid px-4 mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="text-white fw-bold mb-0">
+                    {# Module Part #}
+                    <i class="{{ module_icon|default:'fas fa-cube' }} me-2 opacity-75"></i>
+                    <span class="opacity-75">{{ module_title|default:'Module' }}</span>
+
+                    {# Separator #}
+                    <span class="mx-3 text-secondary opacity-50">-</span>
+
+                    {# Tab Part #}
+                    <span id="hub-active-tab-container">
+                        <i id="hub-active-tab-icon-display" class="fas fa-circle me-2 text-info"></i>
+                        <span id="hub-active-tab-name-display" class="text-info">Tab Name</span>
+                    </span>
+                </h2>
+
+                {# Back Button - RIGHT side #}
+                <button id="hub-back-btn-inline"
+                    class="btn btn-outline-secondary rounded-pill d-flex align-items-center px-3 py-2"
+                    onclick="exitTab()">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    <span class="fw-bold" data-i18n="common.back">返回</span>
+                </button>
+            </div>
+        </div>
+
+        {# 3. Back Button (Legacy - Hidden, kept for compatibility) #}
+        <div id="hub-back-btn" style="display: none !important;"></div>
+
+        {# 4. JavaScript Logic #}
+        <script>
+            function enterTab(tabId, tabName, tabIcon) {
+                // 1. Hide Hub Grid
+                const hubGrid = document.getElementById('{{ hub_id }}');
+                if (hubGrid) hubGrid.style.display = 'none';
+
+                // 2. Show Header & Populate Data
+                const header = document.getElementById('hub-content-header');
+                if (header) {
+                    header.style.display = 'block';
+                    // Populate
+                    const iconSpan = document.getElementById('hub-active-tab-icon-display');
+                    const nameSpan = document.getElementById('hub-active-tab-name-display');
+                    if (iconSpan) iconSpan.className = tabIcon + ' me-2 text-info'; /* Update class directly */
+                    if (nameSpan) nameSpan.textContent = tabName;
+                }
+
+                // 3. Show Tab Content Area (Module Specific Logic)
+
+                // [New] Generic Tab Switching (Standard V5 - Robust Logic)
+                const candidates = [
+                    'tab-' + tabId,
+                    'tab-' + tabId.replace(/\./g, '_'),
+                    'tab-' + tabId.replace(/\./g, '-'),
+                    'tab-' + tabId.replace(/-/g, '_'),
+                    'tab-' + tabId.replace(/_/g, '-')
+                ];
+
+                // 1. Hide ALL standard tab panels
+                document.querySelectorAll('.tab-content-panel').forEach(panel => {
+                    panel.style.setProperty('display', 'none', 'important');
+                });
+
+                // 2. Try Match & Show
+                let matchedEl = null;
+                for (const id of candidates) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        matchedEl = el;
+                        el.style.setProperty('display', 'block', 'important');
+                        console.log("[enterTab] show", { tabId, matchedId: id, display: getComputedStyle(el).display });
+                        break;
+                    }
+                }
+                if (!matchedEl) {
+                    console.warn("[enterTab] No container found for", tabId, "candidates:", candidates);
+                }
+
+                /* Old Logic Removed */
+
+
+
+                // [Legacy Support] Logic for DB Admin (Bootstrap Tabs)
+                const bsTabBtn = document.querySelector(`button[data-bs-target='#${tabId}']`);
+                if (bsTabBtn) {
+                    const tab = bootstrap.Tab.getOrCreateInstance(bsTabBtn);
+                    tab.show();
+                    const content = document.getElementById('dbTabsContent');
+                    if (content) content.style.display = 'block';
+                }
+
+                // [Legacy Support] Trigger the click on the hidden nav link (Audit, UserAdmin)
+                const navLink = document.querySelector(`.nav-link[data-hub-target='${tabId}']`) || document.getElementById(`${tabId}-tab`);
+
+                if (navLink) {
+                    navLink.click();
+
+                    // Ensure content areas are visible (Legacy Containers)
+                    const uaContent = document.getElementById('ua-content-area');
+                    if (uaContent) uaContent.style.display = 'block';
+
+                    const auditContent = document.getElementById('audit-content-area');
+                    if (auditContent) auditContent.style.display = 'block';
+                }
+
+                // 4. Show Back Button
+                const backBtn = document.getElementById('hub-back-btn');
+                if (backBtn) backBtn.style.display = 'block';
+
+                // 5. Apply Body Class for CSS Scoping
+                document.body.classList.add('tab-active');
+
+                // 6. Hide Original Module Header (if exists, for immersion)
+                const originalHeader = document.querySelector('.module-header');
+                if (originalHeader) originalHeader.classList.add('d-none');
+
+                // 7. [Fix] Reset Scroll Position (P0)
+                // Tabs might be hidden due to previous scroll position on body
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+                window.scrollTo(0, 0);
+            }
+
+            function exitTab() {
+                // 1. Show Hub Grid
+                const hubGrid = document.getElementById('{{ hub_id }}');
+                if (hubGrid) {
+                    hubGrid.style.display = 'block';
+                    hubGrid.classList.add('fade-in');
+                }
+
+                // 2. Hide Header
+                const header = document.getElementById('hub-content-header');
+                if (header) header.style.display = 'none';
+
+                // 3. Hide Tab Contents (Explicitly Hide ALL possible content areas)
+                const dbContent = document.getElementById('dbTabsContent');
+                if (dbContent) dbContent.style.display = 'none';
+
+                const uaContent = document.getElementById('ua-content-area');
+                if (uaContent) uaContent.style.display = 'none';
+
+                const auditContent = document.getElementById('audit-content-area');
+                if (auditContent) auditContent.style.display = 'none';
+
+                // 4. Hide Back Button
+                const backBtn = document.getElementById('hub-back-btn');
+                if (backBtn) backBtn.style.display = 'none';
+
+                // 5. Remove Body Class
+                document.body.classList.remove('tab-active');
+
+                // 6. Restore Original Module Header
+                const originalHeader = document.querySelector('.module-header');
+                if (originalHeader) originalHeader.classList.remove('d-none');
+
+                // Clear hash
+                history.pushState("", document.title, window.location.pathname + window.location.search);
+            }
+
+            // Auto-init based on Hash & Clean Ghost Content
+            document.addEventListener("DOMContentLoaded", function () {
+                if (!window.location.hash) {
+                    // Default: Hub View - HIDE ALL CONTENT
+                    const header = document.getElementById('hub-content-header');
+                    if (header) header.style.display = 'none';
+
+                    // Clean Ghost Content
+                    const dbContent = document.getElementById('dbTabsContent');
+                    if (dbContent) dbContent.style.display = 'none';
+
+                    const uaContent = document.getElementById('ua-content-area');
+                    if (uaContent) uaContent.style.display = 'none';
+
+                    const auditContent = document.getElementById('audit-content-area');
+                    if (auditContent) auditContent.style.display = 'none';
+
+                } else {
+                    // Deep Link: Enter Tab
+                    const tabId = window.location.hash.substring(1);
+                    if (tabId) {
+                        // Try to find the item in the rendered DOM to get name/icon
+                        enterTab(tabId, 'Loading...', 'fas fa-circle-notch fa-spin');
+                    }
+                }
+            });
+        </script>

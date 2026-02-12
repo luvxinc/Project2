@@ -1,0 +1,138 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-white-50 mb-0 small" data-i18n="ui.text_32">
+                生成、预览和下载商业智能分析报表。
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 backdrop-blur">
+                <i class="fas fa-chart-line me-1"></i> <span data-i18n="reports.analytics_engine">分析引擎</span>
+            </span>
+        </div>
+    </div>
+
+    {% with hub_id="reports-hub" hub_items=hub_items module_icon="fas fa-chart-bar" module_title="商业智能报表" %}
+    {% include "components/module_hub.html" %}
+    {% endwith %}
+
+    <div id="tab-generator" class="tab-content-panel" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-rocket fa-2x text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h5 class="text-primary mb-1" data-i18n="reports.generator">报表生成器</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_34">配置分析周期并启动全量分析引擎。</p>
+                </div>
+            </div>
+            <div id="generator-content" hx-get="{% url 'web_ui:sales:reports:generator_form' %}"
+                hx-trigger="intersect once">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-white-50 mt-3" data-i18n="common.loading">正在加载...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-center" class="tab-content-panel" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-folder-open fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-success mb-1" data-i18n="nav.reports">报表中心</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="sales.report_center_desc">预览、下载和管理已生成的分析报表。</p>
+                    </div>
+                </div>
+                <div class="htmx-indicator" id="center-spinner">
+                    <div class="spinner-border text-success" role="status"></div>
+                </div>
+            </div>
+            <div id="center-content" hx-get="{% url 'web_ui:sales:reports:center_files' %}"
+                hx-trigger="intersect once, reports:updated from:body" hx-indicator="#center-spinner">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="text-white-50 mt-3" data-i18n="reports.loading_files">正在加载文件列表...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var originalEnterTab = window.enterTab;
+        var originalExitTab = window.exitTab;
+
+        window.enterTab = function (tabId, tabName, tabIcon) {
+            var panels = document.querySelectorAll('.tab-content-panel');
+            for (var i = 0; i < panels.length; i++) {
+                panels[i].style.display = 'none';
+            }
+            var panel = document.getElementById('tab-' + tabId);
+            if (panel) {
+                panel.style.display = 'block';
+            }
+            if (typeof originalEnterTab === 'function') {
+                originalEnterTab(tabId, tabName, tabIcon);
+            }
+        };
+
+        window.exitTab = function () {
+            var panels = document.querySelectorAll('.tab-content-panel');
+            for (var i = 0; i < panels.length; i++) {
+                panels[i].style.display = 'none';
+            }
+            if (typeof originalExitTab === 'function') {
+                originalExitTab();
+            }
+        };
+        
+        // ============================================================
+        // 页面离开清理机制
+        // 当用户离开页面时自动清理临时生成的报表文件
+        // ============================================================
+        function cleanupReportsOnLeave() {
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) return;
+            
+            // 使用 sendBeacon 发送异步请求（在页面关闭时可靠执行）
+            var formData = new FormData();
+            formData.append('csrfmiddlewaretoken', csrfToken.value);
+            
+            navigator.sendBeacon('{% url "web_ui:sales:reports:clear_files" %}', formData);
+        }
+        
+        // 监听页面离开事件
+        window.addEventListener('pagehide', cleanupReportsOnLeave);
+        
+        // 监听 visibilitychange 事件作为备用（用户切换标签页长时间后可能关闭）
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                // 用户切换离开时，设置延迟清理
+                // 如果用户在短时间内返回，则不清理
+                window._reportCleanupTimeout = setTimeout(function() {
+                    cleanupReportsOnLeave();
+                }, 30000); // 30秒后清理
+            } else if (document.visibilityState === 'visible') {
+                // 用户返回，取消清理
+                if (window._reportCleanupTimeout) {
+                    clearTimeout(window._reportCleanupTimeout);
+                    window._reportCleanupTimeout = null;
+                }
+            }
+        });
+    });
+
+</script>
+{% endblock %}

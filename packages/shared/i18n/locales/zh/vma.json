@@ -1,0 +1,472 @@
+{
+  "title": "VMA 管理",
+  "description": "供应商库存追踪与培训管理",
+  "module": {
+    "title": "VMA",
+    "description": "供应商库存追踪与管理"
+  },
+  "hub": {
+    "explore": "了解更多",
+    "truvalve": {
+      "title": "TruValve",
+      "description": "TruValve 供应商库存追踪与管理",
+      "cta": "进入管理"
+    },
+    "p_valve": {
+      "title": "P-Valve",
+      "description": "P-Valve 供应商库存追踪与管理",
+      "cta": "进入管理"
+    },
+    "employees": {
+      "title": "员工管理",
+      "description": "员工档案、入职离职与信息维护",
+      "cta": "进入管理"
+    },
+    "duties": {
+      "title": "职责管理",
+      "description": "岗位职责定义、分配与追踪",
+      "cta": "进入管理"
+    },
+    "training": {
+      "title": "培训管理",
+      "description": "培训计划、记录、认证与技能追踪",
+      "cta": "进入培训"
+    }
+  },
+  "truvalve": {
+    "title": "TruValve",
+    "description": "TruValve 供应商库存追踪与管理"
+  },
+  "p_valve": {
+    "title": "P-Valve",
+    "description": "P-Valve 供应商库存追踪与管理",
+    "tabs": {
+      "inventory": {
+        "title": "库存管理",
+        "description": "追踪和管理 P-Valve 和输送系统库存水平"
+      },
+      "clinicalCase": {
+        "title": "临床案例",
+        "description": "记录和管理临床手术案例和产品使用情况"
+      },
+      "overview": {
+        "title": "概览",
+        "description": "库存仪表盘，包含汇总指标和近期活动"
+      },
+      "demoInventory": {
+        "title": "演示库存",
+        "description": "追踪演示产品、样品和展示单元"
+      },
+      "fridgeShelf": {
+        "title": "冰箱货架",
+        "description": "可视化冰箱存储货架上的产品放置"
+      },
+      "productManagement": {
+        "title": "产品管理",
+        "description": "管理 P-Valve 和输送系统产品目录"
+      },
+      "siteManagement": {
+        "title": "站点管理",
+        "description": "管理医院和诊所站点信息"
+      }
+    }
+  },
+  "employees": {
+    "title": "员工管理",
+    "description": "员工档案与信息维护",
+    "list": {
+      "title": "员工列表",
+      "empty": "暂无员工数据",
+      "search": "搜索工号或姓名...",
+      "total": "共 {count} 名员工"
+    },
+    "fields": {
+      "employeeNo": "工号",
+      "lastName": "姓",
+      "firstName": "名",
+      "department": "部门",
+      "duties": "职责",
+      "hireDate": "入职时间",
+      "terminationDate": "离职日期",
+      "terminationDateDesc": "请选择该员工的离职日期",
+      "assignedAt": "分配日期",
+      "removedAt": "移除日期",
+      "status": "状态"
+    },
+    "status": {
+      "active": "在职",
+      "inactive": "离职"
+    },
+    "actions": {
+      "add": "新增员工",
+      "edit": "编辑",
+      "delete": "删除",
+      "activate": "激活",
+      "deactivate": "停用",
+      "confirmDelete": "确认删除？",
+      "deleteSuccess": "员工已删除",
+      "activateSuccess": "员工已激活",
+      "deactivateSuccess": "员工已停用",
+      "saveSuccess": "员工已保存"
+    },
+    "form": {
+      "title_create": "新增员工",
+      "title_edit": "编辑员工",
+      "employeeNo_placeholder": "请输入工号",
+      "lastName_placeholder": "请输入姓",
+      "firstName_placeholder": "请输入名",
+      "department_placeholder": "请选择部门",
+      "hireDate_placeholder": "请选择入职时间",
+      "employeeNo_exists": "该工号已存在"
+    },
+    "career": {
+      "title": "职业生涯时间线",
+      "viewCareer": "查看职业生涯",
+      "active": "在职",
+      "ended": "已结束",
+      "historical": "历史",
+      "latest": "最新",
+      "noAssignments": "暂无部门分配记录",
+      "addAssignment": "添加部门分配",
+      "endAssignment": "结束",
+      "addSuccess": "部门分配已添加",
+      "editSuccess": "分配记录已更新",
+      "removeSuccess": "分配已结束",
+      "deleteSuccess": "分配记录已删除",
+      "stackRule": "仅可编辑最新记录",
+      "start": "起点",
+      "hired": "入职",
+      "joinedCompany": "加入公司",
+      "onboardedAs": "入职编号",
+      "modifyHistory": "修改历史",
+      "planNewEvent": "规划新职业事件",
+      "confirmPlan": "确认规划",
+      "processing": "处理中...",
+      "selectPlaceholder": "请选择...",
+      "statusActive": "在职",
+      "statusInactive": "离职（已终止）",
+      "statusLeave": "休假",
+      "save": "保存",
+      "create": "创建",
+      "addDuty": "添加职责 +",
+      "removeDuty": "移除职责 -",
+      "terminateStatus": "终止 / 状态",
+      "cannotRemoveLast": "无法移除最后一个职责。请使用\"终止\"结束雇佣关系或先添加其他职责。",
+      "effectiveDate": "生效日期",
+      "selectDepartment": "选择部门",
+      "selectAssignmentEnd": "选择要结束的分配",
+      "assigned": "已分配",
+      "newStatus": "新状态",
+      "changeDuty": "更改职责",
+      "changeTo": "更改为：",
+      "cancel": "取消",
+      "historyAdjustment": "* 历史调整：此操作将更新该日期的正式记录。",
+      "cannotDeleteHistory": "历史记录无法删除。您可以更正职责分配。",
+      "alertOnlyAssigned": "只有\"已分配职责\"事件可以修改为其他职能。",
+      "legacyUnknown": "历史 / 未知",
+      "noEmployeesInDept": "该部门暂无员工",
+      "joined": "入职",
+      "staff": "人",
+      "depts": "部门",
+      "employeesTimeline": "员工时间线",
+      "assignedDuty": "分配职责：",
+      "relievedFromDuty": "解除职责：",
+      "duration": "任期："
+    }
+  },
+  "departments": {
+    "title": "部门管理",
+    "description": "管理部门码、部门名称和SOP培训需求",
+    "list": {
+      "empty": "暂无部门",
+      "employeeCount": "{count} 名员工",
+      "employees": "名员工",
+      "active": "启用",
+      "inactive": "停用"
+    },
+    "fields": {
+      "code": "部门码",
+      "name": "部门名称",
+      "duties": "职责",
+      "sopTrainingReq": "SOP培训需求",
+      "employeeCount": "员工数",
+      "status": "状态"
+    },
+    "actions": {
+      "add": "新增部门",
+      "addDepartment": "新建部门",
+      "addDuty": "新增职责",
+      "edit": "编辑",
+      "delete": "删除",
+      "manage": "管理部门",
+      "confirmDelete": "确定要删除该部门吗？",
+      "cannotDelete": "无法删除有员工的部门",
+      "deleteSuccess": "部门已删除",
+      "saveSuccess": "部门已保存",
+      "sopRequirements": "SOP 需求",
+      "sopReqSaveSuccess": "SOP培训需求已保存",
+      "sopReqCount": "{count} 个SOP",
+      "sopReqNone": "暂无SOP需求"
+    },
+    "form": {
+      "title_create": "新增部门",
+      "title_edit": "编辑部门",
+      "title_addDuty": "新增职责",
+      "code_placeholder": "请输入部门码",
+      "name_placeholder": "请输入部门名称",
+      "duties_placeholder": "请输入部门职责",
+      "sopTrainingReq_placeholder": "请输入SOP培训需求（可选）",
+      "focusHint": "请在下方输入新职责",
+      "name_exists": "该部门名称已存在",
+      "code_exists": "该部门码已存在",
+      "code_duties_exists": "该部门码+职责组合已存在"
+    }
+  },
+  "duties": {
+    "title": "部门和职责管理",
+    "description": "部门管理与岗位职责分配"
+  },
+  "sopRequirementsModal": {
+    "title": "SOP 培训需求",
+    "subtitle": "选择该职责需要培训的 SOP 文件",
+    "search": "搜索 SOP...",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "selected": "已选 {count} 个",
+    "save": "保存",
+    "cancel": "取消",
+    "saving": "保存中...",
+    "noResults": "未找到 SOP",
+    "editRequirements": "编辑需求",
+    "selectOption": "-- 请选择 --"
+  },
+  "sopHistory": {
+    "title": "SOP需求变更历史",
+    "viewHistory": "查看历史",
+    "noHistory": "暂无历史记录",
+    "initial": "初始设定",
+    "add": "新增",
+    "remove": "移除",
+    "change": "变更",
+    "changeDate": "变更日期",
+    "changeGroups": "个变更组",
+    "totalRecords": "条记录",
+    "deleteRecord": "删除记录",
+    "confirmDeleteRecord": "删除SOP历史记录",
+    "deleteGroup": "删除变更组",
+    "confirmDeleteGroup": "删除全部",
+    "recordsOnDate": "条记录于",
+    "scrollHint": "滑动查看所有里程碑",
+    "latest": "最新",
+    "changes": "SOP 变更",
+    "more": "更多",
+    "start": "起点",
+    "edit": "编辑",
+    "addNew": "添加",
+    "dateError": "日期必须晚于最后一个里程碑日期"
+  },
+  "trainingSop": {
+    "title": "培训SOP文件管理",
+    "description": "受控文件管理与SOP版本追踪",
+    "search": "搜索编号、SOP文件号、文件名或DA#...",
+    "versionHistory": "版本历史",
+    "list": {
+      "empty": "暂无SOP文件",
+      "total": "共 {count} 个SOP",
+      "documents": "份文件",
+      "requireTraining": "需培训"
+    },
+    "fields": {
+      "seqNo": "编号",
+      "sopNo": "SOP文件号",
+      "name": "文件名字",
+      "description": "描述",
+      "version": "版本号",
+      "effectiveDate": "生效日期",
+      "structureClassification": "文件种类",
+      "documentType": "SOP种类",
+      "trainingRequired": "是否需要培训",
+      "status": "状态",
+      "daNo": "审批号",
+      "initial": "初始"
+    },
+    "documentTypes": {
+      "Procedure Document": "程序文件",
+      "Management Regulation": "管理规定",
+      "Technical Document": "技术文件",
+      "Quality Manual": "质量手册"
+    },
+    "structureTypes": {
+      "Master Document": "主文件",
+      "Form": "表单",
+      "Template": "模板",
+      "Attachment": "附件",
+      "Master": "主文件"
+    },
+    "close": "关闭",
+    "status": {
+      "active": "启用",
+      "deprecated": "弃用",
+      "latest": "最新"
+    },
+    "training": {
+      "required": "需要培训",
+      "notRequired": "无需培训",
+      "short": "培训"
+    },
+    "actions": {
+      "add": "新增SOP",
+      "edit": "编辑",
+      "newRevision": "新增版本",
+      "activate": "启用",
+      "deprecate": "弃用",
+      "saveSuccess": "SOP已保存"
+    },
+    "form": {
+      "title_create": "新增SOP文件",
+      "title_edit": "编辑SOP文件",
+      "title_revision": "新增版本",
+      "revisionHint": "正在为该文件创建新版本。编号自动分配，SOP文件号继承自原文件。",
+      "sopNo_placeholder": "如 VM-QP-030",
+      "name_placeholder": "请输入文件名字",
+      "description_placeholder": "请输入描述（可选）",
+      "version_placeholder": "如 A0, B1, C2",
+      "effectiveDate_placeholder": "选择生效日期"
+    }
+  },
+  "training": {
+    "title": "培训管理",
+    "description": "培训计划与认证管理",
+    "stats": {
+      "employees": "{count} 名员工",
+      "complete": "{count} 已完成",
+      "missing": "{count} 缺失"
+    },
+    "fields": {
+      "employeeId": "工号",
+      "employeeName": "姓名",
+      "hireDate": "入职日期",
+      "required": "应培训数",
+      "status": "培训状态"
+    },
+    "status": {
+      "complete": "已完成",
+      "missing": "缺失 ({count})"
+    },
+    "detail": {
+      "trained": "✓ 已培训 ({count})",
+      "missingSops": "⚠ 缺失 SOP ({count})",
+      "noRecords": "暂无培训记录",
+      "columns": {
+        "sopNo": "SOP编号",
+        "version": "版本",
+        "trainingNo": "培训号",
+        "date": "日期",
+        "trainer": "培训师",
+        "name": "名称",
+        "da": "审批号",
+        "effective": "生效日期"
+      }
+    },
+    "actions": {
+      "smartFill": "培训",
+      "back": "返回",
+      "roadmap": "路线图"
+    },
+    "smartFill": {
+      "title": "智能填充培训记录",
+      "cutoffDate": "截止日期（培训截止到）",
+      "lecturer": "培训师",
+      "selectLecturer": "选择培训师",
+      "generating": "生成中...",
+      "button": "智能填充所有缺失记录",
+      "download": "下载全部PDF",
+      "confirm": "生成",
+      "confirmTitle": "智能填充",
+      "confirmMessage": "自动生成截止到以下日期的所有缺失培训记录"
+    },
+    "roadmap": {
+      "title": "培训合规路线图",
+      "description": "每个SOP变更事件对应的培训合规状态快照",
+      "subtitle": "每个SOP变更事件对应的培训合规状态快照",
+      "milestones": "个里程碑",
+      "loading": "正在计算合规快照...",
+      "noData": "未找到SOP变更事件",
+      "compliant": "合规",
+      "nonCompliant": "不合规",
+      "latest": "最新",
+      "initial": "初始",
+      "scrollHint": "滑动查看完整合规时间线",
+      "start": "起点"
+    }
+  },
+  "trainingRecords": {
+    "title": "培训记录",
+    "sessions": "培训批次",
+    "description": "查看、编辑和下载培训记录",
+    "stats": {
+      "sessions": "{count} 个批次",
+      "trainees": "共 {count} 名受训人"
+    },
+    "fields": {
+      "trainingNo": "培训号",
+      "trainingDate": "培训日期",
+      "subject": "主题",
+      "lecturer": "培训师",
+      "employees": "员工",
+      "sops": "SOP",
+      "download": "下载"
+    },
+    "empty": "暂无培训记录。请前往培训管理页使用智能填充生成记录。",
+    "evaluation": {
+      "selfTraining": "自学培训",
+      "oralQA": "口头问答"
+    },
+    "detail": {
+      "sops": "SOP ({count})",
+      "employees": "员工 ({count})",
+      "noSops": "本批次无SOP",
+      "noEmployees": "本批次无员工",
+      "columns": {
+        "sopNo": "SOP编号",
+        "version": "版本",
+        "trainees": "受训人数",
+        "employeeNo": "工号",
+        "sopsCol": "SOP",
+        "remove": "移除"
+      }
+    },
+    "actions": {
+      "edit": "✎ 编辑",
+      "done": "✕ 完成",
+      "remove": "移除",
+      "pdf": "PDF"
+    },
+    "delete": {
+      "title": "删除培训批次？",
+      "message": "将永久删除批次 {trainingNo} 及其全部 {count} 条记录，此操作不可撤销。",
+      "cancel": "取消",
+      "confirm": "删除"
+    }
+  },
+  "trainingMatrix": {
+    "title": "培训矩阵",
+    "employee": "员工",
+    "employees": "名员工",
+    "rate": "完成率",
+    "completed": "已完成",
+    "missing": "缺失",
+    "na": "无需培训",
+    "compliant": "合规",
+    "totalEmployees": "员工总数",
+    "totalSops": "SOP总数",
+    "fullyCompliant": "完全合规",
+    "overallRate": "总体完成率",
+    "generatedAt": "生成时间",
+    "required": "需求数",
+    "pendingAction": "待处理",
+    "triggers": "触发项",
+    "allCompliant": "全部合规",
+    "baseline": "基线"
+  }
+}

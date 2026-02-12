@@ -1,0 +1,983 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Abnormal Receipt - Procurement - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in" id="abnormal-main-container">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:purchase:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="purchase.title">Procurement</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="purchase.abnormal">
+                        Abnormal Receipt</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:purchase:hub' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="purchase.back_to_hub">返回Procurement</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 异常列表视图 -->
+    <!-- ===================================== -->
+    <div id="abnormal-list-view">
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-danger bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px;">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1">Abnormal Receipt</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_406">管理入库过程中产生的数量差异，处理待解决的异常情况。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm rounded-pill" onclick="loadAbnormalTable()">
+                    <i class="fas fa-sync-alt me-1"></i> <span data-i18n="common.refresh">刷新列表</span>
+                </button>
+            </div>
+
+            <!-- 操作须知 -->
+            <div class="alert alert-info mb-4"
+                style="background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3);">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 mt-1 text-info fa-lg"></i>
+                    <div>
+                        <strong class="text-info d-block mb-2" data-i18n="common.operation_notes">操作须知</strong>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="log.actions.view_detail">查看详情</strong>：<span data-i18n="desc.d077">点击 <i
+                                                class="fas fa-eye text-info"></i> 查看异常记录的完整入库信息和货物明细</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_408">处理异常</strong>：<span data-i18n="desc.d078">点击 <i
+                                                class="fas fa-tools text-warning"></i> 进入异常处理向导，选择修正策略</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="common.history">历史记录</strong>：<span data-i18n="desc.d079">点击 <i
+                                                class="fas fa-history text-secondary"></i> 查看该物流单的处理历史版本</span></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_410">状态标识</strong>：<span
+                                            class="badge bg-warning bg-opacity-25 text-warning"
+                                            data-i18n="abnormal.status_pending">待处理</span> <span
+                                            data-i18n="desc.d080">需要处理，</span><span
+                                            class="badge bg-success bg-opacity-25 text-success"
+                                            data-i18n="abnormal.status_processed">已处理</span> <span data-i18n="desc.d081">已完成修正</span>
+                                    </li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.text_413">删除处理</strong>：<span data-i18n="instructions.desc_32">已处理记录可点击
+                                        </span><i class="fas fa-trash text-danger"></i> <span
+                                            data-i18n="desc.d082">撤销修正，恢复原始差异状态</span></li>
+                                    <li class="mb-1"><strong class="text-white"
+                                            data-i18n="ui.icon_3050">注意事项</strong>：<span
+                                            data-i18n="instructions.desc_16">删除操作不可逆，将移除所有相关的修正记录</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- 筛选区域 -->
+            <div class="d-flex gap-3 mb-4 align-items-end">
+                <div>
+                    <label class="form-label text-white-50 small mb-1">
+                        <i class="fas fa-sort me-1"></i><span data-i18n="purchase.sort_by">排序方式</span>
+                    </label>
+                    <select class="form-select form-select-sm bg-dark border-secondary text-white" id="filter-sort"
+                        style="width: 180px;" onchange="applyFilters()">
+                        <option value="receive_date:desc" data-i18n="sort.receive_date_newest">入库日期 (最新优先)</option>
+                        <option value="receive_date:asc" data-i18n="sort.receive_date_oldest">入库日期 (最早优先)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-white-50 small mb-1">
+                        <i class="fas fa-filter me-1"></i><span data-i18n="ui.icon_3162">状态筛选</span>
+                    </label>
+                    <select class="form-select form-select-sm bg-dark border-secondary text-white" id="filter-status"
+                        style="width: 140px;" onchange="applyFilters()">
+                        <option value="" data-i18n="log.filter.all_status">全部状态</option>
+                        <option value="pending" data-i18n="abnormal.status_pending">待处理</option>
+                        <option value="done" data-i18n="abnormal.status_processed">已处理</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Apple风格表格 -->
+            <div class="po-table-container">
+                <table class="po-table" id="abnormal-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="status">
+                                <span data-i18n="common.status">状态</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th class="sortable" data-sort="logistic_num">
+                                <span data-i18n="table.logistics_no">物流单号</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th class="sortable" data-sort="receive_date">
+                                <span data-i18n="table.receive_date">入库日期</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th data-i18n="common.remark">备注</th>
+                            <th data-i18n="common.operation">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="abnormal-table-body">
+                        <!-- JS动态加载 -->
+                    </tbody>
+                </table>
+
+                <!-- Loading State -->
+                <div id="abnormal-loading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-white-50 mt-3 mb-0" data-i18n="common.loading">正在加载异常数据...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="abnormal-empty" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="purchase.no_abnormal_records">暂无入库异常记录</p>
+                    <p class="text-white-50 small" data-i18n="ui.text_415">所有入库均无差异，系统运行正常</p>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <span class="text-white-50 small" id="abnormal-count" data-i18n="ui.text_416">共 0 条异常记录</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 异常详情视图 (默认隐藏) - 专用模板 -->
+    <!-- ===================================== -->
+    <div id="abnormal-detail-view" style="display: none;">
+        {% include "purchase/pages/abnormal_view.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 处理异常视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="abnormal-process-view" style="display: none;">
+        {% include "purchase/pages/abnormal_process_wizard.html" %}
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 历史记录视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="abnormal-history-view" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-history fa-2x text-info"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="ui.text_417">历史修订记录</h5>
+                        <p class="text-white-50 small mb-0" id="history-subtitle" data-i18n="ui.text_418">物流单号: -</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="showListView()">
+                    <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+                </button>
+            </div>
+
+            <!-- 加载中 -->
+            <div id="history-loading" class="text-center py-5">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="text-white-50 mt-3 mb-0" data-i18n="common.loading">正在加载历史记录...</p>
+            </div>
+
+            <!-- 历史记录内容 -->
+            <div id="history-body" style="display: none;">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header bg-warning bg-opacity-10 border-secondary">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        <span class="text-white fw-bold" data-i18n="ui.text_419">差异修订记录</span>
+                        <span class="badge bg-warning text-dark ms-2" id="history-version-count">0</span>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                        <div id="history-versions-container" class="p-3">
+                            <!-- JS动态填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="history-empty" class="text-center py-5" style="display: none;">
+                <i class="fas fa-folder-open fa-3x text-white-50 opacity-25 mb-3"></i>
+                <p class="text-white-50 mb-0" data-i18n="ui.text_420">暂无历史修订记录</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ========================================
+       Apple风格订单表格 (复用 send_mgmt 样式)
+       ======================================== */
+    .po-table-container {
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .po-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    /* 表头 */
+    .po-table thead {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .po-table thead th {
+        padding: 16px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.3);
+        white-space: nowrap;
+    }
+
+    .po-table thead th.sortable {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .po-table thead th.sortable:hover {
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* 数据行 */
+    .po-table tbody tr {
+        background: rgba(25, 28, 35, 0.6);
+        transition: all 0.2s ease;
+    }
+
+    .po-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .po-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .po-table tbody td {
+        padding: 14px 12px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* 物流单号加粗 */
+    .po-table tbody td.cell-logistic-num {
+        font-weight: 700;
+        color: #fff;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    /* 日期显示 */
+    .date-display {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .date-display .date {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* 操作按钮组 */
+    .action-btn-group {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .action-btn.view {
+        background: rgba(13, 110, 253, 0.15);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #0d6efd;
+    }
+
+    .action-btn.view:hover {
+        background: rgba(13, 110, 253, 0.3);
+    }
+
+    .action-btn.process {
+        background: rgba(255, 193, 7, 0.15);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+
+    .action-btn.process:hover {
+        background: rgba(255, 193, 7, 0.3);
+    }
+
+    .action-btn.history {
+        background: rgba(111, 66, 193, 0.15);
+        border-color: rgba(111, 66, 193, 0.3);
+        color: #6f42c1;
+    }
+
+    .action-btn.history:hover {
+        background: rgba(111, 66, 193, 0.3);
+    }
+
+    .action-btn.delete {
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+
+    .action-btn.delete:hover {
+        background: rgba(220, 53, 69, 0.3);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* 状态标签 */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-badge.done {
+        background: rgba(25, 135, 84, 0.15);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    /* 入库状态标签 (用于详情视图) */
+    .receive-status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .receive-status-tag.status-in-transit {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+    }
+
+    .receive-status-tag.status-all-received {
+        background: rgba(25, 135, 84, 0.2);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.4);
+    }
+
+    .receive-status-tag.status-diff-resolved {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.4);
+    }
+
+    .receive-status-tag.status-diff-pending {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.4);
+        animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    .receive-status-tag.status-deleted {
+        background: rgba(108, 117, 125, 0.2);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.4);
+        text-decoration: line-through;
+    }
+
+    @keyframes statusPulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .action-btn.delete {
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+
+    .action-btn.delete:hover {
+        background: rgba(220, 53, 69, 0.3);
+    }
+
+    .action-btn.restore {
+        background: rgba(25, 135, 84, 0.15);
+        border-color: rgba(25, 135, 84, 0.3);
+        color: #198754;
+    }
+
+    .action-btn.restore:hover {
+        background: rgba(25, 135, 84, 0.3);
+    }
+
+    .status-badge.deleted {
+        background: rgba(108, 117, 125, 0.2);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.4);
+    }
+
+    /* 历史记录卡片样式 (与发货单历史一致) */
+    .version-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(108, 117, 125, 0.3);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .version-header {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    .version-header.initial {
+        background: linear-gradient(90deg, rgba(13, 110, 253, 0.2), transparent);
+        border-left: 3px solid #0d6efd;
+    }
+
+    .version-header.adjust {
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), transparent);
+        border-left: 3px solid #ffc107;
+    }
+
+    .version-seq {
+        font-family: 'SF Mono', monospace;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .version-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .version-meta i {
+        margin-right: 0.3rem;
+    }
+
+    .version-body {
+        padding: 1rem;
+    }
+
+    .diff-data-table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+
+    .diff-data-table td {
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.1);
+    }
+
+    .diff-data-table td:first-child {
+        color: rgba(255, 255, 255, 0.5);
+        width: 35%;
+    }
+
+    .diff-data-table td:last-child {
+        color: #fff;
+    }
+
+    .diff-positive {
+        color: #dc3545;
+    }
+
+    .diff-negative {
+        color: #0dcaf0;
+    }
+
+    .diff-zero {
+        color: #198754;
+    }
+</style>
+
+<script>
+    // ========================================
+    // 全局状态
+    // ========================================
+    let currentLogisticNum = null;
+    let currentReceiveDate = null;
+    let abnormalData = [];
+    let currentSortBy = 'receive_date';
+    let currentSortOrder = 'desc';
+    let currentStatus = '';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAbnormalTable();
+        bindSortableHeaders();
+        initTooltips();
+    });
+
+    function initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    }
+
+    // ========================================
+    // 加载异常列表
+    // ========================================
+    function loadAbnormalTable() {
+        const tbody = document.getElementById('abnormal-table-body');
+        const loading = document.getElementById('abnormal-loading');
+        const empty = document.getElementById('abnormal-empty');
+        const table = document.getElementById('abnormal-table');
+        const countEl = document.getElementById('abnormal-count');
+
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        table.style.display = 'none';
+
+        let url = `{% url 'web_ui:purchase:abnormal_list' %}?sort_by=${currentSortBy}&sort_order=${currentSortOrder}`;
+        if (currentStatus) {
+            url += `&status=${encodeURIComponent(currentStatus)}`;
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">${data.message}</p>`;
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                abnormalData = data.data || [];
+                countEl.textContent = `共 ${data.total || 0} 条异常记录`;
+
+                if (abnormalData.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                table.style.display = 'table';
+                abnormalData.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.dataset.logisticNum = item.logistic_num;
+                    tr.dataset.receiveDate = item.receive_date;
+
+                    // 状态标签：待处理 / 已处理
+                    const statusBadge = item.status === 'done'
+                        ? '<span class="status-badge done"><i class="fas fa-check me-1"></i>已处理</span>'
+                        : '<span class="status-badge pending"><i class="fas fa-clock me-1"></i>待处理</span>';
+
+                    const noteText = item.note ? (item.note.length > 30 ? item.note.substring(0, 30) + '...' : item.note) : '-';
+
+                    // 构建操作按钮
+                    let actionButtons = `
+                        <button class="action-btn view" onclick="viewDetail('${escapeHtml(item.logistic_num)}', '${item.receive_date}')"
+                                data-bs-toggle="tooltip" data-i18n-title="tooltip.t5034" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn history" onclick="viewHistory('${escapeHtml(item.logistic_num)}', '${item.receive_date}')"
+                                data-bs-toggle="tooltip" data-i18n-title="tooltip.t6" title="History">
+                            <i class="fas fa-history"></i>
+                    `;
+
+                    // 根据状态显示不同按钮
+                    if (item.status === 'done') {
+                        // 已处理：显示删除按钮
+                        actionButtons += `
+                            <button class="action-btn delete" onclick="deleteAbnormal('${escapeHtml(item.logistic_num)}', '${item.receive_date}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t5844" title="Delete Process Record">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                    } else {
+                        // 待处理：显示处理按钮
+                        actionButtons += `
+                            <button class="action-btn process" onclick="processAbnormal('${escapeHtml(item.logistic_num)}', '${item.receive_date}')"
+                                    data-bs-toggle="tooltip" data-i18n-title="tooltip.t890" title="Process Abnormal">
+                                <i class="fas fa-tools"></i>
+                            </button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td>${statusBadge}</td>
+                        <td class="cell-logistic-num">
+                            ${escapeHtml(item.logistic_num)}
+                        </td>
+                        <td>
+                            <div class="date-display">
+                                <span class="date">${item.receive_date}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-white-50 small" title="${escapeHtml(item.note)}">${escapeHtml(noteText)}</span>
+                        </td>
+                        <td>
+                            <div class="action-btn-group">
+                                ${actionButtons}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 重新初始化tooltips
+                initTooltips();
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0" data-i18n="ui.text_421">加载失败: ${err}</p>`;
+                empty.style.display = 'block';
+            });
+    }
+
+    // ========================================
+    // 筛选和排序
+    // ========================================
+    function applyFilters() {
+        const sortValue = document.getElementById('filter-sort').value;
+        const [sortBy, sortOrder] = sortValue.split(':');
+        currentSortBy = sortBy;
+        currentSortOrder = sortOrder;
+        currentStatus = document.getElementById('filter-status').value;
+        loadAbnormalTable();
+    }
+
+    function bindSortableHeaders() {
+        document.querySelectorAll('.po-table th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortField = th.dataset.sort;
+                if (currentSortBy === sortField) {
+                    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortBy = sortField;
+                    currentSortOrder = 'asc';
+                }
+                loadAbnormalTable();
+            });
+        });
+    }
+
+    // ========================================
+    // 页面切换
+    // ========================================
+    function showListView() {
+        document.getElementById('abnormal-list-view').style.display = 'block';
+        document.getElementById('abnormal-detail-view').style.display = 'none';
+        document.getElementById('abnormal-process-view').style.display = 'none';
+        document.getElementById('abnormal-history-view').style.display = 'none';
+        currentLogisticNum = null;
+        currentReceiveDate = null;
+        loadAbnormalTable();
+    }
+
+    function viewDetail(logisticNum, receiveDate) {
+        currentLogisticNum = logisticNum;
+        currentReceiveDate = receiveDate;
+        document.getElementById('abnormal-list-view').style.display = 'none';
+        document.getElementById('abnormal-detail-view').style.display = 'block';
+        // 调用异常专用详情加载函数（来自 abnormal_view.html）
+        loadAbnormalViewDetail(logisticNum);
+    }
+
+    function processAbnormal(logisticNum, receiveDate) {
+        currentLogisticNum = logisticNum;
+        currentReceiveDate = receiveDate;
+        document.getElementById('abnormal-list-view').style.display = 'none';
+        document.getElementById('abnormal-process-view').style.display = 'block';
+        // 调用向导加载函数
+        loadAbnormalForProcess(logisticNum, receiveDate);
+    }
+
+    function viewHistory(logisticNum, receiveDate) {
+        currentLogisticNum = logisticNum;
+        currentReceiveDate = receiveDate;
+        document.getElementById('abnormal-list-view').style.display = 'none';
+        document.getElementById('abnormal-history-view').style.display = 'block';
+        document.getElementById('history-subtitle').textContent = `${logisticNum} | ${receiveDate}`;
+        // 加载历史记录
+        loadAbnormalHistory(logisticNum, receiveDate);
+    }
+
+    function showToast(type, message) {
+        const toast = document.createElement('div');
+        const alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-danger');
+        toast.className = `alert ${alertClass} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ========================================
+    // 删除异常处理记录
+    // ========================================
+    function deleteAbnormal(logisticNum, receiveDate) {
+        console.log('[AbnormalDelete] deleteAbnormal called for:', logisticNum);
+
+        // 直接使用密码验证（密码验证本身就是一种确认机制）
+        if (typeof requestPasswordVerify === 'function') {
+            console.log('[AbnormalDelete] Calling requestPasswordVerify...');
+            requestPasswordVerify(
+                'btn_abnormal_delete',
+                (passwords) => {
+                    console.log('[AbnormalDelete] Password verified, passwords:', Object.keys(passwords));
+                    submitDeleteAbnormal(logisticNum, receiveDate, passwords);
+                },
+                null,
+                (window.i18n?.t('js.delete_abnormal_record') || 'Delete Abnormal Record'),
+                () => {
+                    console.log('[AbnormalDelete] User cancelled');
+                }
+            );
+        } else {
+            console.log('[AbnormalDelete] requestPasswordVerify not available, using confirm fallback');
+            // 降级: 无密码验证时使用原生confirm
+            if (confirm(`确定要删除 ${logisticNum} 的处理记录吗？\n此操作将撤销之前的修正，恢复原始差异状态`)) {
+                submitDeleteAbnormal(logisticNum, receiveDate, {});
+            }
+        }
+    }
+
+    function submitDeleteAbnormal(logisticNum, receiveDate, passwords) {
+        console.log('[AbnormalDelete] submitDeleteAbnormal called');
+        const requestBody = {
+            logistic_num: logisticNum,
+            receive_date: receiveDate
+        };
+
+        // 添加密码到请求体
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+        console.log('[AbnormalDelete] Request body keys:', Object.keys(requestBody));
+
+        fetch(`{% url 'web_ui:purchase:abnormal_delete' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}'
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(r => r.json())
+            .then(data => {
+                console.log('[AbnormalDelete] Response:', data);
+                if (data.success) {
+                    showToast('success', data.message || (window.i18n?.t('js.delete_success') || 'Delete Success'));
+                    loadAbnormalTable();
+                } else {
+                    showToast('error', data.message || (window.i18n?.t('js.delete_failed') || 'Delete Failed'));
+                }
+            })
+            .catch(err => {
+                console.error('[AbnormalDelete] Error:', err);
+                showToast('error', (window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err);
+            });
+    }
+
+    // ========================================
+    // 历史记录加载
+    // ========================================
+    function loadAbnormalHistory(logisticNum, receiveDate) {
+        const loading = document.getElementById('history-loading');
+        const body = document.getElementById('history-body');
+        const empty = document.getElementById('history-empty');
+        const container = document.getElementById('history-versions-container');
+        const countEl = document.getElementById('history-version-count');
+
+        loading.style.display = 'block';
+        body.style.display = 'none';
+        empty.style.display = 'none';
+
+        const url = `{% url 'web_ui:purchase:abnormal_history' %}?logistic_num=${encodeURIComponent(logisticNum)}&receive_date=${encodeURIComponent(receiveDate)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">${data.message}</p>`;
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                const items = data.data || [];
+                countEl.textContent = items.length;
+
+                if (items.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                body.style.display = 'block';
+
+                // 按SKU分组
+                const groupedBySku = {};
+                items.forEach(item => {
+                    if (!groupedBySku[item.po_sku]) {
+                        groupedBySku[item.po_sku] = [];
+                    }
+                    groupedBySku[item.po_sku].push(item);
+                });
+
+                let html = '';
+
+                // 为每个SKU生成版本卡片
+                Object.keys(groupedBySku).forEach(sku => {
+                    const skuItems = groupedBySku[sku];
+
+                    skuItems.forEach((v, idx) => {
+                        const isInitial = v.action === 'new';
+                        const headerClass = isInitial ? 'initial' : 'adjust';
+                        const badgeHtml = isInitial
+                            ? '<span class="badge bg-primary" data-i18n="ui.text_422">初始记录</span>'
+                            : '<span class="badge bg-warning text-dark" data-i18n="js.correct">修正</span>';
+
+                        // 解析策略标识（从note末尾解析 #M1/#M2/#M3/#M4）
+                        const methodMap = {
+                            'M1': (window.i18n?.t('js.correct_shipment_only') || 'Correct Shipment Only'),
+                            'M2': (window.i18n?.t('js.sync_shipment_order') || 'Sync Shipment and Order'),
+                            'M3': (window.i18n?.t('js.delayed_receive') || 'Delayed Receive'),
+                            'M4': (window.i18n?.t('js.vendor_error_process') || 'Vendor Error Processing')
+                        };
+
+                        let methodBadge = '';
+                        let displayNote = v.note || '';
+                        const methodMatch = displayNote.match(/#(M\d)$/);
+                        if (methodMatch) {
+                            const methodCode = methodMatch[1];
+                            const methodName = methodMap[methodCode] || methodCode;
+                            methodBadge = `<span class="badge bg-info bg-opacity-75 ms-2">${methodName}</span>`;
+                            // 移除 note 中的策略标识用于显示
+                            displayNote = displayNote.replace(/#M\d$/, '').trim();
+                        }
+
+                        // 差异量颜色
+                        let diffClass = 'diff-zero';
+                        if (v.diff_quantity > 0) {
+                            diffClass = 'diff-positive';
+                        } else if (v.diff_quantity < 0) {
+                            diffClass = 'diff-negative';
+                        }
+
+                        html += `
+                            <div class="version-card">
+                                <div class="version-header ${headerClass}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <span class="version-seq text-warning">${escapeHtml(v.seq)}</span>
+                                            ${methodBadge}
+                                        </div>
+                                        ${badgeHtml}
+                                    </div>
+                                    <div class="version-meta">
+                                        <span><i class="fas fa-calendar"></i>${v.receive_date}</span>
+                                        <span><i class="fas fa-user"></i>${escapeHtml(v.by) || '-'}</span>
+                                    </div>
+                                    ${displayNote ? `<div class="text-white-50 small mt-2"><i class="fas fa-comment me-1"></i>${escapeHtml(displayNote)}</div>` : ''}
+                                </div>
+                                <div class="version-body">
+                                    <table class="diff-data-table">
+                                        <tr><td>SKU</td><td class="font-monospace">${escapeHtml(v.po_sku)}</td></tr>
+                                        <tr><td data-i18n="table.shipped_qty">发货数量</td><td>${v.sent_quantity}</td></tr>
+                                        <tr><td data-i18n="table.received_qty">入库数量</td><td>${v.receive_quantity}</td></tr>
+                                        <tr><td data-i18n="ui.text_2125">差异数量</td><td class="${diffClass}">${v.diff_quantity > 0 ? '+' : ''}${v.diff_quantity}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+
+                container.innerHTML = html;
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0" data-i18n="ui.text_421">加载失败: ${err}</p>`;
+                empty.style.display = 'block';
+            });
+    }
+
+    // ========================================
+    // 工具函数
+    // ========================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

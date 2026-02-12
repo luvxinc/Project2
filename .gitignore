@@ -1,0 +1,84 @@
+# Node.js
+node_modules/
+.turbo/
+.dev-pids/
+.next/
+.vercel/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Environment & Secrets
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+
+# Logs
+logs/
+*.log
+
+# Data & Backups (sensitive)
+backups/
+data/records/
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Agent/AI
+.gemini/
+
+# Output files
+output/
+
+# Legacy
+legacy_streamlit/

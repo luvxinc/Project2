@@ -1,0 +1,46 @@
+=== ORDER HEADER ===
+Field,Value
+orderId,11-13841-51893
+legacyOrderId,11-13841-51893
+creationDate,2025-11-16T22:47:35.000Z
+lastModifiedDate,2025-12-03T10:59:39.000Z
+orderFulfillmentStatus,FULFILLED
+orderPaymentStatus,PARTIALLY_REFUNDED
+salesRecordReference,38428
+totalFeeBasisAmount,211.31
+totalMarketplaceFee,22.27
+ebayCollectAndRemitTax,True
+""
+=== BUYER ===
+username,anytime-78
+""
+=== SHIPPING ADDRESS ===
+fullName,Sandra lewis
+addressLine1,13007 S 186th Ave
+addressLine2,
+city,Buckeye
+stateOrProvince,AZ
+postalCode,85326-4563
+countryCode,US
+phone,6232853297
+shippingCarrierCode,USPS
+shippingServiceCode,USPSParcel
+""
+=== PRICING SUMMARY ===
+priceSubtotal,198.78
+deliveryCost,0.0
+tax,
+total,198.78
+""
+=== PAYMENTS ===
+paymentMethod,paymentDate,amount,status
+EBAY,2025-11-16T22:47:36.051Z,176.51,PAID
+""
+=== REFUNDS ===
+refundDate,amount,status,referenceId
+2025-11-29T16:24:52.895Z,49.65,REFUNDED,5306235169
+""
+=== LINE ITEMS ===
+lineItemId,legacyItemId,sku,title,quantity,lineItemCost,shippingCost,tax,total,fulfillmentStatus,refundAmount
+10077260049011,403464704391,ZD.5112SH666T15.4+BE2B4E45K.20,[4] 15mm Thick Mercedes 5x112mm CB 66.6 Wheel Spacer Kit 14x1.5 Bolts Included,1,99.29,0.0,6.26,99.29,FULFILLED,99.29
+10077260049111,405081159779,ZC.5112H666E32.4+BU1B4E28K.20,"[4] 1.25"" Thick Audi 5x112mm CB 66.6 Wheel Spacer Kit 14x1.5 Lug Bolts Included",1,99.49,0.0,6.27,99.49,FULFILLED,

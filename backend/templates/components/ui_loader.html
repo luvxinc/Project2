@@ -1,0 +1,111 @@
+<!-- 
+    Common UI Component: Global Loading Indicator 
+    Features: Glassmorphism overlay, Neon progress bar, JS-controlled visibility
+-->
+<div id="global-progress"
+    class="htmx-indicator position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+    style="background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(5px); display: none; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+
+    <div class="glass-card p-5 text-center position-relative overflow-hidden"
+        style="min-width: 450px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 50px rgba(0,255,255,0.1);">
+
+        <!-- Decorative Background Elements -->
+        <div class="position-absolute top-0 start-0 w-100 h-100"
+            style="background: radial-gradient(circle at 50% 50%, rgba(0,123,255,0.1) 0%, transparent 70%); pointer-events: none;">
+        </div>
+
+        <div class="mb-4 position-relative">
+            <div class="spinner-border text-info" style="width: 3rem; height: 3rem; border-width: 0.25em;"
+                role="status"></div>
+            <div class="position-absolute top-50 start-50 translate-middle text-info small fw-bold"
+                style="font-size: 0.6rem;">SYS</div>
+        </div>
+
+        <h4 class="text-white fw-bold mb-2 tracking-wide" id="loader-title">SYSTEM PROCESSING</h4>
+        <p class="text-white-50 mb-4 small font-monospace" id="loader-desc">Executing protected operation. Please
+            wait...</p>
+
+        <!-- Cool Neon Progress Bar -->
+        <div class="progress bg-black border border-secondary border-opacity-25"
+            style="height: 6px; box-shadow: 0 0 10px rgba(0,0,0,0.5) inset; overflow: visible;">
+            <div class="progress-bar bg-info shadow-none position-relative" role="progressbar"
+                style="width: 100%; animation: neonFlux 2s infinite ease-in-out; box-shadow: 0 0 15px #0dcaf0;">
+                <div class="position-absolute top-0 start-0 w-100 h-100"
+                    style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent); animation: sheen 1.5s infinite;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Decoration -->
+        <div class="d-flex justify-content-between mt-2 text-muted" style="font-size: 0.6rem; font-family: monospace;">
+            <span>SEC_LEVEL: L0</span>
+            <span id="loader-timer">00:00</span>
+            <span>TOKEN: VALID</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* HTMX Active State: Show and Enable Interactions */
+    .htmx-request#global-progress,
+    .htmx-request.global-progress {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+    }
+
+    /* Animations */
+    @keyframes sheen {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @keyframes neonFlux {
+        0% {
+            opacity: 0.8;
+            box-shadow: 0 0 10px #0dcaf0;
+        }
+
+        50% {
+            opacity: 1;
+            box-shadow: 0 0 25px #0dcaf0;
+        }
+
+        100% {
+            opacity: 0.8;
+            box-shadow: 0 0 10px #0dcaf0;
+        }
+    }
+</style>
+
+<script>
+    // Simple Timer for the loader
+    document.body.addEventListener('htmx:configRequest', function (evt) {
+        // Find if this request uses the global progress
+        if (evt.detail.elt.getAttribute('hx-indicator') === '#global-progress') {
+            const timerEl = document.getElementById('loader-timer');
+            if (timerEl) {
+                let sec = 0;
+                timerEl.innerText = "00:00";
+                window.globalLoaderInterval = setInterval(() => {
+                    sec++;
+                    let m = Math.floor(sec / 60).toString().padStart(2, '0');
+                    let s = (sec % 60).toString().padStart(2, '0');
+                    timerEl.innerText = `${m}:${s}`;
+                }, 1000);
+            }
+        }
+    });
+
+    document.body.addEventListener('htmx:afterOnLoad', function (evt) {
+        if (window.globalLoaderInterval) {
+            clearInterval(window.globalLoaderInterval);
+            window.globalLoaderInterval = null;
+        }
+    });
+</script>

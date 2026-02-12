@@ -1,0 +1,133 @@
+// ================================
+// VMA P-Valve Inventory Transaction Models
+// 产品进出库流水记录 — 会计分录模式（append-only ledger）
+// ================================
+
+/// 库存流水 Action 类型
+enum VmaInventoryAction {
+  REC_CN      // 从中国接收入库
+  REC_CASE    // 临床使用后回库（未用完的）
+  OUT_CASE    // 出库用于临床
+  OUT_CN      // 退回中国
+  USED_CASE   // 临床使用消耗（用掉了，不可再用）
+  MOVE_DEMO   // 移至样品库（不再参与临床）
+
+  @@map("vma_inventory_action")
+}
+
+/// 产品类型
+enum VmaProductType {
+  PVALVE           // P-Valve 瓣膜
+  DELIVERY_SYSTEM  // 输送系统
+
+  @@map("vma_product_type")
+}
+
+/// 入库检验结果
+enum VmaInspectionResult {
+  ACCEPT
+  REJECT
+
+  @@map("vma_inspection_result")
+}
+
+// ================================
+// 收货批次表 — 记录从中国发货的每一批
+// 一次发货 = 一条 Batch，内含多个产品 = 多条 Transaction
+// ================================
+
+model VmaReceivingBatch {
+  id              String   @id @default(uuid())
+  batchNo         String   @unique @map("batch_no")                 // 批次号（业务主键）
+  poNo            String?  @map("po_no")                            // 采购单号
+  dateShipped     DateTime? @map("date_shipped") @db.Date           // 从中国发货日期
+  dateReceived    DateTime @map("date_received") @db.Date           // 到货日期
+  timeReceived    String?  @map("time_received")                    // 到货时间 HH:mm
+  operator        String?                                           // 收货操作员
+  comments        String?  @db.Text                                 // 收货备注
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // 该批次下的所有流水
+  transactions    VmaInventoryTransaction[]
+
+  @@index([dateReceived])
+  @@map("vma_receiving_batches")
+}
+
+// ================================
+// 临床案例表 — Case ID = UVP-{SiteID}-{PatientID}
+// ================================
+
+/// 临床案例状态
+enum VmaClinicalCaseStatus {
+  IN_PROGRESS  // 进行中（Case 创建时默认）
+  COMPLETED    // 已完成（回库后标记）
+
+  @@map("vma_clinical_case_status")
+}
+
+model VmaClinicalCase {
+  caseId          String                 @id @map("case_id")    // e.g. "UVP-001-003"
+  caseNo          String?                @unique @map("case_no")  // e.g. "123" or "123A", unique
+  siteId          String                 @map("site_id")         // FK → VmaSite
+  patientId       String                 @map("patient_id")      // 3位数字 e.g. "003"
+  caseDate        DateTime               @map("case_date") @db.Date
+  status          VmaClinicalCaseStatus  @default(IN_PROGRESS)
+
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  // 关联
+  site            VmaSite                @relation(fields: [siteId], references: [siteId])
+  transactions    VmaInventoryTransaction[]
+
+  @@index([status])
+  @@index([caseDate])
+  @@index([siteId])
+  @@map("vma_clinical_cases")
+}
+
+// ================================
+// 库存流水记录表 — 会计分录（append-only ledger）
+// 每一次动作 = 一条记录，当前状态 = 所有记录之和
+// ================================
+
+model VmaInventoryTransaction {
+  id            String                @id @default(uuid())
+  date          DateTime              @db.Date                 // 流水日期 YYYY-MM-DD
+  action        VmaInventoryAction                              // 进出库动作
+  productType   VmaProductType        @map("product_type")     // P-Valve / Delivery System
+  specNo        String                @map("spec_no")          // Venus Medtech 规格型号
+  serialNo      String?               @map("serial_no")        // 产品序列号
+  qty           Int                   @default(1)              // 数量
+  expDate       DateTime?             @map("exp_date") @db.Date // 过期日期
+  operator      String?                                        // 操作员
+  location      String?                                        // 存储位置
+  notes         String?               @db.Text                 // 备注
+
+  // —— 收货检验相关 ——
+  inspection    VmaInspectionResult?                            // 入库检验结果 (ACCEPT/REJECT)
+  condition     Int[]                 @default([])              // 到货状况勾选项索引 (0-8 对应9项 Conditional Notes)
+
+  // —— 外键关联 ——
+  batchNo       String?               @map("batch_no")         // 关联收货批次
+  batch         VmaReceivingBatch?    @relation(fields: [batchNo], references: [batchNo])
+
+  caseId        String?               @map("case_id")          // 关联临床案例
+  clinicalCase  VmaClinicalCase?      @relation(fields: [caseId], references: [caseId])
+
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  deletedAt     DateTime?             @map("deleted_at")
+
+  @@index([date])
+  @@index([action])
+  @@index([productType])
+  @@index([specNo])
+  @@index([serialNo])
+  @@index([caseId])
+  @@index([batchNo])
+  @@map("vma_inventory_transactions")
+}

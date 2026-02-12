@@ -1,0 +1,144 @@
+{% load i18n %}
+{% load security_tags i18n %}
+
+<!-- Report Center File List -->
+{% if files %}
+<div class="row g-4">
+    <!-- Left: Tools -->
+    <div class="col-md-4">
+        <div class="glass-card p-3 border border-secondary border-opacity-25">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="fas fa-tools me-2"></i>{% trans "操作" %}
+            </h6>
+
+            <!-- Download All ZIP -->
+            <a href="{% url 'web_ui:sales:reports:download_zip' %}" class="btn btn-success w-100 mb-3"
+                data-testid="btn-download-zip">
+                <i class="fas fa-file-archive me-2"></i>{% trans "打包下载所有" %} (.zip)
+            </a>
+
+            <!-- Clear All -->
+            <button type="button" class="btn btn-outline-danger w-100" id="btn-clear-reports"
+                onclick="window.confirmClearReports()" data-testid="btn-clear-all">
+                <i class="fas fa-trash-alt me-2"></i>{% trans "清空所有文件" %}
+            </button>
+            
+            <script>
+            // 定义全局函数，确保按钮点击时可以调用
+            window.confirmClearReports = function() {
+                // 使用 GlobalModal 确认
+                if (typeof GlobalModal !== 'undefined' && GlobalModal.showConfirm) {
+                    GlobalModal.showConfirm({
+                        title: '{% trans "清空所有报表文件" %}',
+                        message: '{% trans "确定要清空所有报表文件吗？此操作不可恢复。" %}',
+                        confirmLabel: '{% trans "确认清空" %}',
+                        confirmClass: 'btn-danger',
+                        onConfirm: function() {
+                            // 执行 HTMX 请求
+                            htmx.ajax('POST', '{% url "web_ui:sales:reports:clear_files" %}', {
+                                target: '#center-content',
+                                swap: 'innerHTML'
+                            });
+                        }
+                    });
+                } else {
+                    // fallback to native confirm
+                    if (confirm('{% trans "确定要清空所有报表文件吗？此操作不可恢复。" %}')) {
+                        htmx.ajax('POST', '{% url "web_ui:sales:reports:clear_files" %}', {
+                            target: '#center-content',
+                            swap: 'innerHTML'
+                        });
+                    }
+                }
+            };
+            </script>
+
+            <hr class="border-secondary">
+
+            <div class="text-center text-muted small">
+                <i class="fas fa-file-csv me-1"></i>
+                {% trans "共" %} <span class="text-info fw-bold">{{ files|length }}</span> {% trans "个文件" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: File List -->
+    <div class="col-md-8">
+        <div class="glass-card p-3 border border-secondary border-opacity-25">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="fas fa-list me-2"></i>{% trans "文件列表" %}
+            </h6>
+
+            <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                {% for file in files %}
+                <div
+                    class="list-group-item bg-transparent border-secondary border-opacity-25 d-flex align-items-center p-3">
+                    <!-- Buttons -->
+                    <div class="btn-group me-3 flex-shrink-0 shadow">
+                        <!-- 查看按钮 - 根据文件类型跳转到对应 Viewer -->
+                        {% with file.name|lower as fname %}
+                        {% if '.pdf' in fname %}
+                        <a href="{% url 'web_ui:sales:reports:viewer_pdf' file.name %}"
+                            class="btn btn-sm btn-danger text-white fw-bold" data-i18n-title="tooltip.t5194" title="{% trans '查看 PDF' %}"
+                            data-testid="btn-view-{{ forloop.counter0 }}">
+                            <i class="fas fa-file-pdf me-1"></i>{% trans "查看" %}
+                        </a>
+                        {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname or '.gif' in fname or '.webp' in
+                        fname %}
+                        <a href="{% url 'web_ui:sales:reports:viewer_image' file.name %}"
+                            class="btn btn-sm btn-primary text-white fw-bold" data-i18n-title="tooltip.t1354" title="{% trans '查看图片' %}"
+                            data-testid="btn-view-{{ forloop.counter0 }}">
+                            <i class="fas fa-image me-1"></i>{% trans "查看" %}
+                        </a>
+                        {% else %}
+                        <a href="{% url 'web_ui:sales:reports:viewer_table' file.name %}"
+                            class="btn btn-sm btn-info text-dark fw-bold" data-i18n-title="tooltip.t9179" title="{% trans '查看表格' %}"
+                            data-testid="btn-view-{{ forloop.counter0 }}">
+                            <i class="fas fa-table me-1"></i>{% trans "查看" %}
+                        </a>
+                        {% endif %}
+                        {% endwith %}
+
+                        <a href="{% url 'web_ui:sales:reports:download' file.name %}" class="btn btn-sm btn-success"
+                            data-i18n-title="tooltip.t5166" title="{% trans '下载文件' %}" data-testid="btn-download-{{ forloop.counter0 }}">
+                            <i class="fas fa-download me-1"></i>{% trans "下载" %}
+                        </a>
+                    </div>
+
+                    <!-- File info -->
+                    <div class="d-flex align-items-center flex-grow-1 min-w-0">
+                        {% with file.name|lower as fname %}
+                        {% if '.pdf' in fname %}
+                        <i class="fas fa-file-pdf text-danger fa-lg me-3 flex-shrink-0"></i>
+                        {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname or '.gif' in fname or '.webp' in
+                        fname %}
+                        <i class="fas fa-file-image text-primary fa-lg me-3 flex-shrink-0"></i>
+                        {% else %}
+                        <i class="fas fa-file-csv text-success fa-lg me-3 flex-shrink-0"></i>
+                        {% endif %}
+                        {% endwith %}
+                        <div class="text-truncate">
+                            <span class="text-white fw-bold">{{ file.name }}</span>
+                            <br>
+                            <small class="text-muted font-monospace">{{ file.size_display }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-5">
+    <i class="fas fa-folder-open fa-4x text-muted mb-4 opacity-25"></i>
+    <h5 class="text-white-50">{% trans "暂无报表文件" %}</h5>
+    <p class="text-muted">{% trans "请先前往「报表生成器」运行分析任务。" %}</p>
+    <button type="button" class="btn btn-outline-primary" hx-get="{% url 'web_ui:sales:reports:center_files' %}"
+        hx-target="#center-content" data-testid="btn-refresh">
+        <i class="fas fa-sync-alt me-2"></i>{% trans "刷新列表" %}
+    </button>
+</div>
+{% endif %}

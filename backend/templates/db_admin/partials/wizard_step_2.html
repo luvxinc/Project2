@@ -1,0 +1,45 @@
+<div class="wizard-step fade-in">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h6 class="text-uppercase text-muted small fw-bold mb-0" data-i18n="ui.text_1757">第二步：选择操作</h6>
+        <span class="badge bg-info text-dark">目标：{{ selected_date }}</span>
+    </div>
+
+    <div class="row g-3">
+        <!-- Option A: Modify Single -->
+        <div class="col-md-6">
+            <form hx-post="{% url request.resolver_match.namespace|add:':wizard_step_3' %}"
+                hx-target="#wizard_container">
+                {% csrf_token %}
+                <input type="hidden" name="selected_date" value="{{ selected_date }}">
+                <input type="hidden" name="action_type" value="MODIFY">
+                <button type="submit" class="btn btn-outline-light w-100 p-4 h-100 text-start hover-glass">
+                    <i class="fas fa-edit fa-2x text-warning mb-3"></i>
+                    <h5 class="mb-1" data-i18n="ui.text_1759">修改单品库存</h5>
+                    <p class="small text-white-50 mb-0" data-i18n="ui.text_1760">修正单个 SKU 的库存数值。</p>
+                </button>
+            </form>
+        </div>
+
+        <!-- Option B: Delete Column -->
+        <div class="col-md-6">
+            <form hx-post="{% url request.resolver_match.namespace|add:':wizard_step_3' %}"
+                hx-target="#wizard_container">
+                {% csrf_token %}
+                <input type="hidden" name="selected_date" value="{{ selected_date }}">
+                <input type="hidden" name="action_type" value="DELETE">
+                <button type="submit" class="btn btn-outline-danger w-100 p-4 h-100 text-start hover-glass">
+                    <i class="fas fa-trash-alt fa-2x text-danger mb-3"></i>
+                    <h5 class="text-danger mb-1" data-i18n="ui.text_1761">删除整列</h5>
+                    <p class="small text-white-50 mb-0" data-i18n="ui.text_1762">物理删除该日期的所有库存数据。</p>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{% url request.resolver_match.namespace|add:':data_change' %}"
+            class="btn btn-link text-white-50 text-decoration-none">
+            <i class="fas fa-arrow-left me-1"></i><span data-i18n="ui.icon_3008">重新开始</span>
+        </a>
+    </div>
+</div>

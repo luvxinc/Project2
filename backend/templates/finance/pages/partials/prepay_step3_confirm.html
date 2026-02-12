@@ -1,0 +1,142 @@
+<!-- 预付款向导 Step 3: 验证信息 -->
+<div id="prepay-step-confirm" class="wizard-step-content">
+    <!-- 确认卡片 -->
+    <div class="card bg-dark border-warning border-opacity-50 mb-4">
+        <div class="card-header bg-warning bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+            <span>
+                <i class="fas fa-clipboard-check text-warning me-2"></i>
+                <span class="text-warning fw-bold" data-i18n="ui.text_1004">请确认以下信息</span>
+            </span>
+            <span class="badge bg-warning bg-opacity-25 text-warning" data-i18n="ui.text_1488">提交前请仔细核对</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- 供应商ID -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="ui.icon_3417">供应商ID</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-white fw-bold" id="confirm-supplier-code">--</span>
+                    </div>
+                </div>
+                <!-- 供应商名字 -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="ui.icon_3418">供应商名字</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-white" id="confirm-supplier-name">--</span>
+                    </div>
+                </div>
+                <!-- 供应商结算货币 -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="js.settlement_currency">结算货币</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-white" id="confirm-supplier-currency">--</span>
+                    </div>
+                </div>
+                
+                <div class="col-12"><hr class="border-secondary border-opacity-25 my-2"></div>
+                
+                <!-- 预付款日期 -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="ui.text_1320">预付款日期</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-white" id="confirm-date">--</span>
+                    </div>
+                </div>
+                <!-- 预付款货币 -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="ui.text_1493">预付款货币</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-info fw-bold" id="confirm-currency">--</span>
+                    </div>
+                </div>
+                <!-- 预付款金额 -->
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small" data-i18n="ui.text_1319">预付款金额</label>
+                    <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                        <span class="text-success fw-bold fs-5" id="confirm-amount">--</span>
+                    </div>
+                </div>
+                
+                <!-- 汇率 -->
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small" data-i18n="ui.text_1495">结算汇率 (USD/RMB)</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25 d-flex align-items-center">
+                        <span class="text-white" id="confirm-rate">--</span>
+                        <span class="badge bg-secondary bg-opacity-50 ms-2" id="confirm-rate-source" style="font-size: 0.65rem;">--</span>
+                    </div>
+                </div>
+                <!-- 备注 -->
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small" data-i18n="common.remark">备注</label>
+                    <div class="p-2 rounded bg-black bg-opacity-25">
+                        <span class="text-white-50" id="confirm-note">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 货币转换提示 -->
+    <div id="currency-conversion-notice" class="alert alert-warning" style="display: none;">
+        <i class="fas fa-info-circle me-2"></i>
+        <span id="currency-conversion-text"></span>
+    </div>
+
+    <!-- 付款文件上传（可选） -->
+    <div class="card bg-dark border-secondary border-opacity-25 mb-4">
+        <div class="card-header bg-black bg-opacity-25 border-0 d-flex justify-content-between align-items-center">
+            <span>
+                <i class="fas fa-file-upload text-info me-2"></i>
+                <span class="text-white" data-i18n="ui.text_1497">上传付款文件</span>
+                <span class="badge bg-secondary bg-opacity-50 text-white-50 ms-2" style="font-size: 0.65rem;" data-i18n="common.optional">可选</span>
+            </span>
+        </div>
+        <div class="card-body">
+            <div id="prepay-file-drop-zone" class="border border-dashed border-secondary rounded p-4 text-center" 
+                 style="cursor: pointer; transition: all 0.2s ease;"
+                 ondragover="event.preventDefault(); this.classList.add('border-info', 'bg-info', 'bg-opacity-10');"
+                 ondragleave="this.classList.remove('border-info', 'bg-info', 'bg-opacity-10');"
+                 ondrop="handlePrepayFileDrop(event)"
+                 onclick="document.getElementById('prepay-file-input').click();">
+                <input type="file" id="prepay-file-input" style="display: none;" 
+                       accept=".pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.xls,.xlsx,.doc,.docx,.csv,.zip,.rar"
+                       onchange="handlePrepayFileSelect(event)">
+                <div id="prepay-file-placeholder">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-secondary opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-1" data-i18n="ui.text_1499">点击选择或拖放文件到此处</p>
+                    <p class="text-white-50 small mb-0 opacity-50" data-i18n="ui.text_1500">支持 PDF、图片、Excel、Word 等格式，最大 50MB</p>
+                </div>
+                <div id="prepay-file-preview" style="display: none;">
+                    <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                    <p class="text-white mb-1" id="prepay-file-name">file.pdf</p>
+                    <p class="text-white-50 small mb-2" id="prepay-file-size">1.2 MB</p>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); clearPrepayFile();">
+                        <i class="fas fa-times me-1"></i><span data-i18n="ui.icon_3430">移除</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                    id="prepay-btn-step3-back"
+                    data-bs-toggle="tooltip"
+                    data-i18n-title="common.back_modify" title="返回修改">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_modify">返回修改</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-success btn-lg px-5 shadow rounded-pill" 
+                    id="prepay-btn-step3-confirm"
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t6379" title="确认无误，提交预付款记录">
+                <i class="fas fa-check me-2"></i><span data-i18n="wizard.confirm_submit">确认提交</span>
+            </button>
+        </div>
+    </div>
+</div>

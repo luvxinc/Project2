@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Role Switches - System Admin - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:dashboard' %}"
+                            class="text-info text-decoration-none">System Admin</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">Role Switches</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="ui.icon_3021">返回System Admin</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区：复用原有 ua_tab_capabilities 结构 -->
+    <!-- 主内容区：复用原有 ua_tab_capabilities 结构 (已迁移至新位置) -->
+    {% include "user_admin/components/role_switches/capability_form.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+<!-- 预付款向导 Step 2: 付款明细 -->
+<div id="prepay-step-form" class="wizard-step-content">
+    <form id="form-prepay-detail" autocomplete="off" onkeydown="return event.key != 'Enter';">
+        {% csrf_token %}
+
+        <!-- 供应商信息名片卡片（只读展示） -->
+        <div id="supplier-info-card" class="card bg-dark border-secondary border-opacity-25 mb-4">
+            <div class="card-header bg-secondary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-building me-2 text-secondary"></i>
+                    <span class="text-white" data-i18n="ui.text_1412">供应商信息</span>
+                </div>
+                <span class="badge bg-secondary bg-opacity-50" data-i18n="ui.text_1413">只读</span>
+            </div>
+            <div class="card-body">
+                <!-- 名片式展示 -->
+                <div class="row g-3">
+                    <!-- 供应商ID -->
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded bg-black bg-opacity-25">
+                            <div class="text-white-50 small mb-1">
+                                <i class="fas fa-id-badge me-1"></i><span data-i18n="ui.icon_3417">供应商ID</span>
+                            </div>
+                            <div class="text-info fw-bold fs-5" id="prepay-supplier-code-display">--</div>
+                        </div>
+                        <input type="hidden" id="prepay-supplier-code">
+                    </div>
+                    
+                    <!-- 供应商名字 -->
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded bg-black bg-opacity-25">
+                            <div class="text-white-50 small mb-1">
+                                <i class="fas fa-user me-1"></i><span data-i18n="ui.icon_3418">供应商名字</span>
+                            </div>
+                            <div class="text-white fw-bold" id="prepay-supplier-name-display">--</div>
+                        </div>
+                        <input type="hidden" id="prepay-supplier-name">
+                    </div>
+                    
+                    <!-- 供应商结算货币 -->
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                            <div class="text-white-50 small mb-1">
+                                <i class="fas fa-coins me-1"></i><span data-i18n="js.settlement_currency">结算货币</span>
+                            </div>
+                            <div class="text-warning fw-bold fs-5" id="prepay-supplier-currency-display">--</div>
+                        </div>
+                        <input type="hidden" id="prepay-supplier-currency">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预付款参数名片卡片 -->
+        <div id="prepay-params-card" class="card bg-dark border-secondary border-opacity-25 mb-4">
+            <div class="card-header bg-secondary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-file-invoice-dollar me-2 text-info"></i>
+                    <span class="text-white" data-i18n="ui.text_1414">预付款参数</span>
+                </span>
+                <span class="badge bg-info bg-opacity-25 text-info" data-i18n="ui.text_1028">请填写以下信息</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- 预付款日期 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t2650" title="请选择预付款日期">
+                            预付款日期 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" 
+                               class="form-control bg-dark border-secondary text-white" 
+                               id="prepay-date" 
+                               name="prepay_date"
+                               onchange="onPrepayDateChange()"
+                               required>
+                    </div>
+                    
+                    <!-- 预付款货币 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t7075" title="请选择实际付款使用的货币">
+                            预付款货币 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select bg-dark border-secondary text-white" 
+                                id="prepay-currency"
+                                name="prepay_currency"
+                                required>
+                            <option value="" data-i18n="option.o6059">请选择货币</option>
+                            <option value="USD" data-i18n="option.o8781">USD (美元)</option>
+                            <option value="RMB" data-i18n="option.o6699">RMB (人民币)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 预付款金额 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t8573" title="请输入预付款金额，最多保留两位小数">
+                            预付款金额 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" 
+                               class="form-control bg-dark border-warning text-white" 
+                               id="prepay-amount" 
+                               name="prepay_amount"
+                               min="0.01"
+                               step="0.01"
+                               data-i18n-placeholder="form.placeholder.generic_25" placeholder="请输入金额"
+                               required>
+                        <small class="text-white-50 mt-1 d-block">
+                            <i class="fas fa-info-circle me-1"></i><span data-i18n="ui.icon_3420">金额最多保留两位小数</span>
+                        </small>
+                    </div>
+                    
+                    <!-- 结算汇率 -->
+                    <div class="col-md-6">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t5800" title="根据预付款日期自动获取USD/RMB汇率买入价，若无法获取需手动填写">
+                            结算汇率(USD/RMB) <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <!-- 使用 GlobalExchangeRate 组件 -->
+                        <div id="prepay-rate-container"></div>
+                    </div>
+                    
+                    <!-- 预付款备注 -->
+                    <div class="col-12">
+                        <label class="form-label text-white-50 small" data-bs-toggle="tooltip" data-i18n-title="tooltip.t1094" title="请填写预付款用途说明">
+                            预付款备注 <i class="fas fa-info-circle ms-1"></i> <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control bg-dark border-secondary text-white" 
+                               id="prepay-note" 
+                               name="prepay_note"
+                               data-i18n-placeholder="form.placeholder.generic_24" placeholder="请填写此笔预付款的用途说明"
+                               required>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 验证错误提示 -->
+        <div id="prepay-form-error" class="alert alert-danger" style="display: none;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="prepay-form-error-text"></span>
+        </div>
+    </form>
+
+    <!-- 导航按钮 -->
+    <div class="wizard-actions">
+        <div class="wizard-actions-left">
+            <button type="button" 
+                    class="btn btn-outline-secondary btn-lg px-4 rounded-pill" 
+                    id="prepay-btn-step2-back"
+                    data-bs-toggle="tooltip"
+                    data-i18n-title="common.back_prev" title="返回上一步">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back">返回</span>
+            </button>
+        </div>
+        <div class="wizard-actions-right">
+            <button type="button" 
+                    class="btn btn-success btn-lg px-5 shadow rounded-pill" 
+                    id="prepay-btn-step2-next"
+                    data-bs-toggle="tooltip" 
+                    data-i18n-title="tooltip.t7348" title="进入下一步确认信息">
+                <i class="fas fa-arrow-right me-2"></i><span data-i18n="ui.icon_3422">下一步：确认信息</span>
+            </button>
+        </div>
+    </div>
+</div>

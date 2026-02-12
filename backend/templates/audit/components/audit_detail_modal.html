@@ -1,0 +1,132 @@
+{% load static custom_filters %}
+
+<div class="modal-header border-bottom border-secondary border-opacity-25 bg-dark">
+    <h5 class="modal-title text-white">
+        <i class="fa-solid fa-file-invoice me-2 text-primary"></i>日志详情单 (Record Detail)
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-0">
+
+    {# 1. 核心状态横幅 #}
+    <div class="p-4 bg-black bg-opacity-50 border-bottom border-secondary border-opacity-10">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="text-white-50 small mb-1">REFERENCE ID</div>
+                <div class="font-monospace text-info fs-5 user-select-all">{{ ref_id }}</div>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-{% if 'Failed' in main_log.status %}danger{% else %}success{% endif %} fs-6 px-3 py-2">
+                    {{ main_log.status }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4" style="max-height: 65vh; overflow-y: auto;">
+
+        {# 2. 基础信息全字段表格 #}
+        <h6 class="text-white fw-bold mb-3"><i class="fa-solid fa-table me-2 text-secondary"></i>基础记录 (Record Fields)</h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-dark table-bordered table-sm small align-middle mb-0">
+                <tbody>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50 w-25">Time</th>
+                        <td class="font-monospace text-white">{{ main_log.time }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">User / IP</th>
+                        <td class="text-white">{{ main_log.user }} <span class="text-muted ms-2">({{ main_log.ip }})</span></td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">Module / Page</th>
+                        <td class="text-white">{{ main_log.page }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">Action</th>
+                        <td class="text-white fw-bold">{{ main_log.action }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">Target</th>
+                        <td class="text-white font-monospace">{{ main_log.target }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">Root Cause</th>
+                        <td class="text-{% if 'Failed' in main_log.status %}warning{% else %}muted{% endif %}">{{ main_log.root_cause }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-secondary bg-opacity-10 text-white-50">Note</th>
+                        <td class="text-white-50">{{ main_log.note }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {# 3. 变更明细 #}
+        <h6 class="text-white fw-bold mb-3 border-top border-secondary border-opacity-25 pt-3">
+            <i class="fa-solid fa-code-compare me-2 text-secondary"></i>变更追踪 (Traceability)
+        </h6>
+
+        {% if details_obj.summary %}
+            <div class="alert alert-dark bg-opacity-50 border-secondary border-opacity-25 small mb-3">
+                <i class="fa-solid fa-info-circle me-2"></i>{{ details_obj.summary }}
+            </div>
+        {% endif %}
+
+        {% if details_obj.diff_records %}
+            <div class="p-3 bg-black bg-opacity-25 rounded small font-monospace text-info border border-secondary border-opacity-10">
+                {% for record in details_obj.diff_records %}
+                    <div>{{ record }}</div>
+                {% endfor %}
+            </div>
+        {% elif details_obj.before %}
+            <div class="table-responsive small">
+                <table class="table table-sm table-dark table-bordered mb-0">
+                    <thead class="text-muted text-uppercase">
+                        <tr><th style="width:30%">Field</th><th style="width:35%">Before</th><th style="width:35%">After</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for key in details_obj.before %}
+                        <tr>
+                            <td class="text-white-50">{{ key }}</td>
+                            <td class="text-danger text-opacity-75">{{ details_obj.before|get_item:key }}</td>
+                            <td class="text-success text-opacity-75">{{ details_obj.after|get_item:key }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted small fst-italic">无结构化数据变更。原始消息: {{ details_obj.raw_details|default:main_log.details }}</p>
+        {% endif %}
+
+        {# 4. 关联日志 #}
+        {% if infra_logs or system_logs %}
+            <h6 class="text-white fw-bold mb-3 border-top border-secondary border-opacity-25 pt-3">
+                <i class="fa-solid fa-link me-2 text-secondary"></i>关联记录 (Linked Logs)
+            </h6>
+
+            {% for infra in infra_logs %}
+                <div class="d-flex gap-3 small mb-2 p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-10">
+                    <div class="text-warning fw-bold" style="min-width: 60px;">INFRA</div>
+                    <div class="text-white-50">{{ infra.time|slice:"11:19" }}</div>
+                    <div class="text-white font-monospace text-truncate">{{ infra.sql|slice:":80" }}...</div>
+                </div>
+            {% endfor %}
+
+            {% for sys in system_logs %}
+                <div class="d-flex gap-3 small mb-2 p-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25">
+                    <div class="text-danger fw-bold" style="min-width: 60px;">ERROR</div>
+                    <div class="text-white-50">{{ sys.time|slice:"11:19" }}</div>
+                    <div class="text-danger">{{ sys.message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+
+    <div class="modal-footer border-top border-secondary border-opacity-25 bg-dark">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</div>

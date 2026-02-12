@@ -1,0 +1,46 @@
+{% load security_tags %}
+
+<!-- Overwrite Confirmation Dialog -->
+<!-- Overwrite Confirmation Dialog (Apple Style) -->
+<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+    <div class="glass-card border border-warning border-opacity-50 shadow-lg p-5 text-center"
+        style="backdrop-filter: blur(20px); background: rgba(30,32,40,0.85); max-width: 550px; border-radius: 24px;">
+
+        <div class="mb-4">
+            <i class="fa-solid fa-triangle-exclamation fa-4x text-warning"></i>
+        </div>
+
+        <h3 class="text-white mb-3 fw-bold" data-i18n="ui.text_286">日期列已存在</h3>
+        <p class="text-white-50 fs-5 mb-5">
+            数据库中已存在 <code class="text-warning fw-bold px-2">{{ target_date }}</code> 日期列。<br>
+            <span data-i18n="ui.overwrite_confirm">是否要覆盖现有数据？</span>
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+            <!-- Cancel: Release memory and go back -->
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2"
+                hx-get="{% url 'web_ui:inventory:stocktake_etl:tab_inventory' %}" hx-target="#inv-process-area">
+                <i class="fa-solid fa-xmark me-2"></i><span data-i18n="common.cancel">取消</span>
+            </button>
+
+            <!-- Confirm: Submit with overwrite flag and password -->
+            <form hx-post="{% url 'web_ui:inventory:stocktake_etl:inv_sync' %}" hx-target="#inv-process-area"
+                style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="target_date" value="{{ target_date }}">
+                <input type="hidden" name="session_key" value="{{ session_key }}">
+                <input type="hidden" name="confirm_overwrite" value="yes">
+
+                <div class="mb-3 text-start">
+                    {% security_inputs 'btn_sync_inventory' %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-warning rounded-pill py-2 shadow fw-bold">
+                        <i class="fa-solid fa-check me-2"></i><span data-i18n="ui.icon_3118">确认覆盖</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,131 @@
+<!-- Step 1: 付款说明 -->
+
+<!-- 付款须知 -->
+<div class="card bg-dark border-info mb-4">
+    <div class="card-header bg-info bg-opacity-10 border-info" id="instruction-card">
+        <i class="fas fa-info-circle me-2 text-info"></i>
+        <span class="text-white" data-i18n="ui.text_1400">付款须知</span>
+    </div>
+    <div class="card-body">
+        <p class="text-white-50 mb-3" data-i18n="ui.text_1533">
+            您即将对以下选中的物流单进行运费结算。
+        </p>
+        <p class="text-white mb-2" data-i18n="ui.text_1534">请逐一核对每笔物流单的付款信息：</p>
+        <ul class="text-white-50 mb-3">
+            <li><i class="fas fa-check-circle text-success me-2"></i><span data-i18n="ui.icon_3436">物流费用金额</span></li>
+            <li><i class="fas fa-check-circle text-success me-2"></i><span data-i18n="ui.icon_3437">计费重量</span></li>
+            <li><i class="fas fa-check-circle text-success me-2"></i><span data-i18n="ui.icon_3438">汇率（如适用）</span></li>
+        </ul>
+
+        <div class="alert alert-warning bg-warning bg-opacity-10 border-warning mb-0">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong data-i18n="ui.text_758">重要提示：</strong>
+            <ul class="mb-0 mt-2">
+                <li data-i18n="desc.d108">本流程中仅支持修改【<span class="text-warning fw-bold"
+                        data-i18n="table.exchange_rate">汇率</span>】</li>
+                <li data-i18n="desc.d109">如需修改其他物流信息，请前往 <a href="{% url 'web_ui:purchase:send_mgmt_page' %}"
+                        class="text-info" data-i18n="ui.text_1537">采购管理 → 发货单管理</a> 进行调整</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 待付款清单 -->
+<div class="card bg-dark border-warning mb-4" id="summary-card">
+    <div class="card-header bg-warning bg-opacity-10 border-warning d-flex align-items-center">
+        <i class="fas fa-list-check me-2 text-warning"></i>
+        <span class="text-white" data-i18n="ui.icon_3369">待付款物流单</span>
+        <span class="badge bg-success ms-2" id="logistic-count-badge" data-i18n="ui.text_1410">0 单</span>
+    </div>
+    <div class="card-body p-0">
+        <!-- 表格 -->
+        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+            <table class="table table-dark table-hover mb-0">
+                <thead style="position: sticky; top: 0; background: #2a2d36; z-index: 1;">
+                    <tr>
+                        <th class="text-center" data-i18n="table.logistics_no">物流单号</th>
+                        <th class="text-center" data-i18n="purchase.shipping_date">发货日期</th>
+                        <th class="text-center" data-i18n="js.pallets">托盘数</th>
+                        <th class="text-center" data-i18n="ui.text_2506">物流重量</th>
+                        <th class="text-center" data-i18n="table.exchange_rate">汇率</th>
+                        <th class="text-center" data-i18n="ui.text_2518">费用 (RMB)</th>
+                        <th class="text-center" data-i18n="ui.text_2519">费用 (USD)</th>
+                    </tr>
+                </thead>
+                <tbody id="payment-list-body">
+                    <!-- JS动态填充 -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 合计 -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top border-secondary">
+            <span class="text-white-50" data-i18n="ui.text_1540">费用合计</span>
+            <div>
+                <span class="text-warning fw-bold fs-5 me-3" id="total-rmb">¥0.00</span>
+                <span class="text-info fw-bold" id="total-usd">$0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 空状态 -->
+<div id="empty-state" class="text-center py-5" style="display: none;">
+    <i class="fas fa-exclamation-circle fa-3x text-warning opacity-50 mb-3"></i>
+    <p class="text-white-50 mb-3" data-i18n="ui.text_1541">未选择任何物流单</p>
+    <button type="button" class="btn btn-outline-primary" onclick="closePaymentWizard()">
+        <i class="fas fa-arrow-left me-1"></i><span data-i18n="ui.icon_3415">返回选择</span>
+    </button>
+</div>
+
+<!-- 操作按钮 -->
+<div class="d-flex justify-content-between gap-3 mt-4">
+    <button type="button" class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="closePaymentWizard()">
+        <i class="fas fa-times me-2"></i><span data-i18n="common.cancel">取消</span>
+    </button>
+    <button type="button" class="btn btn-success btn-lg px-4 rounded-pill" id="btn-step1-next">
+        <span data-i18n="desc.d114">继续付款</span> <i class="fas fa-arrow-right ms-2"></i>
+    </button>
+</div>
+
+<script>
+    // Step 1 初始化
+    function initStep1() {
+        const tbody = document.getElementById('payment-list-body');
+
+        if (!window.paymentItems || window.paymentItems.length === 0) {
+            document.getElementById('instruction-card').closest('.card').style.display = 'none';
+            document.getElementById('summary-card').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('btn-step1-next').disabled = true;
+            return;
+        }
+
+        document.getElementById('logistic-count-badge').textContent = `${window.paymentItems.length} 单`;
+
+        let totalRMB = 0;
+        let totalUSD = 0;
+
+        tbody.innerHTML = window.paymentItems.map(item => {
+            totalRMB += item.total_price_rmb || 0;
+            totalUSD += item.total_price_usd || 0;
+
+            return `
+                <tr>
+                    <td class="text-center font-monospace fw-bold text-white">${item.logistic_num}</td>
+                    <td class="text-center">${item.date_sent}</td>
+                    <td class="text-center"><span class="badge bg-info bg-opacity-25 text-info">${item.pallets}</span></td>
+                    <td class="text-center">${item.total_weight ? item.total_weight.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-'} kg</td>
+                    <td class="text-center">${item.usd_rmb ? item.usd_rmb.toFixed(4) : '-'}</td>
+                    <td class="text-center text-warning fw-bold">¥${(item.total_price_rmb || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-center text-info">$${(item.total_price_usd || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                </tr>
+            `;
+        }).join('');
+
+        document.getElementById('total-rmb').textContent = `¥${totalRMB.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('total-usd').textContent = `$${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+        // 启用下一步按钮
+        document.getElementById('btn-step1-next').disabled = false;
+    }
+</script>

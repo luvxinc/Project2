@@ -1,0 +1,2 @@
+﻿id,username,password_hash,is_admin,is_locked,failed_attempts,created_at,updated_at,session_token
+28,restricted,pbkdf2_sha256$120000$fxJRY5kRgfaB5aKc0O6mNg==$y3MYAxnJrlAJE/FbZyXC8tjBkdM5tB3Xq2tpbCbELqE=,0,0,0,2025-12-15 12:54:32,2025-12-15 12:54:32,

@@ -1,0 +1,114 @@
+<!-- 付款历史记录视图 -->
+<div id="payment-history-view" style="display: none;">
+    <div class="glass-card p-4 shadow-lg">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+            <div class="d-flex align-items-center">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-history fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="ui.text_417">历史修订记录</h5>
+                    <p class="text-white-50 small mb-0" id="history-pmt-no-label" data-i18n="ui.text_1528">付款号: -</p>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="closePaymentHistory()">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+            </button>
+        </div>
+
+        <!-- 加载中 -->
+        <div id="history-loading" class="text-center py-5">
+            <div class="spinner-border text-info" role="status"></div>
+            <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_707">正在加载历史记录...</p>
+        </div>
+
+        <!-- 双栏布局 -->
+        <div id="history-content" class="row g-4" style="display: none;">
+            <!-- 左栏：物流单信息修订记录 -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-primary bg-opacity-10 border-secondary">
+                        <i class="fas fa-truck me-2 text-primary"></i>
+                        <span class="text-white fw-bold" data-i18n="ui.text_1530">物流单信息修订</span>
+                        <span class="badge bg-primary ms-2" id="send-version-count">0</span>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                        <div id="send-versions-container" class="p-3">
+                            <!-- JS动态填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右栏：付款修订记录 -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-success bg-opacity-10 border-secondary">
+                        <i class="fas fa-money-check-alt me-2 text-success"></i>
+                        <span class="text-white fw-bold" data-i18n="ui.text_1531">付款修订记录</span>
+                        <span class="badge bg-success ms-2" id="payment-version-count">0</span>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                        <div id="payment-versions-container" class="p-3">
+                            <!-- JS动态填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 历史记录卡片样式（与订单管理一致） */
+    .version-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(108, 117, 125, 0.3);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .version-header {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.2);
+    }
+    .version-header.initial {
+        background: linear-gradient(90deg, rgba(13, 110, 253, 0.2), transparent);
+        border-left: 3px solid #0d6efd;
+    }
+    .version-seq {
+        font-family: 'SF Mono', monospace;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .version-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    .version-meta i {
+        margin-right: 0.3rem;
+    }
+    .version-body {
+        padding: 1rem;
+    }
+    .initial-card-table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    .initial-card-table td {
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.1);
+    }
+    .initial-card-table td:first-child {
+        color: rgba(255, 255, 255, 0.5);
+        width: 35%;
+    }
+    .initial-card-table td:last-child {
+        color: #fff;
+    }
+</style>

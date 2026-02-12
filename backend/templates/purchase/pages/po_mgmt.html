@@ -1,0 +1,1223 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load security_tags %}
+
+{% block title %}PO Management - Procurement - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in" id="po-mgmt-main-container">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:purchase:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="purchase.title">Procurement</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="purchase.po_list">PO Management</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:purchase:hub' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="purchase.back_to_hub">返回Procurement</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 订单列表视图 -->
+    <!-- ===================================== -->
+    <div id="po-list-view">
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                        <i class="fas fa-file-invoice fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="purchase.po_mgmt_title">采购PO Management</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="purchase.po_mgmt_desc">查看和管理所有采购订单，支持在线修改和版本追踪。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm rounded-pill" onclick="loadOrderTable()">
+                    <i class="fas fa-sync-alt me-1"></i> <span data-i18n="common.refresh">刷新列表</span>
+                </button>
+            </div>
+
+            <!-- 操作须知 -->
+            <div class="alert alert-info mb-4" style="background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3);">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 mt-1 text-info fa-lg"></i>
+                    <div>
+                        <strong class="text-info d-block mb-2" data-i18n="common.operation_notes">操作须知</strong>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white" data-i18n="purchase.po_view">查看订单</strong>：<span data-i18n="mgmt.po_view_desc">点击 <i class="fas fa-eye text-info"></i> 查看订单完整信息，包括策略和明细</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_559">修改订单</strong>：<span data-i18n="mgmt.po_edit_desc">点击 <i class="fas fa-pen text-warning"></i> 进入修改向导，可调整策略和商品明细</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="common.history">历史记录</strong>：<span data-i18n="mgmt.po_history_desc">点击 <i class="fas fa-history text-secondary"></i> 查看订单所有版本的修订历史</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_463">删除/恢复</strong>：<span data-i18n="mgmt.po_delete_desc">点击 <i class="fas fa-trash text-danger"></i> 删除订单，<i class="fas fa-undo text-success"></i> 可撤销删除</span></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0 ps-3 text-white-50 small">
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_525">账单文件</strong>：<span data-i18n="mgmt.po_invoice_desc">点击 <i class="fas fa-file-invoice text-info"></i> 查看账单，<i class="fas fa-upload text-warning"></i> 上传/替换账单文件</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_563">总额显示</strong>：<span data-i18n="instructions.desc_35">自动计算当前版本的订单总金额（数量 × 单价）</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_468">版本追踪</strong>：<span data-i18n="instructions.desc_53">策略版本（V##）和明细版本（L##）独立管理</span></li>
+                                    <li class="mb-1"><strong class="text-white" data-i18n="ui.text_565">筛选排序</strong>：<span data-i18n="instructions.desc_26">支持按供应商筛选，点击表头可排序</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选区域 -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small">
+                        <i class="fas fa-filter me-1"></i><span data-i18n="purchase.filter_by_supplier">按供应商筛选</span>
+                    </label>
+                    <select class="form-select bg-dark border-secondary text-white" id="filter-supplier" 
+                            data-bs-toggle="tooltip" data-i18n-title="tooltip.t4391" title="选择供应商代码以筛选订单">
+                        <option value="" data-i18n="purchase.all_suppliers">全部供应商</option>
+                        <!-- JS动态加载 -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small">
+                        <i class="fas fa-sort me-1"></i><span data-i18n="purchase.sort_by">排序方式</span>
+                    </label>
+                    <select class="form-select bg-dark border-secondary text-white" id="filter-sort"
+                            data-bs-toggle="tooltip" data-i18n-title="tooltip.t3171" title="选择排序字段">
+                        <option value="order_date:desc" data-i18n="purchase.order_date_newest">订单日期 (最新优先)</option>
+                        <option value="order_date:asc" data-i18n="purchase.order_date_oldest">订单日期 (最早优先)</option>
+                        <option value="po_num:asc" data-i18n="purchase.order_no_asc">订单号 (升序)</option>
+                        <option value="po_num:desc" data-i18n="purchase.order_no_desc">订单号 (降序)</option>
+                        <option value="supplier_code:asc" data-i18n="purchase.supplier_asc">供应商 (A-Z)</option>
+                        <option value="supplier_code:desc" data-i18n="purchase.supplier_desc">供应商 (Z-A)</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="fas fa-search me-2"></i><span data-i18n="purchase.apply_filter">应用筛选</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Apple风格表格 -->
+            <div class="po-table-container">
+                <table class="po-table" id="po-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="po_num">
+                                <span data-i18n="purchase.order_num">订单号</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th class="sortable" data-sort="supplier_code">
+                                <span data-i18n="common.supplier">供应商</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th class="sortable" data-sort="order_date">
+                                <span data-i18n="table.order_date">订单日期</span> <i class="fas fa-sort ms-1"></i>
+                            </th>
+                            <th data-i18n="purchase.strategy_version">策略版本</th>
+                            <th data-i18n="purchase.detail_version">明细版本</th>
+                            <th data-i18n="purchase.total">总额</th>
+                            <th data-i18n="purchase.file">文件</th>
+                            <th data-i18n="common.operation">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="po-table-body">
+                        <!-- JS动态加载 -->
+                    </tbody>
+                </table>
+
+                <!-- Loading State -->
+                <div id="po-loading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-white-50 mt-3 mb-0" data-i18n="purchase.loading_orders">正在加载订单数据...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="po-empty" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-inbox fa-3x text-white-50 opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="purchase.no_orders">暂无采购订单数据</p>
+                    <a href="{% url 'web_ui:purchase:po_add_page' %}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus me-1"></i><span data-i18n="purchase.create_po">Create PO</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <span class="text-white-50 small" id="po-count" data-i18n="ui.text_566">共 0 条订单</span>
+                <a href="{% url 'web_ui:purchase:po_add_page' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i><span data-i18n="purchase.create_po">Create PO</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 订单详情视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="po-detail-view" style="display: none;">
+        {% include "purchase/pages/po_mgmt/po_view.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 订单修改视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="po-edit-view" style="display: none;">
+        {% include "purchase/pages/po_mgmt/po_edit.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 历史记录视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="po-history-view" style="display: none;">
+        {% include "purchase/pages/po_mgmt/po_history.html" %}
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 删除确认视图 (默认隐藏) -->
+    <!-- ===================================== -->
+    <div id="po-delete-view" style="display: none;">
+        {% include "purchase/pages/po_mgmt/po_delete.html" %}
+    </div>
+</div>
+
+<style>
+    /* ========================================
+       Apple风格订单表格
+       ======================================== */
+    .po-table-container {
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .po-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    /* 表头 */
+    .po-table thead {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .po-table thead th {
+        padding: 16px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.3);
+        white-space: nowrap;
+    }
+
+    .po-table thead th.sortable {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .po-table thead th.sortable:hover {
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* 数据行 */
+    .po-table tbody tr {
+        background: rgba(25, 28, 35, 0.6);
+        transition: all 0.2s ease;
+    }
+
+    .po-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .po-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .po-table tbody td {
+        padding: 14px 12px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* 订单号加粗 */
+    .po-table tbody td.cell-po-num {
+        font-weight: 700;
+        color: #fff;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    /* 已删除订单样式 */
+    .po-table tbody tr.deleted {
+        background: rgba(220, 53, 69, 0.1);
+    }
+
+    .po-table tbody tr.deleted td {
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .po-table tbody tr.deleted td.cell-po-num {
+        text-decoration: none;
+        color: rgba(220, 53, 69, 0.8);
+    }
+
+    /* 版本Badge */
+    .version-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'SF Mono', monospace;
+    }
+
+    .version-badge.strategy {
+        background: rgba(13, 202, 240, 0.15);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.3);
+    }
+
+    .version-badge.detail {
+        background: rgba(25, 135, 84, 0.15);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    /* 日期显示 */
+    .date-display {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .date-display .date {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* 操作按钮组 */
+    .action-btn-group {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .action-btn.view {
+        background: rgba(13, 110, 253, 0.15);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #0d6efd;
+    }
+
+    .action-btn.view:hover {
+        background: rgba(13, 110, 253, 0.3);
+    }
+
+    .action-btn.edit {
+        background: rgba(255, 193, 7, 0.15);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+
+    .action-btn.edit:hover {
+        background: rgba(255, 193, 7, 0.3);
+    }
+
+    .action-btn.history {
+        background: rgba(108, 117, 125, 0.15);
+        border-color: rgba(108, 117, 125, 0.3);
+        color: #6c757d;
+    }
+
+    .action-btn.history:hover {
+        background: rgba(108, 117, 125, 0.3);
+    }
+
+    .action-btn.delete {
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+
+    .action-btn.delete:hover {
+        background: rgba(220, 53, 69, 0.3);
+    }
+
+    .action-btn.restore {
+        background: rgba(25, 135, 84, 0.15);
+        border-color: rgba(25, 135, 84, 0.3);
+        color: #198754;
+    }
+
+    .action-btn.restore:hover {
+        background: rgba(25, 135, 84, 0.3);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* 删除标签 */
+    .deleted-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.4);
+        animation: deletePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes deletePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* 发货状态标签 */
+    .shipping-status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        margin-left: 8px;
+    }
+
+    .shipping-status-tag.fully-shipped {
+        background: rgba(25, 135, 84, 0.2);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.4);
+    }
+
+    .shipping-status-tag.not-shipped {
+        background: rgba(108, 117, 125, 0.2);
+        color: #adb5bd;
+        border: 1px solid rgba(108, 117, 125, 0.4);
+    }
+
+    .shipping-status-tag.partially-shipped {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+    }
+
+    /* 删除行不使用删除线 */
+    .po-table tbody tr.deleted td {
+        text-decoration: none;
+    }
+
+    .po-table tbody tr.deleted td.cell-po-num {
+        color: rgba(220, 53, 69, 0.8);
+    }
+</style>
+
+<script>
+    // ========================================
+    // 全局状态
+    // ========================================
+    let currentPoNum = null;
+    let orderData = [];
+    let currentSortBy = 'order_date';
+    let currentSortOrder = 'desc';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSupplierFilter();
+        loadOrderTable();
+        bindSortableHeaders();
+        initTooltips();
+    });
+
+    function initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    }
+
+    // ========================================
+    // 发货状态标签生成
+    // ========================================
+    function getShippingStatusTag(status) {
+        const statusConfig = {
+            'fully_shipped': { class: 'fully-shipped', text: "{% trans '全部已发货' %}" },
+            'not_shipped': { class: 'not-shipped', text: "{% trans '在产未发货' %}" },
+            'partially_shipped': { class: 'partially-shipped', text: "{% trans '部分已发货' %}" }
+        };
+        
+        const config = statusConfig[status] || statusConfig['not_shipped'];
+        return `<span class="shipping-status-tag ${config.class}">${config.text}</span>`;
+    }
+
+    /**
+     * 检查订单是否可以修改/删除
+     * 规则：已删除、部分发货、全部发货的订单不可修改/删除
+     */
+    function canModifyOrder(item) {
+        if (item.is_deleted) return false;
+        if (item.shipping_status === 'partially_shipped') return false;
+        if (item.shipping_status === 'fully_shipped') return false;
+        return true;
+    }
+
+    /**
+     * 获取编辑按钮的tooltip文本
+     */
+    function getEditButtonTooltip(item) {
+        if (item.is_deleted) return "{% trans '订单已删除，无法修改' %}";
+        if (item.shipping_status === 'fully_shipped') return "{% trans '订单已全部发货，无法修改' %}";
+        if (item.shipping_status === 'partially_shipped') return "{% trans '订单已部分发货，无法修改' %}";
+        return "{% trans '修改订单' %}";
+    }
+
+    /**
+     * 获取删除按钮的tooltip文本
+     */
+    function getDeleteButtonTooltip(item) {
+        if (item.shipping_status === 'fully_shipped') return "{% trans '订单已全部发货，无法删除' %}";
+        if (item.shipping_status === 'partially_shipped') return "{% trans '订单已部分发货，无法删除' %}";
+        return "{% trans '删除订单' %}";
+    }
+
+    // ========================================
+    // 加载供应商筛选选项
+    // ========================================
+    function loadSupplierFilter() {
+        fetch("{% url 'web_ui:purchase:po_mgmt_suppliers' %}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const select = document.getElementById('filter-supplier');
+                    data.data.forEach(code => {
+                        const opt = document.createElement('option');
+                        opt.value = code;
+                        opt.textContent = code;
+                        select.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.error('加载供应商筛选失败:', err));
+    }
+
+    // ========================================
+    // 加载订单列表
+    // ========================================
+    function loadOrderTable() {
+        const tbody = document.getElementById('po-table-body');
+        const loading = document.getElementById('po-loading');
+        const empty = document.getElementById('po-empty');
+        const table = document.getElementById('po-table');
+        const countEl = document.getElementById('po-count');
+
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        table.style.display = 'none';
+
+        const supplierFilter = document.getElementById('filter-supplier').value;
+        
+        let url = `{% url 'web_ui:purchase:po_mgmt_list' %}?sort_by=${currentSortBy}&sort_order=${currentSortOrder}`;
+        if (supplierFilter) {
+            url += `&supplier_code=${encodeURIComponent(supplierFilter)}`;
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">${data.message}</p>`;
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                orderData = data.data || [];
+                countEl.textContent = `{% trans '共' %} ${data.count || 0} {% trans '条订单' %}`;
+
+                if (orderData.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                table.style.display = 'table';
+                orderData.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.dataset.poNum = item.po_num;
+                    
+                    if (item.is_deleted) {
+                        tr.classList.add('deleted');
+                    }
+
+                    tr.innerHTML = `
+                        <td class="cell-po-num">
+                            ${item.po_num}
+                            ${item.is_deleted ? '<span class="deleted-tag ms-2"><i class="fas fa-ban me-1"></i>{% trans "已删除" %}</span>' : getShippingStatusTag(item.shipping_status)}
+                        </td>
+                        <td>${item.supplier_code}</td>
+                        <td>
+                            <div class="date-display">
+                                <span class="date">${item.order_date}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-display small text-white-50">${item.latest_strategy_date}</div>
+                            <span class="version-badge strategy">${item.latest_strategy_seq}</span>
+                        </td>
+                        <td>
+                            <div class="date-display small text-white-50">${item.latest_detail_date}</div>
+                            <span class="version-badge detail">${item.latest_detail_seq}</span>
+                        </td>
+                        <td class="text-end">
+                            ${item.is_deleted ? '<span class="text-white-50">-</span>' : `
+                            <div class="d-flex flex-column align-items-end">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-danger bg-opacity-25 text-danger me-1" style="font-size: 0.65rem;">RMB</span>
+                                    <span class="text-success fw-bold">¥${item.total_rmb.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div class="d-flex align-items-center mt-1">
+                                    <span class="badge bg-primary bg-opacity-25 text-primary me-1" style="font-size: 0.65rem;">USD</span>
+                                    <span class="text-info small">$${item.total_usd.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                </div>
+                            </div>
+                            `}
+                        </td>
+                        <td>
+                            <div class="action-btn-group">
+                                <button class="action-btn ${item.has_invoice ? 'view' : ''}" 
+                                        onclick="viewInvoice('${item.po_num}')"
+                                        data-bs-toggle="tooltip" 
+                                        title="${item.has_invoice ? "{% trans '查看账单' %}" : "{% trans '未上传账单' %}"}"
+                                        ${!item.has_invoice ? 'disabled' : ''}>
+                                    <i class="fas fa-file-invoice"></i>
+                                </button>
+                                <button class="action-btn edit" onclick="uploadInvoice('${item.po_num}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t1856" title="{% trans '更换文件' %}">
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-btn-group">
+                                <button class="action-btn view" onclick="viewOrder('${item.po_num}')" 
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t1183" title="{% trans '查看订单' %}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn edit" onclick="${canModifyOrder(item) ? `editOrder('${item.po_num}')` : 'void(0)'}" 
+                                        data-bs-toggle="tooltip" title="${getEditButtonTooltip(item)}" ${canModifyOrder(item) ? '' : 'disabled'}>
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="action-btn history" onclick="viewHistory('${item.po_num}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t6992" title="{% trans "历史记录" %}">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                ${item.is_deleted ? `
+                                <button class="action-btn restore" onclick="undeleteOrder('${item.po_num}')"
+                                        data-bs-toggle="tooltip" data-i18n-title="tooltip.t5882" title="{% trans '撤销删除' %}">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                ` : `
+                                <button class="action-btn delete" onclick="${canModifyOrder(item) ? `deleteOrder('${item.po_num}')` : 'void(0)'}"
+                                        data-bs-toggle="tooltip" title="${getDeleteButtonTooltip(item)}" ${canModifyOrder(item) ? '' : 'disabled'}>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                `}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 重新初始化tooltips
+                initTooltips();
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                empty.innerHTML = `<i class="fas fa-exclamation-circle fa-3x text-danger opacity-50 mb-3"></i><p class="text-danger mb-0">{% trans "加载失败" %}: ${err}</p>`;
+                empty.style.display = 'block';
+            });
+    }
+
+    // ========================================
+    // 筛选和排序
+    // ========================================
+    function applyFilters() {
+        const sortValue = document.getElementById('filter-sort').value;
+        const [sortBy, sortOrder] = sortValue.split(':');
+        currentSortBy = sortBy;
+        currentSortOrder = sortOrder;
+        loadOrderTable();
+    }
+
+    function bindSortableHeaders() {
+        document.querySelectorAll('.po-table th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortField = th.dataset.sort;
+                if (currentSortBy === sortField) {
+                    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortBy = sortField;
+                    currentSortOrder = 'asc';
+                }
+                loadOrderTable();
+            });
+        });
+    }
+
+    // ========================================
+    // 页面切换
+    // ========================================
+    function showListView() {
+        document.getElementById('po-list-view').style.display = 'block';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'none';
+        
+        // 隐藏动态创建的视图
+        const invoiceView = document.getElementById('po-invoice-view');
+        if (invoiceView) invoiceView.style.display = 'none';
+        const uploadView = document.getElementById('po-upload-view');
+        if (uploadView) uploadView.style.display = 'none';
+        
+        currentPoNum = null;
+        
+        // 刷新订单列表以反映最新状态
+        loadOrderTable();
+    }
+
+    function viewOrder(poNum) {
+        currentPoNum = poNum;
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'block';
+        if (typeof loadOrderDetail === 'function') {
+            loadOrderDetail(poNum);
+        }
+    }
+
+
+    function editOrder(poNum) {
+        currentPoNum = poNum;
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'block';
+        if (typeof loadOrderForEdit === 'function') {
+            loadOrderForEdit(poNum);
+        }
+    }
+
+    function viewHistory(poNum) {
+        currentPoNum = poNum;
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'block';
+        if (typeof loadOrderHistory === 'function') {
+            loadOrderHistory(poNum);
+        }
+    }
+
+    function deleteOrder(poNum) {
+        currentPoNum = poNum;
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'block';
+        if (typeof loadOrderForDelete === 'function') {
+            loadOrderForDelete(poNum);
+        }
+    }
+
+    // 撤销删除订单
+    function undeleteOrder(poNum) {
+        // 使用密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_po_undelete',       // actionKey
+                (passwords) => submitUndelete(poNum, passwords),  // onSuccess
+                null,                    // contextEl
+                "{% trans '撤销删除订单' %}",          // actionDisplayName
+                () => {}                 // onCancel
+            );
+        } else {
+            // 无密码验证，直接确认
+            if (confirm("{% trans '确定要撤销删除此订单吗？' %}")) {
+                submitUndelete(poNum, {});
+            }
+        }
+    }
+
+    // 提交撤销删除
+    function submitUndelete(poNum, passwords) {
+        // 构建请求体
+        const requestBody = { po_num: poNum };
+        
+        // 添加密码到请求
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                requestBody[`sec_code_${slot}`] = code;
+            }
+        }
+        
+        fetch(`{% url 'web_ui:purchase:po_mgmt_submit_undelete' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // 成功提示
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast(data.message || (window.i18n?.t('js.order_restored') || 'Order Restored'), 'success');
+                } else {
+                    alert(data.message || (window.i18n?.t('js.order_restored') || 'Order Restored'));
+                }
+                // 刷新列表
+                loadOrderTable();
+            } else {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast(data.message || (window.i18n?.t('js.restore_failed') || 'Restore Failed'), 'danger');
+                } else {
+                    alert(data.message || (window.i18n?.t('js.restore_failed') || 'Restore Failed'));
+                }
+            }
+        })
+        .catch(err => {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "网络错误: " %}' + err, 'danger');
+            } else {
+                alert('{% trans "网络错误: " %}' + err);
+            }
+        });
+    }
+    // ========================================
+    // 账单文件查看功能 (使用公共组件)
+    // ========================================
+    let currentInvoicePoNum = null;
+    let poFileViewer = null;
+    
+    function viewInvoice(poNum) {
+        currentInvoicePoNum = poNum;
+        
+        // 获取文件信息
+        fetch(`{% url 'web_ui:purchase:po_mgmt_invoice_info' %}?po_num=${encodeURIComponent(poNum)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.data.has_file) {
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast((window.i18n?.t('js.no_order_bill') || 'No order bill file'), 'warning');
+                    }
+                    return;
+                }
+                
+                // 显示文件查看页面
+                showInvoiceViewer(poNum, data.data.latest_file, data.data.files);
+            })
+            .catch(err => {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast((window.i18n?.t('js.get_file_info_failed_colon') || 'Get file info failed: ') + err, 'danger');
+                }
+            });
+    }
+    
+    function showInvoiceViewer(poNum, filename, allFiles) {
+        // 隐藏其他视图
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'none';
+        
+        // 显示/创建文件查看视图
+        let viewer = document.getElementById('po-invoice-view');
+        if (!viewer) {
+            viewer = document.createElement('div');
+            viewer.id = 'po-invoice-view';
+            document.querySelector('#po-mgmt-main-container').appendChild(viewer);
+        }
+        viewer.style.display = 'block';
+        
+        // 使用公共组件
+        if (typeof GlobalFileViewer !== 'undefined') {
+            poFileViewer = new GlobalFileViewer({
+                containerId: 'po-invoice-view',
+                title: (window.i18n?.t('js.view_bill_file') || 'View Bill File'),
+                identifierLabel: (window.i18n?.t('purchase.order_num') || 'Order No'),
+                identifierValue: poNum,
+                files: allFiles,
+                currentFile: filename,
+                getFileUrl: (fname, year) => `{% url 'web_ui:purchase:po_mgmt_serve_invoice' %}?po_num=${encodeURIComponent(poNum)}&filename=${encodeURIComponent(fname)}`,
+                onUpload: () => uploadInvoice(poNum),
+                onBack: () => showListView(),
+                // 删除功能配置
+                deleteUrl: '{% url "web_ui:purchase:po_mgmt_delete_invoice" %}',
+                deletePayload: { po_num: poNum },
+                onDeleteSuccess: () => showListView(),
+                // [Fix 2026-01-03] 启用密码验证
+                requireDeletePassword: true,
+                deletePasswordActionKey: 'btn_po_delete_invoice'
+            });
+        }
+    }
+    
+    // ========================================
+    // 账单文件上传向导
+    // ========================================
+    let invoiceUploadWizard = null;
+    let invoiceUploadPoNum = null;
+    let invoiceUploadFile = null;
+    
+    function uploadInvoice(poNum) {
+        invoiceUploadPoNum = poNum;
+        invoiceUploadFile = null;
+        
+        // 隐藏其他视图
+        document.getElementById('po-list-view').style.display = 'none';
+        document.getElementById('po-detail-view').style.display = 'none';
+        document.getElementById('po-edit-view').style.display = 'none';
+        document.getElementById('po-history-view').style.display = 'none';
+        document.getElementById('po-delete-view').style.display = 'none';
+        const invoiceView = document.getElementById('po-invoice-view');
+        if (invoiceView) invoiceView.style.display = 'none';
+        
+        // 显示/创建上传向导视图
+        let uploadView = document.getElementById('po-upload-view');
+        if (!uploadView) {
+            uploadView = document.createElement('div');
+            uploadView.id = 'po-upload-view';
+            document.querySelector('#po-mgmt-main-container').appendChild(uploadView);
+        }
+        
+        uploadView.innerHTML = `
+            <div class="glass-card p-4 shadow-lg" id="invoice-upload-wizard-container">
+                <div class="wizard-header d-flex flex-column mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="fas fa-file-upload fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-1" data-i18n="ui.text_531">上传/替换账单文件</h5>
+                            <p class="text-white-50 small mb-0" data-i18n="ui.text_569">订单号: ${poNum}</p>
+                        </div>
+                    </div>
+                    <hr class="border-secondary border-opacity-25 my-4 w-100">
+                </div>
+                <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+                
+                <!-- Step 1: 选择文件 -->
+                <div id="invoice-step-1" class="wizard-step-content">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle me-3 mt-1 text-info"></i>
+                            <div>
+                                <strong class="text-info" data-i18n="common.operation_notes">操作须知</strong>
+                                <ul class="mb-0 mt-2 ps-3">
+                                    <li data-i18n="ui.text_534">支持上传 PDF、图片（JPG/PNG）、Excel、Word 等格式</li>
+                                    <li data-i18n="ui.text_535">文件大小限制为 20MB</li>
+                                    <li data-i18n="ui.text_477">上传后将自动生成新版本号（Ver01, Ver02...）</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="invoice-upload-dropzone"></div>
+                </div>
+                
+                <!-- Step 2: 确认上传 -->
+                <div id="invoice-step-2" class="wizard-step-content" style="display: none;">
+                    <div class="alert alert-warning mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle me-3 mt-1 text-warning"></i>
+                            <div>
+                                <strong class="text-warning" data-i18n="common.operation_notes">操作须知</strong>
+                                <ul class="mb-0 mt-2 ps-3">
+                                    <li data-i18n="ui.text_479">请确认文件信息无误后点击「确认上传」</li>
+                                    <li id="invoice-existing-warning" style="display: none;" data-i18n="ui.text_576">该订单已存在账单文件，上传后将生成新版本</li>
+                                    <li data-i18n="ui.text_540">上传需要密码验证</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-header bg-warning bg-opacity-10 border-secondary">
+                            <i class="fas fa-file me-2 text-warning"></i>
+                            <span class="text-white" data-i18n="ui.text_481">待上传文件</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_482">文件名:</span></div>
+                                <div class="col-6"><span class="text-white" id="invoice-confirm-filename">-</span></div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_483">文件大小:</span></div>
+                                <div class="col-6"><span class="text-white" id="invoice-confirm-size">-</span></div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><span class="text-white-50" data-i18n="ui.text_484">目标版本:</span></div>
+                                <div class="col-6"><span class="text-success fw-bold" id="invoice-confirm-version">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: 完成 -->
+                <div id="invoice-step-3" class="wizard-step-content" style="display: none;">
+                    <div class="text-center py-5" id="invoice-result-container">
+                        <!-- JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        uploadView.style.display = 'block';
+        
+        // 初始化向导
+        if (typeof GlobalWizard !== 'undefined') {
+            invoiceUploadWizard = new GlobalWizard({
+                containerId: 'invoice-upload-wizard-container',
+                steps: [
+                    { id: 'select', label: (window.i18n?.t('js.select_file') || 'Select File'), contentSelector: '#invoice-step-1' },
+                    { id: 'confirm', label: (window.i18n?.t('js.confirm_file') || 'Confirm File'), contentSelector: '#invoice-step-2' },
+                    { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#invoice-step-3' }
+                ],
+                onStepChange: (from, to) => {
+                    for (let i = 1; i <= 3; i++) {
+                        document.getElementById(`invoice-step-${i}`).style.display = i === to + 1 ? 'block' : 'none';
+                    }
+                }
+            });
+        }
+        
+        // 初始化文件上传组件（延迟执行确保DOM已更新）
+        setTimeout(() => {
+            initInvoiceUploadDropzone();
+        }, 100);
+    }
+    
+    function initInvoiceUploadDropzone() {
+        const container = document.getElementById('invoice-upload-dropzone');
+        if (!container) {
+            console.error('[Invoice Upload] Container not found: invoice-upload-dropzone');
+            return;
+        }
+        
+        if (typeof GlobalFileUpload !== 'undefined') {
+            window.invoiceUploader = new GlobalFileUpload({
+                containerId: 'invoice-upload-dropzone',
+                inputName: 'invoice_file',
+                title: (window.i18n?.t('js.upload_bill_file') || 'Upload Bill File'),
+                hint: (window.i18n?.t('js.supported_formats') || 'Supports PDF, images, Excel, Word, max 20MB'),
+                accept: '.pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.xls,.xlsx,.doc,.docx,.csv',
+                maxSizeMB: 20,
+                required: true,
+                onFileSelect: (file) => {
+                    invoiceUploadFile = file;
+                }
+            });
+        } else {
+            console.error('[Invoice Upload] GlobalFileUpload not available');
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>文件上传组件未加载
+                </div>
+            `;
+        }
+        
+        // 添加下一步按钮
+        container.insertAdjacentHTML('afterend', `
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                    <i class="fas fa-times me-2"></i>取消
+                </button>
+                <button class="btn btn-warning btn-lg px-4 rounded-pill" onclick="invoiceUploadStep1Next()">
+                    <i class="fas fa-arrow-right me-2"></i>下一步
+                </button>
+            </div>
+        `);
+    }
+    
+    function invoiceUploadStep1Next() {
+        if (!invoiceUploadFile) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast((window.i18n?.t('js.select_file_first') || 'Select file first'), 'warning');
+            }
+            return;
+        }
+        
+        // 显示步骤2
+        document.getElementById('invoice-step-1').style.display = 'none';
+        document.getElementById('invoice-step-2').style.display = 'block';
+        if (invoiceUploadWizard) invoiceUploadWizard.goToStep('confirm');
+        
+        // 填充确认信息
+        document.getElementById('invoice-confirm-filename').textContent = invoiceUploadFile.name;
+        document.getElementById('invoice-confirm-size').textContent = (invoiceUploadFile.size / 1024 / 1024).toFixed(2) + ' MB';
+        
+        // 检查是否已存在文件
+        fetch(`{% url 'web_ui:purchase:po_mgmt_invoice_info' %}?po_num=${encodeURIComponent(invoiceUploadPoNum)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data.has_file) {
+                    document.getElementById('invoice-existing-warning').style.display = 'list-item';
+                    // 计算新版本号
+                    const files = data.data.files;
+                    let maxVer = 0;
+                    files.forEach(f => {
+                        const match = f.filename.match(/_Ver(\d+)/);
+                        if (match) maxVer = Math.max(maxVer, parseInt(match[1]));
+                    });
+                    document.getElementById('invoice-confirm-version').textContent = `Ver${String(maxVer + 1).padStart(2, '0')}`;
+                } else {
+                    document.getElementById('invoice-confirm-version').textContent = 'Ver01';
+                }
+            });
+        
+        // 添加确认按钮
+        const step2 = document.getElementById('invoice-step-2');
+        if (!step2.querySelector('.wizard-actions')) {
+            step2.insertAdjacentHTML('beforeend', `
+                <div class="wizard-actions d-flex justify-content-end gap-3 mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="invoiceUploadStep2Back()">
+                        <i class="fas fa-arrow-left me-2"></i>上一步
+                    </button>
+                    <button class="btn btn-success btn-lg px-4 rounded-pill" onclick="invoiceUploadConfirm()">
+                        <i class="fas fa-upload me-2"></i>确认上传
+                    </button>
+                </div>
+            `);
+        }
+    }
+    
+    function invoiceUploadStep2Back() {
+        document.getElementById('invoice-step-1').style.display = 'block';
+        document.getElementById('invoice-step-2').style.display = 'none';
+        if (invoiceUploadWizard) invoiceUploadWizard.goToStep('select');
+    }
+    
+    function invoiceUploadConfirm() {
+        // 触发密码验证
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'btn_po_upload_invoice',
+                (passwords) => executeInvoiceUpload(passwords),
+                null,
+                (window.i18n?.t('js.upload_bill_file') || 'Upload Bill File'),
+                () => {}
+            );
+        } else {
+            executeInvoiceUpload({});
+        }
+    }
+    
+    function executeInvoiceUpload(passwords) {
+        if (!invoiceUploadFile || !invoiceUploadPoNum) return;
+        
+        const formData = new FormData();
+        formData.append('po_num', invoiceUploadPoNum);
+        formData.append('supplier_code', invoiceUploadPoNum.substring(0, 2));
+        formData.append('invoice_file', invoiceUploadFile);
+        
+        // 添加密码到请求
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                formData.append(`sec_code_${slot}`, code);
+            }
+        }
+        
+        fetch('{% url "web_ui:purchase:po_mgmt_upload_invoice" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            // 显示步骤3
+            document.getElementById('invoice-step-2').style.display = 'none';
+            document.getElementById('invoice-step-3').style.display = 'block';
+            if (invoiceUploadWizard) invoiceUploadWizard.goToStep('done');
+            
+            const resultContainer = document.getElementById('invoice-result-container');
+            if (data.success) {
+                resultContainer.innerHTML = `
+                    <div class="bg-success bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                        <i class="fas fa-check-circle fa-4x text-success"></i>
+                    </div>
+                    <h4 class="text-white mb-2" data-i18n="toast.upload_success">上传成功</h4>
+                    <p class="text-white-50 mb-4" data-i18n="ui.text_486">文件已保存为 ${data.filename}</p>
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </button>
+                `;
+            } else {
+                resultContainer.innerHTML = `
+                    <div class="bg-danger bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                        <i class="fas fa-times-circle fa-4x text-danger"></i>
+                    </div>
+                    <h4 class="text-white mb-2" data-i18n="toast.upload_failed">上传失败</h4>
+                    <p class="text-danger mb-4" data-i18n="ui.text_548">${data.message || (window.i18n?.t('js.unknown_error') || 'Unknown Error')}</p>
+                    <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </button>
+                `;
+            }
+        })
+        .catch(err => {
+            document.getElementById('invoice-step-2').style.display = 'none';
+            document.getElementById('invoice-step-3').style.display = 'block';
+            document.getElementById('invoice-result-container').innerHTML = `
+                <div class="bg-danger bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+                    <i class="fas fa-times-circle fa-4x text-danger"></i>
+                </div>
+                <h4 class="text-white mb-2" data-i18n="toast.upload_failed">上传失败</h4>
+                <p class="text-danger mb-4" data-i18n="ui.text_490">网络错误: ${err}</p>
+                <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showListView()">
+                    <i class="fas fa-arrow-left me-2"></i>返回列表
+                </button>
+            `;
+        });
+    }
+</script>
+{% endblock %}

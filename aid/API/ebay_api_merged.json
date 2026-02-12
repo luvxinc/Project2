@@ -1,0 +1,771 @@
+{
+  "title": "eBay API Reference (Merged)",
+  "version": "1.0",
+  "generatedAt": "2026-01-16",
+  "apis": {
+    "account_v1": {
+      "apiName": "Account API v1",
+      "baseUrl": "https://api.ebay.com/sell/account/v1",
+      "description": "The <b>Account API</b> gives sellers the ability to configure their eBay seller accounts, including the seller's policies (eBay business policies and seller-defined custom policies), opt in and out of eBay seller programs, configure sales tax tables, and get account information.  <br><br>For details on the availability of the methods in this API, see <a href=\"/api-docs/sell/account/overview.html#requirements\">Account API requirements and restrictions</a>.",
+      "methodCount": 37,
+      "methods": [
+        {
+          "name": "getCustomPolicies",
+          "httpMethod": "GET",
+          "path": "/custom_policy/",
+          "summary": "This method retrieves the list of custom policies defined for a seller's account. To limit the returned custom policies, specify the <b>policy_types</b> query parameter.",
+          "tags": [
+            "custom_policy"
+          ]
+        },
+        {
+          "name": "createCustomPolicy",
+          "httpMethod": "POST",
+          "path": "/custom_policy/",
+          "summary": "This method creates a new custom policy that specifies the seller's terms for complying with local governmental regulations. Each Custom Policy targets a <b>policyType</b>. Multiple policies may be cr",
+          "tags": [
+            "custom_policy"
+          ]
+        },
+        {
+          "name": "getCustomPolicy",
+          "httpMethod": "GET",
+          "path": "/custom_policy/{custom_policy_id}",
+          "summary": "This method retrieves the custom policy specified by the <b>custom_policy_id</b> path parameter.",
+          "tags": [
+            "custom_policy"
+          ]
+        },
+        {
+          "name": "updateCustomPolicy",
+          "httpMethod": "PUT",
+          "path": "/custom_policy/{custom_policy_id}",
+          "summary": "This method updates an existing custom policy specified by the <b>custom_policy_id</b> path parameter. Since this method overwrites the policy's <b>name</b>, <b>label</b>, and <b>description</b> field",
+          "tags": [
+            "custom_policy"
+          ]
+        },
+        {
+          "name": "createFulfillmentPolicy",
+          "httpMethod": "POST",
+          "path": "/fulfillment_policy/",
+          "summary": "This method creates a new fulfillment policy for an eBay marketplace where the policy encapsulates seller's terms for fulfilling item purchases. Fulfillment policies include the shipment options that ",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "getFulfillmentPolicy",
+          "httpMethod": "GET",
+          "path": "/fulfillment_policy/{fulfillmentPolicyId}",
+          "summary": "This method retrieves the complete details of a fulfillment policy. Supply the ID of the policy you want to retrieve using the <b>fulfillmentPolicyId</b> path parameter.",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "updateFulfillmentPolicy",
+          "httpMethod": "PUT",
+          "path": "/fulfillment_policy/{fulfillmentPolicyId}",
+          "summary": "This method updates an existing fulfillment policy. Specify the policy you want to update using the <b>fulfillment_policy_id</b> path parameter. Supply a complete policy payload with the updates you w",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "deleteFulfillmentPolicy",
+          "httpMethod": "DELETE",
+          "path": "/fulfillment_policy/{fulfillmentPolicyId}",
+          "summary": "This method deletes a fulfillment policy. Supply the ID of the policy you want to delete in the <b>fulfillmentPolicyId</b> path parameter.",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "getFulfillmentPolicies",
+          "httpMethod": "GET",
+          "path": "/fulfillment_policy",
+          "summary": "This method retrieves all the fulfillment policies configured for the marketplace you specify using the <code>marketplace_id</code> query parameter.",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "getFulfillmentPolicyByName",
+          "httpMethod": "GET",
+          "path": "/fulfillment_policy/get_by_policy_name",
+          "summary": "This method retrieves the details for a specific fulfillment policy. In the request, supply both the policy <code>name</code> and its associated <code>marketplace_id</code> as query parameters.",
+          "tags": [
+            "fulfillment_policy"
+          ]
+        },
+        {
+          "name": "getPaymentPolicies",
+          "httpMethod": "GET",
+          "path": "/payment_policy",
+          "summary": "This method retrieves all the payment business policies configured for the marketplace you specify using the <code>marketplace_id</code> query parameter.",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "createPaymentPolicy",
+          "httpMethod": "POST",
+          "path": "/payment_policy",
+          "summary": "This method creates a new payment policy where the policy encapsulates seller's terms for order payments. <br><br>A successful request returns the <b>getPaymentPolicy</b> URI to the new policy in the ",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "getPaymentPolicy",
+          "httpMethod": "GET",
+          "path": "/payment_policy/{payment_policy_id}",
+          "summary": "This method retrieves the complete details of a payment policy. Supply the ID of the policy you want to retrieve using the <b>paymentPolicyId</b> path parameter.",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "updatePaymentPolicy",
+          "httpMethod": "PUT",
+          "path": "/payment_policy/{payment_policy_id}",
+          "summary": "This method updates an existing payment policy. Specify the policy you want to update using the <b>payment_policy_id</b> path parameter. Supply a complete policy payload with the updates you want to m",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "deletePaymentPolicy",
+          "httpMethod": "DELETE",
+          "path": "/payment_policy/{payment_policy_id}",
+          "summary": "This method deletes a payment policy. Supply the ID of the policy you want to delete in the <b>paymentPolicyId</b> path parameter. ",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "getPaymentPolicyByName",
+          "httpMethod": "GET",
+          "path": "/payment_policy/get_by_policy_name",
+          "summary": "This method retrieves the details of a specific payment policy. Supply both the policy <code>name</code> and its associated <code>marketplace_id</code> in the request query parameters.",
+          "tags": [
+            "payment_policy"
+          ]
+        },
+        {
+          "name": "getPaymentsProgram",
+          "httpMethod": "GET",
+          "path": "/payments_program/{marketplace_id}/{payments_program_type}",
+          "summary": "<span class=\"tablenote\"><b>Note:</b> This method is no longer applicable, as all seller accounts globally have been enabled for the new eBay payment and checkout flow.</span><br>This method returns wh",
+          "tags": [
+            "payments_program"
+          ]
+        },
+        {
+          "name": "getPaymentsProgramOnboarding",
+          "httpMethod": "GET",
+          "path": "/payments_program/{marketplace_id}/{payments_program_type}/onboarding",
+          "summary": "<span class=\"tablenote\"><b>Note:</b> This method is no longer applicable, as all seller accounts globally have been enabled for the new eBay payment and checkout flow.</span><br>This method retrieves ",
+          "tags": [
+            "onboarding"
+          ]
+        },
+        {
+          "name": "getPrivileges",
+          "httpMethod": "GET",
+          "path": "/privilege",
+          "summary": "This method retrieves the seller's current set of privileges, including whether or not the seller's eBay registration has been completed, as well as the details of their site-wide <b>sellingLimit</b> ",
+          "tags": [
+            "privilege"
+          ]
+        },
+        {
+          "name": "getOptedInPrograms",
+          "httpMethod": "GET",
+          "path": "/program/get_opted_in_programs",
+          "summary": "This method gets a list of the seller programs that the seller has opted-in to.",
+          "tags": [
+            "program"
+          ]
+        },
+        {
+          "name": "optInToProgram",
+          "httpMethod": "POST",
+          "path": "/program/opt_in",
+          "summary": "This method opts the seller in to an eBay seller program. Refer to the <a href=\"/api-docs/sell/account/overview.html#opt-in\" target=\"_blank\">Account API overview</a> for information about available eB",
+          "tags": [
+            "program"
+          ]
+        },
+        {
+          "name": "optOutOfProgram",
+          "httpMethod": "POST",
+          "path": "/program/opt_out",
+          "summary": "This method opts the seller out of a seller program in which they are currently opted in to. A seller can retrieve a list of the seller programs they are opted-in to using the <b>getOptedInPrograms</b",
+          "tags": [
+            "program"
+          ]
+        },
+        {
+          "name": "getRateTables",
+          "httpMethod": "GET",
+          "path": "/rate_table",
+          "summary": "This method retrieves a seller's <i>shipping rate tables</i> for the country specified in the <b>country_code</b> query parameter. If you call this method without specifying a country code, the call r",
+          "tags": [
+            "rate_table"
+          ]
+        },
+        {
+          "name": "getReturnPolicies",
+          "httpMethod": "GET",
+          "path": "/return_policy",
+          "summary": "This method retrieves all the return policies configured for the marketplace you specify using the <code>marketplace_id</code> query parameter.",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "createReturnPolicy",
+          "httpMethod": "POST",
+          "path": "/return_policy",
+          "summary": "This method creates a new return policy where the policy encapsulates seller's terms for returning items.  <br><br>Each policy targets a specific marketplace, and you can create multiple policies for ",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "getReturnPolicy",
+          "httpMethod": "GET",
+          "path": "/return_policy/{return_policy_id}",
+          "summary": "This method retrieves the complete details of the return policy specified by the <b>returnPolicyId</b> path parameter.",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "updateReturnPolicy",
+          "httpMethod": "PUT",
+          "path": "/return_policy/{return_policy_id}",
+          "summary": "This method updates an existing return policy. Specify the policy you want to update using the <b>return_policy_id</b> path parameter. Supply a complete policy payload with the updates you want to mak",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "deleteReturnPolicy",
+          "httpMethod": "DELETE",
+          "path": "/return_policy/{return_policy_id}",
+          "summary": "This method deletes a return policy. Supply the ID of the policy you want to delete in the <b>returnPolicyId</b> path parameter.",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "getReturnPolicyByName",
+          "httpMethod": "GET",
+          "path": "/return_policy/get_by_policy_name",
+          "summary": "This method retrieves the details of a specific return policy. Supply both the policy <code>name</code> and its associated <code>marketplace_id</code> in the request query parameters.",
+          "tags": [
+            "return_policy"
+          ]
+        },
+        {
+          "name": "bulkCreateOrReplaceSalesTax",
+          "httpMethod": "POST",
+          "path": "/bulk_create_or_replace_sales_tax",
+          "summary": "This method creates or updates multiple sales-tax table entries.<br><br><i>Sales-tax tables</i> can be set up for countries that support different <i>tax jurisdictions</i>.<br><br><span class=\"tableno",
+          "tags": [
+            "sales_tax"
+          ]
+        },
+        {
+          "name": "getSalesTax",
+          "httpMethod": "GET",
+          "path": "/sales_tax/{countryCode}/{jurisdictionId}",
+          "summary": "This call retrieves the current sales-tax table entry for a specific tax jurisdiction. Specify the jurisdiction to retrieve using the <b>countryCode</b> and <b>jurisdictionId</b> path parameters. All ",
+          "tags": [
+            "sales_tax"
+          ]
+        },
+        {
+          "name": "createOrReplaceSalesTax",
+          "httpMethod": "PUT",
+          "path": "/sales_tax/{countryCode}/{jurisdictionId}",
+          "summary": "This method creates or updates a sales-tax table entry for a jurisdiction. Specify the tax table entry you want to configure using the two path parameters: <b>countryCode</b> and <b>jurisdictionId</b>",
+          "tags": [
+            "sales_tax"
+          ]
+        },
+        {
+          "name": "deleteSalesTax",
+          "httpMethod": "DELETE",
+          "path": "/sales_tax/{countryCode}/{jurisdictionId}",
+          "summary": "This call deletes a sales-tax table entry for a jurisdiction. Specify the jurisdiction to delete using the <b>countryCode</b> and <b>jurisdictionId</b> path parameters.<br><br><span class=\"tablenote\">",
+          "tags": [
+            "sales_tax"
+          ]
+        },
+        {
+          "name": "getSalesTaxes",
+          "httpMethod": "GET",
+          "path": "/sales_tax",
+          "summary": "Use this call to retrieve all sales tax table entries that the seller has defined for a specific country. All four response fields will be returned for each tax jurisdiction that matches the search cr",
+          "tags": [
+            "sales_tax"
+          ]
+        },
+        {
+          "name": "getSubscription",
+          "httpMethod": "GET",
+          "path": "/subscription",
+          "summary": "This method retrieves a list of subscriptions associated with the seller account.",
+          "tags": [
+            "subscription"
+          ]
+        },
+        {
+          "name": "getKYC",
+          "httpMethod": "GET",
+          "path": "/kyc",
+          "summary": "<span class=\"tablenote\"><b>Note:</b> This method was originally created to see which onboarding requirements were still pending for sellers being onboarded for eBay managed payments, but now that all ",
+          "tags": [
+            "kyc"
+          ]
+        },
+        {
+          "name": "getAdvertisingEligibility",
+          "httpMethod": "GET",
+          "path": "/advertising_eligibility",
+          "summary": "This method allows developers to check the seller eligibility status for eBay advertising programs.",
+          "tags": [
+            "advertising_eligibility"
+          ]
+        }
+      ]
+    },
+    "post_order_v2": {
+      "apiName": "Post-Order API v2",
+      "baseUrl": "https://api.ebay.com/post-order/v2",
+      "description": "处理订单取消、退货、争议和查询。此 API 用于解决买卖双方的售后问题。",
+      "resources": {
+        "cancellation": {
+          "description": "取消订单管理",
+          "methods": [
+            {
+              "name": "approveCancellation",
+              "httpMethod": "POST",
+              "path": "/cancellation/{cancelId}/approve",
+              "summary": "批准取消请求",
+              "deprecated": false
+            },
+            {
+              "name": "checkCancellationEligibility",
+              "httpMethod": "POST",
+              "path": "/cancellation/check_eligibility",
+              "summary": "检查是否可以取消",
+              "deprecated": false
+            },
+            {
+              "name": "confirmCancellationRefund",
+              "httpMethod": "POST",
+              "path": "/cancellation/{cancelId}/confirm",
+              "summary": "买家确认收到退款",
+              "deprecated": true,
+              "deprecationDate": "2026-03-02"
+            },
+            {
+              "name": "createCancellationRequest",
+              "httpMethod": "POST",
+              "path": "/cancellation",
+              "summary": "创建取消请求",
+              "deprecated": false
+            },
+            {
+              "name": "getCancellation",
+              "httpMethod": "GET",
+              "path": "/cancellation/{cancelId}",
+              "summary": "获取取消详情",
+              "deprecated": false
+            },
+            {
+              "name": "rejectCancellation",
+              "httpMethod": "POST",
+              "path": "/cancellation/{cancelId}/reject",
+              "summary": "拒绝取消请求",
+              "deprecated": false
+            },
+            {
+              "name": "searchCancellations",
+              "httpMethod": "GET",
+              "path": "/cancellation/search",
+              "summary": "搜索取消记录",
+              "deprecated": false
+            }
+          ]
+        },
+        "caseManagement": {
+          "description": "案例管理",
+          "methods": [
+            {
+              "name": "appealCaseDecision",
+              "httpMethod": "POST",
+              "path": "/casemanagement/{caseId}/appeal",
+              "summary": "对案例裁决提出申诉",
+              "deprecated": false
+            },
+            {
+              "name": "closeCase",
+              "httpMethod": "POST",
+              "path": "/casemanagement/{caseId}/close",
+              "summary": "买家关闭案例",
+              "deprecated": true,
+              "deprecationDate": "2026-03-02"
+            },
+            {
+              "name": "getCase",
+              "httpMethod": "GET",
+              "path": "/casemanagement/{caseId}",
+              "summary": "获取案例详情",
+              "deprecated": false
+            },
+            {
+              "name": "issueCaseRefund",
+              "httpMethod": "POST",
+              "path": "/casemanagement/{caseId}/issue_refund",
+              "summary": "卖家发起退款",
+              "deprecated": true,
+              "deprecationDate": "2026-03-02"
+            },
+            {
+              "name": "provideCaseShipmentInfo",
+              "httpMethod": "POST",
+              "path": "/casemanagement/{caseId}/provide_shipment_info",
+              "summary": "提供物流信息",
+              "deprecated": true,
+              "deprecationDate": "2026-03-02"
+            },
+            {
+              "name": "provideReturnAddress",
+              "httpMethod": "POST",
+              "path": "/casemanagement/{caseId}/provide_return_address",
+              "summary": "提供退货地址",
+              "deprecated": true,
+              "deprecationDate": "2026-03-02"
+            },
+            {
+              "name": "searchCases",
+              "httpMethod": "GET",
+              "path": "/casemanagement/search",
+              "summary": "搜索案例",
+              "deprecated": false
+            }
+          ]
+        },
+        "inquiry": {
+          "description": "查询/咨询管理",
+          "methods": [
+            {
+              "name": "checkInquiryEligibility",
+              "httpMethod": "POST",
+              "path": "/inquiry/check_eligibility",
+              "summary": "检查是否可以开启咨询",
+              "deprecated": false
+            },
+            {
+              "name": "closeInquiry",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/close",
+              "summary": "关闭咨询",
+              "deprecated": true,
+              "deprecationDate": "2026-03-16"
+            },
+            {
+              "name": "confirmInquiryRefund",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/confirm_refund",
+              "summary": "确认退款已收到",
+              "deprecated": true,
+              "deprecationDate": "2026-03-16"
+            },
+            {
+              "name": "createInquiry",
+              "httpMethod": "POST",
+              "path": "/inquiry",
+              "summary": "创建咨询",
+              "deprecated": true,
+              "deprecationDate": "2026-03-16"
+            },
+            {
+              "name": "escalateInquiry",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/escalate",
+              "summary": "升级咨询为案例",
+              "deprecated": false
+            },
+            {
+              "name": "getInquiry",
+              "httpMethod": "GET",
+              "path": "/inquiry/{inquiryId}",
+              "summary": "获取咨询详情",
+              "deprecated": false
+            },
+            {
+              "name": "issueInquiryRefund",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/issue_refund",
+              "summary": "发起退款",
+              "deprecated": false
+            },
+            {
+              "name": "provideInquiryRefundInfo",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/provide_refund_info",
+              "summary": "提供退款信息",
+              "deprecated": true,
+              "deprecationDate": "2026-03-16"
+            },
+            {
+              "name": "provideInquiryShipmentInfo",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/provide_shipment_info",
+              "summary": "提供物流信息",
+              "deprecated": false
+            },
+            {
+              "name": "searchInquiries",
+              "httpMethod": "GET",
+              "path": "/inquiry/search",
+              "summary": "搜索咨询",
+              "deprecated": false
+            },
+            {
+              "name": "sendInquiryMessage",
+              "httpMethod": "POST",
+              "path": "/inquiry/{inquiryId}/send_message",
+              "summary": "发送消息",
+              "deprecated": false
+            }
+          ]
+        },
+        "return": {
+          "description": "退货管理",
+          "methods": [
+            {
+              "name": "addShippingLabelInfo",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/add_shipping_label",
+              "summary": "添加运单信息",
+              "deprecated": false
+            },
+            {
+              "name": "cancelReturnRequest",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/cancel",
+              "summary": "取消退货请求",
+              "deprecated": true,
+              "deprecationDate": "2026-01-20"
+            },
+            {
+              "name": "checkReturnEligibility",
+              "httpMethod": "POST",
+              "path": "/return/check_eligibility",
+              "summary": "检查是否可以退货",
+              "deprecated": true,
+              "deprecationDate": "2026-01-20"
+            },
+            {
+              "name": "createReturnRequest",
+              "httpMethod": "POST",
+              "path": "/return",
+              "summary": "创建退货请求",
+              "deprecated": false
+            },
+            {
+              "name": "escalateReturn",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/escalate",
+              "summary": "升级退货为案例",
+              "deprecated": false
+            },
+            {
+              "name": "getReturn",
+              "httpMethod": "GET",
+              "path": "/return/{returnId}",
+              "summary": "获取退货详情",
+              "deprecated": false
+            },
+            {
+              "name": "getReturnEstimate",
+              "httpMethod": "POST",
+              "path": "/return/estimate",
+              "summary": "获取退款和运费估算",
+              "deprecated": false
+            },
+            {
+              "name": "getReturnFiles",
+              "httpMethod": "GET",
+              "path": "/return/{returnId}/files",
+              "summary": "获取退货相关文件",
+              "deprecated": false
+            },
+            {
+              "name": "getReturnPreferences",
+              "httpMethod": "GET",
+              "path": "/return/preference",
+              "summary": "获取退货偏好设置",
+              "deprecated": false
+            },
+            {
+              "name": "getReturnShippingLabel",
+              "httpMethod": "GET",
+              "path": "/return/{returnId}/get_shipping_label",
+              "summary": "获取退货运单",
+              "deprecated": false
+            },
+            {
+              "name": "getShipmentTrackingInfo",
+              "httpMethod": "GET",
+              "path": "/return/{returnId}/tracking",
+              "summary": "获取物流跟踪信息",
+              "deprecated": false
+            },
+            {
+              "name": "issueReturnRefund",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/issue_refund",
+              "summary": "发起退款",
+              "deprecated": false
+            },
+            {
+              "name": "markReturnReceived",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/mark_as_received",
+              "summary": "标记已收到退货",
+              "deprecated": false
+            },
+            {
+              "name": "markReturnRefundReceived",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/mark_refund_received",
+              "summary": "标记退款已收到",
+              "deprecated": true,
+              "deprecationDate": "2026-01-20"
+            },
+            {
+              "name": "markReturnShipped",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/mark_as_shipped",
+              "summary": "标记已发货",
+              "deprecated": true,
+              "deprecationDate": "2026-01-20"
+            },
+            {
+              "name": "processReturnRequest",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/decide",
+              "summary": "处理退货请求",
+              "deprecated": false
+            },
+            {
+              "name": "searchReturns",
+              "httpMethod": "GET",
+              "path": "/return/search",
+              "summary": "搜索退货",
+              "deprecated": false
+            },
+            {
+              "name": "sendReturnMessage",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/send_message",
+              "summary": "发送消息",
+              "deprecated": false
+            },
+            {
+              "name": "setReturnPreferences",
+              "httpMethod": "POST",
+              "path": "/return/preference",
+              "summary": "设置退货偏好",
+              "deprecated": false
+            },
+            {
+              "name": "submitReturnFile",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/file/submit",
+              "summary": "提交退货文件",
+              "deprecated": false
+            },
+            {
+              "name": "uploadReturnFile",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/file/upload",
+              "summary": "上传退货文件",
+              "deprecated": false
+            },
+            {
+              "name": "voidShippingLabel",
+              "httpMethod": "POST",
+              "path": "/return/{returnId}/void_shipping_label",
+              "summary": "作废运单",
+              "deprecated": true,
+              "deprecationDate": "2026-01-20"
+            }
+          ]
+        }
+      }
+    },
+    "logistics_v1": {
+      "apiName": "Logistics API v1",
+      "baseUrl": "https://api.ebay.com/sell/logistics/v1",
+      "description": "获取运费报价并创建运单。注意：此 API 仅对特定开发者开放 (Limited Release)。",
+      "resources": {
+        "shipping_quote": {
+          "description": "运费报价",
+          "methods": [
+            {
+              "name": "createShippingQuote",
+              "httpMethod": "POST",
+              "path": "/shipping_quote",
+              "summary": "创建运费报价请求，获取多个快递商的实时报价"
+            },
+            {
+              "name": "getShippingQuote",
+              "httpMethod": "GET",
+              "path": "/shipping_quote/{shippingQuoteId}",
+              "summary": "获取已创建的运费报价详情"
+            }
+          ]
+        },
+        "shipment": {
+          "description": "运单管理",
+          "methods": [
+            {
+              "name": "createFromShippingQuote",
+              "httpMethod": "POST",
+              "path": "/shipment/create_from_shipping_quote",
+              "summary": "根据选定的报价创建运单"
+            },
+            {
+              "name": "getShipment",
+              "httpMethod": "GET",
+              "path": "/shipment/{shipmentId}",
+              "summary": "获取运单详情"
+            },
+            {
+              "name": "downloadLabelFile",
+              "httpMethod": "GET",
+              "path": "/shipment/{shipmentId}/download_label_file",
+              "summary": "下载运单标签文件"
+            },
+            {
+              "name": "cancelShipment",
+              "httpMethod": "POST",
+              "path": "/shipment/{shipmentId}/cancel",
+              "summary": "取消运单"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

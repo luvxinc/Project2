@@ -1,0 +1,439 @@
+{% load security_tags %}
+
+<div id="permission-panel" class="fade-in" data-user-list-url="{% url 'web_ui:panel_user_list' %}">
+    <!-- Header OOB Swap -->
+    <div id="ua-page-header" hx-swap-oob="true">
+        {% include "user_admin/components/headers/header_permissions.html" %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Left: Permission Cards -->
+        <div class="col-xl-9 col-lg-8">
+            <div class="glass-card overflow-hidden shadow-lg">
+                <!-- Header Bar -->
+                <div
+                    class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom border-secondary border-opacity-10">
+                    <div class="d-flex align-items-center">
+                        <div class="perm-user-avatar me-3">
+                            <span>{{ target_username|first|upper }}</span>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-white fw-bold">{{ target_username }}</span>
+                                {% if target_role == 'Super Admin' %}
+                                <span class="role-badge superadmin"><i class="fa-solid fa-crown me-1"></i>Super
+                                    Admin</span>
+                                {% elif target_role == 'Admin' %}
+                                <span class="role-badge admin"><i
+                                        class="fa-solid fa-shield-halved me-1"></i>Admin</span>
+                                {% else %}
+                                <span class="role-badge user"><i class="fa-solid fa-user me-1"></i>User</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-white-50 small mt-1">
+                                已选 <span id="perm-count" class="text-info fw-bold">0</span> 项权限
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="initPermSave()">
+                            <i class="fa-solid fa-floppy-disk me-1"></i><span data-i18n="common.save">保存</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                            onclick="cancelPermEdit()">
+                            <i class="fa-solid fa-times me-1"></i><span data-i18n="common.cancel">取消</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form id="permForm" hx-post="{% url 'web_ui:user_update_permissions' target_username=target_username %}"
+                    hx-trigger="submit" hx-swap="none">
+                    {% csrf_token %}
+                    <div id="perm-security-zone" class="d-none">
+                        {% security_inputs 'btn_update_perms' %}
+                    </div>
+
+                    <!-- Permission Cards -->
+                    <div class="perm-cards-container p-3">
+                        {% for module in permission_tree %}
+                        {% with mkey=module.key mid=module.key|slugify %}
+                        <div class="perm-card">
+                            <!-- Left: Module Info -->
+                            <div class="perm-card-left">
+                                <div class="module-info">
+                                    <i class="fa-solid fa-layer-group text-primary me-2"></i>
+                                    <span class="module-name">{{ module.name }}</span>
+                                </div>
+                                <!-- Select All -->
+                                <div class="module-toggle mt-2">
+                                    {% if is_superuser or mkey in actor_perms %}
+                                    <label class="ui-toggle ui-toggle-sm ui-toggle-primary">
+                                        <input type="checkbox" id="chk-all-{{ mid }}"
+                                            onchange="toggleModuleChildren(this, '{{ mid }}')">
+                                        <span class="ui-toggle-track"></span>
+                                    </label>
+                                    <span class="toggle-label" data-i18n="common.select_all">全选</span>
+                                    {% else %}
+                                    <span class="text-secondary small"><i class="fa-solid fa-lock me-1"></i><span
+                                            data-i18n="common.no_permission">无权限</span></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Right: Features Grid -->
+                            <div class="perm-card-right">
+                                <div class="features-grid">
+                                    {% for t in module.children %}
+                                    {% with tk=t.key tid=t.key|slugify %}
+                                    <div class="feature-cell {% if not is_superuser and tk not in actor_perms %}feature-disabled{% endif %}"
+                                        {% if is_superuser or tk in actor_perms
+                                        %}onclick="toggleFeature('chk-{{ mid }}-{{ tid }}')" {% else
+                                        %}onclick="showNoPermissionModal()" {% endif %}>
+                                        {% if is_superuser or tk in actor_perms %}
+                                        <label class="ui-toggle ui-toggle-sm ui-toggle-info"
+                                            onclick="event.stopPropagation()">
+                                            <input type="checkbox" name="perms" value="{{ tk }}"
+                                                id="chk-{{ mid }}-{{ tid }}" data-module="{{ mid }}" {% check_attr tk
+                                                current_perms %}>
+                                            <span class="ui-toggle-track"></span>
+                                        </label>
+                                        <span class="feature-name">{{ t.name }}</span>
+                                        {% else %}
+                                        <label class="ui-toggle ui-toggle-sm disabled"
+                                            onclick="event.stopPropagation()">
+                                            <input type="checkbox" disabled {% check_attr tk current_perms %}>
+                                            <span class="ui-toggle-track"></span>
+                                        </label>
+                                        <span class="feature-name text-secondary">{{ t.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endwith %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Notice Panel -->
+        <div class="col-xl-3 col-lg-4">
+            <div
+                class="alert alert-info bg-opacity-10 border-info border-opacity-25 d-flex flex-column mb-0 shadow-sm rounded-3 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fa-solid fa-circle-info text-info me-2 fa-lg"></i>
+                    <strong class="text-info" data-i18n="common.operation_notes">操作须知</strong>
+                </div>
+                <div class="text-white-50 small">
+                    <div class="mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                        <div class="text-white-50 fw-bold mb-2">
+                            <i class="fa-solid fa-hand-pointer me-1"></i><span
+                                data-i18n="common.operation_desc">操作说明</span>
+                        </div>
+                        <ul class="mb-0 ps-3 d-flex flex-column gap-1">
+                            <li data-i18n="perms.row_is_module">每行是一个功能板块</li>
+                            <li data-i18n="perms.select_toggle">左侧「全选」可一键开关整个板块</li>
+                            <li data-i18n="perms.right_features">右侧是该板块下的所有功能</li>
+                            <li data-i18n="perms.gray_no_access">灰色项表示您无权配置</li>
+                        </ul>
+                    </div>
+                    <div class="text-white-50 fw-bold mb-2">
+                        <i class="fa-solid fa-shield-halved me-1"></i><span data-i18n="ui.icon_3042">安全提示</span>
+                    </div>
+                    <ul class="mb-0 ps-3 d-flex flex-column gap-2">
+                        <li><strong class="text-white-50"
+                                data-i18n="perms.permission_passthrough">权限穿透：</strong><br>您只能授予自己拥有的权限。</li>
+                        <li><strong class="text-white-50" data-i18n="perms.effect_time">生效时间：</strong><br>权限变更用户重新登录后生效。
+                        </li>
+                        <li><strong class="text-white-50" data-i18n="perms.audit_trail">审计追踪：</strong><br>所有变更将记录在审计日志中。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ========================================
+       Permission Panel - Horizontal Cards V7
+       ======================================== */
+    .perm-user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(13, 202, 240, 0.2), rgba(13, 110, 253, 0.2));
+        border: 1px solid rgba(13, 202, 240, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        color: #0dcaf0;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .role-badge.superadmin {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(255, 193, 7, 0.2));
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .role-badge.admin {
+        background: rgba(13, 202, 240, 0.15);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.25);
+    }
+
+    .role-badge.user {
+        background: rgba(108, 117, 125, 0.15);
+        color: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(108, 117, 125, 0.25);
+    }
+
+    /* Cards Container */
+    .perm-cards-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* Permission Card */
+    .perm-card {
+        display: flex;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    /* Left Column: Module Info (Highlighted) */
+    .perm-card-left {
+        width: 160px;
+        flex-shrink: 0;
+        padding: 14px;
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(13, 202, 240, 0.08));
+        border-right: 2px solid rgba(13, 110, 253, 0.3);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .module-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .module-name {
+        font-weight: 600;
+        color: #fff;
+        font-size: 13px;
+    }
+
+    .module-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toggle-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Right Column: Features */
+    .perm-card-right {
+        flex: 1;
+        padding: 12px 14px;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+
+    @media (max-width: 1400px) {
+        .features-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .features-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .feature-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+
+    .feature-cell:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .feature-disabled {
+        opacity: 0.4;
+    }
+
+    .feature-disabled:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .feature-name {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Disabled toggle */
+    .ui-toggle.disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+
+    /* Active state for checked features */
+    .feature-cell.feature-active {
+        background: rgba(13, 202, 240, 0.1);
+        border-color: rgba(13, 202, 240, 0.4);
+        box-shadow: 0 0 8px rgba(13, 202, 240, 0.15);
+    }
+
+    .feature-cell.feature-active .feature-name {
+        color: #fff;
+    }
+</style>
+
+<script>
+    function toggleFeature(checkboxId) {
+        const cb = document.getElementById(checkboxId);
+        if (cb && !cb.disabled) {
+            cb.checked = !cb.checked;
+            updateCellStyle(cb);
+            syncModuleToggle(cb.dataset.module);
+            updatePermCount();
+        }
+    }
+
+    function updateCellStyle(checkbox) {
+        const cell = checkbox.closest('.feature-cell');
+        if (cell) {
+            cell.classList.toggle('feature-active', checkbox.checked);
+        }
+    }
+
+    function updateAllCellStyles() {
+        document.querySelectorAll('input[name="perms"]').forEach(cb => updateCellStyle(cb));
+    }
+
+    function toggleModuleChildren(checkbox, moduleId) {
+        const children = document.querySelectorAll(`input[data-module="${moduleId}"]:not(:disabled)`);
+        children.forEach(cb => {
+            cb.checked = checkbox.checked;
+            updateCellStyle(cb);
+        });
+        updatePermCount();
+    }
+
+    function syncModuleToggle(moduleId) {
+        const toggle = document.getElementById(`chk-all-${moduleId}`);
+        if (!toggle) return;
+        const children = document.querySelectorAll(`input[data-module="${moduleId}"]:not(:disabled)`);
+        if (children.length === 0) return;
+        toggle.checked = Array.from(children).every(cb => cb.checked);
+    }
+
+    function updatePermCount() {
+        document.getElementById('perm-count').textContent =
+            document.querySelectorAll('input[name="perms"]:checked').length;
+    }
+
+    (function init() {
+        const panel = document.getElementById('permission-panel');
+        if (!panel) return;
+
+        panel.addEventListener('change', function (e) {
+            if (e.target.name === 'perms') {
+                syncModuleToggle(e.target.dataset.module);
+                updatePermCount();
+            }
+        });
+
+        document.querySelectorAll('[id^="chk-all-"]').forEach(t => syncModuleToggle(t.id.replace('chk-all-', '')));
+        updateAllCellStyles();
+        updatePermCount();
+    })();
+
+    function showPermPasswordErrorModal(msg) {
+        GlobalModal.showCustom({
+            html: `<div class="modal-header border-0"><h5 class="modal-title text-danger"><i class="fas fa-times-circle me-2"></i><span data-i18n="js.auth_failed">授权失败</span></h5></div>
+                <div class="modal-body text-center py-4"><i class="fas fa-shield-xmark fa-3x text-danger opacity-75 mb-3"></i>
+                <p class="text-white mb-2" data-i18n="perms.password_failed">密码验证失败</p><p class="text-white-50 small mb-0">${msg || (window.i18n?.t('js.check_password_retry') || '请检查密码后重试')}</p></div>
+                <div class="modal-footer border-0 justify-content-center"><button class="btn btn-outline-secondary px-4" onclick="GlobalModal.hide()"><span data-i18n="common.understand">了解</span></button></div>`,
+            borderColor: '#dc3545', glowEffect: 'blink'
+        });
+    }
+
+    function showNoPermissionModal() {
+        GlobalModal.showCustom({
+            html: `<div class="modal-header border-0"><h5 class="modal-title text-warning"><i class="fas fa-lock me-2"></i>权限限制</h5></div>
+                <div class="modal-body text-center py-4"><i class="fas fa-shield-halved fa-3x text-warning opacity-75 mb-3"></i>
+                <p class="text-white mb-2" data-i18n="perms.no_permission">你没有权限修改该项</p><p class="text-white-50 small mb-0">该权限节点不在您的授权范围内。</p></div>
+                <div class="modal-footer border-0 justify-content-center"><button class="btn btn-info px-4" onclick="GlobalModal.hide()"><span data-i18n="common.understand">了解</span></button></div>`,
+            borderColor: '#ffc107', glowEffect: 'pulse'
+        });
+    }
+
+    function initPermSave() {
+        const zone = document.getElementById('perm-security-zone');
+        const codes = [];
+        zone?.querySelectorAll('input').forEach(i => {
+            if (i.name?.startsWith('sec_code_')) codes.push(i.name.replace('sec_code_', ''));
+        });
+        if (!codes.length) { htmx.trigger('#permForm', 'submit'); return; }
+        GlobalModal.showPassword({
+            title: (window.i18n?.t('js.auth_required') || 'Authentication Required'), desc: (window.i18n?.t('js.save_perms_auth') || 'Save permissions requires auth'), requiredCodes: codes,
+            onSubmit: pw => {
+                for (const [k, v] of Object.entries(pw)) {
+                    const i = zone.querySelector(`input[name="sec_code_${k}"]`);
+                    if (i) i.value = v;
+                }
+                htmx.trigger('#permForm', 'submit');
+            }
+        });
+    }
+
+    function cancelPermEdit() {
+        htmx.ajax('GET', document.getElementById('permission-panel')?.dataset.userListUrl || '/web/user_admin/panel/users/', { target: '#ua-content-area', swap: 'innerHTML' });
+    }
+
+    document.body.addEventListener("showToast", e => {
+        const m = e.detail?.value;
+        if (m && (m.includes((window.i18n?.t('js.wrong_password') || 'Wrong Password')) || m.includes((window.i18n?.t('js.auth_failed') || 'Auth Failed')) || m.includes((window.i18n?.t('modal.password.verify_failed') || 'Verification Failed'))))
+            setTimeout(() => showPermPasswordErrorModal(m), 300);
+    });
+</script>

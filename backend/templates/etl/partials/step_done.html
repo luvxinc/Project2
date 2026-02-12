@@ -1,0 +1,443 @@
+{% load security_tags %}
+
+<div class="card bg-dark border-success border-opacity-50">
+    <div class="card-body py-5">
+        <!-- Success Header -->
+        <div class="text-center mb-5">
+            <div class="display-1 text-success mb-4">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 class="text-white mb-3" data-i18n="ui.text_241">数据已成功入库!</h3>
+            <p class="text-muted mb-0">所有数据已成功处理并写入<strong class="text-success" data-i18n="ui.text_242">销售数据</strong>表。</p>
+        </div>
+
+        <!-- Stats Blocks -->
+        {% if stats %}
+        <div class="row g-4 mb-4">
+            <!-- Block 1: 修复统计 (Clickable) -->
+            <div class="col-md-6">
+                <div class="card bg-black bg-opacity-50 border-info border-opacity-25 h-100" style="cursor: pointer;"
+                    onclick="showFixLogModal()">
+                    <div
+                        class="card-header bg-info bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fa-solid fa-wrench me-2 text-info"></i>
+                            <span class="text-info" data-i18n="ui.text_243">修复统计</span>
+                        </span>
+                        <i class="fa-solid fa-external-link-alt text-info opacity-50"></i>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-around text-center">
+                            <div class="stat-item">
+                                <div
+                                    class="stat-box bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3 p-3">
+                                    <div class="text-danger fs-4 fw-bold">{{ stats.error_count|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2056">有误数据</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div
+                                    class="stat-box bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 p-3">
+                                    <div class="text-warning fs-4 fw-bold">{{ stats.auto_fixed|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2057">自动修复</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-box border rounded-3 p-3"
+                                    style="background: rgba(253, 126, 20, 0.1); border-color: rgba(253, 126, 20, 0.25) !important;">
+                                    <div class="fs-4 fw-bold" style="color: #fd7e14;">{{ stats.manual_fixed|default:0 }}
+                                    </div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2058">人工修正</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Block 2: 上传统计 -->
+            <div class="col-md-6">
+                <div class="card bg-black bg-opacity-50 border-primary border-opacity-25 h-100">
+                    <div class="card-header bg-primary bg-opacity-10 border-0">
+                        <i class="fa-solid fa-upload me-2 text-primary"></i>
+                        <span class="text-primary" data-i18n="ui.text_244">上传统计</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-around text-center">
+                            <div class="stat-item">
+                                <div
+                                    class="stat-box bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 p-3">
+                                    <div class="text-primary fs-4 fw-bold">{{ stats.data_count|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2059">本次数据</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div
+                                    class="stat-box bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3">
+                                    <div class="text-secondary fs-4 fw-bold">{{ stats.dedup_count|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2060">查验去重</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div
+                                    class="stat-box bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 p-3">
+                                    <div class="text-success fs-4 fw-bold">{{ stats.actual_upload|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2061">实际上传</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 3: 数据库状态变化 (Full Width) -->
+        <div class="card bg-black bg-opacity-50 border-secondary border-opacity-25 mb-4">
+            <div class="card-header bg-secondary bg-opacity-10 border-0">
+                <i class="fa-solid fa-database me-2 text-secondary"></i>
+                <span class="text-secondary" data-i18n="ui.text_245">数据库状态变化</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <!-- 更新前 -->
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border border-secondary border-opacity-50"
+                            style="background: rgba(108, 117, 125, 0.1);">
+                            <h5 class="text-white-50 mb-3 fw-bold" data-i18n="ui.text_246">更新前</h5>
+                            <div class="d-flex justify-content-around">
+                                <div>
+                                    <div class="text-white fs-4 fw-bold">{{ stats.before_count|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2062">原记录数</div>
+                                </div>
+                                <div>
+                                    <div class="text-white">
+                                        {{ stats.before_min_date|default:'N/A' }}
+                                        <i class="fa-solid fa-arrow-right mx-2 text-info"></i>
+                                        {{ stats.before_max_date|default:'N/A' }}
+                                    </div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2063">数据范围</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 更新后 -->
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border border-success border-opacity-50"
+                            style="background: rgba(25, 135, 84, 0.1);">
+                            <h5 class="text-success mb-3 fw-bold" data-i18n="ui.text_247">更新后</h5>
+                            <div class="d-flex justify-content-around">
+                                <div>
+                                    <div class="text-success fs-4 fw-bold">{{ stats.after_count|default:0 }}</div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2064">现记录数</div>
+                                </div>
+                                <div>
+                                    <div class="text-white">
+                                        {{ stats.after_min_date|default:'N/A' }}
+                                        <i class="fa-solid fa-arrow-right mx-2 text-success"></i>
+                                        {{ stats.after_max_date|default:'N/A' }}
+                                    </div>
+                                    <div class="text-white-50 small" data-i18n="ui.text_2063">数据范围</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [V2.0] Block 4: FIFO 库存同步统计 -->
+        {% if stats.fifo_stats %}
+        <div class="card bg-black bg-opacity-50 border-warning border-opacity-25 mb-4">
+            <div class="card-header bg-warning bg-opacity-10 border-0">
+                <i class="fa-solid fa-warehouse me-2 text-warning"></i>
+                <span class="text-warning" data-i18n="ui.text_248">FIFO 库存同步</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-around text-center">
+                    <div class="stat-item">
+                        <div class="stat-box bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3 p-3">
+                            <div class="text-danger fs-4 fw-bold">{{ stats.fifo_stats.out_count|default:0 }}</div>
+                            <div class="text-white-50 small" data-i18n="ui.text_2066">销售出库</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-box bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 p-3">
+                            <div class="text-success fs-4 fw-bold">{{ stats.fifo_stats.in_count|default:0 }}</div>
+                            <div class="text-white-50 small" data-i18n="ui.text_2067">退货回库</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-box bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-3 p-3">
+                            <div class="text-secondary fs-4 fw-bold">{{ stats.fifo_stats.skip_count|default:0 }}</div>
+                            <div class="text-white-50 small" data-i18n="ui.text_2068">跳过处理</div>
+                        </div>
+                    </div>
+                    {% if stats.fifo_stats.error_count > 0 %}
+                    <div class="stat-item">
+                        <div class="stat-box bg-danger bg-opacity-25 border border-danger rounded-3 p-3">
+                            <div class="text-danger fs-4 fw-bold">{{ stats.fifo_stats.error_count }}</div>
+                            <div class="text-white-50 small" data-i18n="ui.text_2069">同步错误</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-outline-primary px-4" hx-get="{% url 'web_ui:sales:transactions:tab_transaction' %}"
+                hx-target="#etl-tab-content">
+                <i class="fa-solid fa-rotate me-2"></i><span data-i18n="ui.icon_3022">开始新一轮</span>
+            </button>
+            <a href="{% url 'web_ui:sales:reports:dashboard' %}" class="btn btn-primary px-4">
+                <i class="fa-solid fa-chart-pie me-2"></i><span data-i18n="ui.icon_3102">查看报表</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Fix Log Modal - Grouped by Custom Label -->
+<div id="fixLogPanel" class="fix-log-panel" style="display: none;">
+    <div class="fix-log-overlay" onclick="hideFixLogModal()"></div>
+    <div class="fix-log-content">
+        <div class="fix-log-header">
+            <h5 class="text-white mb-0">
+                <i class="fa-solid fa-list-check me-2 text-info"></i><span data-i18n="ui.icon_3103">修复记录明细</span>
+            </h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideFixLogModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="fix-log-body">
+            {% if stats.fix_log %}
+            <div class="fix-groups-container">
+                {% regroup stats.fix_log by custom_label as label_groups %}
+                {% for group in label_groups %}
+                <div class="fix-group">
+                    <div class="fix-group-header">
+                        <i class="fa-solid fa-tag me-2"></i>{% firstof group.grouper "未知商品" %}
+                    </div>
+                    <div class="fix-group-content">
+                        {% for item in group.list %}
+                        <div class="fix-entry">
+                            {% if item.old and item.new %}
+                            <!-- SKU Row: old -> new -->
+                            <div class="fix-row">
+                                <span class="fix-btn-error">{{ item.old }}</span>
+                                <i class="fa-solid fa-arrow-right text-info mx-3"></i>
+                                <span class="fix-btn-success">{{ item.new }}</span>
+                            </div>
+                            <!-- Qty Row (only if changed) -->
+                            {% if item.old_qty and item.new_qty and item.old_qty != item.new_qty %}
+                            <div class="fix-row mt-2">
+                                <span class="fix-btn-error">x{{ item.old_qty }}</span>
+                                <i class="fa-solid fa-arrow-right text-info mx-3"></i>
+                                <span class="fix-btn-success">x{{ item.new_qty }}</span>
+                            </div>
+                            {% endif %}
+                            {% elif item.msg %}
+                            <!-- Auto Fix: parse from msg string (format: "SKU: OLD -> NEW") -->
+                            <div class="fix-row">
+                                <span class="fix-btn-auto">{{ item.msg }}</span>
+                            </div>
+                            {% else %}
+                            <!-- Fallback -->
+                            <div class="fix-row">
+                                <span class="text-muted">{{ item }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fa-solid fa-check-circle fa-4x text-success mb-4 opacity-75"></i>
+                <h5 class="text-white" data-i18n="ui.text_249">本次数据上传解析没有错误</h5>
+                <p class="text-muted" data-i18n="ui.text_250">所有数据均符合规范，无需修正。</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="fix-log-footer">
+            <button type="button" class="btn btn-secondary" onclick="hideFixLogModal()" data-i18n="common.close">关闭</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-item {
+        flex: 1;
+        max-width: 120px;
+    }
+
+    .stat-box {
+        min-width: 90px;
+    }
+
+    /* Fix Log Panel Styles */
+    .fix-log-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fix-log-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    .fix-log-content {
+        position: relative;
+        background: #1a1a1a;
+        border: 1px solid rgba(13, 202, 240, 0.25);
+        border-radius: 12px;
+        max-width: 800px;
+        width: 95%;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .fix-log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .fix-log-body {
+        padding: 1rem 1.5rem;
+        overflow-y: auto;
+        max-height: 60vh;
+    }
+
+    .fix-log-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: right;
+    }
+
+    /* Grouped Layout */
+    .fix-groups-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .fix-group {
+        background: rgba(30, 30, 30, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .fix-group-header {
+        background: rgba(13, 110, 253, 0.15);
+        border-bottom: 1px solid rgba(13, 110, 253, 0.3);
+        padding: 0.5rem 1rem;
+        color: #6ea8fe;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .fix-group-content {
+        padding: 0.75rem 1rem;
+    }
+
+    .fix-entry {
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .fix-entry:last-child {
+        border-bottom: none;
+    }
+
+    .fix-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Button-like Box Styles */
+    .fix-btn-error {
+        display: inline-block;
+        background: #dc3545;
+        color: #ffffff;
+        padding: 8px 16px;
+        min-width: 80px;
+        text-align: center;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 2px solid #b02a37;
+        box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+        cursor: default;
+    }
+
+    .fix-btn-success {
+        display: inline-block;
+        background: #198754;
+        color: #ffffff;
+        padding: 8px 16px;
+        min-width: 80px;
+        text-align: center;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 2px solid #146c43;
+        box-shadow: 0 2px 6px rgba(25, 135, 84, 0.4);
+        cursor: default;
+    }
+
+    .fix-btn-auto {
+        display: inline-block;
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255, 193, 7, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .fix-groups-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function showFixLogModal() {
+        document.getElementById('fixLogPanel').style.display = 'flex';
+    }
+
+    function hideFixLogModal() {
+        document.getElementById('fixLogPanel').style.display = 'none';
+    }
+
+    // Also allow ESC key to close
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            hideFixLogModal();
+        }
+    });
+</script>

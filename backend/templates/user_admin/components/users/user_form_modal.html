@@ -1,0 +1,54 @@
+{% load security_tags %}
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-primary border-opacity-50 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary">
+                    <i class="fa-solid fa-user-plus me-2"></i><span data-i18n="ui.icon_3046">新建用户</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="createUserForm" hx-post="{% url 'web_ui:user_create' %}" hx-target="#user-table-body"
+                hx-swap="afterbegin"
+                hx-on::after-request="if(event.detail.successful) { this.reset(); bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide(); }">
+                {% csrf_token %}
+
+                <div class="modal-body pt-3">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_106">用户名 (Username)</label>
+                        <input type="text" name="username"
+                            class="form-control bg-dark text-white border-secondary rounded-3" required
+                            data-i18n-placeholder="form.placeholder.username" placeholder="输入用户名...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_107">登录密码 (Password)</label>
+                        <input type="password" name="password"
+                            class="form-control bg-dark text-white border-secondary rounded-3" required
+                            data-i18n-placeholder="form.placeholder.initial_password" placeholder="设置初始密码...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50 small" data-i18n="ui.text_108">角色 (Role)</label>
+                        <select name="role" class="form-select bg-dark text-white border-secondary rounded-3">
+                            <option value="user" data-i18n="option.o6137">普通用户 (User)</option>
+                            <option value="admin" data-i18n="option.o3833">管理员 (Admin)</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-4">
+                        {% security_inputs 'btn_create_user' %}
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal" data-i18n="common.cancel">取消</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-check me-2"></i><span data-i18n="ui.icon_3047">创建用户</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

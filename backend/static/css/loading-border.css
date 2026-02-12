@@ -1,0 +1,220 @@
+/* =============================================================================
+ * Loading Border Animation (跑马灯边框动画)
+ * =============================================================================
+ * A glowing line that runs around the button border like a runner on a track
+ * - Width: 5-10x thicker than original
+ * - Tail: 2x longer
+ * - Brightness: 2x higher with drop-shadow
+ * ============================================================================= */
+
+/* Base loading border styles */
+.loading-border {
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+/* DISABLED: Linear gradient approach - kept for reference */
+.loading-border::before {
+    display: none;
+}
+
+/* Conic gradient: the glowing line that runs around the border */
+.loading-border::after {
+    content: '';
+    position: absolute;
+
+    /* WIDTH: 5-10x thicker (was -3px) */
+    inset: -8px;
+    border-radius: inherit;
+
+    /* TAIL: 2x longer (was 30deg, now 60deg visible) */
+    background: conic-gradient(from var(--angle, 0deg),
+            transparent 0deg,
+            transparent 300deg,
+            rgba(13, 110, 253, 0.2) 320deg,
+            rgba(13, 110, 253, 0.4) 335deg,
+            rgba(13, 110, 253, 0.7) 350deg,
+            rgba(13, 110, 253, 1) 360deg);
+
+    animation: rotate-angle 1.5s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+
+    /* BRIGHTNESS: 2x higher with glow effect */
+    filter:
+        drop-shadow(0 0 8px rgba(13, 110, 253, 1)) drop-shadow(0 0 16px rgba(13, 110, 253, 0.8)) drop-shadow(0 0 24px rgba(13, 110, 253, 0.5));
+}
+
+@keyframes rotate-angle {
+    0% {
+        --angle: 0deg;
+    }
+
+    100% {
+        --angle: 360deg;
+    }
+}
+
+/* Fallback for browsers that don't support @property */
+@supports not (background: conic-gradient(from var(--angle), red, blue)) {
+    .loading-border::after {
+        inset: -8px;
+        background: conic-gradient(from 0deg,
+                transparent 0deg,
+                transparent 300deg,
+                rgba(13, 110, 253, 0.2) 320deg,
+                rgba(13, 110, 253, 0.4) 335deg,
+                rgba(13, 110, 253, 0.7) 350deg,
+                rgba(13, 110, 253, 1) 360deg);
+        animation: rotate-border-fallback 1.5s linear infinite;
+        filter:
+            drop-shadow(0 0 8px rgba(13, 110, 253, 1)) drop-shadow(0 0 16px rgba(13, 110, 253, 0.8)) drop-shadow(0 0 24px rgba(13, 110, 253, 0.5));
+    }
+}
+
+@keyframes rotate-border-fallback {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== COLOR VARIANTS ===== */
+
+/* Danger (red) */
+.loading-border-danger::after {
+    inset: -8px;
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            transparent 300deg,
+            rgba(220, 53, 69, 0.2) 320deg,
+            rgba(220, 53, 69, 0.4) 335deg,
+            rgba(220, 53, 69, 0.7) 350deg,
+            rgba(220, 53, 69, 1) 360deg);
+    filter:
+        drop-shadow(0 0 8px rgba(220, 53, 69, 1)) drop-shadow(0 0 16px rgba(220, 53, 69, 0.8)) drop-shadow(0 0 24px rgba(220, 53, 69, 0.5));
+}
+
+/* Warning (orange/yellow) */
+.loading-border-warning::after {
+    inset: -8px;
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            transparent 300deg,
+            rgba(255, 193, 7, 0.2) 320deg,
+            rgba(255, 193, 7, 0.4) 335deg,
+            rgba(255, 193, 7, 0.7) 350deg,
+            rgba(255, 193, 7, 1) 360deg);
+    filter:
+        drop-shadow(0 0 8px rgba(255, 193, 7, 1)) drop-shadow(0 0 16px rgba(255, 193, 7, 0.8)) drop-shadow(0 0 24px rgba(255, 193, 7, 0.5));
+}
+
+/* Success (green) */
+.loading-border-success::after {
+    inset: -8px;
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            transparent 300deg,
+            rgba(25, 135, 84, 0.2) 320deg,
+            rgba(25, 135, 84, 0.4) 335deg,
+            rgba(25, 135, 84, 0.7) 350deg,
+            rgba(25, 135, 84, 1) 360deg);
+    filter:
+        drop-shadow(0 0 8px rgba(25, 135, 84, 1)) drop-shadow(0 0 16px rgba(25, 135, 84, 0.8)) drop-shadow(0 0 24px rgba(25, 135, 84, 0.5));
+}
+
+/* Info (cyan) */
+.loading-border-info::after {
+    inset: -8px;
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            transparent 300deg,
+            rgba(13, 202, 240, 0.2) 320deg,
+            rgba(13, 202, 240, 0.4) 335deg,
+            rgba(13, 202, 240, 0.7) 350deg,
+            rgba(13, 202, 240, 1) 360deg);
+    filter:
+        drop-shadow(0 0 8px rgba(13, 202, 240, 1)) drop-shadow(0 0 16px rgba(13, 202, 240, 0.8)) drop-shadow(0 0 24px rgba(13, 202, 240, 0.5));
+}
+
+/* ===== TASK ITEM STATES (for reports module) ===== */
+
+.task-item {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Completed task: green glow border */
+.task-item.completed {
+    background: rgba(25, 135, 84, 0.15) !important;
+    border: 1px solid rgba(25, 135, 84, 0.5);
+    box-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
+}
+
+.task-item.completed .task-icon {
+    color: #198754 !important;
+}
+
+.task-item.completed::after {
+    content: '✓';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #198754;
+    font-weight: bold;
+}
+
+/* Running task: FLASHING BORDER (1 second cycle) - NO marquee */
+.task-item.running {
+    background: rgba(13, 110, 253, 0.05) !important;
+    animation: task-border-flash 1s ease-in-out infinite;
+}
+
+@keyframes task-border-flash {
+
+    0%,
+    100% {
+        border: 2px solid rgba(13, 110, 253, 0.3);
+        box-shadow:
+            0 0 5px rgba(13, 110, 253, 0.2),
+            inset 0 0 5px rgba(13, 110, 253, 0.05);
+    }
+
+    50% {
+        border: 2px solid rgba(13, 110, 253, 1);
+        box-shadow:
+            0 0 15px rgba(13, 110, 253, 0.8),
+            0 0 30px rgba(13, 110, 253, 0.4),
+            inset 0 0 10px rgba(13, 110, 253, 0.1);
+    }
+}
+
+.task-item.running .task-icon {
+    animation: pulse-icon 1s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.15);
+    }
+}
+
+/* ===== CSS Custom Property for angle animation ===== */
+@property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}

@@ -1,0 +1,179 @@
+{% load security_tags %}
+<!-- 流程6: 提交并完成 -->
+<div id="edit-step-6" class="wizard-step-content" style="display: none;">
+    <!-- 提交中状态 -->
+    <div id="edit-step6-submitting" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status" style="width: 4rem; height: 4rem;">
+            <span class="visually-hidden" data-i18n="ui.text_1029">提交中...</span>
+        </div>
+        <h4 class="text-white mt-4 mb-2" data-i18n="ui.text_781">正在提交修改...</h4>
+        <p class="text-white-50" data-i18n="ui.text_1031">请稍候，正在将修改提交到数据库。</p>
+    </div>
+    
+    <!-- 提交成功状态 -->
+    <div id="edit-step6-success" class="text-center py-5" style="display: none;">
+        <div class="bg-success bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+            <i class="fas fa-check-circle fa-4x text-success"></i>
+        </div>
+        <h4 class="text-white mb-3" data-i18n="ui.text_1032">发货单修改成功！</h4>
+        <p class="text-white-50 mb-4" id="edit-success-message" data-i18n="ui.text_1033">
+            发货单信息已成功更新。
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-primary btn-lg px-4 rounded-pill" onclick="reloadAndEditOrder()">
+                <i class="fas fa-eye me-2"></i><span data-i18n="ui.icon_3223">继续查看/编辑</span>
+            </button>
+            <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="closeEditAndReload()">
+                <i class="fas fa-list me-2"></i><span data-i18n="common.back_list">返回列表</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 提交失败状态 -->
+    <div id="edit-step6-error" class="text-center py-5" style="display: none;">
+        <div class="bg-danger bg-opacity-25 rounded-circle d-inline-flex p-4 mb-4">
+            <i class="fas fa-times-circle fa-4x text-danger"></i>
+        </div>
+        <h4 class="text-white mb-3" data-i18n="ui.text_784">提交失败</h4>
+        <p class="text-danger mb-4" id="edit-error-message" data-i18n="ui.text_1035">
+            提交过程中发生错误。
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-warning btn-lg px-4 rounded-pill" onclick="retrySubmit()">
+                <i class="fas fa-redo me-2"></i><span data-i18n="ui.icon_3090">重试</span>
+            </button>
+            <button class="btn btn-outline-secondary btn-lg px-4 rounded-pill" onclick="showEditStep(5)">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="ui.icon_3330">返回预览</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 安全验证表单 (隐藏) -->
+    <form id="edit-submit-form-step6" class="d-none">
+        {% csrf_token %}
+        {% security_inputs "btn_send_modify" %}
+    </form>
+</div>
+
+<script>
+    // ========================================
+    // Step6: 提交并完成
+    // ========================================
+    
+    // 当进入Step6时自动执行提交
+    function runStep6Submit() {
+        const submittingEl = document.getElementById('edit-step6-submitting');
+        const successEl = document.getElementById('edit-step6-success');
+        const errorEl = document.getElementById('edit-step6-error');
+        
+        // 显示提交中状态
+        submittingEl.style.display = 'block';
+        successEl.style.display = 'none';
+        errorEl.style.display = 'none';
+        
+        // 收集数据 - 包括所有需要处理的行（有效行和删除行）
+        const note = document.getElementById('edit-items-note')?.value?.trim() || '';
+        
+        // 收集所有需要提交的项：有效项 + 删除项
+        const allItems = step3Items.filter(i => {
+            // 新增但被删除的不提交
+            if (i.is_new && i.is_deleted) return false;
+            // 有效项：有完整数据且发货量>0
+            if (!i.is_deleted && i.po_num && i.po_sku && i.po_price !== null && i.sent_qty > 0) return true;
+            // 删除项：原有的（非新增）被删除的
+            if (i.is_deleted && !i.is_new && i.po_num && i.po_sku) return true;
+            return false;
+        });
+        
+        // 构建请求数据
+        const requestData = {
+            logistic_num: editCurrentLogisticNum,
+            items: allItems.map(i => ({
+                po_num: i.po_num,
+                po_sku: i.po_sku,
+                po_price: i.po_price,
+                sent_qty: i.sent_qty || 0,
+                is_adjusted: i.is_adjusted || false,
+                is_deleted: i.is_deleted || false,
+                is_new: i.is_new || false
+            })),
+            note: note
+        };
+        
+        // 添加Step5验证的密码
+        if (typeof sendEditVerifiedPasswords !== 'undefined' && sendEditVerifiedPasswords) {
+            for (const [slot, code] of Object.entries(sendEditVerifiedPasswords)) {
+                requestData[`sec_code_${slot}`] = code;
+            }
+        }
+        
+        // 检查是否有物流参数修改
+        if (!editSkippedLogistics && typeof collectLogisticsData === 'function' && editOriginalData && editOriginalData.logistics) {
+            const logisticsData = collectLogisticsData();
+            const orig = editOriginalData.logistics;
+            const hasLogisticsChanges = (
+                logisticsData.date_eta !== (orig.date_eta || '') ||
+                logisticsData.pallets !== (orig.pallets || 0) ||
+                Math.abs(logisticsData.price_kg - (orig.price_kg || 0)) > 0.0001 ||
+                Math.abs(logisticsData.total_weight - (orig.total_weight || 0)) > 0.01 ||
+                Math.abs(logisticsData.total_price - (orig.total_price || 0)) > 0.01 ||
+                Math.abs(logisticsData.usd_rmb - (orig.usd_rmb || 0)) > 0.0001
+            );
+            
+            if (hasLogisticsChanges) {
+                requestData.logistics = logisticsData;
+                requestData.logistics_note = logisticsData.note || note;
+            }
+        }
+        
+        fetch(`{% url 'web_ui:purchase:send_mgmt_submit_items_modify' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(r => r.json())
+        .then(result => {
+            submittingEl.style.display = 'none';
+            
+            if (result.success) {
+                let message = `发货单修改成功，新版本号: ${result.data.new_seq}`;
+                if (result.data.logistics_updated) {
+                    message += (window.i18n?.t('js.with_logistics_edit') || '(with logistics edit)');
+                }
+                document.getElementById('edit-success-message').textContent = message;
+                successEl.style.display = 'block';
+            } else {
+                document.getElementById('edit-error-message').textContent = result.message || (window.i18n?.t('js.submit_failed') || 'Submit Failed');
+                errorEl.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            submittingEl.style.display = 'none';
+            document.getElementById('edit-error-message').textContent = (window.i18n?.t('js.submit_failed_colon') || 'Submit failed: ') + err;
+            errorEl.style.display = 'block';
+        });
+    }
+    
+    // 重试提交
+    function retrySubmit() {
+        runStep6Submit();
+    }
+    
+    // 继续查看/编辑
+    function reloadAndEditOrder() {
+        if (editCurrentLogisticNum) {
+            viewOrder(editCurrentLogisticNum);
+        }
+    }
+    
+    // 返回列表
+    function closeEditAndReload() {
+        showListView();
+        if (typeof loadOrderTable === 'function') {
+            loadOrderTable();
+        }
+    }
+</script>

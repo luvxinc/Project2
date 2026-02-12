@@ -1,0 +1,164 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}用户权限管理 - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 h-100 d-flex flex-column">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-white fw-bold mb-1">
+                <i class="fa-solid fa-users-gear me-2 text-info"></i>用户与权限管理中心
+            </h4>
+            <div class="text-muted small">
+                ISO 27001 Access Control & Security Policy Management
+            </div>
+        </div>
+
+        <div id="header-actions">
+        </div>
+    </div>
+
+    <!-- Module Hub Menu -->
+    {% with hub_id="user-admin-hub" hub_items=hub_items module_icon="fa-solid fa-users-gear" module_title="用户与权限管理中心
+    (User & IAM)" %}
+    {% include "components/module_hub.html" %}
+    {% endwith %}
+
+    <!-- Hidden Tabs Navigation for HTMX targets -->
+    <ul class="nav nav-pills mb-3 border-bottom border-secondary border-opacity-25 d-none" id="uaTabs">
+        <li class="nav-item">
+            <a class="nav-link active cursor-pointer" hx-get="{% url 'web_ui:tab_content' tab_name='users' %}"
+                hx-target="#ua-content-area" hx-trigger="load, click" onclick="setActiveTab(this)"
+                data-hub-target="users">
+                User List
+            </a>
+        </li>
+
+        {% if user.is_superuser %}
+        <li class="nav-item">
+            <a class="nav-link cursor-pointer" hx-get="{% url 'web_ui:tab_content' tab_name='policies' %}"
+                hx-target="#ua-content-area" onclick="setActiveTab(this)" data-hub-target="policies">
+                Policies
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link cursor-pointer" hx-get="{% url 'web_ui:tab_content' tab_name='capabilities' %}"
+                hx-target="#ua-content-area" onclick="setActiveTab(this)" data-hub-target="capabilities">
+                Capabilities
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <div id="ua-content-area" class="flex-grow-1 position-relative">
+        <div class="htmx-indicator position-absolute top-50 start-50 translate-middle text-center">
+            <div class="spinner-border text-info mb-2" role="status"></div>
+            <div class="text-muted small">Loading Module...</div>
+        </div>
+    </div>
+
+    <!-- Shared Modals -->
+    {# 引入新增用户弹窗 (Moved to Dashboard for Hub Access) #}
+    {% include "components/ua_modal_user_form.html" %}
+
+    {# 权限配置弹窗容器 (内容由 HTMX 加载) #}
+    <div class="modal fade" id="permissionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-0" id="permission-modal-content"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function setActiveTab(element) {
+        document.querySelectorAll('#uaTabs .nav-link').forEach(el => {
+            el.classList.remove('active', 'border-info', 'text-white', 'fw-bold');
+            el.classList.add('border-transparent', 'text-white-50');
+        });
+        element.classList.remove('border-transparent', 'text-white-50');
+        element.classList.add('active', 'border-info', 'text-white', 'fw-bold');
+    }
+
+    // [Moved from ua_tab_users.html]
+    function setupResetModal(username) {
+        document.getElementById('reset-user-display').innerText = username;
+        document.getElementById('reset-user-input').value = username;
+    }
+
+    function setupDeleteModal(username) {
+        document.getElementById('delete-user-display').innerText = username;
+        const form = document.getElementById('deleteUserForm');
+        // Update the URLs in existing hx-post and hx-target attributes
+        // [FIX] Correct URL pattern to match urls.py (actions/delete_user)
+        const newPost = `/dashboard/user_admin/actions/delete_user/${username}/`;
+        form.setAttribute('hx-post', newPost);
+        form.setAttribute('hx-target', `#user_row_${username}`);
+
+        // [FIX] Re-process HTMX after attribute changes
+        htmx.process(form);
+    }
+
+    function setupLockModal(btn) {
+        const username = btn.dataset.username;
+        const manageUrl = btn.dataset.manageUrl;
+        const rowId = btn.dataset.rowId;
+        const actionType = btn.dataset.actionType || 'lock';
+
+        document.getElementById('lock-user-display').innerText = username;
+        const actionText = actionType === 'unlock' ? '解锁 (Unlock)' : '锁定 (Lock)';
+        document.getElementById('lock-action-display').innerText = actionText;
+
+        const titleEl = document.getElementById('lock-modal-title');
+        if (actionType === 'unlock') {
+            titleEl.innerHTML = '<i class="fa-solid fa-lock-open me-2"></i>解除锁定';
+            titleEl.className = 'modal-title text-success fw-bold';
+        } else {
+            titleEl.innerHTML = '<i class="fa-solid fa-lock me-2"></i>锁定用户';
+            titleEl.className = 'modal-title text-danger fw-bold';
+        }
+
+        document.getElementById('lock-action-input').value = actionType;
+
+        const form = document.getElementById('lockUserForm');
+        form.setAttribute('hx-post', manageUrl);
+        form.setAttribute('hx-target', `#${rowId}`);
+
+        // [FIX] Re-process HTMX after attribute changes
+        htmx.process(form);
+    }
+
+    function setupRoleModal(btn) {
+        const username = btn.dataset.username;
+        const url = btn.dataset.url;
+        const rowId = btn.dataset.rowId;
+        const direction = btn.dataset.direction;
+
+        document.getElementById('role-user-display').innerText = username;
+
+        const actionText = direction === 'up' ? '晋升为管理员 (Promote)' : '降级为普通用户 (Demote)';
+        document.getElementById('role-action-display').innerText = actionText;
+
+        document.getElementById('role-direction-input').value = direction;
+
+        const form = document.getElementById('changeRoleForm');
+        form.setAttribute('hx-post', url);
+        form.setAttribute('hx-target', `#${rowId}`);
+
+        // [FIX] Re-process HTMX after attribute changes
+        htmx.process(form);
+    }
+</script>
+
+<style>
+    .nav-link.active {
+        background: transparent !important;
+    }
+
+    .hover-text-white:hover {
+        color: #fff !important;
+    }
+</style>
+{% endblock %}

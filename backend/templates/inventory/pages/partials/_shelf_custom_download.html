@@ -1,0 +1,529 @@
+
+<script>
+/* ========================================================
+   Custom Download & Interactive 3D Logic (Slot Level Support)
+   ======================================================== */
+
+const CustomDownloadState = {
+    selectedWh: null,
+    highlightedMesh: null,
+    originalHex: null,
+    sceneObj: null,
+};
+
+function openCustomDownloadView() {
+    document.getElementById('main-view').classList.add('d-none');
+    document.getElementById('custom-download-view').classList.remove('d-none');
+    
+    const select = document.getElementById('custom-download-wh-select');
+    select.innerHTML = '<option value="" selected disabled data-i18n="option.o2629">请选择仓库...</option>';
+    
+    if (ShelfState && ShelfState.warehouses) {
+        Object.keys(ShelfState.warehouses).forEach(wh => {
+            const option = document.createElement('option');
+            option.value = wh;
+            option.textContent = wh;
+            select.appendChild(option);
+        });
+    }
+    
+    if (!select.dataset.hasListener) {
+        select.addEventListener('change', (e) => {
+            const wh = e.target.value;
+            if (wh) initCustomInteractive3D('custom-3d-container', ShelfState.warehouses[wh], wh);
+        });
+        select.dataset.hasListener = "true";
+    }
+}
+
+function closeCustomDownloadView() {
+    document.getElementById('custom-download-view').classList.add('d-none');
+    document.getElementById('main-view').classList.remove('d-none');
+    const container = document.getElementById('custom-3d-container');
+    container.innerHTML = '';
+    CustomDownloadState.sceneObj = null;
+}
+
+function initCustomInteractive3D(containerId, whData, whNum) {
+    const container = document.getElementById(containerId);
+    if (!container || !THREE) return;
+    
+    container.innerHTML = '';
+    const rect = container.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a); 
+    
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+    camera.position.set(0, 25, 30);
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+    
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.maxPolarAngle = Math.PI / 2 - 0.1; 
+    
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+    
+    // --- Geometry Constants ---
+    const aisles = whData?.aisles || {};
+    const hasL = !!aisles['L'], hasR = !!aisles['R'];
+    const bayCountL = hasL ? Object.keys(aisles['L'].bays || {}).length : 0;
+    const bayCountR = hasR ? Object.keys(aisles['R'].bays || {}).length : 0;
+    const maxBays = Math.max(bayCountL, bayCountR, 1);
+    
+    const whWidth = 10; 
+    const walkwayWidth = 2.0;
+    const entranceDepth = 2.0;
+    const shelfWidth = (whWidth - walkwayWidth) / 2 - 0.2;
+    const shelfDepth = 6.0;
+    const shelfGap = 0.5;
+    const shelfHeight = 1.0;
+    
+    const shelfZoneLength = maxBays * shelfDepth + Math.max(0, maxBays - 1) * shelfGap;
+    const whDepth = shelfZoneLength + entranceDepth;
+    const backWallZ = -whDepth / 2;
+    const shelfStartZ = backWallZ + shelfDepth / 2;
+    
+    // Environment
+    scene.add(createBox(whWidth, 0.2, whDepth, 0x1a2129, 0, -0.1, 0)); // Floor
+    scene.add(createBox(walkwayWidth, 0.02, whDepth, 0x5a5a4a, 0, 0.02, 0)); // Walkway
+    const entryZ = whDepth/2 - entranceDepth/2;
+    scene.add(createBox(whWidth/2, 0.15, entranceDepth*0.8, 0x6aaf6a, 0, 0.08, entryZ)); // Entrance
+    createLabel(scene, (window.i18n?.t('js.entry') || 'Entry'), 0, 0.8, entryZ, 0x00ff00);
+
+    const xL = -(whWidth/2 - shelfWidth/2 - 0.1); 
+    const xR = (whWidth/2 - shelfWidth/2 - 0.1);
+    
+    const interactables = [];
+    const smallGap = 0.05; // Gap between sub-blocks
+    
+    function createInteractiveBay(aisleData, xPos, startZ, w, d, h, gap, side) {
+        const bays = aisleData.bays || {};
+        const bayNums = Object.keys(bays).sort((a, b) => parseInt(a) - parseInt(b));
+        
+        bayNums.forEach((bayNum, idx) => {
+            const zPos = startZ + idx * (d + gap);
+            createLabel(scene, `Bay ${bayNum}`, xPos, h*3.5, zPos, 0xffffff, 0.5);
+            
+            const bayData = bays[bayNum];
+            const levels = bayData.levels || {};
+            const order = ['G', 'M', 'T'];
+            let y = h/2 + 0.1;
+            
+            order.forEach(level => {
+                if (levels[level]) {
+                    const lData = levels[level];
+                    const bins = lData.bins ? Object.keys(lData.bins).sort() : [];
+                    
+                    // Base geometry params
+                    const baseColor = LEVEL_COLORS[level] || 0xcccccc;
+                    
+                    // Recursive split logic
+                    if (bins.length === 0) {
+                        // Case A: Whole Level (No Bin subdivisions)
+                        createBlock(w, h, d, xPos, y, zPos, baseColor, {
+                            type: 'level', whNum, aisle: side, bay: bayNum, level
+                        });
+                    } else {
+                        // Case B: Split by Bins (along Z axis)
+                        const binDepth = d / bins.length;
+                        const startZ_Level = zPos - d/2;
+                        
+                        bins.forEach((binKey, bIdx) => {
+                            const binNode = lData.bins[binKey];
+                            const slots = binNode.slots ? binNode.slots : []; // Array of strings
+                            
+                            const binZCenter = startZ_Level + (bIdx * binDepth) + (binDepth / 2);
+                            const binZStart = startZ_Level + (bIdx * binDepth);
+                            
+                            if (slots.length === 0) {
+                                // Draw Bin Block
+                                createBlock(w, h, binDepth - smallGap, xPos, y, binZCenter, baseColor, {
+                                    type: 'bin', whNum, aisle: side, bay: bayNum, level, bin: binKey
+                                });
+                            } else {
+                                // Case C: Split by Slots (along Z axis, nested in Bin)
+                                const slotDepth = binDepth / slots.length;
+                                
+                                slots.forEach((slotKey, sIdx) => {
+                                    const slotZCenter = binZStart + (sIdx * slotDepth) + (slotDepth / 2);
+                                    
+                                    createBlock(w, h, slotDepth - smallGap, xPos, y, slotZCenter, baseColor, {
+                                        type: 'slot', whNum, aisle: side, bay: bayNum, level, bin: binKey, slot: slotKey
+                                    });
+                                });
+                            }
+                        });
+                    }
+                    y += h + 0.1;
+                }
+            });
+        });
+    }
+    
+    function createBlock(w, h, d, x, y, z, color, userData) {
+        const geo = new THREE.BoxGeometry(w, h, d);
+        const mat = new THREE.MeshLambertMaterial({ color: color });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, z);
+        mesh.userData = userData;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
+        // Wireframe for better visibility of splits
+        const edges = new THREE.EdgesGeometry(geo);
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 }));
+        mesh.add(line);
+        
+        scene.add(mesh);
+        interactables.push(mesh);
+    }
+    
+    if (hasL) createInteractiveBay(aisles['L'], xL, shelfStartZ, shelfWidth, shelfDepth, shelfHeight, shelfGap, 'L');
+    if (hasR) createInteractiveBay(aisles['R'], xR, shelfStartZ, shelfWidth, shelfDepth, shelfHeight, shelfGap, 'R');
+
+    // Raycaster
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    const onMouseClick = (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(interactables);
+        
+        if (intersects.length > 0) {
+            handleObjectClick(intersects[0].object);
+        } else {
+             // Optional: Deselect if clicking void?
+        }
+    };
+    
+    // Debounce resize
+    let resizeTimeout;
+    const onResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+             const newRect = container.getBoundingClientRect();
+             if(newRect.width > 0 && newRect.height > 0) {
+                 camera.aspect = newRect.width / newRect.height;
+                 camera.updateProjectionMatrix();
+                 renderer.setSize(newRect.width, newRect.height);
+             }
+        }, 100);
+    };
+    window.addEventListener('resize', onResize);
+    
+    container.addEventListener('click', onMouseClick);
+    
+    function animate() {
+        if (!document.getElementById(containerId)) {
+            window.removeEventListener('resize', onResize);
+            return;
+        }
+        requestAnimationFrame(animate); 
+        controls.update(); 
+        renderer.render(scene, camera); 
+    }
+    animate();
+    
+    CustomDownloadState.sceneObj = { scene, interactables };
+}
+
+function handleObjectClick(mesh) {
+    if (CustomDownloadState.highlightedMesh && CustomDownloadState.highlightedMesh !== mesh) {
+        CustomDownloadState.highlightedMesh.material.emissive.setHex(0x000000);
+    }
+    
+    mesh.material.emissive.setHex(0xaaaaaa); // Stronger highlight
+    CustomDownloadState.highlightedMesh = mesh;
+    
+    updateInfoBar(mesh.userData);
+}
+
+function updateInfoBar(info) {
+    const container = document.getElementById('location-info-bar');
+    const btnGenerate = document.getElementById('btn-generate-barcode');
+    
+    if (!info) return;
+    
+    // Auto-enable generate button if a leaf node is selected
+    if (btnGenerate) btnGenerate.disabled = false;
+
+    let typeLabel = (window.i18n?.t('js.level') || 'Level');
+    let deepDetail = '';
+    
+    if (info.type === 'bin') typeLabel = (window.i18n?.t('js.bin') || 'Bin');
+    if (info.type === 'slot') typeLabel = (window.i18n?.t('js.slot') || 'Slot');
+    
+    let html = `
+        <div class="mb-4 fade-in">
+            <h5 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+                <i class="fas fa-check-circle me-2"></i>已选中: ${typeLabel}
+            </h5>
+            
+            <div class="card bg-dark bg-opacity-50 border-secondary mb-3">
+                <div class="card-body py-2">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-white-50 d-block" data-i18n="ui.text_378">仓库</small>
+                            <span class="fw-bold text-white">${info.whNum}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50 d-block" data-i18n="ui.text_379">排 (Aisle)</small>
+                            <span class="fw-bold text-white">${info.aisle}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50 d-block" data-i18n="ui.text_380">跨 (Bay)</small>
+                            <span class="fw-bold text-white">${info.bay}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50 d-block" data-i18n="ui.text_381">层 (Level)</small>
+                            <span class="badge bg-${info.level === 'G' ? 'success' : (info.level === 'M' ? 'primary' : 'warning')}">
+                                ${info.level}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    if (info.type !== 'level') {
+        html += `
+            <div class="card bg-primary bg-opacity-10 border-primary mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-box me-2 text-primary"></i>
+                        <span class="text-white-50 me-2">Bin:</span>
+                        <span class="fw-bold text-white fs-5">${info.bin}</span>
+                    </div>
+    `;
+        
+        if (info.type === 'slot') {
+            html += `
+                    <div class="d-flex align-items-center border-top border-primary border-opacity-25 pt-2">
+                        <i class="fas fa-th me-2 text-info"></i>
+                        <span class="text-white-50 me-2">Slot:</span>
+                        <span class="fw-bold text-info fs-4">${info.slot}</span>
+                    </div>
+            `;
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+    } else {
+        html += `<div class="alert alert-secondary text-center small py-2" data-i18n="ui.text_2093">此层级未再细分</div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Generate Barcode Logic
+document.getElementById('btn-generate-barcode').addEventListener('click', async function() {
+    if (!CustomDownloadState.highlightedMesh || !CustomDownloadState.highlightedMesh.userData) {
+        createAndShowToast(i18n.t('toast.select_location'), 'warning');
+        return;
+    }
+    
+    const info = CustomDownloadState.highlightedMesh.userData;
+    // Prepare payload matching backend expectation
+    const payload = {
+        wh_num: info.whNum,
+        aisle: info.aisle,
+        bay: info.bay,
+        level: info.level,
+        bin: info.bin || '',   // ensure empty string if undefined
+        slot: info.slot || ''
+    };
+    
+    const btn = this;
+    const orgContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + (window.i18n?.t('js.generating') || 'Generating...');
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/dashboard/inventory/shelf/api/download_barcode/', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Ensure this template context variable is available
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // Get filename from header or gen default
+            const disposition = res.headers.get('Content-Disposition');
+            let filename = 'barcode.pdf';
+            if (disposition && disposition.indexOf('filename=') !== -1) {
+                const match = disposition.match(/filename="?([^"]+)"?/);
+                if (match && match[1]) filename = match[1];
+            }
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            createAndShowToast((window.i18n?.t('js.download_success') || 'Download Success'), 'success');
+        } else {
+            const err = await res.json();
+            createAndShowToast((window.i18n?.t('js.generate_failed_colon') || 'Generate failed: ') + (err.error || 'Unknown error'), 'danger');
+        }
+    } catch (e) {
+        console.error(e);
+        createAndShowToast((window.i18n?.t('js.request_failed') || 'Request Failed'), 'danger');
+    } finally {
+        btn.innerHTML = orgContent;
+        btn.disabled = false;
+    }
+});
+
+// ============================================================
+// Download All Barcodes (Batch ZIP) with GlobalModal Progress
+// ============================================================
+
+async function downloadAllBarcodes() {
+    const btn = document.getElementById('btnDownloadAll');
+    const originalContent = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + (window.i18n?.t('js.preparing') || 'Preparing...');
+    
+    // Show progress modal using GlobalModal
+    const progressHtml = `
+        <div class="modal-header border-0">
+            <h5 class="modal-title text-white">
+                <i class="fas fa-download me-2 text-info"></i>批量下载仓库码
+            </h5>
+        </div>
+        <div class="modal-body">
+            <div class="text-center mb-3">
+                <i class="fas fa-file-archive fa-3x text-info mb-3"></i>
+                <p id="gm-progress-status" class="text-white" data-i18n="ui.text_382">正在生成 PDF 文件...</p>
+            </div>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                     id="gm-progress-bar" role="progressbar" style="width: 0%">
+                    <span id="gm-progress-percent">0%</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    GlobalModal.showCustom({
+        html: progressHtml,
+        borderColor: '#0dcaf0',
+        glowEffect: 'none'
+    });
+    
+    // Wait a moment for modal to render
+    await new Promise(r => setTimeout(r, 100));
+    
+    const progressBar = document.getElementById('gm-progress-bar');
+    const progressPercent = document.getElementById('gm-progress-percent');
+    const progressStatus = document.getElementById('gm-progress-status');
+    
+    try {
+        const response = await fetch('/dashboard/inventory/shelf/api/download_all/');
+        
+        if (!response.ok) {
+            throw new Error('Download failed');
+        }
+        
+        // Get content length for progress
+        const contentLength = response.headers.get('content-length');
+        const total = parseInt(contentLength, 10) || 0;
+        
+        // Read the stream
+        const reader = response.body.getReader();
+        const chunks = [];
+        let received = 0;
+        
+        if (progressStatus) progressStatus.textContent = (window.i18n?.t('js.downloading') || 'Downloading...');
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            chunks.push(value);
+            received += value.length;
+            
+            // Update progress
+            if (progressBar && progressPercent) {
+                if (total > 0) {
+                    const percent = Math.round((received / total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressPercent.textContent = percent + '%';
+                } else {
+                    // Indeterminate progress
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = `${(received / 1024).toFixed(1)} KB`;
+                }
+            }
+        }
+        
+        // Combine chunks into blob
+        const blob = new Blob(chunks, { type: 'application/zip' });
+        
+        if (progressStatus) progressStatus.textContent = (window.i18n?.t('js.download_complete') || 'Download Complete!');
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+            progressBar.classList.remove('bg-info');
+            progressBar.classList.add('bg-success');
+        }
+        if (progressPercent) progressPercent.textContent = '100%';
+        
+        // Trigger download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'warehouse_code.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        createAndShowToast((window.i18n?.t('js.download_success') || 'Download Success'), 'success');
+        
+        // Close modal after delay
+        setTimeout(() => {
+            GlobalModal.hide();
+        }, 1000);
+        
+    } catch (e) {
+        console.error('Download error:', e);
+        if (progressStatus) progressStatus.textContent = (window.i18n?.t('modal.download_failed') || 'Download Failed');
+        if (progressBar) {
+            progressBar.classList.remove('bg-info');
+            progressBar.classList.add('bg-danger');
+        }
+        createAndShowToast((window.i18n?.t('js.download_failed_colon') || 'Download failed: ') + e.message, 'danger');
+        
+        setTimeout(() => {
+            GlobalModal.hide();
+        }, 2000);
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+}
+</script>

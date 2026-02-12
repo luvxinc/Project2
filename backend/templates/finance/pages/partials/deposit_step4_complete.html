@@ -1,0 +1,390 @@
+<!-- Step 4: 付款完成 (Deposit) -->
+<div class="row">
+    <div class="col-12">
+        <div class="success-card text-center">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4 class="text-success mb-2" data-i18n="ui.text_1443">付款完成</h4>
+            <p class="text-white-50 mb-4"><span data-i18n="desc.d092">已成功标记</span> <span class="text-white fw-bold"
+                    id="success-count">0</span> <span data-i18n="desc.d093">个订货单为已付款状态</span></p>
+
+            <!-- 费用汇总卡片 - 第一行: 定金金额 + 预付抵扣 -->
+            <div class="success-summary-cards mb-3">
+                <!-- 定金金额 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-coins text-info"></i>
+                        <span data-i18n="ui.text_1543">定金金额</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info" id="success-deposit-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning" id="success-deposit-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预付抵扣 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-wallet text-info"></i>
+                        <span data-i18n="ui.text_2484">预付抵扣</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info" id="success-prepay-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning" id="success-prepay-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 费用汇总卡片 - 第二行: 本次支付 + 额外费用(可选) = 付款总额 -->
+            <div class="success-summary-cards">
+                <!-- 本次支付 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-hand-holding-usd text-success"></i>
+                        <span data-i18n="finance.this_payment">本次支付</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info" id="success-cash-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning" id="success-cash-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 加号(额外费用) -->
+                <div class="operator-symbol" id="success-extra-plus" style="display: none;">+</div>
+
+                <!-- 额外费用(可选) -->
+                <div class="summary-card" id="success-extra-card" style="display: none;">
+                    <div class="summary-card-header">
+                        <i class="fas fa-receipt text-danger"></i>
+                        <span data-i18n="table.extra_fees">额外费用</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info" id="success-extra-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning" id="success-extra-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 等号 -->
+                <div class="operator-symbol">=</div>
+
+                <!-- 付款总额 -->
+                <div class="summary-card total">
+                    <div class="summary-card-header">
+                        <i class="fas fa-calculator text-warning"></i>
+                        <span data-i18n="ui.text_2578">付款总额</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info fs-5 fw-bold" id="success-total-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning fs-5 fw-bold" id="success-total-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 付款信息 -->
+            <div class="success-info mt-4">
+                <div class="info-item">
+                    <i class="fas fa-calendar-check text-white-50"></i>
+                    <span class="text-white-50" data-i18n="table.payment_date">付款日期</span>
+                    <span class="text-white fw-bold" id="success-payment-date">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user text-white-50"></i>
+                    <span class="text-white-50" data-i18n="common.operator">操作人</span>
+                    <span class="text-white fw-bold" id="success-operator">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Wizard Actions -->
+<!-- Wizard Actions (Removed per request) -->
+<div class="wizard-actions mt-4"></div>
+
+<!-- 复用 Logistics 的样式 -->
+<style>
+    .success-card {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.08), rgba(0, 0, 0, 0.3));
+        border: 1px solid rgba(25, 135, 84, 0.25);
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+    }
+
+    .success-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.25), rgba(25, 135, 84, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: successPulse 2s infinite;
+    }
+
+    .success-icon i {
+        font-size: 2rem;
+        color: #198754;
+    }
+
+    @keyframes successPulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4);
+        }
+
+        50% {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px 5px rgba(25, 135, 84, 0.2);
+        }
+    }
+
+    .success-summary-cards {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .operator-symbol {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 0 0.25rem;
+    }
+
+    .summary-card {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(108, 117, 125, 0.25);
+        border-radius: 12px;
+        min-width: 160px;
+        flex: 1;
+        max-width: 180px;
+    }
+
+    .summary-card.total {
+        border-color: rgba(255, 193, 7, 0.35);
+        background: rgba(255, 193, 7, 0.08);
+    }
+
+    .summary-card-header {
+        padding: 0.6rem 0.8rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .summary-card-header i {
+        font-size: 0.75rem;
+    }
+
+    .summary-card-body {
+        padding: 0.8rem;
+    }
+
+    .amount-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+    }
+
+    .amount-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .currency-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    .currency-badge.usd {
+        background: rgba(13, 110, 253, 0.2);
+        color: #0dcaf0;
+    }
+
+    .currency-badge.rmb {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+
+    .amount {
+        font-family: 'SF Mono', monospace;
+        font-size: 0.95rem;
+    }
+
+    .success-info {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(108, 117, 125, 0.15);
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .info-item i {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-item span:first-of-type {
+        font-size: 0.75rem;
+    }
+</style>
+
+<script>
+    // Step 4 初始化
+    function initStep4() {
+        // 获取汇率
+        const currentRate = window.paymentItems && window.paymentItems.length > 0
+            ? (window.paymentItems[0].cur_usd_rmb || 7.0) : 7.0;
+
+        // 计算预付抵扣和本次支付
+        let prepayRMB = 0;
+        let prepayUSD = 0;
+        let cashRMB = 0;
+        let cashUSD = 0;
+
+        if (window.paymentItems) {
+            window.paymentItems.forEach(item => {
+                // 预付抵扣金额
+                const prepayAmount = item._prepayVal || item.allocated_deduction || 0;
+                const itemCur = item.cur_currency || 'USD';
+                const itemRate = item.cur_usd_rmb || currentRate;
+
+                if (itemCur === 'RMB') {
+                    prepayRMB += prepayAmount;
+                    prepayUSD += prepayAmount / itemRate;
+                } else {
+                    prepayUSD += prepayAmount;
+                    prepayRMB += prepayAmount * itemRate;
+                }
+
+                // 本次现金支付 = 待付金额 - 抵扣金额
+                const pending = item.recalc_pending || item.deposit_pending || 0;
+                const cashAmount = Math.max(0, pending - prepayAmount);
+
+                if (itemCur === 'RMB') {
+                    cashRMB += cashAmount;
+                    cashUSD += cashAmount / itemRate;
+                } else {
+                    cashUSD += cashAmount;
+                    cashRMB += cashAmount * itemRate;
+                }
+            });
+        }
+
+        // 计算额外费用
+        let extraRMB = 0;
+        let extraUSD = 0;
+        const hasExtraFee = window.extraFeeData && window.extraFeeData.note &&
+            window.extraFeeData.currency && window.extraFeeData.amount > 0;
+
+        if (hasExtraFee) {
+            const { currency, amount } = window.extraFeeData;
+            if (currency === 'RMB') {
+                extraRMB = amount;
+                extraUSD = amount / currentRate;
+            } else if (currency === 'USD') {
+                extraUSD = amount;
+                extraRMB = amount * currentRate;
+            }
+        }
+
+        // 计算总计: 付款总额 = 本次支付 + 额外费用（不含预付抵扣）
+        const totalRMB = cashRMB + extraRMB;
+        const totalUSD = cashUSD + extraUSD;
+
+        // 更新显示
+        document.getElementById('success-count').textContent = window.paymentItems ? window.paymentItems.length : 0;
+
+        // 定金金额 = 预付抵扣 + 本次支付
+        const depositRMB = prepayRMB + cashRMB;
+        const depositUSD = prepayUSD + cashUSD;
+        document.getElementById('success-deposit-rmb').textContent = `¥${depositRMB.toFixed(2)}`;
+        document.getElementById('success-deposit-usd').textContent = `$${depositUSD.toFixed(2)}`;
+
+        // 预付抵扣
+        document.getElementById('success-prepay-rmb').textContent = `¥${prepayRMB.toFixed(2)}`;
+        document.getElementById('success-prepay-usd').textContent = `$${prepayUSD.toFixed(2)}`;
+
+        // 本次支付
+        document.getElementById('success-cash-rmb').textContent = `¥${cashRMB.toFixed(2)}`;
+        document.getElementById('success-cash-usd').textContent = `$${cashUSD.toFixed(2)}`;
+
+        // 额外费用
+        if (hasExtraFee) {
+            document.getElementById('success-extra-card').style.display = 'block';
+            document.getElementById('success-extra-plus').style.display = 'block';
+            document.getElementById('success-extra-rmb').textContent = `¥${extraRMB.toFixed(2)}`;
+            document.getElementById('success-extra-usd').textContent = `$${extraUSD.toFixed(2)}`;
+        } else {
+            document.getElementById('success-extra-card').style.display = 'none';
+            document.getElementById('success-extra-plus').style.display = 'none';
+        }
+
+        // 付款总额
+        document.getElementById('success-total-rmb').textContent = `¥${totalRMB.toFixed(2)}`;
+        document.getElementById('success-total-usd').textContent = `$${totalUSD.toFixed(2)}`;
+
+        // 付款日期
+        const paymentDate = window.step2RateState ? window.step2RateState.paymentDate : '-';
+        document.getElementById('success-payment-date').textContent = paymentDate || '-';
+
+        // 操作人
+        const operatorEl = document.querySelector('[data-current-user]');
+        const operator = operatorEl ? operatorEl.dataset.currentUser : (window.i18n?.t('js.current_user') || 'Current User');
+        document.getElementById('success-operator').textContent = operator || (window.i18n?.t('js.current_user') || 'Current User');
+    }
+
+    // closeDepositWizard 已在 deposit.html 中全局定义 (window.closeDepositWizard)
+    // 此处不再重复定义，避免遮蔽全局版本导致状态刷新问题
+</script>

@@ -1,0 +1,214 @@
+<div class="fade-in">
+    <!-- Main Config Card (Full Width) -->
+    <div class="glass-card p-4 p-lg-5 shadow-lg">
+
+        <!-- Header Section -->
+        <div class="d-flex align-items-center mb-4 border-bottom border-light border-opacity-10 pb-4">
+            <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                <i class="fa-solid fa-sliders fa-2x text-primary"></i>
+            </div>
+            <div>
+                <h4 class="text-white mb-1 fw-bold" data-i18n="capability.title">职能边界配置 (Capabilities)</h4>
+                <p class="text-white-50 small mb-0" data-i18n="capability.desc">动态控制管理员 (Admin) 角色的操作权限。修改后即时生效，无需重启。</p>
+            </div>
+        </div>
+
+        <!-- Info/Notice Section (Sensitive info removed) -->
+        <div
+            class="alert alert-info bg-opacity-10 border-info border-opacity-25 d-flex align-items-start mb-5 shadow-sm rounded-3">
+            <i class="fa-solid fa-circle-info text-info mt-1 me-3 fa-lg"></i>
+            <div class="text-white-50 small">
+                <strong class="text-info d-block mb-1" data-i18n="common.operation_notes">操作须知</strong>
+                <ul class="mb-0 ps-3">
+                    <li>此面板仅控制 <strong data-i18n="ui.text_81">普通管理员</strong> 的权限，Superuser 拥有所有权限不受此限制。</li>
+                    <li data-i18n="capability.audit_logged">所有变更将记录在系统审计日志 (Audit Log) 中。</li>
+                    <li data-i18n="ui.text_83">系统重启后将按默认策略恢复配置（如需永久生效请联系System Admin员）。</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Config Form -->
+        <form id="capabilityForm">
+            {% csrf_token %}
+
+            <div class="row g-4 mb-5">
+
+                <!-- Left Column: Standard Capabilities -->
+                <div class="col-lg-6">
+                    <h6 class="text-white-50 text-uppercase small fw-bold mb-3 ls-1">
+                        <i class="fa-solid fa-user-gear me-2"></i><span data-i18n="ui.icon_3029">常规职能</span>
+                    </h6>
+                    <div class="d-flex flex-column gap-3">
+
+                        <!-- 1. Create User -->
+                        <div class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-user-plus me-2 text-info opacity-75"></i><span data-i18n="ui.icon_3030">允许Register New User</span>
+                                </div>
+                                <div class="text-white-50 small" data-i18n="capability.allow_create">授权管理员创建新的登录账号。</div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-primary">
+                                <input type="checkbox" name="caps" value="can_create_user" {% if caps.can_create_user %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <!-- 2. Lock User -->
+                        <div class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-lock me-2 text-info opacity-75"></i><span data-i18n="ui.icon_3031">允许锁定/解锁</span>
+                                </div>
+                                <div class="text-white-50 small" data-i18n="capability.allow_lock">授权管理员冻结违规账号。</div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-primary">
+                                <input type="checkbox" name="caps" value="can_lock_user" {% if caps.can_lock_user %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <!-- 3. Reset Password -->
+                        <div class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-key me-2 text-info opacity-75"></i><span data-i18n="ui.icon_3032">允许重置密码</span>
+                                </div>
+                                <div class="text-white-50 small">授权管理员强制修改用户密码。<span class="text-warning" data-i18n="capability.high_risk">高危</span>
+                                </div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-primary">
+                                <input type="checkbox" name="caps" value="can_reset_pwd" {% if caps.can_reset_pwd %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <!-- 4. Manage Permissions -->
+                        <div class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-shield-halved me-2 text-info opacity-75"></i><span data-i18n="ui.icon_3033">允许模块权限管理</span>
+                                </div>
+                                <div class="text-white-50 small" data-i18n="capability.allow_config_perms">授权管理员修改用户的模块访问权限。</div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-primary">
+                                <input type="checkbox" name="caps" value="can_manage_perms" {% if caps.can_manage_perms %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Right Column: High-Risk Capabilities -->
+                <div class="col-lg-6">
+                    <h6 class="text-danger text-uppercase small fw-bold mb-3 ls-1">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i><span data-i18n="ui.icon_3034">高风险职能</span>
+                    </h6>
+                    <div class="d-flex flex-column gap-3">
+
+                        <!-- 5. Change Role -->
+                        <div
+                            class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item cap-item-warning">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-user-tag me-2 text-warning opacity-75"></i><span data-i18n="ui.icon_3035">允许调整职级</span>
+                                </div>
+                                <div class="text-white-50 small" data-i18n="capability.allow_promote">授权管理员晋升/降级普通用户。涉及权限提权。</div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-warning">
+                                <input type="checkbox" name="caps" value="can_change_role" {% if caps.can_change_role %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <!-- 6. Delete User -->
+                        <div
+                            class="d-flex justify-content-between align-items-center p-4 rounded-3 cap-item cap-item-danger">
+                            <div class="pe-3">
+                                <div class="text-white fw-bold mb-1">
+                                    <i class="fa-solid fa-trash me-2 text-danger opacity-75"></i><span data-i18n="ui.icon_3036">允许删除用户</span>
+                                </div>
+                                <div class="text-white-50 small">授权管理员<span data-i18n="ui.execute">执行</span>用户永久删除。<span
+                                        class="text-danger fw-bold" data-i18n="capability.critical_risk">极高风险</span></div>
+                            </div>
+                            <label class="ui-toggle ui-toggle-danger">
+                                <input type="checkbox" name="caps" value="can_delete_user" {% if caps.can_delete_user %}checked{% endif %}>
+                                <span class="ui-toggle-track"></span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div
+                class="d-flex justify-content-between align-items-center pt-4 border-top border-light border-opacity-10">
+                <div id="cap-save-status" class="small text-info" style="min-height: 24px;"></div>
+                <button type="button" id="save-cap-btn"
+                    class="btn btn-primary btn-lg px-5 rounded-pill shadow-lg fw-bold"
+                    hx-post="{% url 'web_ui:capability_toggle' %}" hx-include="#capabilityForm"
+                    hx-target="#cap-save-status" hx-swap="innerHTML" hx-indicator="#save-cap-btn">
+                    <span class="htmx-indicator spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span class="indicator-label"><i class="fa-solid fa-floppy-disk me-2"></i><span data-i18n="capability.save_all">保存所有配置</span></span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Capability Item Row */
+    .cap-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.25s ease;
+    }
+
+    .cap-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(13, 202, 240, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Warning Item */
+    .cap-item-warning {
+        background: rgba(255, 193, 7, 0.04);
+        border-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .cap-item-warning:hover {
+        background: rgba(255, 193, 7, 0.08);
+        border-color: rgba(255, 193, 7, 0.35);
+    }
+
+    /* Danger Item */
+    .cap-item-danger {
+        background: rgba(220, 53, 69, 0.04);
+        border-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .cap-item-danger:hover {
+        background: rgba(220, 53, 69, 0.08);
+        border-color: rgba(220, 53, 69, 0.35);
+    }
+
+    /* Letter Spacing Utility */
+    .ls-1 {
+        letter-spacing: 0.05em;
+    }
+
+    /* HTMX States */
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+
+    .htmx-request.btn {
+        opacity: 0.8;
+        pointer-events: none;
+    }
+</style>

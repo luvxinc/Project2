@@ -1,0 +1,51 @@
+{% extends "layouts/base.html" %}
+{% load security_tags static %}
+
+{% block title %}Transaction Upload - Sales - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/global-wizard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- 页面Header (对标用户账户页标准) -->
+    <div class="d-flex justify-content-between align-items-center mb-4" data-testid="page-header">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:sales:hub' %}"
+                            class="text-info text-decoration-none">Sales</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">Transaction Upload</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center mt-2">
+                <div class="bg-info bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-cloud-upload-alt fa-2x text-info"></i>
+                </div>
+                <div>
+                    <h4 class="text-white fw-bold mb-1">Transaction Upload (Transaction Upload)</h4>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_215">上传 eBay Transaction/Earning CSV 报表，系统自动解析、清洗、转换入库。</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:sales:hub' %}" class="btn btn-outline-secondary rounded-pill px-4"
+                data-testid="btn-back">
+                <i class="fas fa-arrow-left me-2"></i><span data-i18n="ui.icon_3087">返回Sales</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="glass-card p-4 shadow-lg" data-testid="etl-card">
+        <!-- ETL Content - HTMX 加载 -->
+        <div id="etl-tab-content" hx-get="{% url 'web_ui:sales:transactions:tab_transaction' %}" hx-trigger="load">
+            <div class="text-center py-5">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="text-white-50 mt-3" data-i18n="ui.text_211">正在加载...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,2007 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Deposit Payment - Finance - ERP System{% endblock %}
+
+{% block content %}
+<div class="fade-in" id="deposit-main-container">
+    <!-- 页面Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:finance:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="finance.title">Finance</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="finance.deposit">
+                        Deposit Payment</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:finance:hub' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="finance.back_to_hub">返回Finance</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 订单列表视图 -->
+    <div id="deposit-list-view">
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px;">
+                        <i class="fas fa-hand-holding-usd fa-2x text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="finance.deposit_page_title">Deposit Payment</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_1183">管理订货单定金，查看付款状态，进行批量付款操作。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm rounded-pill" onclick="loadDepositTable()">
+                    <i class="fas fa-sync-alt me-1"></i> <span data-i18n="common.refresh">刷新列表</span>
+                </button>
+            </div>
+
+            <!-- 操作须知 -->
+            <div class="alert alert-info mb-4"
+                style="background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3);">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 mt-1 text-info fa-lg"></i>
+                    <div>
+                        <strong class="text-info d-block mb-2" data-i18n="common.operation_notes">操作须知</strong>
+                        <ul class="mb-0 ps-3 text-white-50 small">
+                            <li class="mb-1"><strong class="text-white" data-i18n="finance.payment_status">付款状态</strong>：<span
+                                    class="badge bg-success bg-opacity-25 text-success"
+                                    data-i18n="finance.paid">已付清</span> <span data-i18n="desc.d072">表示定金已结清，</span><span
+                                    class="badge bg-warning bg-opacity-25 text-warning"
+                                    data-i18n="finance.unpaid">待付款</span> <span data-i18n="desc.d073">表示仍有定金待付</span></li>
+                            <li class="mb-1"><strong class="text-white" data-i18n="finance.batch_payment">批量付款</strong>：<span
+                                    data-i18n="instructions.desc_23">勾选待付款订单，点击「批量付款」进入付款向导；同一批次订单共享付款单号</span></li>
+                            <li class="mb-1"><strong class="text-white" data-i18n="table.pmt_no">付款单号</strong>：<span
+                                    data-i18n="desc.d002">格式</span> <code>DPMT_YYYYMMDD_N##</code>，<span
+                                    data-i18n="desc.d074">可点击已付订单查看关联付款记录与回执</span></li>
+                            <li class="mb-1"><strong class="text-white" data-i18n="ui.text_1189">定金计算</strong>：<span
+                                    data-i18n="instructions.desc_73">定金费用 = 订单总金额 × 定金比例；支持多次分批付款</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选区域 -->
+            <div class="d-flex gap-3 mb-4 align-items-end">
+                <div>
+                    <label class="form-label text-white-50 small mb-1">
+                        <i class="fas fa-sort me-1"></i><span data-i18n="purchase.sort_by">排序方式</span>
+                    </label>
+                    <select class="form-select form-select-sm bg-dark border-secondary text-white" id="filter-sort"
+                        style="width: 180px;" onchange="applyFilters()">
+                        <option value="po_date:desc" data-i18n="purchase.order_date_newest">订单日期 (最新优先)</option>
+                        <option value="po_date:asc" data-i18n="purchase.order_date_oldest">订单日期 (最早优先)</option>
+                        <option value="po_num:asc" data-i18n="sort.order_no_asc">订货单号 (升序)</option>
+                        <option value="po_num:desc" data-i18n="sort.order_no_desc">订货单号 (降序)</option>
+                    </select>
+                </div>
+                <div class="ms-auto">
+                    <button class="btn btn-success btn-sm rounded-pill" id="btn-batch-payment" disabled>
+                        <i class="fas fa-money-check-alt me-1"></i><span data-i18n="ui.icon_3360">批量付款 (</span><span
+                            id="selected-count">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 未付款订单 - 按供应商分块 -->
+            <div class="mb-4">
+                <h6 class="text-warning mb-3">
+                    <i class="fas fa-clock me-2"></i><span data-i18n="ui.icon_3361">定金待付清单</span>
+                    <span class="badge bg-warning bg-opacity-25 text-warning ms-2" id="unpaid-count">0</span>
+                </h6>
+                <div id="unpaid-supplier-blocks">
+                    <!-- JS 动态生成按供应商分块的内容 -->
+                </div>
+                <div id="unpaid-empty" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-check-circle fa-2x text-success opacity-50 mb-2"></i>
+                    <p class="text-white-50 mb-0 small" data-i18n="finance.all_deposits_paid">全部订单定金已付清</p>
+                </div>
+            </div>
+
+            <!-- Unpaid Footer Count -->
+            <div class="mt-3">
+                <span class="text-white-50 small" id="unpaid-footer-count" data-i18n="ui.text_1190">共 0 条待付订单</span>
+            </div>
+        </div>
+
+        <!-- Paid Section Divider -->
+        <div class="my-4"></div>
+
+        <!-- 已付款订单板块 -->
+        <div class="glass-card p-4 shadow-lg">
+
+
+            <!-- 已付款订单 - 九宫格展示 -->
+            {% include "finance/pages/partials/deposit_paid_grid.html" %}
+
+            <!-- Loading State -->
+            <div id="deposit-loading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="text-white-50 mt-3 mb-0" data-i18n="common.loading">正在加载数据...</p>
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- 付款文件查看视图 (视图切换模式, 默认隐藏) -->
+    {% include "finance/pages/partials/deposit_file_viewer.html" %}
+
+    <!-- 订单详情视图 (视图切换模式, 默认隐藏) -->
+    {% include "finance/pages/partials/deposit_orders_view.html" %}
+
+    <!-- 付款向导视图 (默认隐藏) -->
+
+    <div id="deposit-wizard-view" style="display: none;">
+        <div class="glass-card p-4 shadow-lg">
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px;">
+                        <i class="fas fa-money-check-alt fa-2x text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-white mb-1" data-i18n="finance.deposit_wizard_title">定金批量付款向导</h5>
+                        <p class="text-white-50 small mb-0" data-i18n="ui.text_1191">确认结算汇率并完成定金付款。</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="closeDepositWizard()">
+                    <i class="fas fa-times me-1"></i><span data-i18n="finance.cancel_payment">取消付款</span>
+                </button>
+            </div>
+
+            <div id="deposit-wizard-container" style="width: 100%;">
+                <div data-wizard-stepbar-anchor></div>
+
+                <!-- Step 1: 付款说明 -->
+                <div class="wizard-step-content" id="dep-step-intro" style="width: 100%; display: block;">
+                    {% include "finance/pages/partials/deposit_step1_intro.html" %}
+                </div>
+
+                <!-- Step 2: 确认汇率 -->
+                <div class="wizard-step-content" id="dep-step-rate">
+                    {% include "finance/pages/partials/deposit_step2_rate.html" %}
+                </div>
+
+                <!-- Step 3: 确认付款 -->
+                <div class="wizard-step-content" id="dep-step-confirm">
+                    {% include "finance/pages/partials/deposit_step3_confirm.html" %}
+                </div>
+
+                <!-- Step 4: 付款完成 -->
+                <div class="wizard-step-content" id="dep-step-complete">
+                    {% include "finance/pages/partials/deposit_step4_complete.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    /* 表格容器 */
+    .deposit-table-container {
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: calc(100vh - 450px);
+        overflow-y: auto;
+    }
+
+    .deposit-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    /* 表头 */
+    .deposit-table thead {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .deposit-table thead th {
+        padding: 14px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        border-bottom: 2px solid rgba(255, 193, 7, 0.3);
+        white-space: nowrap;
+    }
+
+    /* 数据行 */
+    .deposit-table tbody tr {
+        background: rgba(25, 28, 35, 0.6);
+        transition: all 0.2s ease;
+    }
+
+    .deposit-table tbody tr:hover {
+        background: rgba(40, 45, 55, 0.8);
+    }
+
+    .deposit-table tbody tr.selected {
+        background: rgba(255, 193, 7, 0.15);
+    }
+
+    .deposit-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .deposit-table tbody td {
+        padding: 12px 10px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* 订货单号加粗 */
+    .deposit-table tbody td.cell-po-num {
+        font-weight: 700;
+        color: #fff;
+        font-size: 12px;
+    }
+
+    /* 金额样式 */
+    .amount-primary {
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .amount-secondary {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .amount-pending {
+        color: #ffc107;
+        font-weight: 600;
+    }
+
+    .amount-paid {
+        color: #198754;
+        font-weight: 600;
+    }
+
+    /* 付款状态标签 */
+    .payment-status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .payment-status-tag.paid {
+        background: rgba(25, 135, 84, 0.2);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.4);
+    }
+
+    .payment-status-tag.unpaid {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+    }
+
+    .payment-status-tag.partial {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.4);
+    }
+
+    /* 已付款九宫格 */
+    .paid-grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+
+    .payment-card {
+        background: linear-gradient(145deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.03) 100%);
+        border: 1px solid rgba(25, 135, 84, 0.25);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .payment-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(25, 135, 84, 0.5);
+        box-shadow: 0 8px 24px rgba(25, 135, 84, 0.15);
+    }
+
+    .payment-card-header {
+        padding: 12px 16px;
+        background: rgba(25, 135, 84, 0.15);
+        border-bottom: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .payment-card-header .po-num {
+        font-weight: 700;
+        color: #198754;
+        font-size: 13px;
+    }
+
+    .payment-card-body {
+        padding: 14px 16px;
+    }
+
+    .payment-card-body .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .payment-card-body .info-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .payment-card-body .info-value {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+    }
+
+    /* 会计风格对齐容器 */
+    .acct-box {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        min-width: 90px;
+    }
+
+    .acct-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .acct-amt {
+        letter-spacing: -0.3px;
+    }
+
+    /* 供应商分块容器 */
+    .supplier-block {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .supplier-block-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        border-bottom: 2px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .supplier-block-header .supplier-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .supplier-block-header .supplier-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 193, 7, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .supplier-block-header .supplier-icon i {
+        font-size: 18px;
+        color: #ffc107;
+    }
+
+    .supplier-block-header .supplier-name {
+        font-weight: 700;
+        font-size: 15px;
+        color: #fff;
+    }
+
+    .supplier-block-header .supplier-code {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: monospace;
+    }
+
+    .supplier-block-header .select-all-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .supplier-block-header .select-all-btn:hover {
+        background: rgba(255, 193, 7, 0.2);
+        border-color: rgba(255, 193, 7, 0.5);
+    }
+
+    .supplier-block-header .select-all-btn.active {
+        background: rgba(255, 193, 7, 0.3);
+        border-color: #ffc107;
+    }
+
+    .supplier-block-body {
+        padding: 0;
+    }
+
+    /* 表格行选中样式 */
+    .deposit-table tbody tr.order-row-tr {
+        transition: all 0.15s ease;
+    }
+
+    .deposit-table tbody tr.order-row-tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .deposit-table tbody tr.order-row-tr.selected {
+        background: rgba(255, 193, 7, 0.15) !important;
+    }
+
+    .deposit-table tbody tr.order-row-tr.selected td:first-child {
+        border-left: 3px solid #ffc107;
+    }
+
+    /* ===== Payment Wizard Styles ===== */
+
+    /* 向导容器 */
+    #deposit-wizard-container {
+        width: 100%;
+    }
+
+    .wizard-step-content {
+        width: 100%;
+    }
+
+    .wizard-step-content .row {
+        width: 100%;
+        margin: 0;
+    }
+
+    .wizard-step-content .col-12 {
+        width: 100%;
+        padding: 0;
+    }
+
+    /* Instruction Card */
+    .instruction-card {
+        background: linear-gradient(145deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+        border: 1px solid rgba(13, 110, 253, 0.2);
+        border-radius: 16px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .instruction-header {
+        padding: 16px 20px;
+        background: rgba(13, 110, 253, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .instruction-header i {
+        font-size: 24px;
+        color: #0d6efd;
+    }
+
+    .instruction-header h6 {
+        margin: 0;
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .instruction-body {
+        padding: 20px;
+    }
+
+    .instruction-body ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .instruction-body li {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 10px;
+        line-height: 1.6;
+    }
+
+    .instruction-body li:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Detail Table */
+    .detail-table-container {
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .detail-table-container table {
+        margin-bottom: 0;
+    }
+
+    .detail-table-container thead th {
+        background: linear-gradient(180deg, rgba(60, 65, 80, 0.95) 0%, rgba(45, 50, 60, 0.95) 100%);
+        padding: 14px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-table-container tbody td {
+        padding: 14px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 13px;
+    }
+
+    .total-row td {
+        background: rgba(255, 193, 7, 0.1);
+        border-top: 2px solid rgba(255, 193, 7, 0.3);
+    }
+
+    /* Rate Selection Card */
+    .rate-selection-card {
+        background: rgba(255, 193, 7, 0.08);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+    .rate-mode-toggle {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    /* Confirmation Card */
+    .confirmation-card {
+        background: linear-gradient(145deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.03) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.25);
+        border-radius: 20px;
+        padding: 40px 32px;
+    }
+
+    .confirmation-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 193, 7, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
+
+    .confirmation-icon i {
+        font-size: 36px;
+        color: #ffc107;
+    }
+
+    .confirmation-details {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Success Card */
+    .success-card {
+        background: linear-gradient(145deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.03) 100%);
+        border: 1px solid rgba(25, 135, 84, 0.25);
+        border-radius: 20px;
+        padding: 48px 32px;
+    }
+
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(25, 135, 84, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        animation: pulse-success 2s ease-in-out infinite;
+    }
+
+    .success-icon i {
+        font-size: 48px;
+        color: #198754;
+    }
+
+    @keyframes pulse-success {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .result-summary {
+        background: rgba(25, 135, 84, 0.1);
+        border: 1px solid rgba(25, 135, 84, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+        background: linear-gradient(145deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.02) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        border-radius: 16px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .summary-header {
+        padding: 16px 20px;
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .summary-body {
+        padding: 0;
+    }
+
+    .summary-total {
+        padding: 16px 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Total Display */
+    .total-rmb {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffc107;
+    }
+
+    .total-usd {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0dcaf0;
+    }
+
+    /* ===== Paid Supplier List Styles (Ported from Prepay) ===== */
+    .supplier-cards-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 2px;
+    }
+
+    .supplier-cards-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+    }
+
+    .supplier-card {
+        background: rgba(25, 28, 35, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .supplier-card:hover {
+        background: rgba(40, 45, 55, 0.8);
+        border-color: rgba(13, 202, 240, 0.3);
+        transform: translateX(2px);
+    }
+
+    .supplier-card.active {
+        background: rgba(25, 135, 84, 0.1);
+        border-color: rgba(25, 135, 84, 0.5);
+        box-shadow: 0 0 0 1px rgba(25, 135, 84, 0.2);
+    }
+
+    .supplier-card .supplier-code {
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    .supplier-card .supplier-name {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .supplier-card .currency-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+</style>
+
+<script>
+    var depositData = [];
+    var selectedOrders = new Set();
+    var currentSupplierCode = null;  // 当前选中的供应商代码
+    var activePaidSupplierCode = null; // 当前选中的已付供应商代码
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDepositTable();
+
+        // 批量付款按钮
+        document.getElementById('btn-batch-payment').addEventListener('click', function () {
+            if (selectedOrders.size > 0) {
+                openDepositWizard();
+            } else {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast('{% trans "请先选择至少一个订单" %}', 'warning');
+                } else {
+                    alert('{% trans "请先选择至少一个订单" %}');
+                }
+            }
+        });
+
+        // 年份筛选
+        document.getElementById('paid-year-filter').addEventListener('change', function () {
+            renderPaidGrid();
+        });
+    });
+
+    function loadDepositTable() {
+        var loading = document.getElementById('deposit-loading');
+        var container = document.getElementById('unpaid-supplier-blocks');
+
+        loading.style.display = 'block';
+        container.innerHTML = '';
+
+        var sortVal = document.getElementById('filter-sort').value.split(':');
+        var sortBy = sortVal[0];
+        var sortOrder = sortVal[1];
+
+        fetch('{% url "web_ui:finance:deposit_list" %}?sort_by=' + sortBy + '&sort_order=' + sortOrder)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    console.error('Error:', data.message);
+                    return;
+                }
+
+                depositData = data.data || [];
+                selectedOrders.clear();
+                currentSupplierCode = null;
+                updateSelectedCount();
+                renderTables();
+            })
+            .catch(function (err) {
+                loading.style.display = 'none';
+                console.error('Error:', err);
+            });
+    }
+
+    function renderTables() {
+        var container = document.getElementById('unpaid-supplier-blocks');
+        var unpaidEmpty = document.getElementById('unpaid-empty');
+        var unpaidCount = document.getElementById('unpaid-count');
+        var paidCount = document.getElementById('paid-count');
+        var totalCount = document.getElementById('deposit-count');
+
+        var unpaidOrders = depositData.filter(function (o) { return !o.is_paid; });
+        var paidOrders = depositData.filter(function (o) { return o.is_paid; });
+
+        // 按供应商分组
+        var supplierGroups = {};
+        unpaidOrders.forEach(function (order) {
+            var code = order.supplier_code || 'OTHER';
+            if (!supplierGroups[code]) {
+                supplierGroups[code] = {
+                    code: code,
+                    name: order.supplier_name || code,
+                    orders: []
+                };
+            }
+            supplierGroups[code].orders.push(order);
+        });
+
+        // 渲染供应商分块
+        if (Object.keys(supplierGroups).length === 0) {
+            container.innerHTML = '';
+            unpaidEmpty.style.display = 'block';
+        } else {
+            unpaidEmpty.style.display = 'none';
+            var html = '';
+            Object.keys(supplierGroups).sort().forEach(function (code) {
+                html += renderSupplierBlock(supplierGroups[code]);
+            });
+            container.innerHTML = html;
+
+            // 绑定事件
+            bindSupplierBlockEvents();
+        }
+
+        unpaidCount.textContent = unpaidOrders.length;
+        paidCount.textContent = paidOrders.length;
+        unpaidCount.textContent = unpaidOrders.length;
+        paidCount.textContent = paidOrders.length;
+
+        // Update footer counts
+        var unpaidFooter = document.getElementById('unpaid-footer-count');
+        if (unpaidFooter) unpaidFooter.textContent = (window.i18n?.t('js.total_prefix') || 'Total ') + unpaidOrders.length + (window.i18n?.t('js.pending_orders_suffix') || ' pending orders');
+
+        // totalCount element is removed/replaced
+        // totalCount.textContent = (window.i18n?.t('js.total_prefix') || 'Total ') + depositData.length + ' 条订单';
+
+        // 填充年份筛选
+        var years = new Set();
+        paidOrders.forEach(function (o) {
+            if (o.po_date) {
+                years.add(o.po_date.substring(0, 4));
+            }
+        });
+        var yearSelect = document.getElementById('paid-year-filter');
+        var currentYear = yearSelect.value;
+        yearSelect.innerHTML = '<option value="" data-i18n="sort.all_years">全部年份</option>';
+        Array.from(years).sort().reverse().forEach(function (y) {
+            yearSelect.innerHTML += '<option value="' + y + '">' + y + '</option>';
+        });
+        if (currentYear) yearSelect.value = currentYear;
+
+        if (currentYear) yearSelect.value = currentYear;
+
+        // Render Paid Section
+        renderPaidSuppliers(depositData);
+        renderPaidGrid();
+    }
+
+    function renderSupplierBlock(group) {
+        var html = '<div class="supplier-block" data-supplier-code="' + group.code + '">';
+
+        // 供应商头部
+        html += '<div class="supplier-block-header">' +
+            '<div class="supplier-info">' +
+            '<div class="supplier-icon"><i class="fas fa-building"></i></div>' +
+            '<div>' +
+            '<div class="supplier-name">' + group.name + '</div>' +
+            '<div class="supplier-code">' + group.code + ' · ' + group.orders.length + ' ' + (window.i18n?.t('desc.d179') || 'Orders') + '</div>' +
+            '</div>' +
+            '</div>' +
+            '<button type="button" class="select-all-btn" data-supplier-code="' + group.code + '">' +
+            '<i class="fas fa-check-double"></i>' +
+            '<span data-i18n="common.select_all">全选</span>' +
+            '</button>' +
+            '</div>';
+
+        // 表格 - 使用原来的 deposit-table 样式
+        html += '<div class="deposit-table-container" style="max-height: none; border-radius: 0;">';
+        html += '<table class="deposit-table">';
+        html += '<thead><tr>' +
+            '<th data-i18n="table.order_no">订货单号</th>' +
+            '<th data-i18n="table.order_date">订单日期</th>' +
+            '<th>' + (window.i18n?.t('table.sku_count') || 'SKU Count') + '</th>' +
+            '<th data-i18n="table.total_amount">订单总金额</th>' +
+            '<th data-i18n="table.settlement_rate">结算汇率</th>' +
+            '<th data-i18n="table.deposit_rate">定金比例</th>' +
+            '<th data-i18n="table.deposit_amount">定金费用</th>' +
+            '<th data-i18n="table.deposit_paid">已付定金</th>' +
+            '<th data-i18n="table.deposit_due">定金待付</th>' +
+            '<th data-i18n="table.balance_remaining">尾款剩余</th>' +
+            '</tr></thead>';
+        html += '<tbody>';
+        group.orders.forEach(function (order) {
+            html += renderOrderRow(order);
+        });
+        html += '</tbody></table></div>';
+
+        html += '</div>';
+        return html;
+    }
+
+    function renderOrderRow(order) {
+        var cur = order.cur_currency;
+
+        // 会计风格金额生成器 - 使用原来的样式
+        function renderDualAmount(primaryAmt, usdAmount, primaryCur, customClass) {
+            var cls = customClass || 'amount-primary';
+            var html = '<div class="acct-box">';
+
+            // 主货币行
+            var primaryBadge = primaryCur === 'USD' ?
+                '<span class="badge bg-success" style="font-size:9px; width:32px;">USD</span>' :
+                '<span class="badge bg-info" style="font-size:9px; width:32px;">' + primaryCur + '</span>';
+
+            html += '<div class="acct-row">' + primaryBadge + '<span class="acct-amt ' + cls + '">' + formatNumber(primaryAmt) + '</span></div>';
+
+            // 副货币行 (只在非USD时显示折算)
+            if (primaryCur !== 'USD') {
+                var usdBadge = '<span class="badge bg-success" style="font-size:9px; width:32px;">USD</span>';
+                html += '<div class="acct-row">' + usdBadge + '<span class="acct-amt amount-secondary">' + formatNumber(usdAmount) + '</span></div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        // 订单总金额
+        var totalDisplay = renderDualAmount(order.total_amount, order.total_amount_usd, cur);
+        // 定金费用
+        var depositDisplay = renderDualAmount(order.deposit_amount, order.deposit_amount_usd, cur);
+        // 已付定金
+        var actualDisplay = renderDualAmount(order.actual_paid, order.actual_paid_usd, cur, 'amount-paid');
+        // 定金待付
+        var pendingDisplay = renderDualAmount(order.deposit_pending, order.deposit_pending_usd, cur, 'amount-pending');
+        // 尾款剩余
+        var balanceDisplay = renderDualAmount(order.balance_remaining, order.balance_remaining_usd, cur);
+
+        var selectedClass = selectedOrders.has(order.po_num) ? ' selected' : '';
+
+        return '<tr class="order-row-tr' + selectedClass + '" data-po-num="' + order.po_num + '" data-supplier-code="' + order.supplier_code + '" style="cursor: pointer;">' +
+            '<td class="cell-po-num">' + order.po_num + '</td>' +
+            '<td>' + (order.po_date || '-') + '</td>' +
+            '<td>' + order.sku_count + '</td>' +
+            '<td>' + totalDisplay + '</td>' +
+            '<td>' +
+            '<div class="d-flex flex-column align-items-center">' +
+            '<span class="text-white fw-bold">' + order.cur_usd_rmb.toFixed(4) + '</span>' +
+            '<span class="badge border ' + (order.rate_source_code === 'AUTO' ? 'bg-info bg-opacity-10 text-info border-info border-opacity-25' : 'bg-light bg-opacity-10 text-light border-secondary border-opacity-25') + ' mt-1" style="font-size: 9px; padding: 2px 6px;" data-i18n="ui.text_1193">' +
+            (order.rate_source_code === 'AUTO' ? (window.i18n?.t('js.auto_fetch') || 'Auto Fetch') : (window.i18n?.t('js.manual_input') || 'Manual Input')) +
+            '</span>' +
+            '</div>' +
+            '</td>' +
+            '<td>' + order.deposit_par + '%</td>' +
+            '<td>' + depositDisplay + '</td>' +
+            '<td>' + actualDisplay + '</td>' +
+            '<td>' + pendingDisplay + '</td>' +
+            '<td>' + balanceDisplay + '</td>' +
+            '</tr>';
+    }
+
+    function bindSupplierBlockEvents() {
+        // 订单行点击选择  
+        document.querySelectorAll('.order-row-tr').forEach(function (row) {
+            row.addEventListener('click', function () {
+                var poNum = this.dataset.poNum;
+                var supplierCode = this.dataset.supplierCode;
+
+                // 如果已经选中了其他供应商的订单，需要先清空
+                if (currentSupplierCode && currentSupplierCode !== supplierCode && selectedOrders.size > 0) {
+                    // 清空之前供应商的选择
+                    clearAllSelections();
+                }
+
+                // 切换选中状态
+                if (selectedOrders.has(poNum)) {
+                    selectedOrders.delete(poNum);
+                    this.classList.remove('selected');
+                } else {
+                    selectedOrders.add(poNum);
+                    this.classList.add('selected');
+                    currentSupplierCode = supplierCode;
+                }
+
+                // 如果没有选中任何订单，重置当前供应商
+                if (selectedOrders.size === 0) {
+                    currentSupplierCode = null;
+                }
+
+                updateSelectAllButtonState(supplierCode);
+                updateSelectedCount();
+            });
+        });
+
+        // 全选按钮
+        document.querySelectorAll('.select-all-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var supplierCode = this.dataset.supplierCode;
+
+                // 如果已经选中了其他供应商的订单，需要先清空
+                if (currentSupplierCode && currentSupplierCode !== supplierCode && selectedOrders.size > 0) {
+                    clearAllSelections();
+                }
+
+                var block = document.querySelector('.supplier-block[data-supplier-code="' + supplierCode + '"]');
+                var rows = block.querySelectorAll('.order-row-tr');
+                var allSelected = Array.from(rows).every(function (r) { return r.classList.contains('selected'); });
+
+                if (allSelected) {
+                    // 取消全选
+                    rows.forEach(function (row) {
+                        var poNum = row.dataset.poNum;
+                        selectedOrders.delete(poNum);
+                        row.classList.remove('selected');
+                    });
+                    this.classList.remove('active');
+                    if (selectedOrders.size === 0) {
+                        currentSupplierCode = null;
+                    }
+                } else {
+                    // 全选
+                    rows.forEach(function (row) {
+                        var poNum = row.dataset.poNum;
+                        selectedOrders.add(poNum);
+                        row.classList.add('selected');
+                    });
+                    this.classList.add('active');
+                    currentSupplierCode = supplierCode;
+                }
+
+                updateSelectedCount();
+            });
+        });
+    }
+
+    function clearAllSelections() {
+        selectedOrders.clear();
+        document.querySelectorAll('.order-row-tr.selected').forEach(function (row) {
+            row.classList.remove('selected');
+        });
+        document.querySelectorAll('.select-all-btn.active').forEach(function (btn) {
+            btn.classList.remove('active');
+        });
+        currentSupplierCode = null;
+    }
+
+    function updateSelectAllButtonState(supplierCode) {
+        var block = document.querySelector('.supplier-block[data-supplier-code="' + supplierCode + '"]');
+        if (!block) return;
+
+        var rows = block.querySelectorAll('.order-row-tr');
+        var btn = block.querySelector('.select-all-btn');
+        var allSelected = Array.from(rows).every(function (r) { return r.classList.contains('selected'); });
+
+        if (allSelected && rows.length > 0) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    function renderPaidSuppliers(allOrders) {
+        var container = document.getElementById('paid-supplier-list');
+        var empty = document.getElementById('paid-supplier-empty');
+        if (!container) return;
+
+        // Group by supplier
+        var suppliers = {};
+        allOrders.forEach(function (o) {
+            var code = o.supplier_code || 'OTHER';
+            if (!suppliers[code]) {
+                suppliers[code] = {
+                    code: code,
+                    name: o.supplier_name || code,
+                    currency: o.cur_currency || 'USD'
+                };
+            }
+        });
+
+        if (Object.keys(suppliers).length === 0) {
+            container.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+        var html = '';
+
+        Object.keys(suppliers).sort().forEach(function (code) {
+            var s = suppliers[code];
+            var activeClass = (code === activePaidSupplierCode) ? ' active' : '';
+            var currencyBadgeClass = s.currency === 'USD' ? 'bg-success' : 'bg-info text-dark';
+            html += '<div class="supplier-card' + activeClass + '" onclick="selectPaidSupplier(\'' + code + '\')">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                '<div>' +
+                '<div class="supplier-code">' + s.code + '</div>' +
+                '<div class="supplier-name" title="' + s.name + '">' + s.name + '</div>' +
+                '</div>' +
+                '<span class="badge ' + currencyBadgeClass + ' currency-tag">' + s.currency + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+        container.innerHTML = html;
+    }
+
+    function selectPaidSupplier(code) {
+        if (activePaidSupplierCode === code) {
+            activePaidSupplierCode = null;
+        } else {
+            activePaidSupplierCode = code;
+        }
+
+        // Update active visual state
+        var cards = document.querySelectorAll('#paid-supplier-list .supplier-card');
+        cards.forEach(function (c) {
+            c.classList.remove('active');
+            if (activePaidSupplierCode && c.querySelector('.supplier-code').textContent === activePaidSupplierCode) {
+                c.classList.add('active');
+            }
+        });
+
+        renderPaidGrid();
+    }
+
+    function renderPaidGrid() {
+        var container = document.getElementById('paid-grid-container');
+        var empty = document.getElementById('paid-empty');
+        var title = document.getElementById('paid-list-title');
+        var yearFilter = document.getElementById('paid-year-filter') ? document.getElementById('paid-year-filter').value : '';
+
+        // Base filter: Is Paid
+        var paidOrders = depositData.filter(function (o) { return o.is_paid; });
+
+        // Supplier Filter
+        if (activePaidSupplierCode) {
+            paidOrders = paidOrders.filter(function (o) { return o.supplier_code === activePaidSupplierCode; });
+            if (title) title.textContent = activePaidSupplierCode + (window.i18n?.t('js.paid_orders_suffix') || ' paid orders');
+        } else {
+            if (title) title.textContent = (window.i18n?.t('js.all_deposit_paid') || 'All Deposit Paid Orders');
+        }
+
+        // Year Filter
+        if (yearFilter) {
+            paidOrders = paidOrders.filter(function (o) {
+                return o.po_date && o.po_date.startsWith(yearFilter);
+            });
+        }
+
+        // Update Badge & Footer
+        var paidCount = document.getElementById('paid-count');
+        if (paidCount) paidCount.textContent = paidOrders.length;
+
+        var paidFooter = document.getElementById('paid-footer-count');
+        if (paidFooter) paidFooter.textContent = (window.i18n?.t('js.total_prefix') || 'Total ') + paidOrders.length + (window.i18n?.t('js.paid_orders_suffix') || ' paid orders');
+
+        if (paidOrders.length === 0) {
+            container.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+        var html = '';
+
+        // Sort logic handled by backend usually, but here we can just render
+        paidOrders.forEach(function (order) {
+            var cur = order.cur_currency;
+
+            // Dual amount helper (duplicated for robustness)
+            function renderDual(primaryAmt, usdAmount, customClass) {
+                var cls = customClass || 'amount-primary';
+                var html = '<div class="acct-box">';
+
+                // Primary
+                var primaryBadge = cur === 'USD' ?
+                    '<span class="badge bg-success" style="font-size:9px; width:32px;">USD</span>' :
+                    '<span class="badge bg-info" style="font-size:9px; width:32px;">' + cur + '</span>';
+                html += '<div class="acct-row">' + primaryBadge + '<span class="acct-amt ' + cls + '">' + formatNumber(primaryAmt) + '</span></div>';
+
+                // Secondary (USD)
+                if (cur !== 'USD') {
+                    var usdBadge = '<span class="badge bg-success" style="font-size:9px; width:32px;">USD</span>';
+                    html += '<div class="acct-row">' + usdBadge + '<span class="acct-amt amount-secondary">' + formatNumber(usdAmount) + '</span></div>';
+                }
+                html += '</div>';
+                return html;
+            }
+
+            var totalDisplay = renderDual(order.total_amount, order.total_amount_usd);
+            var paidDisplay = renderDual(order.actual_paid, order.actual_paid_usd, 'amount-paid');
+            var balanceDisplay = renderDual(order.balance_remaining, order.balance_remaining_usd);
+
+            // Rate display
+            var rateSource = order.rate_source_code === 'AUTO' ? (window.i18n?.t('js.auto_fetch') || 'Auto Fetch') : (window.i18n?.t('js.manual_input') || 'Manual Input');
+            var rateClass = order.rate_source_code === 'AUTO' ? 'bg-info bg-opacity-10 text-info border-info border-opacity-25' : 'bg-light bg-opacity-10 text-light border-secondary border-opacity-25';
+            var rateDisplay = '<div class="d-flex flex-column align-items-center">' +
+                '<span class="text-white fw-bold">' + (order.cur_usd_rmb ? order.cur_usd_rmb.toFixed(4) : '-') + '</span>' +
+                '<span class="badge border ' + rateClass + ' mt-1" style="font-size: 9px; padding: 2px 6px;">' + rateSource + '</span>' +
+                '</div>';
+
+            // Deposit Amount
+            var depositAmountDisplay = renderDual(order.deposit_amount, order.deposit_amount_usd);
+
+            // Extra Fees Display (Dual Currency)
+            var extraFeesDisplay = '-';
+            if (order.extra_fees_usd > 0) {
+                var primaryExtra = (cur === 'RMB') ? order.extra_fees_rmb : order.extra_fees_usd;
+                extraFeesDisplay = renderDual(primaryExtra, order.extra_fees_usd);
+            }
+            html += '<tr class="order-row-tr cursor-pointer" onclick="togglePaidDetail(this)">' +
+                '<td class="cell-po-num">' + order.po_num + '</td>' +
+                '<td>' + (order.po_date || '-') + '</td>' +
+                '<td><span class="badge bg-secondary bg-opacity-25 text-light">' + (order.cur_currency || 'USD') + '</span></td>' +
+                '<td>' + totalDisplay + '</td>' +
+                '<td>' + rateDisplay + '</td>' +
+                '<td>' + order.deposit_par + '%</td>' +
+                '<td>' + depositAmountDisplay + '</td>' +
+                '<td>' + (order.latest_payment_date || '-') + '</td>' +
+                '<td>' + paidDisplay + '</td>' +
+                '<td>' + balanceDisplay + '</td>' +
+                '<td>' + extraFeesDisplay + '</td>' +
+                '<td class="text-center text-white-50"><i class="fas fa-chevron-down detail-chevron small"></i></td>' +
+                '</tr>';
+
+            // --- Detail Row (Improved UI) ---
+            html += '<tr class="detail-row" style="display:none;">' +
+                '<td colspan="12" class="p-0 border-0">' +
+                '<div class="detail-wrapper p-3" style="background: rgba(10, 10, 15, 0.4); box-shadow: inset 0 6px 15px -6px rgba(0,0,0,0.5);">' +
+                '<div class="d-flex align-items-center mb-3 ms-1">' +
+                '<div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">' +
+                '<i class="fas fa-history text-info" style="font-size: 10px;"></i>' +
+                '</div>' +
+                '<span class="text-white small fw-bold tracking-wide" data-i18n="table.payment_history">支付历史记录</span>' +
+                '</div>' +
+
+                '<div class="rounded-3 overflow-hidden border border-secondary border-opacity-25" style="background: rgba(30, 35, 45, 0.4);">' +
+                '<table class="table table-sm table-borderless mb-0 align-middle" style="font-size: 0.85rem;">' +
+                '<thead style="background: rgba(255, 255, 255, 0.03);">' +
+                '<tr class="text-white-50 border-bottom border-secondary border-opacity-25">' +
+                '<th class="ps-3 py-2 fw-normal text-end" style="font-size: 0.75rem; width: 10%;" data-i18n="table.pmt_no">付款单号</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 10%;" data-i18n="purchase.order_num">订单号</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 8%;" data-i18n="table.settlement_currency">结算币种</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 8%;" data-i18n="table.payment_date">付款日期</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 8%;" data-i18n="table.exchange_rate">汇率</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 9%;" data-i18n="table.deposit_payment">定金支付金额</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 9%;" data-i18n="table.deduction">抵扣金额</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 8%;" data-i18n="table.override">覆盖</th>' +
+                '<th class="fw-normal text-end" style="font-size: 0.75rem; width: 10%;" data-i18n="table.extra_fees">额外费用</th>' +
+                '<th class="fw-normal text-end pe-3" style="font-size: 0.75rem; width: 20%;" data-i18n="common.operation">操作</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>';
+
+            if (order.payment_details && order.payment_details.length > 0) {
+                // Currency Badge Helper
+                function getCurBadge(c) {
+                    return c === 'USD'
+                        ? '<span class="badge bg-success me-1" style="font-size:9px;">USD</span>'
+                        : '<span class="badge bg-info text-dark me-1" style="font-size:9px;">' + c + '</span>';
+                }
+
+                order.payment_details.forEach(function (pmt, idx) {
+                    var pmtRateMode = pmt.dep_cur_mode === 'A' ? (window.i18n?.t('js.auto') || 'Auto') : (window.i18n?.t('js.manual') || 'Manual');
+                    var pmtRateClass = pmt.dep_cur_mode === 'A' ? 'text-info' : 'text-secondary';
+                    var rateVal = parseFloat(pmt.dep_paid_cur);
+                    var rateDisplay = isNaN(rateVal) ? '-' : rateVal.toString();
+                    var borderClass = idx === order.payment_details.length - 1 ? '' : 'border-bottom border-secondary border-opacity-10';
+
+                    var depCurBadge = getCurBadge(pmt.dep_cur || 'RMB');
+                    var deductCurBadge = getCurBadge(order.cur_currency || 'USD');
+                    var extraCurBadge = getCurBadge(pmt.extra_cur || '');
+                    var orderCurBadge = getCurBadge(order.cur_currency || 'USD');
+
+                    var overrideHtml = pmt.dep_override === 1
+                        ? '<i class="fas fa-check-circle text-warning opacity-75"></i>'
+                        : '<i class="fas fa-minus text-white-50 opacity-25" style="font-size: 0.7rem;"></i>';
+
+                    html += '<tr class="' + borderClass + '">' +
+                        '<td class="ps-3 py-2 text-end align-middle">' +
+                        '<span class="text-info text-opacity-75" style="font-size: 0.85rem;">' + pmt.pmt_no + '</span>' +
+                        '</td>' +
+                        '<td class="text-end align-middle"><span class="text-white small">' + (pmt.po_num || order.po_num) + '</span></td>' +
+                        '<td class="text-end align-middle">' + orderCurBadge + '</td>' +
+                        '<td class="text-end align-middle"><span class="text-white text-opacity-75">' + (pmt.dep_date || '-') + '</span></td>' +
+                        '<td class="text-end align-middle">' +
+                        '<div class="d-flex flex-column align-items-end lh-1">' +
+                        '<span class="text-white small">' + rateDisplay + '</span>' +
+                        '<span class="' + pmtRateClass + '" style="font-size: 0.65rem; margin-top: 2px;">' + pmtRateMode + '</span>' +
+                        '</div>' +
+                        '</td>' +
+                        '<td class="text-end align-middle">' +
+                        depCurBadge +
+                        '<span class="text-white fw-bold">' + formatNumber(pmt.dep_paid) + '</span>' +
+                        '</td>' +
+                        '<td class="text-end align-middle">' +
+                        (pmt.dep_prepay_amount > 0 ?
+                            deductCurBadge +
+                            '<span class="text-info fw-bold">' + formatNumber(pmt.dep_prepay_amount) + '</span>' :
+                            '<span class="text-white-50 opacity-25">-</span>') +
+                        '</td>' +
+                        '<td class="text-end align-middle">' + overrideHtml + '</td>' +
+                        '<td class="text-end align-middle">' +
+                        (pmt.extra_amount > 0 ?
+                            extraCurBadge +
+                            '<span class="text-danger fw-bold">' + formatNumber(pmt.extra_amount) + '</span>' :
+                            '<span class="text-white-50 opacity-25">-</span>') +
+                        '</td>' +
+                        '<td class="text-end pe-3 align-middle">' +
+                        '<div class="d-flex justify-content-end gap-1">' +
+                        '<button class="btn btn-sm btn-link p-0 text-info opacity-75" data-bs-toggle="tooltip" data-i18n-title="tooltip.t4191" title="View Payment File" onclick="viewPaymentFiles(\'' + pmt.pmt_no + '\', event)"><i class="fas fa-file-invoice"></i></button>' +
+                            '<button class="btn btn-sm btn-link p-0 text-success opacity-75" data-bs-toggle="tooltip" data-i18n-title="tooltip.t7820" title="Upload Payment File" onclick="uploadDepositReceiptFile(\'' + pmt.pmt_no + '\'); event.stopPropagation();"><i class="fas fa-upload"></i></button>' +
+                                '<button class="btn btn-sm btn-link p-0 text-light opacity-75" data-bs-toggle="tooltip" data-i18n-title="tooltip.t2250" title="View Order Info" onclick="viewDepositOrders(\'' + pmt.pmt_no + '\'); event.stopPropagation();"><i class="fas fa-boxes"></i></button>' +
+                                    '<button class="btn btn-sm btn-link p-0 text-secondary opacity-75" data-bs-toggle="tooltip" data-i18n-title="tooltip.t6" title="History" onclick="viewDepositHistory(\'' + pmt.pmt_no + '\', \'' + (pmt.po_num || order.po_num) + '\'); event.stopPropagation();"><i class="fas fa-history"></i></button>' +
+                                    '<button class="btn btn-sm btn-link p-0 text-danger opacity-75" data-bs-toggle="tooltip" data-i18n-title="tooltip.t5709" title="Delete Payment" onclick="deleteDepositPayment(\'' + pmt.pmt_no + '\'); event.stopPropagation();"><i class="fas fa-trash-alt"></i></button>' +
+                                        '</div>' +
+                                        '</td>' +
+                                        '</tr>';
+                });
+            } else {
+                html += '<tr><td colspan="10" class="text-center text-white-50 py-4 opacity-75" data-i18n="table.no_records">无明细记录</td></tr>';
+            }
+
+            html += '</tbody></table></div></div></td></tr>';
+        });
+        container.innerHTML = html;
+
+        // Re-initialize tooltips for dynamic content
+        if (typeof bootstrap !== 'undefined') {
+            var tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+    }
+
+    function togglePaidDetail(row) {
+        var detailRow = row.nextElementSibling;
+        var chevron = row.querySelector('.detail-chevron');
+
+        if (detailRow && detailRow.classList.contains('detail-row')) {
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                row.classList.add('bg-white', 'bg-opacity-10');
+                if (chevron) chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            } else {
+                detailRow.style.display = 'none';
+                row.classList.remove('bg-white', 'bg-opacity-10');
+                if (chevron) chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+            }
+        }
+    }
+
+    function deleteDepositPayment(pmtNo) {
+        // 1. Fetch impact scope (all POs for this pmtNo)
+        // We can use the existing deposit_orders_api or a quick query. 
+        // Re-using deposit_orders_api is simplest as it returns list of orders.
+        fetch(`/dashboard/finance/deposit/api/orders/?pmt_no=${encodeURIComponent(pmtNo)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data && data.data.orders && data.data.orders.length > 0) {
+                    const orders = data.data.orders;
+                    const poList = orders.map(o => o.po_num).join(', ');
+                    const isMulti = orders.length > 1;
+                    // 3. 构建确认消息
+                    var msg = '<div class="text-center">' +
+                        '<p class="mb-3">{% trans "您确定要删除定金付款记录吗？" %}</p>' +
+                        '<p class="text-muted small mb-2">{% trans "付款单号" %}: <strong class="text-danger">' + pmtNo + '</strong></p>';
+
+                    if (isMulti) {
+                        msg += '<div class="alert alert-warning bg-opacity-10 border-0 small text-start mx-4">' +
+                            '<i class="fas fa-exclamation-triangle me-2 text-warning"></i>' +
+                            '<strong>{% trans "注意: 该付款单关联多个订单。删除将同时撤销以下所有订单的定金支付:" %}</strong>' +
+                            '<div class="mt-2 text-white-50 ms-4">' + poList + '</div>' +
+                            '</div>';
+                    } else {
+                        msg += '<p class="text-muted small">{% trans "关联订单" %}: ' + poList + '</p>';
+                    }
+
+                    msg += '</div>';
+
+                    GlobalModal.showConfirm({
+                        title: (window.i18n?.t('js.confirm_delete_deposit') || 'Confirm Delete Deposit'),
+                        message: msg,
+                        confirmText: (window.i18n?.t('js.confirm_delete') || 'Confirm Delete'),
+                        confirmStyle: 'danger',
+                        onConfirm: () => {
+                            // Closure Buffer 350ms
+                            setTimeout(() => {
+                                requestPasswordVerify(
+                                    'deposit_payment_delete',
+                                    function (passwords) {
+                                        executeDeleteDeposit(pmtNo, passwords);
+                                    },
+                                    null,
+                                    '{% trans "删除定金" %}',
+                                    function () {
+                                        console.log('Cancelled delete');
+                                    }
+                                );
+                            }, 350);
+                        },
+                        onCancel: function () {
+                            // clearDeleteHighlights(); // Assuming this function exists or is intended
+                        }
+                    });
+
+                } else {
+                    if (typeof GlobalModal !== 'undefined') GlobalModal.showToast('{% trans "无法获取付款详情" %}', 'error');
+                }
+            })
+            .catch(function (err) {
+                console.error(err);
+                if (typeof GlobalModal !== 'undefined') GlobalModal.showToast('{% trans "网络错误" %}', 'error');
+            });
+    }
+
+    function executeDeleteDeposit(pmtNo, passwords) {
+        const body = { pmt_no: pmtNo };
+        if (passwords) {
+            for (const [slot, code] of Object.entries(passwords)) {
+                body[`sec_code_${slot}`] = code;
+            }
+        }
+
+        fetch("{% url 'web_ui:finance:deposit_payment_delete' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(body)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof GlobalModal !== 'undefined') GlobalModal.showToast('{% trans "定金付款已删除" %}', 'success');
+                    loadDepositTable(); // Refresh
+                } else {
+                    if (typeof GlobalModal !== 'undefined') GlobalModal.showToast(data.message || '{% trans "删除失败" %}', 'error');
+                }
+            })
+            .catch(function (err) {
+                if (typeof GlobalModal !== 'undefined') GlobalModal.showToast('{% trans "请求失败" %}: ' + err, 'error');
+            });
+    }
+
+    function updateSelectedCount() {
+        document.getElementById('selected-count').textContent = selectedOrders.size;
+        document.getElementById('btn-batch-payment').disabled = selectedOrders.size === 0;
+    }
+
+    function applyFilters() {
+        loadDepositTable();
+    }
+
+    function formatNumber(num) {
+        if (!num && num !== 0) return '-';
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
+
+    function formatCurrency(amount, currency) {
+        return formatNumber(amount);
+    }
+
+    // ===== 付款向导逻辑 =====
+    var depositWizard = null;
+    var depositWizardState = {
+        selectedOrders: [],
+        supplierCode: '',
+        supplierName: '',
+        usePaymentDateRate: false,
+        paymentDate: '',
+        settlementRate: 0,
+        totalPending: 0,
+        totalPendingRmb: 0
+    };
+
+    // ===== 付款向导逻辑 (Replicating Logistic Wizard) =====
+
+    // Open Wizard
+    function openDepositWizard() {
+        // Collect selected data
+        var selectedData = [];
+        if (selectedOrders && selectedOrders.size > 0) {
+            selectedOrders.forEach(function (poNum) {
+                var item = depositData.find(function (d) { return d.po_num === poNum; });
+                if (item) selectedData.push(item);
+            });
+        }
+
+        if (selectedData.length === 0) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "请先选择需要付款的订货单" %}', 'warning');
+            } else {
+                alert('{% trans "请先选择需要付款的订货单" %}');
+            }
+            return;
+        }
+
+        // Setup global state for partials
+        window.paymentItems = selectedData;
+        window.extraFeeData = null;
+
+        // Sync to depositWizardState (for executeDepositPayment)
+        depositWizardState.selectedOrders = selectedData;
+
+        // Switch View
+        document.getElementById('deposit-list-view').style.display = 'none';
+        document.getElementById('deposit-wizard-view').style.display = 'block';
+
+        // Init Wizard
+        initPaymentWizard();
+    }
+
+    // Close Wizard (Exposed globally)
+    window.closeDepositWizard = function () {
+        document.getElementById('deposit-wizard-view').style.display = 'none';
+        document.getElementById('deposit-list-view').style.display = 'block';
+
+        if (window.paymentWizard) {
+            window.paymentWizard = null;
+        }
+
+        // 清理付款向导状态
+        window.paymentItems = [];
+        window.extraFeeData = null;
+        window.paymentReceiptFile = null;
+        if (window.step2RateState) {
+            window.step2RateState = {
+                usePaymentDateRate: false,
+                paymentDate: '',
+                settlementRate: 0,
+                rateSource: 'original',
+                originalRates: {}
+            };
+        }
+
+        // Clear selection
+        selectedOrders.clear();
+        if (typeof updateSelectedCount === 'function') {
+            updateSelectedCount();
+        }
+
+        // Refresh List
+        if (typeof loadDepositTable === 'function') {
+            loadDepositTable();
+        }
+    };
+
+    // Init Payment Wizard
+    function initPaymentWizard() {
+        if (window.paymentWizard) window.paymentWizard = null;
+
+        window.paymentWizard = new GlobalWizard({
+            containerId: 'deposit-wizard-container',
+            steps: [
+                { id: 'intro', label: (window.i18n?.t('js.payment_notes') || 'Payment Notes'), contentSelector: '#dep-step-intro' },
+                { id: 'rate', label: (window.i18n?.t('js.confirm_rate') || 'Confirm Rate'), contentSelector: '#dep-step-rate' },
+                { id: 'confirm', label: (window.i18n?.t('js.confirm_payment') || 'Confirm Payment'), contentSelector: '#dep-step-confirm' },
+                { id: 'complete', label: (window.i18n?.t('js.payment_complete') || 'Payment Complete'), type: 'done', contentSelector: '#dep-step-complete' }
+            ],
+            onStepChange: function (from, to) {
+                console.log('[DepositPayment] Step changed:', from, '->', to);
+                // Call init functions defined in partials
+                if (to === 0 && typeof initStep1 === 'function') initStep1();
+                if (to === 1 && typeof initStep2 === 'function') initStep2();
+                if (to === 2 && typeof initStep3 === 'function') initStep3();
+                if (to === 3 && typeof initStep4 === 'function') initStep4();
+            }
+        });
+
+        // Trigger first step init
+        if (typeof initStep1 === 'function') initStep1();
+    }
+
+
+    function bindDepositWizardButtons() {
+        // Step 1 按钮
+        document.getElementById('dep-btn-step1-next')?.addEventListener('click', function () {
+            if (window.paymentWizard) window.paymentWizard.next();
+        });
+
+        // Step 2 按钮
+        document.getElementById('dep-btn-step2-back')?.addEventListener('click', function () {
+            if (window.paymentWizard) window.paymentWizard.back();
+        });
+        document.getElementById('dep-btn-step2-next')?.addEventListener('click', function () {
+            if (window.paymentWizard) window.paymentWizard.next();
+        });
+
+        // Step 3 按钮
+        document.getElementById('dep-btn-step3-back')?.addEventListener('click', function () {
+            if (window.paymentWizard) window.paymentWizard.back();
+        });
+        // dep-btn-step3-confirm 通过 onclick 调用 confirmDepositPayment()
+
+        // Step 4 按钮
+        document.getElementById('dep-btn-step4-done')?.addEventListener('click', function () {
+            closeDepositWizard();
+            loadDepositTable();
+        });
+
+        // 汇率模式切换
+        document.getElementById('dep-use-payment-date-rate')?.addEventListener('change', function () {
+            depositWizardState.usePaymentDateRate = this.checked;
+            var dateSection = document.getElementById('dep-payment-date-section');
+            var hint = document.getElementById('dep-rate-mode-hint');
+
+            if (this.checked) {
+                dateSection.style.display = 'block';
+                hint.textContent = (window.i18n?.t('js.use_payment_rate_desc') || 'Use payment date rate (requires fetching)');
+            } else {
+                dateSection.style.display = 'none';
+                hint.textContent = (window.i18n?.t('js.use_order_rate_desc') || 'Currently using order original rate');
+                depositWizardState.settlementRate = 0;
+            }
+            updateDepStep2Table();
+        });
+
+        // 获取汇率按钮
+        document.getElementById('dep-btn-fetch-rate')?.addEventListener('click', function () {
+            fetchPaymentDateRate();
+        });
+    }
+
+    // Step 1: 付款说明
+    function initDepStep1() {
+        var orders = depositWizardState.selectedOrders;
+
+        // 填充基本信息
+        document.getElementById('dep-step1-count').textContent = orders.length;
+        document.getElementById('dep-step1-supplier').textContent = depositWizardState.supplierName + ' (' + depositWizardState.supplierCode + ')';
+
+        // 填充订单列表
+        var tbody = document.getElementById('dep-step1-order-list');
+        var html = '';
+        var totalDeposit = 0;
+        var totalPaid = 0;
+        var totalPending = 0;
+
+        orders.forEach(function (order) {
+            totalDeposit += order.deposit_amount;
+            totalPaid += order.actual_paid;
+            totalPending += order.deposit_pending;
+
+            html += '<tr>' +
+                '<td class="text-center text-white fw-bold">' + order.po_num + '</td>' +
+                '<td class="text-center">' + (order.po_date || '-') + '</td>' +
+                '<td class="text-center">' + formatNumber(order.total_amount) + ' ' + order.cur_currency + '</td>' +
+                '<td class="text-center">' + order.deposit_par + '%</td>' +
+                '<td class="text-center text-info">' + formatNumber(order.deposit_amount) + '</td>' +
+                '<td class="text-center text-success">' + formatNumber(order.actual_paid) + '</td>' +
+                '<td class="text-center text-warning fw-bold">' + formatNumber(order.deposit_pending) + '</td>' +
+                '</tr>';
+        });
+        tbody.innerHTML = html;
+
+        // 填充合计
+        document.getElementById('dep-step1-total-deposit').textContent = formatNumber(totalDeposit);
+        document.getElementById('dep-step1-total-paid').textContent = formatNumber(totalPaid);
+        document.getElementById('dep-step1-total-pending').textContent = formatNumber(totalPending);
+
+        depositWizardState.totalPending = totalPending;
+    }
+
+    // Step 2: 确认汇率
+    function initDepStep2() {
+        // 设置付款日期为今天
+        document.getElementById('dep-payment-date').value = depositWizardState.paymentDate;
+
+        // 重置汇率模式
+        document.getElementById('dep-use-payment-date-rate').checked = depositWizardState.usePaymentDateRate;
+        document.getElementById('dep-payment-date-section').style.display = depositWizardState.usePaymentDateRate ? 'block' : 'none';
+
+        updateDepStep2Table();
+    }
+
+    function updateDepStep2Table() {
+        var orders = depositWizardState.selectedOrders;
+        var tbody = document.getElementById('dep-step2-rate-list');
+        var html = '';
+        var totalUsd = 0;
+        var totalRmb = 0;
+
+        orders.forEach(function (order) {
+            var settlementRate = depositWizardState.usePaymentDateRate && depositWizardState.settlementRate > 0
+                ? depositWizardState.settlementRate
+                : order.cur_usd_rmb;
+
+            var pendingAmount = order.deposit_pending;
+            var pendingRmb = order.cur_currency === 'RMB' ? pendingAmount : pendingAmount * settlementRate;
+            var pendingUsd = order.cur_currency === 'USD' ? pendingAmount : pendingAmount / settlementRate;
+
+            totalUsd += pendingUsd;
+            totalRmb += pendingRmb;
+
+            html += '<tr>' +
+                '<td class="text-center text-white fw-bold">' + order.po_num + '</td>' +
+                '<td class="text-center">' + order.cur_currency + '</td>' +
+                '<td class="text-center text-white-50">' + order.cur_usd_rmb.toFixed(4) + '</td>' +
+                '<td class="text-center text-info fw-bold">' + settlementRate.toFixed(4) + '</td>' +
+                '<td class="text-center text-warning">' + formatNumber(pendingAmount) + ' ' + order.cur_currency + '</td>' +
+                '<td class="text-center">' + formatNumber(pendingRmb) + '</td>' +
+                '</tr>';
+        });
+        tbody.innerHTML = html;
+
+        document.getElementById('dep-step2-total-usd').textContent = formatNumber(totalUsd) + ' USD';
+        document.getElementById('dep-step2-total-rmb').textContent = formatNumber(totalRmb) + ' RMB';
+
+        depositWizardState.totalPendingRmb = totalRmb;
+    }
+
+    function fetchPaymentDateRate() {
+        var paymentDate = document.getElementById('dep-payment-date').value;
+        if (!paymentDate) {
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "请选择付款日期" %}', 'warning');
+            }
+            return;
+        }
+
+        depositWizardState.paymentDate = paymentDate;
+
+        // 调用汇率 API
+        if (typeof GlobalExchangeRate !== 'undefined' && GlobalExchangeRate.fetchRate) {
+            GlobalExchangeRate.fetchRate(paymentDate, function (rate) {
+                if (rate && rate > 0) {
+                    depositWizardState.settlementRate = rate;
+                    document.getElementById('dep-fetched-rate').textContent = (window.i18n?.t('js.rate_colon') || 'Rate: ') + rate.toFixed(4);
+                    document.getElementById('dep-fetched-rate').style.display = 'inline';
+                    updateDepStep2Table();
+                } else {
+                    if (typeof createAndShowToast === 'function') {
+                        createAndShowToast('{% trans "获取汇率失败" %}', 'error');
+                    }
+                }
+            });
+        } else {
+            // 模拟获取汇率
+            depositWizardState.settlementRate = 7.25;
+            document.getElementById('dep-fetched-rate').textContent = (window.i18n?.t('form.placeholder.generic_13') || 'Rate: 7.2500');
+            document.getElementById('dep-fetched-rate').style.display = 'inline';
+            updateDepStep2Table();
+        }
+    }
+
+    // Step 3: 确认付款
+    function initDepStep3() {
+        var orders = depositWizardState.selectedOrders;
+
+        // 填充确认信息
+        document.getElementById('dep-step3-supplier').textContent = depositWizardState.supplierName;
+        document.getElementById('dep-step3-count').textContent = orders.length + (window.i18n?.t('js.orders_suffix') || ' orders');
+        document.getElementById('dep-step3-date').textContent = depositWizardState.paymentDate;
+
+        var avgRate = 0;
+        orders.forEach(function (o) {
+            avgRate += depositWizardState.usePaymentDateRate && depositWizardState.settlementRate > 0
+                ? depositWizardState.settlementRate
+                : o.cur_usd_rmb;
+        });
+        avgRate = avgRate / orders.length;
+        document.getElementById('dep-step3-rate').textContent = avgRate.toFixed(4);
+        document.getElementById('dep-step3-total').textContent = formatNumber(depositWizardState.totalPending) + ' (≈' + formatNumber(depositWizardState.totalPendingRmb) + ' RMB)';
+
+        // 填充明细表格
+        var tbody = document.getElementById('dep-step3-detail-list');
+        var html = '';
+        orders.forEach(function (order) {
+            var settlementRate = depositWizardState.usePaymentDateRate && depositWizardState.settlementRate > 0
+                ? depositWizardState.settlementRate
+                : order.cur_usd_rmb;
+            var pendingRmb = order.cur_currency === 'RMB' ? order.deposit_pending : order.deposit_pending * settlementRate;
+
+            html += '<tr>' +
+                '<td class="text-center text-white fw-bold">' + order.po_num + '</td>' +
+                '<td class="text-center">' + formatNumber(order.deposit_amount) + '</td>' +
+                '<td class="text-center text-success">' + formatNumber(order.actual_paid) + '</td>' +
+                '<td class="text-center text-warning fw-bold">' + formatNumber(order.deposit_pending) + ' ' + order.cur_currency + '</td>' +
+                '<td class="text-center">' + formatNumber(pendingRmb) + '</td>' +
+                '</tr>';
+        });
+        tbody.innerHTML = html;
+    }
+
+    // 确认付款（需要密码验证）
+    function confirmDepositPayment() {
+        if (typeof requestPasswordVerify === 'function') {
+            requestPasswordVerify(
+                'deposit_payment_submit',
+                function (passwords) {
+                    executeDepositPayment(passwords);
+                },
+                null,
+                '{% trans "定金付款" %}',
+                function () {
+                    console.log('[DepositWizard] Password verification cancelled');
+                }
+            );
+        } else {
+            // 开发模式直接执行
+            executeDepositPayment({});
+        }
+    }
+    // 上传定金回执
+    async function uploadDepositReceipt(pmt_no, file) {
+        if (!pmt_no || !file) return;
+
+        console.log('[DepositWizard] Uploading receipt for', pmt_no);
+        const formData = new FormData();
+        formData.append('pmt_no', pmt_no);
+        formData.append('payment_receipt', file);
+
+        try {
+            const resp = await fetch("{% url 'web_ui:finance:deposit_receipt_upload' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            });
+            const res = await resp.json();
+            if (!res.success) {
+                console.error('Receipt upload failed:', res.message);
+                if (typeof createAndShowToast === 'function') createAndShowToast('{% trans "付款回执上传失败" %}: ' + res.message, 'error');
+            } else {
+                console.log('Receipt upload success');
+            }
+        } catch (e) {
+            console.error('Receipt upload error:', e);
+            if (typeof createAndShowToast === 'function') createAndShowToast('{% trans "付款回执上传出错" %}', 'error');
+        }
+    }
+    async function executeDepositPayment(passwords) {
+        console.log('[DepositWizard] Executing payment...');
+
+        // 优先使用 window.paymentItems（包含 Step 2 更新的数据）
+        var orders = window.paymentItems || depositWizardState.selectedOrders || [];
+        console.log('[DepositWizard] orders count:', orders.length);
+
+        var poNums = orders.map(function (o) { return o.po_num; });
+
+        // Sync state from Step 2 (if available)
+        var pDate = depositWizardState.paymentDate;
+        var useRate = depositWizardState.usePaymentDateRate;
+        var sRate = depositWizardState.settlementRate;
+
+        if (window.step2RateState) {
+            pDate = window.step2RateState.paymentDate;
+            useRate = window.step2RateState.usePaymentDateRate;
+            sRate = window.step2RateState.settlementRate;
+        }
+
+        // 构建 items 数组（包含每个订单的详细数据）
+        var items = orders.map(function (item) {
+            return {
+                po_num: item.po_num,
+                payment_mode: item.payment_mode || 'original',
+                custom_currency: item.custom_currency || item.cur_currency,
+                custom_amount: item.custom_amount ? parseFloat(item.custom_amount) : null,
+                cover_standard: item._coverStandard || item.custom_cover_standard || false,
+                use_prepay: item._usePrepay || false,
+                prepay_amount: item._prepayVal || item.allocated_deduction || 0,
+                prepay_currency: item.prepay_currency || 'RMB'
+            };
+        });
+
+        // 构建请求数据
+        var requestBody = {
+            po_nums: poNums,
+            payment_date: pDate,
+            use_payment_date_rate: useRate,
+            settlement_rate: sRate || 0,
+            items: items
+        };
+
+        // Add Extra Fee
+        if (window.extraFeeData && window.extraFeeData.amount > 0) {
+            requestBody.extra_fee = window.extraFeeData.amount;
+            requestBody.extra_fee_currency = window.extraFeeData.currency;
+            requestBody.extra_fee_note = window.extraFeeData.note;
+        }
+
+        // 添加密码
+        if (passwords) {
+            for (var slot in passwords) {
+                requestBody['sec_code_' + slot] = passwords[slot];
+            }
+        }
+
+        console.log('[DepositWizard] Request body:', requestBody);
+
+        try {
+            var response = await fetch("{% url 'web_ui:finance:deposit_payment_submit' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            var result = await response.json();
+
+            if (result.success) {
+                // Upload Receipt if exists (Async but don't block UI too long, assume success or background)
+                if (window.paymentReceiptFile) {
+                    await uploadDepositReceipt(result.data.pmt_no, window.paymentReceiptFile);
+                }
+
+                // 立即刷新列表数据（后台执行，不阻塞UI）
+                if (typeof loadDepositTable === 'function') {
+                    loadDepositTable();
+                }
+
+                // 跳转到完成步骤
+                if (window.paymentWizard) window.paymentWizard.next();
+                // initStep4() 在 onStepChange 中已被自动调用，负责填充成功页面数据
+            } else {
+                if (typeof createAndShowToast === 'function') {
+                    createAndShowToast(result.message || '{% trans "付款失败" %}', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('[DepositWizard] Payment failed:', error);
+            if (typeof createAndShowToast === 'function') {
+                createAndShowToast('{% trans "付款请求失败" %}: ' + error.message, 'error');
+            }
+        }
+    }
+
+</script>
+
+<!-- Partial Includes -->
+{% include 'finance/pages/partials/deposit_history_view.html' %}
+
+<script>
+    // ... existing scripts ...
+</script>
+{% endblock %}

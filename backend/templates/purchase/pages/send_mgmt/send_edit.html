@@ -1,0 +1,267 @@
+<!-- 发货单修改向导 - 使用GlobalWizard组件 -->
+{% load static %}
+
+<div class="glass-card p-4 shadow-lg" id="edit-wizard-container">
+    <!-- Header -->
+    <div class="wizard-header d-flex flex-column mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="bg-warning bg-opacity-25 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; flex-shrink: 0;">
+                    <i class="fas fa-edit fa-2x text-warning"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="ui.text_1051">修改发货单向导</h5>
+                    <p class="text-white-50 small mb-0" id="edit-po-num-label" data-i18n="ui.text_418">物流单号: -</p>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="showListView()">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="common.back_list">返回列表</span>
+            </button>
+        </div>
+        <hr class="border-secondary border-opacity-25 my-4 w-100">
+    </div>
+    
+    <!-- StepBar 锚点 (GlobalWizard必须) -->
+    <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+
+    <!-- 加载中 -->
+    <div id="edit-loading" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status"></div>
+        <p class="text-white-50 mt-3 mb-0" data-i18n="ui.text_1050">正在加载发货单数据...</p>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- 流程1: 修改物流单详细信息 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step1.html" %}
+
+    <!-- ===================================== -->
+    <!-- 流程2: 验证物流参数 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step2.html" %}
+
+    <!-- ===================================== -->
+    <!-- 流程3: 修改物流单货物明细 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step3.html" %}
+
+    <!-- ===================================== -->
+    <!-- 流程4: 验证修改 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step4.html" %}
+
+    <!-- ===================================== -->
+    <!-- 流程5: 修改预览 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step5.html" %}
+
+    <!-- ===================================== -->
+    <!-- 流程6: 完成 (独立partial) -->
+    <!-- ===================================== -->
+    {% include "purchase/pages/send_mgmt/send_edit_step6.html" %}
+</div>
+
+<script>
+    // ========================================
+    // 修改发货单向导 - 公共状态和函数
+    // ========================================
+    let editPoWizard = null;  // GlobalWizard实例
+    let editCurrentLogisticNum = null;
+    let editOriginalData = null;
+    let editCurrentStep = 1;
+    let editDateSent = null;  // 发货日期，用于验证
+    
+    // 跳过状态跟踪（互斥：只能跳过一个）
+    let editSkippedLogistics = false;   // 是否跳过了流程1（物流修改）
+    let editSkippedItems = false;       // 是否跳过了流程3（明细修改）
+    
+    // 格式化数字：去除尾部的零 (公共函数)
+    function formatNumber(num, maxDecimals = 4) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        return parseFloat(num.toFixed(maxDecimals)).toString();
+    }
+    
+    // 初始化GlobalWizard
+    let _stepUpdateInProgress = false;
+    
+    function initEditWizard() {
+        if (editPoWizard) {
+            editPoWizard.destroy();
+        }
+        
+        editPoWizard = new GlobalWizard({
+            containerId: 'edit-wizard-container',
+            steps: [
+                { id: 'logistics', label: (window.i18n?.t('js.modify_logistics') || 'Modify Logistics'), contentSelector: '#edit-step-1' },
+                { id: 'verify_logistics', label: (window.i18n?.t('js.verify_logistics') || 'Verify Logistics'), contentSelector: '#edit-step-2' },
+                { id: 'items', label: (window.i18n?.t('js.modify_details') || 'Modify Details'), contentSelector: '#edit-step-3' },
+                { id: 'verify_items', label: (window.i18n?.t('js.verify_changes') || 'Verify Changes'), contentSelector: '#edit-step-4' },
+                { id: 'preview', label: (window.i18n?.t('js.modify_preview') || 'Modify Preview'), contentSelector: '#edit-step-5' },
+                { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#edit-step-6' }
+            ],
+            onStepChange: (from, to) => {
+                if (_stepUpdateInProgress) return;
+                editCurrentStep = to + 1;
+                for (let i = 1; i <= 6; i++) {
+                    const el = document.getElementById(`edit-step-${i}`);
+                    if (el) el.style.display = 'none';
+                }
+                const target = document.getElementById(`edit-step-${to + 1}`);
+                if (target) target.style.display = 'block';
+            },
+            onBeforeNext: async (step, index) => {
+                return true;
+            },
+            onComplete: (data) => {
+            },
+            onRestart: () => {
+                showEditStep(1);
+            }
+        });
+    }
+    
+    // 手动显示指定步骤
+    function showEditStep(stepNum) {
+        for (let i = 1; i <= 6; i++) {
+            const el = document.getElementById(`edit-step-${i}`);
+            if (el) el.style.display = 'none';
+        }
+        const target = document.getElementById(`edit-step-${stepNum}`);
+        if (target) target.style.display = 'block';
+        
+        editCurrentStep = stepNum;
+        
+        if (editPoWizard) {
+            _stepUpdateInProgress = true;
+            editPoWizard.goToStep(stepNum - 1);
+            _stepUpdateInProgress = false;
+        }
+        
+        // 如果进入Step3，加载货物数据
+        if (stepNum === 3 && editCurrentLogisticNum) {
+            if (typeof loadItemsForEdit === 'function') {
+                loadItemsForEdit(editCurrentLogisticNum);
+            }
+        }
+        
+        // 如果进入Step4，执行验证
+        if (stepNum === 4) {
+            if (typeof runStep4Verification === 'function') {
+                runStep4Verification();
+            }
+        }
+        
+        // 如果进入Step5，渲染预览
+        if (stepNum === 5) {
+            if (typeof renderPreviewStep === 'function') {
+                renderPreviewStep();
+            }
+        }
+        
+        // 如果进入Step6，自动执行提交
+        if (stepNum === 6) {
+            if (typeof runStep6Submit === 'function') {
+                runStep6Submit();
+            }
+        }
+    }
+    
+    // 加载发货单数据进行编辑
+    function loadOrderForEdit(logisticNum) {
+        editCurrentLogisticNum = logisticNum;
+        editCurrentStep = 1;
+        
+        // 重置跳过状态
+        editSkippedLogistics = false;
+        editSkippedItems = false;
+        
+        document.getElementById('edit-po-num-label').textContent = `物流单号: ${logisticNum}`;
+        document.getElementById('edit-loading').style.display = 'block';
+        
+        // 隐藏所有步骤
+        document.querySelectorAll('.wizard-step-content').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.getElementById('edit-loading').style.display = 'block';
+        
+        fetch(`{% url 'web_ui:purchase:send_mgmt_edit_data' %}?logistic_num=${encodeURIComponent(logisticNum)}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('edit-loading').style.display = 'none';
+                
+                if (!data.success) {
+                    GlobalModal.showError({
+                        title: (window.i18n?.t('js.load_failed') || 'Load Failed'),
+                        message: data.message || (window.i18n?.t('js.load_shipment_failed') || 'Load shipment failed'),
+                        onConfirmOverride: function() { GlobalModal.hide(); showListView(); }
+                    });
+                    return;
+                }
+                
+                editOriginalData = data.data;
+                editDateSent = data.data.date_sent;
+                // 初始化GlobalWizard
+                initEditWizard();
+                
+                // 填充物流数据 (来自Step1的函数)
+                if (typeof renderLogisticsWithEdit === 'function') {
+                    renderLogisticsWithEdit(editOriginalData.logistics);
+                }
+                
+                // 显示当前版本
+                document.getElementById('edit-current-strategy-seq').textContent = editOriginalData.current_seq || 'S01';
+                
+                // 显示第一步
+                document.getElementById('edit-step-1').style.display = 'block';
+            })
+            .catch(err => {
+                document.getElementById('edit-loading').style.display = 'none';
+                GlobalModal.showError({
+                    title: (window.i18n?.t('js.load_failed') || 'Load Failed'),
+                    message: (window.i18n?.t('js.load_shipment_failed_colon') || 'Load shipment failed: ') + err,
+                    onConfirmOverride: function() { GlobalModal.hide(); showListView(); }
+                });
+            });
+    }
+    
+    // 下一步
+    function editWizardNext(fromStep) {
+        if (fromStep === 1) {
+            // 收集数据并验证 (来自Step1和Step2的函数)
+            const data = collectLogisticsData();
+            const errors = validateLogistics(data);
+            
+            // 显示流程2的验证结果
+            showEditStep(2);
+            displayValidationResult(data, errors);
+        }
+    }
+    
+    // 上一步
+    function editWizardPrev(fromStep) {
+        if (fromStep === 2) {
+            showEditStep(1);
+        }
+    }
+    
+    // 跳过物流修改 - 直接进入货物明细编辑
+    function editWizardSkipStrategy() {
+        // 检查是否已跳过明细修改
+        if (editSkippedItems) {
+            GlobalModal.showError({
+                title: (window.i18n?.t('js.cannot_skip') || 'Cannot Skip'),
+                message: '您已跳过了货物明细修改，不能同时跳过物流修改。<br><small class="text-muted" data-i18n="ui.text_1054">至少需要修改物流参数或货物明细中的一项。</small>'
+            });
+            return;
+        }
+        
+        editSkippedLogistics = true;
+        showEditStep(3);
+    }
+    
+    // 获取CSRF Token (公共函数)
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+    }
+</script>

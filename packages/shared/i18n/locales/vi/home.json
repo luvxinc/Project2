@@ -1,0 +1,12 @@
+{
+  "title": "Enterprise Resource Management",
+  "subtitle": "V2 Architecture",
+  "description": "Rebuilt with TypeScript full-stack. More secure, faster, more reliable.",
+  "getStarted": "Get Started",
+  "apiDocs": "API Docs",
+  "enter": "Enter",
+  "footer": {
+    "phase": "Phase 3",
+    "module": "Users Module"
+  }
+}

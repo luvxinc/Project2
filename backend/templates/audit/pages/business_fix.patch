@@ -1,0 +1,31 @@
+100,117c100,112
+<                             <tr>
+<                                 <td class="ps-3 font-monospace small text-white-50">{{ log.time }}</td>
+<                                 <td class="text-white">{{ log.user }}</td>
+<                                 <td class="font-monospace small text-muted">{{ log.ip }}</td>
+<                                 <td class="text-info text-truncate" style="max-width:180px" title="{{ log.page }}">{{
+<                                     log.page }}</td>
+<                                 <td><span class="badge bg-secondary bg-opacity-50 font-monospace">{{ log.action
+<                                         }}</span></td>
+<                                 <td class="text-truncate small" style="max-width:120px" title="{{ log.target }}">{{
+<                                     log.target }}</td>
+<                                 <td>{% if 'Failed' in log.status %}<span class="badge bg-danger">{{ log.status
+<                                         }}</span>{% else %}<span class="badge bg-success">{{ log.status }}</span>{%
+<                                     endif %}</td>
+<                                 <td class="small text-warning text-truncate" style="max-width:120px"
+<                                     title="{{ log.root_cause }}">{{ log.root_cause }}</td>
+<                                 <td class="text-end pe-3 font-monospace small text-muted">{{ log.event_id|default:"-" }}
+<                                 </td>
+<                             </tr>
+---
+>                             <tr>
+>                                 <td class="ps-3 font-monospace small text-white-50">{{ log.time }}</td>
+>                                 <td class="text-white">{{ log.user }}</td>
+>                                 <td class="font-monospace small text-muted">{{ log.ip }}</td>
+>                                 <td class="text-info text-truncate" style="max-width:180px" title="{{ log.page }}">{{ log.page }}</td>
+>                                 <td><span class="badge bg-secondary bg-opacity-50 font-monospace">{{ log.action }}</span></td>
+>                                 <td class="text-truncate small" style="max-width:120px" title="{{ log.target }}">{{ log.target }}</td>
+>                                 <td>{% if 'Failed' in log.status %}<span class="badge bg-danger">{{ log.status }}</span>{% else %}<span class="badge bg-success">{{ log.status }}</span>{% endif %}</td>
+>                                 <td class="small text-warning text-truncate" style="max-width:120px" title="{{ log.root_cause }}">{{ log.root_cause }}</td>
+>                                 <td class="text-end pe-3 font-monospace small text-muted">{{ log.event_id|default:"-" }}</td>
+>                             </tr>

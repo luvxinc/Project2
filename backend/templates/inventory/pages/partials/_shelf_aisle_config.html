@@ -1,0 +1,79 @@
+<!-- 货架排配置表单 partial -->
+<!-- 使用方式: include "inventory/pages/partials/_shelf_aisle_config.html" with aisle="L" prefix="edit_" -->
+<div class="aisle-config-section" id="{{ prefix|default:'' }}aisleConfig{{ aisle }}Section">
+    <div class="config-row">
+        <label data-i18n="ui.text_383">跨数 (Bay)</label>
+        <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
+               id="{{ prefix|default:'' }}bayCount{{ aisle }}" min="1" max="20" value="3" 
+               onchange="ShelfWizard.updatePreview()">
+    </div>
+    
+    <div class="config-row">
+        <div class="form-check form-switch w-100">
+            <input class="form-check-input" type="checkbox" id="{{ prefix|default:'' }}isCustom{{ aisle }}" onchange="ShelfWizard.toggleCustomMode('{{ aisle }}')">
+            <label class="form-check-label text-warning-emphasis small" for="{{ prefix|default:'' }}isCustom{{ aisle }}" data-i18n="ui.text_384">每跨独立配置</label>
+        </div>
+    </div>
+
+    <!-- 统一配置模式 -->
+    <div id="{{ prefix|default:'' }}uniformConfig{{ aisle }}">
+        <div class="config-row">
+            <label data-i18n="ui.text_385">层数 (Level)</label>
+            <div class="level-checkboxes">
+                <div class="level-checkbox">
+                    <input type="checkbox" id="{{ prefix|default:'' }}levelG{{ aisle }}" value="G" checked onchange="ShelfLogic.handleLevelChange('{{ aisle }}', 'uniform', 'G')">
+                    <label for="{{ prefix|default:'' }}levelG{{ aisle }}">G</label>
+                </div>
+                <div class="level-checkbox">
+                    <input type="checkbox" id="{{ prefix|default:'' }}levelM{{ aisle }}" value="M" checked onchange="ShelfLogic.handleLevelChange('{{ aisle }}', 'uniform', 'M')">
+                    <label for="{{ prefix|default:'' }}levelM{{ aisle }}">M</label>
+                </div>
+                <div class="level-checkbox">
+                    <input type="checkbox" id="{{ prefix|default:'' }}levelT{{ aisle }}" value="T" checked onchange="ShelfLogic.handleLevelChange('{{ aisle }}', 'uniform', 'T')">
+                    <label for="{{ prefix|default:'' }}levelT{{ aisle }}">T</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="config-row">
+            <label data-i18n="ui.text_386">库位 (Bin)</label>
+            <select class="form-select form-select-sm bg-dark text-white border-secondary"
+                    id="{{ prefix|default:'' }}binCount{{ aisle }}" onchange="ShelfWizard.updatePreview()">
+                <option value="0" data-i18n="option.o317">不区分</option>
+                <option value="2" selected>2 (L/R)</option>
+            </select>
+        </div>
+        
+        <div class="config-row" id="{{ prefix|default:'' }}slotRow{{ aisle }}">
+            <label data-i18n="ui.text_387">格位 (Slot)</label>
+            <select class="form-select form-select-sm bg-dark text-white border-secondary"
+                    id="{{ prefix|default:'' }}slotCount{{ aisle }}" onchange="ShelfWizard.updatePreview()">
+                <option value="0" selected data-i18n="option.o317">不区分</option>
+                <option value="2">2 (L/R)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 独立跨配置模式 -->
+    <div id="{{ prefix|default:'' }}customConfig{{ aisle }}" class="d-none">
+        <div id="{{ prefix|default:'' }}bayList{{ aisle }}" class="bay-list-container">
+            <!-- JS 动态填充跨配置 -->
+        </div>
+    </div>
+
+    <!-- 原有配置显示区域 (仅编辑模式显示) -->
+    <div id="{{ prefix|default:'' }}originalConfig{{ aisle }}" class="d-none mt-3">
+        <div class="card bg-dark bg-opacity-75 border-warning border-opacity-50">
+            <div class="card-header py-2 bg-warning bg-opacity-10 border-bottom border-warning border-opacity-25">
+                <small class="text-warning fw-bold">
+                    <i class="fas fa-history me-1"></i><span data-i18n="ui.icon_3159">修改前配置 (只读)</span>
+                </small>
+            </div>
+            <div class="card-body py-2">
+                <div id="{{ prefix|default:'' }}originalConfigContent{{ aisle }}" class="text-white-50 small">
+                    <!-- JS 动态填充原有配置 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

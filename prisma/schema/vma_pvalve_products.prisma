@@ -1,0 +1,60 @@
+// ================================
+// VMA P-Valve Product Management Models
+// P-Valve 产品管理 — 瓣膜与输送系统
+// ================================
+
+/// P-Valve 产品型号表 — Specification 为业务主键
+model VmaPValveProduct {
+  id                 String   @id @default(uuid())
+  model              String   // 型号 e.g. L28P, L30P, L32P
+  specification      String   @unique // 规格代码 (业务主键) e.g. P28-25, P30-30
+  diameterA          Float?   @map("diameter_a")     // 直径 A (mm)
+  diameterB          Float?   @map("diameter_b")     // 直径 B (mm)
+  diameterC          Float?   @map("diameter_c")     // 直径 C (mm)
+  expandedLengthD    Float?   @map("expanded_length_d") // 展开长度 D (mm)
+  expandedLengthE    Float?   @map("expanded_length_e") // 展开长度 E (mm)
+  crimpedTotalLength Float?   @map("crimped_total_length") // 压缩总长度 (mm)
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // 被哪些输送系统适配
+  deliverySystemFits VmaDeliverySystemFit[]
+
+  @@index([model])
+  @@map("vma_pvalve_products")
+}
+
+/// 输送系统产品型号表 — Specification 为业务主键
+model VmaDeliverySystemProduct {
+  id            String   @id @default(uuid())
+  model         String   // 型号 e.g. 22Fr, 24Fr
+  specification String   @unique // 规格代码 (业务主键) e.g. DS22-P70, DS24-P81
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 适配哪些 P-Valve
+  pvalveFits VmaDeliverySystemFit[]
+
+  @@index([model])
+  @@map("vma_delivery_system_products")
+}
+
+/// 输送系统 ↔ P-Valve 适配关系表 (多对多)
+/// 记录哪个输送系统可以搭配哪个 P-Valve 使用
+model VmaDeliverySystemFit {
+  id                    String @id @default(uuid())
+  deliverySystemId      String @map("delivery_system_id")
+  pvalveId              String @map("pvalve_id")
+
+  deliverySystem VmaDeliverySystemProduct @relation(fields: [deliverySystemId], references: [id], onDelete: Cascade)
+  pvalve         VmaPValveProduct         @relation(fields: [pvalveId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([deliverySystemId, pvalveId])
+  @@index([deliverySystemId])
+  @@index([pvalveId])
+  @@map("vma_delivery_system_fits")
+}

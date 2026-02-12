@@ -1,0 +1,307 @@
+<!-- PO Payment 付款文件管理视图 (默认隐藏) -->
+<!-- 使用 GlobalFileViewer 组件 -->
+<div id="po-payment-file-view" style="display: none;"></div>
+
+<!-- 付款文件上传向导容器 -->
+<div id="po-payment-file-upload-wizard-container" style="display: none;"></div>
+
+<script>
+// 当前文件视图实例
+let poPaymentFileViewer = null;
+let poPaymentFileUploadWizard = null;
+let currentPOFilePmtNo = null;
+
+/**
+ * 关闭PO Payment文件视图
+ */
+function closePOPaymentFileView() {
+    document.getElementById('po-payment-file-view').style.display = 'none';
+    document.getElementById('po-payment-file-upload-wizard-container').style.display = 'none';
+    document.getElementById('po-list-view').style.display = 'block';
+    currentPOFilePmtNo = null;
+    poPaymentFileViewer = null;
+    
+    // 刷新列表数据
+    if (typeof loadPOTable === 'function') {
+        loadPOTable();
+    }
+}
+
+/**
+ * 查看PO付款文件
+ */
+function viewPaymentFiles(pmtNo, event) {
+    if (event) event.stopPropagation();
+    currentPOFilePmtNo = pmtNo;
+    
+    // 隐藏主视图
+    document.getElementById('po-list-view').style.display = 'none';
+    document.getElementById('po-payment-file-upload-wizard-container').style.display = 'none';
+    
+    // 显示文件视图容器
+    const viewContainer = document.getElementById('po-payment-file-view');
+    viewContainer.style.display = 'block';
+    viewContainer.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="text-white-50 mt-3" data-i18n="ui.text_1291">正在加载文件...</p></div>';
+    
+    // 获取文件信息 (使用 PO Payment API)
+    fetch(`/dashboard/finance/po/api/files/?identifier=${encodeURIComponent(pmtNo)}`)
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                const files = result.data.files || [];
+                showPOPaymentFileViewer(pmtNo, files);
+            } else {
+                viewContainer.innerHTML = `<div class="glass-card p-4"><div class="text-center text-danger"><i class="fas fa-exclamation-circle fa-3x mb-3"></i><p data-i18n="ui.text_1292">${result.message || (window.i18n?.t('js.load_failed') || 'Load Failed')}</p><button class="btn btn-outline-secondary" onclick="closePOPaymentFileView()" data-i18n="common.back">返回</button></div></div>`;
+            }
+        })
+        .catch(err => {
+            viewContainer.innerHTML = `<div class="glass-card p-4"><div class="text-center text-danger"><i class="fas fa-exclamation-circle fa-3x mb-3"></i><p data-i18n="ui.text_490">网络错误: ${err}</p><button class="btn btn-outline-secondary" onclick="closePOPaymentFileView()" data-i18n="common.back">返回</button></div></div>`;
+        });
+}
+
+/**
+ * 显示PO Payment文件查看器
+ */
+function showPOPaymentFileViewer(pmtNo, files) {
+    // 无文件时显示提示
+    if (!files || files.length === 0) {
+        document.getElementById('po-payment-file-view').innerHTML = `
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary btn-sm rounded-pill me-3" onclick="closePOPaymentFileView()">
+                            <i class="fas fa-arrow-left me-2"></i>返回
+                        </button>
+                        <div>
+                            <h5 class="text-white mb-0"><i class="fas fa-file-invoice text-info me-2"></i>付款回执查看</h5>
+                            <small class="text-white-50" data-i18n="ui.text_1296">付款单号: ${pmtNo}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-info opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-3" data-i18n="ui.text_1297">暂无付款回执文件</p>
+                    <button class="btn btn-success btn-sm rounded-pill px-4" onclick="uploadPOReceiptFile('${pmtNo}')">
+                        <i class="fas fa-upload me-2"></i>上传文件
+                    </button>
+                </div>
+            </div>`;
+        return;
+    }
+    
+    // 使用 GlobalFileViewer 组件
+    if (typeof GlobalFileViewer !== 'undefined') {
+        poPaymentFileViewer = new GlobalFileViewer({
+            containerId: 'po-payment-file-view',
+            title: (window.i18n?.t('js.view_payment_receipt') || 'View Payment Receipt'),
+            identifierLabel: (window.i18n?.t('js.payment_no') || 'Payment No'),
+            identifierValue: pmtNo,
+            files: files,
+            currentFile: files.length > 0 ? files[0].filename : null,
+            getFileUrl: (fname) => `/dashboard/finance/po/api/serve_file/?identifier=${encodeURIComponent(pmtNo)}&filename=${encodeURIComponent(fname)}`,
+            onUpload: () => uploadPOReceiptFile(pmtNo),
+            onBack: () => closePOPaymentFileView(),
+            // 删除功能配置
+            deleteUrl: '/dashboard/finance/po/api/delete_file/',
+            deletePayload: { pmt_no: pmtNo },
+            onDeleteSuccess: () => viewPaymentFiles(pmtNo, null),
+            // 启用密码验证
+            requireDeletePassword: true,
+            deletePasswordActionKey: 'po_receipt_delete'
+        });
+    } else {
+        document.getElementById('po-payment-file-view').innerHTML = `
+            <div class="glass-card p-4">
+                <div class="text-center text-warning">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <p data-i18n="ui.text_1298">文件查看组件未加载</p>
+                    <button class="btn btn-outline-secondary" onclick="closePOPaymentFileView()" data-i18n="common.back">返回</button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * 上传PO付款文件
+ */
+function uploadPOReceiptFile(pmtNo) {
+    currentPOFilePmtNo = pmtNo;
+    
+    // 隐藏其他视图
+    document.getElementById('po-list-view').style.display = 'none';
+    document.getElementById('po-payment-file-view').style.display = 'none';
+    
+    // 显示上传向导容器
+    const wizardContainer = document.getElementById('po-payment-file-upload-wizard-container');
+    wizardContainer.style.display = 'block';
+    
+    // 直接使用简化的上传界面
+    renderSimplePOUploadWizard(pmtNo);
+}
+
+/**
+ * 关闭上传向导
+ */
+function closePOPaymentUploadWizard() {
+    document.getElementById('po-payment-file-upload-wizard-container').style.display = 'none';
+    document.getElementById('po-list-view').style.display = 'block';
+    poPaymentFileUploadWizard = null;
+    currentPOFilePmtNo = null;
+    
+    // 刷新列表数据
+    if (typeof loadPOTable === 'function') {
+        loadPOTable();
+    }
+}
+
+/**
+ * 简化的上传向导
+ */
+function renderSimplePOUploadWizard(pmtNo) {
+    const container = document.getElementById('po-payment-file-upload-wizard-container');
+    container.innerHTML = `
+        <div class="glass-card p-4 shadow-lg">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill me-3" onclick="closePOPaymentUploadWizard()">
+                        <i class="fas fa-arrow-left me-2"></i>返回
+                    </button>
+                    <div>
+                        <h5 class="text-white mb-0">
+                            <i class="fas fa-upload text-info me-2"></i>上传付款回执
+                        </h5>
+                        <small class="text-white-50" data-i18n="ui.text_1296">付款单号: ${pmtNo}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Area -->
+            <div id="po-simple-upload-container"></div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top border-secondary border-opacity-25">
+                <button class="btn btn-outline-secondary rounded-pill px-4" onclick="closePOPaymentUploadWizard()" data-i18n="common.cancel">
+                    取消
+                </button>
+                <button class="btn btn-success rounded-pill px-4" id="btn-submit-po-file" onclick="submitPOFileUpload('${pmtNo}')">
+                    <i class="fas fa-upload me-2"></i>上传
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // 初始化文件上传组件
+    if (typeof GlobalFileUpload !== 'undefined') {
+        window.poSimpleUploader = new GlobalFileUpload({
+            containerId: 'po-simple-upload-container',
+            inputName: 'po_file',
+            title: (window.i18n?.t('js.upload_payment_receipt') || 'Upload Payment Receipt'),
+            accept: '.pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.xls,.xlsx,.doc,.docx,.csv,.zip,.rar',
+            maxSizeMB: 50,
+            required: true,
+            onFileSelect: (file) => {
+                console.log('[POFileUpload] File selected:', file.name);
+            }
+        });
+    }
+}
+
+/**
+ * 提交PO文件上传
+ */
+function submitPOFileUpload(pmtNo) {
+    if (!window.poSimpleUploader) {
+        if (typeof GlobalModal !== 'undefined') {
+            GlobalModal.showToast((window.i18n?.t('js.upload_not_init') || 'Upload component not initialized'), 'error');
+        }
+        return;
+    }
+    
+    const file = window.poSimpleUploader.getFile();
+    if (!file) {
+        if (typeof GlobalModal !== 'undefined') {
+            GlobalModal.showToast((window.i18n?.t('js.select_file') || 'Select File'), 'warning');
+        }
+        return;
+    }
+    
+    // 请求密码验证
+    if (typeof requestPasswordVerify === 'function') {
+        requestPasswordVerify(
+            'po_receipt_upload',
+            (passwords) => {
+                doSubmitPOFile(pmtNo, file, passwords);
+            },
+            null,
+            (window.i18n?.t('js.upload_receipt') || 'Upload Receipt'),
+            () => {}
+        );
+    } else {
+        doSubmitPOFile(pmtNo, file, {});
+    }
+}
+
+/**
+ * 执行PO文件上传
+ */
+function doSubmitPOFile(pmtNo, file, passwords) {
+    const btn = document.getElementById('btn-submit-po-file');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>上传中...';
+    
+    const formData = new FormData();
+    formData.append('pmt_no', pmtNo);
+    formData.append('file', file);
+    
+    // 添加密码
+    if (passwords) {
+        for (const [slot, code] of Object.entries(passwords)) {
+            formData.append(`sec_code_${slot}`, code);
+        }
+    }
+    
+    fetch('/dashboard/finance/po/api/upload_receipt/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getPOCsrfToken()
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            closePOPaymentUploadWizard();
+            if (typeof loadPOTable === 'function') {
+                loadPOTable();
+            }
+            if (typeof GlobalModal !== 'undefined') {
+                GlobalModal.showToast(result.message || (window.i18n?.t('js.upload_success') || 'Upload Success'), 'success');
+            }
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (typeof GlobalModal !== 'undefined') {
+                GlobalModal.showToast(result.error || result.message || (window.i18n?.t('js.upload_failed') || 'Upload Failed'), 'error');
+            }
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (typeof GlobalModal !== 'undefined') {
+            GlobalModal.showToast((window.i18n?.t('js.network_error_colon') || 'Network Error: ') + err, 'error');
+        }
+    });
+}
+
+/**
+ * 获取 CSRF Token
+ */
+function getPOCsrfToken() {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+}
+</script>

@@ -1,0 +1,426 @@
+<div class="card glass-card border-0 h-100 shadow-lg position-relative overflow-hidden">
+    <div class="card-body p-0 position-relative">
+        <!-- Loader -->
+        <div id="chart-loader" class="position-absolute top-50 start-50 translate-middle text-center d-none"
+            style="z-index: 50; pointer-events: none;">
+            <div class="spinner-border text-info"
+                style="width: 3rem; height: 3rem; filter: drop-shadow(0 0 5px #0dcaf0);" role="status"></div>
+            <div class="mt-3 text-info font-monospace fw-bold" style="text-shadow: 0 0 10px #0dcaf0;">SYNCHRONIZING
+                MATRIX...</div>
+        </div>
+
+        <!-- Viz Container -->
+        <div id="viz-container" class="w-100 h-100 position-relative" style="min-height: 600px;">
+            <!-- ECharts Layer (Line Chart) -->
+            <div id="echarts-dom" style="width: 100%; height: 600px; position: absolute; top:0; left:0;"></div>
+
+            <!-- Canvas Overlay (Line SFX + 3D Pie Engine) -->
+            <canvas id="sfx-canvas"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 600px; pointer-events: none;"></canvas>
+
+            <!-- 3D Pie Interactions Layer (Tooltips/Boards) -->
+            <div id="pie-overlay"
+                style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Global Config ---
+    const COLORS = ['#0dcaf0', '#d63384', '#ffc107', '#20c997', '#6f42c1', '#fd7e14', '#e83e8c'];
+    const PIE_PALETTE = ['#0d6efd', '#6610f2', '#0dcaf0', '#6f42c1', '#d63384'];
+
+    // --- ECharts Logic (Line) ---
+    function initLineChart(data, mode) {
+        if (!app.chart) {
+            app.chart = echarts.init(document.getElementById('echarts-dom'));
+            window.addEventListener('resize', () => app.chart.resize());
+        }
+
+        document.getElementById('echarts-dom').style.opacity = '1';
+
+        let allVals = [];
+        data.series.forEach(s => allVals.push(...s.data));
+        const minVal = Math.min(...allVals);
+        const maxVal = Math.max(...allVals);
+        const range = maxVal - minVal;
+
+        let yMin = minVal - (range * 0.1);
+        let yMax = maxVal + (range * 0.1);
+        if (yMin < 0 && minVal >= 0) yMin = 0;
+
+        const isSingle = data.series.length === 1;
+        const series = data.series.map((s, idx) => ({
+            name: s.name,
+            type: 'line',
+            data: s.data,
+            smooth: true,
+            showSymbol: false,
+            lineStyle: { opacity: 0 },
+            itemStyle: { color: COLORS[idx % COLORS.length] },
+            areaStyle: { opacity: 0 }
+        }));
+
+        const option = {
+            backgroundColor: 'transparent',
+            grid: { top: 60, left: 60, right: 30, bottom: 40 },
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                borderColor: '#444',
+                textStyle: { color: '#fff' }
+            },
+            xAxis: {
+                type: 'category',
+                data: data.categories,
+                axisLine: { show: false },
+                axisLabel: { color: '#6c757d', fontFamily: 'monospace' }
+            },
+            yAxis: {
+                type: 'value',
+                min: Math.floor(yMin),
+                max: Math.ceil(yMax),
+                splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
+                axisLabel: {
+                    color: '#6c757d', fontFamily: 'monospace',
+                    formatter: function (val) {
+                        if (mode === 'Amount') return '$' + val;
+                        if (mode === 'Quantity') return val + ' units';
+                        if (mode === 'Order') return val + ' Ords';
+                        if (mode === 'Percentage') return val + '%';
+                        return val;
+                    }
+                }
+            },
+            series: series,
+            legend: { show: true, textStyle: { color: '#fff' }, top: 0, right: 10 }
+        };
+        app.chart.clear();
+        app.chart.setOption(option);
+
+        if (window.app.sfx) {
+            setTimeout(() => window.app.sfx.initLine(data, isSingle), 100);
+        }
+    }
+
+    // --- 2D Canvas Pie3D Engine ---
+    class Pie3DEngine {
+        constructor(canvas, overlayDiv) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d');
+            this.overlay = overlayDiv;
+            this.slices = [];
+            this.animId = null;
+        }
+
+        clear() {
+            if (this.animId) cancelAnimationFrame(this.animId);
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.overlay.innerHTML = '';
+            this.slices = [];
+        }
+
+        init(pieData) {
+            this.clear();
+            const rect = this.canvas.getBoundingClientRect();
+            this.canvas.width = rect.width;
+            this.canvas.height = rect.height;
+
+            const CX = this.canvas.width / 2;
+            const CY = this.canvas.height / 2 + 80;
+            const minDim = Math.min(this.canvas.width, this.canvas.height);
+            const RX = minDim * 0.35;
+            const RY = RX * 0.5;
+
+            const sortedData = [...pieData].sort((a, b) => b.value - a.value);
+            const layoutData = [];
+            let left = [], right = [];
+            sortedData.forEach((d, i) => {
+                if (i % 2 === 0) right.push(d);
+                else left.push(d);
+            });
+            layoutData.push(...left.reverse());
+            layoutData.push(...right);
+
+            const pieSum = layoutData.reduce((acc, d) => acc + d.value, 0);
+
+            const minSliceName = sortedData[sortedData.length - 1].name;
+
+            let tempSlices = [];
+            layoutData.forEach((d, idx) => {
+                const sweep = (d.value / pieSum) * Math.PI * 2;
+                if (d.value <= 0) return;
+
+                const rank = sortedData.findIndex(x => x.name === d.name);
+                const targetH = 40 + (4 - rank) * 45;
+
+                tempSlices.push({
+                    data: d,
+                    sweep: sweep,
+                    targetH: targetH,
+                    color: PIE_PALETTE[rank % PIE_PALETTE.length],
+                    delay: rank * 0.15,
+                    rank: rank
+                });
+            });
+
+            const minSliceIdx = tempSlices.findIndex(s => s.data.name === minSliceName);
+            let acc = 0, centerA = 0;
+            for (let i = 0; i < tempSlices.length; i++) {
+                if (i === minSliceIdx) { centerA = acc + tempSlices[i].sweep / 2; break; }
+                acc += tempSlices[i].sweep;
+            }
+            // Rotate 180 degrees: change from -PI/2 to +PI/2
+            const offset = Math.PI / 2 - centerA;
+
+            let currentA = offset;
+            tempSlices.forEach(s => {
+                const startA = currentA;
+                const endA = startA + s.sweep;
+                const midA = startA + s.sweep / 2;
+
+                this.slices.push({
+                    ...s,
+                    startA: startA, endA: endA, midA: midA,
+                    cx: CX, cy: CY, rx: RX, ry: RY,
+                    currentH: 0, growthDur: 1.2, growthTime: 0,
+                    lineProgress: 0, lineStage: 'wait',
+                    idealY: 0, targetY: 0, currentLabelY: 0,
+                    domEl: null, realH: 0
+                });
+                currentA = endA;
+            });
+
+            this.slices.forEach(s => {
+                this.createBoard(s);
+                s.realH = s.domEl.offsetHeight || 100;
+            });
+
+            this.preCalculateLayout();
+            this.startLoop();
+        }
+
+        preCalculateLayout() {
+            this.slices.forEach(s => {
+                const finalTopY = s.cy - s.targetH;
+                const anchor = this.polar(s.midA, s.rx * 0.8, s.ry * 0.8, s.cx, finalTopY);
+                s.idealY = anchor.y - (s.realH / 2);
+                s.targetY = s.idealY;
+                s.currentLabelY = s.idealY;
+            });
+            this.resolveCollisions();
+        }
+
+        resolveCollisions() {
+            const gap = 20;
+            const solveStack = (list) => {
+                list.sort((a, b) => a.targetY - b.targetY);
+                for (let i = 1; i < list.length; i++) {
+                    const prev = list[i - 1];
+                    const curr = list[i];
+                    const prevBot = prev.targetY + prev.realH;
+                    if (curr.targetY < prevBot + gap) {
+                        curr.targetY = prevBot + gap;
+                    }
+                }
+            };
+            const lefts = this.slices.filter(s => Math.cos(s.midA) < 0);
+            const rights = this.slices.filter(s => Math.cos(s.midA) >= 0);
+            solveStack(lefts);
+            solveStack(rights);
+
+            this.slices.forEach(s => {
+                s.currentLabelY = s.targetY;
+                if (s.domEl) {
+                    s.domEl.style.top = s.currentLabelY + 'px';
+                    if (Math.cos(s.midA) >= 0) {
+                        s.domEl.style.left = (s.cx + s.rx + 60) + 'px';
+                        s.domEl.style.right = 'auto';
+                    } else {
+                        s.domEl.style.right = (this.canvas.width - (s.cx - s.rx - 60)) + 'px';
+                        s.domEl.style.left = 'auto';
+                    }
+                }
+            });
+        }
+
+        startLoop() {
+            if (this.animId) cancelAnimationFrame(this.animId);
+            let last = performance.now();
+            const loop = (now) => {
+                const dt = Math.min((now - last) / 1000, 0.1);
+                last = now;
+                this.update(dt);
+                this.draw();
+                this.animId = requestAnimationFrame(loop);
+            };
+            this.animId = requestAnimationFrame(loop);
+        }
+
+        update(dt) {
+            this.slices.forEach(s => {
+                if (s.delay > 0) s.delay -= dt;
+                else {
+                    s.growthTime += dt;
+                    const progress = Math.min(s.growthTime / s.growthDur, 1);
+                    const p = 1 - Math.pow(1 - progress, 3);
+                    s.currentH = s.targetH * p;
+
+                    if (progress >= 1 && s.lineStage === 'wait') s.lineStage = 'grow';
+                }
+
+                if (s.lineStage === 'grow') {
+                    s.lineProgress += dt / 0.5;
+                    if (s.lineProgress > 1) s.lineProgress = 1;
+                }
+
+                if (s.domEl) {
+                    s.domEl.style.opacity = Math.max(0, (s.lineProgress - 0.2) / 0.8);
+                }
+            });
+        }
+
+        draw() {
+            const ctx = this.ctx;
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            if (this.slices.length > 0) {
+                const s0 = this.slices[0];
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.ellipse(s0.cx + 10, s0.cy + 20, s0.rx * 1.02, s0.ry * 1.02, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            const sorted = [...this.slices].sort((a, b) => Math.sin(a.midA) - Math.sin(b.midA));
+
+            sorted.forEach(s => {
+                if (s.currentH > 0.5) this.drawSlice3D(s);
+            });
+
+            sorted.forEach(s => {
+                if (s.lineProgress > 0) this.drawLine(s);
+            });
+        }
+
+        drawSlice3D(s) {
+            const ctx = this.ctx;
+            const topY = s.cy - s.currentH;
+            if (!isFinite(topY) || s.currentH < 1) return;
+
+            const sideGrad = ctx.createLinearGradient(0, topY, 0, s.cy);
+            sideGrad.addColorStop(0, this.adj(s.color, 10));
+            sideGrad.addColorStop(0.5, this.adj(s.color, -10));
+            sideGrad.addColorStop(1, this.adj(s.color, -30));
+
+            ctx.fillStyle = sideGrad;
+            ctx.beginPath();
+            ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, s.startA, s.endA);
+            const topEnd = this.polar(s.endA, s.rx, s.ry, s.cx, topY);
+            ctx.lineTo(topEnd.x, topEnd.y);
+            ctx.ellipse(s.cx, topY, s.rx, s.ry, 0, s.endA, s.startA, true);
+            const botStart = this.polar(s.startA, s.rx, s.ry, s.cx, s.cy);
+            ctx.lineTo(botStart.x, botStart.y);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            const topGrad = ctx.createRadialGradient(s.cx, topY, 0, s.cx, topY, s.rx);
+            topGrad.addColorStop(0, this.adj(s.color, 35));
+            topGrad.addColorStop(0.6, s.color);
+            topGrad.addColorStop(1, this.adj(s.color, -10));
+
+            ctx.fillStyle = topGrad;
+            ctx.beginPath();
+            ctx.moveTo(s.cx, topY);
+            ctx.ellipse(s.cx, topY, s.rx, s.ry, 0, s.startA, s.endA);
+            ctx.lineTo(s.cx, topY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(s.cx, topY, s.rx, s.ry, 0, s.startA, s.endA);
+            ctx.stroke();
+        }
+
+        drawLine(s) {
+            if (s.lineProgress <= 0) return;
+            const ctx = this.ctx;
+            const topY = s.cy - s.currentH;
+            const start = this.polar(s.midA, s.rx * 0.7, s.ry * 0.7, s.cx, topY);
+
+            const midY = s.currentLabelY + 25;
+            const isRight = Math.cos(s.midA) >= 0;
+            const elbowX = s.cx + (isRight ? 1 : -1) * (s.rx + 30);
+            const boxX = isRight ? (s.cx + s.rx + 60) : (s.cx - s.rx - 60);
+
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(elbowX, midY);
+            ctx.lineTo(boxX, midY);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = s.lineProgress;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(start.x, start.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        createBoard(s) {
+            const b = document.createElement('div');
+            b.style.position = 'absolute';
+            b.style.width = '180px';
+            b.style.padding = '12px';
+            b.style.backgroundColor = 'rgba(10, 10, 10, 0.7)';
+            b.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+            b.style.backdropFilter = 'blur(10px)';
+            b.style.borderRadius = '8px';
+            b.style.color = '#fff';
+            b.style.borderLeft = `3px solid ${s.color}`;
+            b.style.fontFamily = 'monospace';
+            b.style.opacity = '0';
+            b.style.zIndex = "100";
+            b.style.pointerEvents = "auto";
+
+            let html = `<div style="color:${this.adj(s.color, 40)}; font-weight:bold; margin-bottom:4px;">${s.data.name}</div>`;
+            html += `<div class="fs-5">$${s.data.value.toLocaleString()}</div>`;
+            html += `<div class="small text-white-50">${s.data.percentage}% of Breakdown</div>`;
+
+            if (s.data.details && Object.keys(s.data.details).length > 0) {
+                html += '<hr style="margin:6px 0; border-color:rgba(255,255,255,0.1)">';
+                for (let k in s.data.details) {
+                    html += `<div class="d-flex justify-content-between small text-white-50" style="font-size:0.85em"><span>${k}</span><span>${s.data.details[k]}</span></div>`;
+                }
+            }
+            b.innerHTML = html;
+            this.overlay.appendChild(b);
+            s.domEl = b;
+        }
+
+        polar(a, rx, ry, cx, cy) { return { x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry }; }
+        adj(color, percent) {
+            if (!color || color.length < 7) return color;
+            var R = parseInt(color.substring(1, 3), 16);
+            var G = parseInt(color.substring(3, 5), 16);
+            var B = parseInt(color.substring(5, 7), 16);
+            R = parseInt(R * (100 + percent) / 100); R = (R < 255) ? R : 255;
+            G = parseInt(G * (100 + percent) / 100); G = (G < 255) ? G : 255;
+            B = parseInt(B * (100 + percent) / 100); B = (B < 255) ? B : 255;
+            var RR = ((R.toString(16).length == 1) ? "0" + R.toString(16) : R.toString(16));
+            var GG = ((G.toString(16).length == 1) ? "0" + G.toString(16) : G.toString(16));
+            var BB = ((B.toString(16).length == 1) ? "0" + B.toString(16) : B.toString(16));
+            return "#" + RR + GG + BB;
+        }
+    }
+</script>

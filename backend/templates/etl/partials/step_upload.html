@@ -1,0 +1,265 @@
+{% load security_tags %}
+
+<!-- 操作须知 -->
+<div class="glass-card p-4 mb-4 border border-info border-opacity-25" data-testid="ops-note-upload">
+    <div class="d-flex align-items-start">
+        <div class="bg-info bg-opacity-25 p-2 rounded-circle me-3 flex-shrink-0">
+            <i class="fas fa-info-circle fa-lg text-info"></i>
+        </div>
+        <div>
+            <h6 class="text-info fw-bold mb-2" data-i18n="ui.text_252">操作须知 - 数据上传</h6>
+            <div class="text-white-50 small">
+                <p class="mb-2">
+                    <strong data-i18n="ui.text_207">功能说明：</strong>
+                    上传 eBay 导出的 Transaction Report 或 Order Earnings Report CSV 文件，系统将自动识别文件类型并进行后续处理。
+                </p>
+                <p class="mb-2">
+                    <strong data-i18n="ui.text_254">支持格式：</strong>
+                    仅支持 .csv 格式文件，可同时上传多个文件（拖拽或点击选择）。
+                </p>
+                <p class="mb-0">
+                    <strong data-i18n="ui.text_209">常见问题：</strong>
+                    文件过大/格式错误/编码异常 → 系统会在"检验"步骤给出详细错误说明。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据截止日期提示 -->
+<div class="alert border-warning border-opacity-50 mb-4" style="background: rgba(255, 193, 7, 0.1);">
+    <div class="d-flex align-items-center">
+        <i class="fa-solid fa-calendar-check fa-2x text-warning me-3"></i>
+        <div>
+            <strong class="text-warning" data-i18n="ui.text_256">当前数据截止日期</strong>
+            <p class="text-white mb-0 mt-1">
+                <span data-i18n="ui.sales_data_latest">销售数据表最新记录至:</span>
+                <span class="badge bg-warning text-dark fs-6 ms-2">{{ data_cutoff_date }}</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- 上传区域 -->
+<div class="glass-card p-4 border border-secondary border-opacity-25" data-testid="upload-card">
+    <h6 class="text-uppercase text-muted small fw-bold mb-3">
+        <i class="fas fa-cloud-upload-alt text-info me-2"></i>Step 1: 数据上传
+    </h6>
+
+    <form id="etl-upload-form" hx-post="{% url 'web_ui:sales:transactions:upload' %}" hx-target="#etl-tab-content"
+        hx-encoding="multipart/form-data" hx-indicator="#upload-spinner" data-testid="upload-form">
+
+        {% csrf_token %}
+
+        <!-- File Upload Zone -->
+        <div class="upload-zone mb-4 p-5 text-center rounded-3"
+            style="border: 2px dashed rgba(13, 202, 240, 0.4); background: rgba(0,0,0,0.2); transition: all 0.3s;"
+            id="drop-zone" data-testid="drop-zone">
+
+            <i class="fa-solid fa-file-csv display-4 text-info mb-3"></i>
+            <p class="text-white mb-2" data-i18n="etl.drag_csv">拖拽 CSV 文件到此处，或点击选择</p>
+            <p class="text-muted small mb-3" data-i18n="ui.text_258">支持 Transaction Report 和 Order Earnings Report</p>
+
+            <input type="file" name="files" id="etl-files" class="d-none" accept=".csv" multiple
+                onchange="updateFileList()">
+
+            <button type="button" class="btn btn-outline-info rounded-pill px-4"
+                onclick="document.getElementById('etl-files').click()">
+                <i class="fa-solid fa-folder-open me-2"></i><span data-i18n="etl.select_file">选择文件</span>
+            </button>
+        </div>
+
+        <!-- Selected Files Preview -->
+        <div id="file-list" class="mb-4 d-none" data-testid="file-list">
+            <h6 class="text-white-50 small mb-2" data-i18n="ui.text_259">已选择的文件:</h6>
+            <div id="file-items" class="d-flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- [V2.0] FIFO 回库比例设置 -->
+        <div class="mb-4 p-3 rounded-3" style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2);">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fa-solid fa-warehouse text-warning me-2"></i>
+                <h6 class="text-warning mb-0 small fw-bold" data-i18n="ui.text_260">FIFO 库存回库比例设置</h6>
+                <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;" data-i18n="common.optional">可选</span>
+            </div>
+            <p class="text-white-50 small mb-3" data-i18n="ui.text_262">
+                设置退货/取消时，实际回库的商品比例。例如 60% 表示退货商品中有 60% 可二次销售。
+            </p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark border-secondary text-white-50" style="min-width: 120px;">
+                            <i class="fa-solid fa-undo me-1 text-info"></i><span data-i18n="ui.icon_3105">主动退货 (RE)</span>
+                        </span>
+                        <input type="number" class="form-control bg-dark border-secondary text-white text-center" 
+                               name="fifo_ratio_re" value="60" min="0" max="100" step="5">
+                        <span class="input-group-text bg-dark border-secondary text-white-50">%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark border-secondary text-white-50" style="min-width: 120px;">
+                            <i class="fa-solid fa-gavel me-1 text-warning"></i><span data-i18n="ui.icon_3106">平台介入 (CR)</span>
+                        </span>
+                        <input type="number" class="form-control bg-dark border-secondary text-white text-center" 
+                               name="fifo_ratio_cr" value="50" min="0" max="100" step="5">
+                        <span class="input-group-text bg-dark border-secondary text-white-50">%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark border-secondary text-white-50" style="min-width: 120px;">
+                            <i class="fa-solid fa-ban me-1 text-danger"></i><span data-i18n="ui.icon_3107">强制退款 (CC)</span>
+                        </span>
+                        <input type="number" class="form-control bg-dark border-secondary text-white text-center" 
+                               name="fifo_ratio_cc" value="30" min="0" max="100" step="5">
+                        <span class="input-group-text bg-dark border-secondary text-white-50">%</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted mt-2 mb-0" style="font-size: 0.7rem;">
+                <i class="fa-solid fa-info-circle me-1"></i>
+                <span data-i18n="ui.return_policy_hint">取消 (CA) 固定 100% 回库，银行投诉 (PD) 固定 0% 回库</span>
+            </p>
+        </div>
+
+
+        <!-- Upload Progress Bar -->
+        <div id="upload-progress-container" class="mb-3 d-none">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-info small">
+                    <i class="fa-solid fa-upload me-1"></i>
+                    <span id="upload-progress-text" data-i18n="ui.uploading">正在上传...</span>
+                </span>
+                <span id="upload-progress-percent" class="text-white-50 small">0%</span>
+            </div>
+            <div class="progress" style="height: 8px; background: rgba(255,255,255,0.1);">
+                <div id="upload-progress-bar" class="progress-bar bg-info" role="progressbar" 
+                     style="width: 0%; transition: width 0.2s ease;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-flex justify-content-between align-items-center">
+            <div id="upload-spinner" class="htmx-indicator">
+                <div class="spinner-border spinner-border-sm text-info me-2" role="status"></div>
+                <span class="text-info" data-i18n="ui.text_263">正在处理...</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary rounded-pill px-5" id="btn-upload" data-testid="btn-upload">
+                <i class="fa-solid fa-arrow-right me-2"></i><span data-i18n="ui.icon_3108">上传并检验</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var dropZone = document.getElementById('drop-zone');
+
+        if (dropZone) {
+            dropZone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.style.borderColor = '#0dcaf0';
+                this.style.background = 'rgba(13, 202, 240, 0.1)';
+            });
+
+            dropZone.addEventListener('dragleave', function (e) {
+                this.style.borderColor = 'rgba(13, 202, 240, 0.4)';
+                this.style.background = 'rgba(0,0,0,0.2)';
+            });
+
+            dropZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                this.style.borderColor = 'rgba(13, 202, 240, 0.4)';
+                this.style.background = 'rgba(0,0,0,0.2)';
+
+                var input = document.getElementById('etl-files');
+                var dt = new DataTransfer();
+
+                Array.from(e.dataTransfer.files).forEach(function (file) {
+                    if (file.name.endsWith('.csv')) {
+                        dt.items.add(file);
+                    }
+                });
+
+                input.files = dt.files;
+                updateFileList();
+            });
+        }
+    })();
+
+    function updateFileList() {
+        var input = document.getElementById('etl-files');
+        var listContainer = document.getElementById('file-list');
+        var itemsContainer = document.getElementById('file-items');
+
+        if (input.files.length > 0) {
+            listContainer.classList.remove('d-none');
+            itemsContainer.innerHTML = '';
+
+            Array.from(input.files).forEach(function (file) {
+                var badge = document.createElement('span');
+                badge.className = 'badge bg-info bg-opacity-25 text-info py-2 px-3';
+                badge.innerHTML = '<i class="fa-solid fa-file me-1"></i>' + file.name;
+                itemsContainer.appendChild(badge);
+            });
+        } else {
+            listContainer.classList.add('d-none');
+        }
+    }
+
+    // ========================================
+    // 上传进度条控制
+    // ========================================
+    (function() {
+        var form = document.getElementById('etl-upload-form');
+        var progressContainer = document.getElementById('upload-progress-container');
+        var progressBar = document.getElementById('upload-progress-bar');
+        var progressPercent = document.getElementById('upload-progress-percent');
+        var progressText = document.getElementById('upload-progress-text');
+        var btnUpload = document.getElementById('btn-upload');
+
+        if (!form) return;
+
+        // 上传开始时显示进度条
+        form.addEventListener('htmx:xhr:loadstart', function(evt) {
+            progressContainer.classList.remove('d-none');
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = '正在上传...';
+            btnUpload.disabled = true;
+            btnUpload.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>上传中...';
+        });
+
+        // 上传进度更新
+        form.addEventListener('htmx:xhr:progress', function(evt) {
+            if (evt.detail.lengthComputable) {
+                var percent = Math.round((evt.detail.loaded / evt.detail.total) * 100);
+                progressBar.style.width = percent + '%';
+                progressBar.setAttribute('aria-valuenow', percent);
+                progressPercent.textContent = percent + '%';
+                
+                // 上传完成后显示处理中
+                if (percent >= 100) {
+                    progressText.textContent = '正在处理...';
+                    progressBar.classList.remove('bg-info');
+                    progressBar.classList.add('bg-success', 'progress-bar-striped', 'progress-bar-animated');
+                }
+            }
+        });
+
+        // 请求完成后重置（无论成功失败）
+        form.addEventListener('htmx:afterRequest', function(evt) {
+            // 延迟隐藏，让用户能看到完成状态
+            setTimeout(function() {
+                progressContainer.classList.add('d-none');
+                progressBar.style.width = '0%';
+                progressBar.classList.remove('bg-success', 'progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.add('bg-info');
+                btnUpload.disabled = false;
+                btnUpload.innerHTML = '<i class="fa-solid fa-arrow-right me-2"></i>上传并检验';
+            }, 500);
+        });
+    })();
+</script>

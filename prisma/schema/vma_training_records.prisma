@@ -1,0 +1,56 @@
+// ================================
+// VMA Training Records
+// VMA 培训记录 — 员工完成培训的明细
+// ================================
+
+// 培训批次（一个 Session = 一组配对的 PDF + DOCX）
+model VmaTrainingSession {
+  id                String   @id @default(uuid())
+  trainingNo        String   @unique @map("training_no")          // e.g. 20260207PP01
+  trainingDate      DateTime @map("training_date")                // 培训日期
+  trainingSubject   String   @map("training_subject")             // New Employee / New SOP / Updated SOP Training
+  trainingObjective String   @map("training_objective") @default("Ensure understanding of updated working procedures and responsibilities")
+  evaluationMethod  String   @map("evaluation_method")            // "oral_qa" or "self_training"
+  lecturerNo        String   @map("lecturer_no")                  // 讲师员工编号
+  lecturerName      String   @map("lecturer_name")                // 讲师姓名 (e.g. "Pham Phuoc")
+  trainingTimeStart String?  @map("training_time_start")          // e.g. "09:30 AM"
+  trainingTimeEnd   String?  @map("training_time_end")            // e.g. "10:20 AM"
+  trainingPlace     String   @map("training_place") @default("On-Site")
+  attendCount       Int      @map("attend_count") @default(0)     // Assessment: 参加人数
+  passCount         Int      @map("pass_count") @default(0)       // Assessment: 通过人数
+  recordedDate      DateTime? @map("recorded_date")               // Recorded By/Date
+  pdfUrl            String?  @map("pdf_url")                      // 生成的合并 PDF 文件路径
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  records           VmaTrainingRecord[]
+
+  @@index([trainingDate])
+  @@index([lecturerNo])
+  @@map("vma_training_sessions")
+}
+
+// 培训完成明细（每条 = 一个员工完成一个 SOP 版本的培训）
+model VmaTrainingRecord {
+  id               String   @id @default(uuid())
+  sessionId        String?  @map("session_id")                    // 关联培训批次
+  employeeNo       String   @map("employee_no")
+  sopNo            String   @map("sop_no")
+  sopVersion       String   @map("sop_version")
+  completedAt      DateTime? @map("completed_at")
+  trainerId        String?  @map("trainer_id")
+  trainingDate     DateTime @map("training_date")
+  trainingNo       String?  @map("training_no")                   // 培训编号 (冗余，方便查询)
+  trainingLocation String?  @map("training_location")
+  trainingDuration Int?     @map("training_duration")             // 分钟
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  session          VmaTrainingSession? @relation(fields: [sessionId], references: [id])
+
+  @@unique([employeeNo, sopNo, sopVersion])
+  @@index([employeeNo])
+  @@index([sopNo])
+  @@index([sessionId])
+  @@map("vma_training_records")
+}

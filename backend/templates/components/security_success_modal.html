@@ -1,0 +1,63 @@
+<!-- 
+    操作成功 Modal 组件
+    使用方法: {% include "components/security_success_modal.html" %}
+    
+    需要在页面中定义的回调函数 (可选):
+    - onSuccessReturnHub(): 点击"返回"按钮时调用
+    - onSuccessContinue(): 点击"继续操作"按钮时调用
+    
+    如果不定义这些函数，默认行为是:
+    - 返回: location.reload()
+    - 继续: 关闭Modal
+    
+    提供的元素 ID:
+    - successModal: Modal 本身
+    - success-msg-content: 成功消息显示区
+    - success-btn-return: 返回按钮
+    - success-btn-continue: 继续按钮
+-->
+
+<!-- Success Modal (Green Glow, Apple Style) -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-success shadow-lg success-modal-glow">
+            <div class="modal-body text-center py-5">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle fa-4x text-success"></i>
+                </div>
+                <h4 class="text-white mb-3" data-i18n="modal.success.title">操作成功</h4>
+                <p class="text-white-50 mb-4" id="success-msg-content"></p>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" id="success-btn-return" class="btn btn-outline-light rounded-pill px-4"
+                        onclick="typeof onSuccessReturnHub === 'function' ? onSuccessReturnHub() : location.reload()">
+                        <i class="fas fa-home me-2"></i><span data-i18n="common.back">返回</span>
+                    </button>
+                    <button type="button" id="success-btn-continue" class="btn btn-success rounded-pill px-4"
+                        onclick="typeof onSuccessContinue === 'function' ? onSuccessContinue() : safeHide('successModal')">
+                        <i class="fas fa-plus me-2"></i><span data-i18n="modal.btn.continue">继续操作</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 成功Modal绿色发光边框 */
+    @keyframes glow-green {
+
+        0%,
+        100% {
+            box-shadow: 0 0 10px rgba(25, 135, 84, 0.5), 0 0 20px rgba(25, 135, 84, 0.3);
+        }
+
+        50% {
+            box-shadow: 0 0 20px rgba(25, 135, 84, 0.8), 0 0 40px rgba(25, 135, 84, 0.5);
+        }
+    }
+
+    .success-modal-glow {
+        animation: glow-green 1.5s ease-in-out infinite;
+    }
+</style>

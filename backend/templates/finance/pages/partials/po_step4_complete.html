@@ -1,0 +1,609 @@
+<!-- Step 4: 付款完成 (PO) - 重新设计 -->
+<div class="row">
+    <div class="col-12">
+        <div class="success-card text-center">
+            <!-- 成功图标 -->
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4 class="text-success mb-2" data-i18n="ui.text_1443">付款完成</h4>
+            <p class="text-white-50 mb-4"><span data-i18n="desc.d092">已成功标记</span> <span class="text-white fw-bold"
+                    id="success-count">0</span> <span data-i18n="desc.d093">个订货单为已付款状态</span></p>
+
+            <!-- 顶部卡片组: 订单总金额、已付金额、本次支付、尾款剩余 -->
+            <div class="success-summary-cards mb-4">
+                <!-- 订单总金额 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-file-invoice-dollar text-white-50"></i>
+                        <span data-i18n="table.total_amount">订单总金额</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-white" id="success-order-total-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-white-50" id="success-order-total-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已付金额 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-check-double text-success"></i>
+                        <span data-i18n="ui.text_2554">已付金额</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-success" id="success-paid-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-success text-opacity-75" id="success-paid-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 本次支付 -->
+                <div class="summary-card highlight-info">
+                    <div class="summary-card-header">
+                        <i class="fas fa-hand-holding-usd text-info"></i>
+                        <span class="text-info" data-i18n="finance.this_payment">本次支付</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-info fw-bold" id="success-this-payment-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-info" id="success-this-payment-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 尾款剩余 -->
+                <div class="summary-card">
+                    <div class="summary-card-header">
+                        <i class="fas fa-hourglass-half text-warning"></i>
+                        <span data-i18n="table.balance_remaining">尾款剩余</span>
+                    </div>
+                    <div class="summary-card-body">
+                        <div class="amount-row">
+                            <span class="currency-badge usd">USD</span>
+                            <span class="amount text-warning" id="success-balance-usd">$0.00</span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="currency-badge rmb">RMB</span>
+                            <span class="amount text-warning text-opacity-75" id="success-balance-rmb">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分割线 + 标题 -->
+            <div class="section-divider">
+                <span class="divider-text" data-i18n="ui.text_1454">本次付款明细</span>
+            </div>
+
+            <!-- 付款明细: 预付款抵扣 + 现金支付 + 额外费用 = 总计实付 -->
+            <div class="payment-breakdown-row">
+                <!-- 预付款抵扣 -->
+                <div class="breakdown-item">
+                    <div class="breakdown-icon bg-success bg-opacity-10">
+                        <i class="fas fa-wallet text-success"></i>
+                    </div>
+                    <div class="breakdown-content">
+                        <div class="breakdown-label" data-i18n="ui.text_2621">预付款抵扣</div>
+                        <div class="breakdown-amount text-success" id="success-prepay-amount">¥0.00</div>
+                        <div class="breakdown-note" data-i18n="ui.text_2622">余额抵扣</div>
+                    </div>
+                </div>
+
+                <div class="breakdown-operator">+</div>
+
+                <!-- 现金支付 -->
+                <div class="breakdown-item">
+                    <div class="breakdown-icon bg-info bg-opacity-10">
+                        <i class="fas fa-money-bill-wave text-info"></i>
+                    </div>
+                    <div class="breakdown-content">
+                        <div class="breakdown-label" data-i18n="ui.text_2576">现金支付</div>
+                        <div class="breakdown-amount text-info" id="success-cash-amount">¥0.00</div>
+                        <div class="breakdown-note" data-i18n="ui.text_2624">银行转账</div>
+                    </div>
+                </div>
+
+                <!-- 额外费用 (可选显示) -->
+                <div class="breakdown-operator" id="success-extra-plus" style="display: none;">+</div>
+
+                <div class="breakdown-item" id="success-extra-item" style="display: none;">
+                    <div class="breakdown-icon bg-secondary bg-opacity-10">
+                        <i class="fas fa-receipt text-white-50"></i>
+                    </div>
+                    <div class="breakdown-content">
+                        <div class="breakdown-label" data-i18n="table.extra_fees">额外费用</div>
+                        <div class="breakdown-amount text-white" id="success-extra-amount">¥0.00</div>
+                        <div class="breakdown-note" id="success-extra-note" data-i18n="ui.text_2626">手续费等</div>
+                    </div>
+                </div>
+
+                <div class="breakdown-operator">=</div>
+
+                <!-- 总计实付 -->
+                <div class="breakdown-item highlight">
+                    <div class="breakdown-icon bg-warning bg-opacity-10">
+                        <i class="fas fa-coins text-warning"></i>
+                    </div>
+                    <div class="breakdown-content">
+                        <div class="breakdown-label text-warning" data-i18n="ui.text_2627">总计实付</div>
+                        <div class="breakdown-amount text-warning fw-bold fs-5" id="success-grand-total">¥0.00</div>
+                        <div class="breakdown-note" data-i18n="ui.text_2628">实际出账</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分割线 + 标题 -->
+            <div class="section-divider mt-4">
+                <span class="divider-text" data-i18n="ui.text_1455">付款记录信息</span>
+            </div>
+
+            <!-- 付款信息 -->
+            <div class="success-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar-check text-info"></i>
+                    <span class="info-label" data-i18n="table.payment_date">付款日期</span>
+                    <span class="info-value" id="success-payment-date">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user text-info"></i>
+                    <span class="info-label" data-i18n="common.operator">操作人</span>
+                    <span class="info-value" id="success-operator">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-file-alt text-info"></i>
+                    <span class="info-label" data-i18n="ui.text_1417">付款回执</span>
+                    <span class="info-value" id="success-receipt-status" data-i18n="ui.text_1459">未上传</span>
+                </div>
+            </div>
+
+            <!-- 付款单号追踪 -->
+            <div class="pmt-tracking mt-4" id="pmt-tracking-section">
+                <div class="pmt-tracking-header">
+                    <i class="fas fa-receipt text-info me-2"></i>
+                    <span class="text-white-50" data-i18n="ui.text_1460">付款单号追踪</span>
+                </div>
+                <div class="pmt-tracking-body" id="pmt-numbers-list">
+                    <!-- JS动态填充 -->
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="success-actions mt-4">
+                <button type="button" class="btn btn-outline-info btn-lg px-5" onclick="closePOWizard()">
+                    <i class="fas fa-list me-2"></i><span data-i18n="common.back_list">返回列表</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wizard Actions (空占位) -->
+<div class="wizard-actions mt-4"></div>
+
+<style>
+    .success-card {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.08), rgba(0, 0, 0, 0.3));
+        border: 1px solid rgba(25, 135, 84, 0.25);
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+    }
+
+    .success-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.25), rgba(25, 135, 84, 0.1));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: successPulse 2s infinite;
+    }
+
+    .success-icon i {
+        font-size: 2rem;
+        color: #198754;
+    }
+
+    @keyframes successPulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4);
+        }
+
+        50% {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px 5px rgba(25, 135, 84, 0.2);
+        }
+    }
+
+    .success-summary-cards {
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+        gap: 1rem;
+        flex-wrap: wrap;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .summary-card {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(108, 117, 125, 0.25);
+        border-radius: 12px;
+        min-width: 180px;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .summary-card.highlight-info {
+        border-color: rgba(13, 202, 240, 0.35);
+        background: rgba(13, 202, 240, 0.08);
+    }
+
+    .summary-card-header {
+        padding: 0.6rem 0.8rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .summary-card-header i {
+        font-size: 0.75rem;
+    }
+
+    .summary-card-body {
+        padding: 0.8rem;
+    }
+
+    .amount-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+    }
+
+    .amount-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .currency-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    .currency-badge.usd {
+        background: rgba(25, 135, 84, 0.2);
+        color: #20c997;
+    }
+
+    .currency-badge.rmb {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+    }
+
+    .amount {
+        font-family: 'SF Mono', monospace;
+        font-size: 0.95rem;
+    }
+
+    /* 分割线 */
+    .section-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(108, 117, 125, 0.3), transparent);
+    }
+
+    .divider-text {
+        padding: 0 1rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* 付款明细行 */
+    .payment-breakdown-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+        border-radius: 10px;
+        min-width: 150px;
+    }
+
+    .breakdown-item.highlight {
+        border-color: rgba(255, 193, 7, 0.35);
+        background: rgba(255, 193, 7, 0.08);
+    }
+
+    .breakdown-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .breakdown-icon i {
+        font-size: 0.9rem;
+    }
+
+    .breakdown-content {
+        text-align: left;
+    }
+
+    .breakdown-label {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .breakdown-amount {
+        font-family: 'SF Mono', monospace;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .breakdown-note {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.35);
+    }
+
+    .breakdown-operator {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* 付款信息 */
+    .success-info {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .info-item i {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-label {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .info-value {
+        font-size: 0.9rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* 付款单号追踪 */
+    .pmt-tracking {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+        border-radius: 10px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .pmt-tracking-header {
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.15);
+        font-size: 0.8rem;
+    }
+
+    .pmt-tracking-body {
+        padding: 0.75rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .pmt-badge {
+        background: rgba(13, 202, 240, 0.1);
+        border: 1px solid rgba(13, 202, 240, 0.25);
+        color: #0dcaf0;
+        padding: 0.25rem 0.6rem;
+        border-radius: 5px;
+        font-family: 'SF Mono', monospace;
+        font-size: 0.75rem;
+    }
+
+    .success-actions {
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(108, 117, 125, 0.15);
+    }
+</style>
+
+<script>
+    // Step 4 初始化
+    function initStep4() {
+        const currentRate = window.paymentItems && window.paymentItems.length > 0
+            ? (window.paymentItems[0].cur_usd_rmb || 7.0) : 7.0;
+
+        // 从 Step 2/3 获取统计数据
+        const totals = (window.step2RateState && window.step2RateState.totals) ? window.step2RateState.totals : {};
+
+        // 订单总金额
+        const orderTotalRMB = totals.depRMB || 0;
+        const orderTotalUSD = totals.depUSD || 0;
+
+        // 已付金额（含本次）= 之前已付 + 本次支付
+        const prevPaidRMB = totals.paidRMB || 0;
+        const prevPaidUSD = totals.paidUSD || 0;
+        const thisPayRMB = totals.payRMB || 0;
+        const thisPayUSD = totals.payUSD || 0;
+        const totalPaidRMB = prevPaidRMB + thisPayRMB + (totals.deductRMB || 0);
+        const totalPaidUSD = prevPaidUSD + thisPayUSD + (totals.deductUSD || 0);
+
+        // 尾款剩余
+        const balanceRMB = totals.currPenRMB || 0;
+        const balanceUSD = totals.currPenUSD || 0;
+
+        // 预付款抵扣
+        const prepayRMB = totals.deductRMB || 0;
+        const prepayUSD = totals.deductUSD || 0;
+
+        // 现金支付
+        const cashRMB = thisPayRMB;
+        const cashUSD = thisPayUSD;
+
+        // 检查是否有减免（pmt_override）
+        let hasOverride = false;
+        if (window.paymentItems) {
+            hasOverride = window.paymentItems.some(item => item._coverStandard || item.pmt_override === 1);
+        }
+
+        // 额外费用
+        let extraRMB = 0, extraUSD = 0, extraNote = '';
+        const hasExtraFee = window.extraFeeData && window.extraFeeData.amount > 0;
+        if (hasExtraFee) {
+            const { currency, amount, note } = window.extraFeeData;
+            extraNote = note || (window.i18n?.t('js.handling_fee') || 'Handling Fee');
+            if (currency === 'RMB') {
+                extraRMB = amount;
+                extraUSD = amount / currentRate;
+            } else {
+                extraUSD = amount;
+                extraRMB = amount * currentRate;
+            }
+        }
+
+        // 总计实付 = 预付抵扣 + 现金支付 + 额外费用
+        const grandTotalRMB = prepayRMB + cashRMB + extraRMB;
+        const grandTotalUSD = prepayUSD + cashUSD + extraUSD;
+
+        // 格式化函数
+        const fmt = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // 更新显示 - 订单数量
+        document.getElementById('success-count').textContent = window.paymentItems ? window.paymentItems.length : 0;
+
+        // 顶部卡片组
+        document.getElementById('success-order-total-usd').textContent = `$${fmt(orderTotalUSD)}`;
+        document.getElementById('success-order-total-rmb').textContent = `¥${fmt(orderTotalRMB)}`;
+
+        document.getElementById('success-paid-usd').textContent = `$${fmt(totalPaidUSD)}`;
+        document.getElementById('success-paid-rmb').textContent = `¥${fmt(totalPaidRMB)}`;
+
+        // 本次支付：如果有减免，显示订单总金额
+        if (hasOverride) {
+            document.getElementById('success-this-payment-usd').textContent = `$${fmt(orderTotalUSD)}`;
+            document.getElementById('success-this-payment-rmb').textContent = `¥${fmt(orderTotalRMB)}`;
+        } else {
+            document.getElementById('success-this-payment-usd').textContent = `$${fmt(thisPayUSD + prepayUSD)}`;
+            document.getElementById('success-this-payment-rmb').textContent = `¥${fmt(thisPayRMB + prepayRMB)}`;
+        }
+
+        // 尾款剩余：如果有减免，强制显示为0
+        if (hasOverride) {
+            document.getElementById('success-balance-usd').textContent = '$0.00';
+            document.getElementById('success-balance-rmb').textContent = '¥0.00';
+        } else {
+            document.getElementById('success-balance-usd').textContent = `$${fmt(balanceUSD)}`;
+            document.getElementById('success-balance-rmb').textContent = `¥${fmt(balanceRMB)}`;
+        }
+
+        // 付款明细
+        document.getElementById('success-prepay-amount').textContent = `¥${fmt(prepayRMB)}`;
+        document.getElementById('success-cash-amount').textContent = `¥${fmt(cashRMB)}`;
+
+        // 额外费用
+        if (hasExtraFee) {
+            document.getElementById('success-extra-plus').style.display = 'block';
+            document.getElementById('success-extra-item').style.display = 'flex';
+            document.getElementById('success-extra-amount').textContent = `¥${fmt(extraRMB)}`;
+            document.getElementById('success-extra-note').textContent = extraNote;
+        } else {
+            document.getElementById('success-extra-plus').style.display = 'none';
+            document.getElementById('success-extra-item').style.display = 'none';
+        }
+
+        // 总计实付
+        document.getElementById('success-grand-total').textContent = `¥${fmt(grandTotalRMB)}`;
+
+        // 付款日期
+        const paymentDate = window.step2RateState ? window.step2RateState.paymentDate : '-';
+        document.getElementById('success-payment-date').textContent = paymentDate || '-';
+
+        // 操作人
+        const operatorEl = document.querySelector('[data-current-user]');
+        const operator = operatorEl ? operatorEl.dataset.currentUser : (window.i18n?.t('js.current_user') || 'Current User');
+        document.getElementById('success-operator').textContent = operator || (window.i18n?.t('js.current_user') || 'Current User');
+
+        // 回执状态
+        const receiptStatus = window.paymentReceiptFile ? (window.i18n?.t('js.uploaded') || 'Uploaded') : (window.i18n?.t('js.not_uploaded') || 'Not Uploaded');
+        document.getElementById('success-receipt-status').textContent = receiptStatus;
+        document.getElementById('success-receipt-status').className = window.paymentReceiptFile
+            ? 'info-value text-success'
+            : 'info-value text-white-50';
+
+        // 付款单号追踪（批次共享一个 pmt_no）
+        const pmtList = document.getElementById('pmt-numbers-list');
+        const pmtNos = window.generatedPmtNos || [];
+        // 去重后显示（理论上应只有一个）
+        const uniquePmtNo = [...new Set(pmtNos)][0];
+        if (uniquePmtNo) {
+            pmtList.innerHTML = `<span class="pmt-badge">${uniquePmtNo}</span>`;
+            document.getElementById('pmt-tracking-section').style.display = 'block';
+        } else {
+            document.getElementById('pmt-tracking-section').style.display = 'none';
+        }
+    }
+
+    // closePOWizard 已在 po.html 中全局定义 (window.closePOWizard)
+    // 此处不再重复定义，避免遮蔽全局版本导致状态刷新问题
+</script>

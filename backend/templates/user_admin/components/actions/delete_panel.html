@@ -1,0 +1,59 @@
+{% load security_tags %}
+
+<div id="delete-panel" class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-danger fw-bold mb-1">
+                <i class="fa-solid fa-user-xmark me-2"></i><span data-i18n="ui.icon_3054">删除用户 (Delete User)</span>
+            </h4>
+            <div class="text-muted small">
+                Target: <span class="text-white font-monospace">{{ target_username }}</span>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm px-3" hx-get="{% url 'web_ui:panel_user_list' %}"
+            hx-target="#ua-content-area">
+            <i class="fa-solid fa-arrow-left me-2"></i><span data-i18n="common.back_list">返回列表</span>
+        </button>
+    </div>
+
+    <div class="glass-card p-4 border-danger border-opacity-50">
+        <div class="alert alert-danger bg-opacity-10 border-danger text-danger mb-4">
+            <div class="d-flex">
+                <i class="fa-solid fa-triangle-exclamation fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading fw-bold">Warning: Irreversible Action</h5>
+                    <p class="mb-0">You are about to permanently delete user <strong>{{ target_username }}</strong>.
+                        This action cannot be undone.</p>
+                </div>
+            </div>
+        </div>
+
+        <form hx-post="{% url 'web_ui:user_delete' target_username=target_username %}" hx-target="#ua-content-area"
+            hx-swap="innerHTML">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label class="form-label text-white fw-bold"><span data-i18n="user_admin.delete_reason">删除原因</span> / Reason
+                    <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control bg-dark text-white border-secondary" rows="3" required
+                    placeholder="Please provide a valid reason for deletion..."></textarea>
+            </div>
+
+            {# Security Inputs (Matrix) #}
+            <div class="bg-black bg-opacity-25 p-4 rounded border border-danger border-opacity-25 mb-4">
+                <h6 class="text-white mb-3 text-danger"><i class="fa-solid fa-lock me-2"></i>Security Verification</h6>
+                {% security_inputs 'btn_delete_user' %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-3">
+                <button type="button" class="btn btn-outline-secondary px-4" hx-get="{% url 'web_ui:panel_user_list' %}"
+                    hx-target="#ua-content-area" data-i18n="ui.text_141">
+                    取消 (Cancel)
+                </button>
+                <button type="submit" class="btn btn-danger fw-bold px-5">
+                    <i class="fa-solid fa-trash me-2"></i><span data-i18n="ui.icon_3056">确认删除 (Delete)</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

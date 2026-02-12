@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+{% load security_tags %}
+
+{% block title %}新增产品 - 产品板块 - Eaglestar ERP{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:products:hub' %}"
+                            class="text-info text-decoration-none">产品板块</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page">新增产品</li>
+                </ol>
+            </nav>
+            <p class="text-white-50 small mb-0 mt-1">创建新的产品档案并初始化库存记录。</p>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:products:hub' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i>返回产品板块
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="glass-card p-4 shadow-lg" data-testid="add-product-card">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-plus-circle fa-2x text-primary me-3"></i>
+            <div>
+                <h5 class="text-primary mb-1 fw-bold">新增产品</h5>
+                <p class="text-white-50 small mb-0">创建新的产品档案并初始化库存记录。</p>
+            </div>
+        </div>
+
+        <div id="create-content" hx-get="{% url 'web_ui:db_admin:cogs_get_form' %}" hx-trigger="load">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-white-50 mt-3">正在加载表单...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

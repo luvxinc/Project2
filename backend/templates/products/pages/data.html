@@ -1,0 +1,793 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+{% load security_tags %}
+
+{% block title %}Product Data Maintenance - Products - Eaglestar ERP{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/global-wizard.css">
+<link rel="stylesheet" href="/static/css/apple-table.css">
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'web_ui:products:hub' %}"
+                            class="text-info text-decoration-none" data-i18n="nav.products">Products</a></li>
+                    <li class="breadcrumb-item text-white active" aria-current="page" data-i18n="products.data_maintenance">Product Data Maintenance</li>
+                </ol>
+            </nav>
+            <p class="text-white-50 small mb-0 mt-1" data-i18n="ui.text_191">批量编辑产品成本、运费及分类信息。</p>
+        </div>
+        <div>
+            <a href="{% url 'web_ui:products:hub' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i><span data-i18n="products.back_to_hub">返回Products</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Wizard Container -->
+    <div class="glass-card p-4" id="product-data-wizard-container" data-testid="product-data-wizard">
+
+        <!-- Wizard Header -->
+        <div class="wizard-header d-flex flex-column mb-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-success bg-opacity-25 p-3 rounded-circle me-3">
+                    <i class="fas fa-file-invoice-dollar fa-2x text-success"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1" data-i18n="products.data_wizard_title">Product Data Maintenance向导</h5>
+                    <p class="text-white-50 small mb-0" data-i18n="ui.text_192">请按步骤修改、验证并保存产品数据。</p>
+                </div>
+            </div>
+            <hr class="border-secondary border-opacity-25 my-4 w-100">
+        </div>
+
+        <!-- StepBar Anchor -->
+        <div class="wizard-stepbar-anchor" data-wizard-stepbar-anchor="1"></div>
+
+        <!-- ========================================== -->
+        <!-- Step 1: 修改数据 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content active" id="step-edit" data-testid="step-edit">
+            <!-- 操作说明卡片 -->
+            <div class="card bg-dark bg-opacity-50 border-info border-opacity-25 mb-4" data-testid="ops-guide-card">
+                <div class="card-header bg-info bg-opacity-10 border-0 d-flex align-items-center">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    <span class="text-info fw-bold" data-i18n="common.operation_desc">操作说明</span>
+                </div>
+                <div class="card-body">
+                    <ul class="text-white-50 small mb-0 ps-3">
+                        <li class="mb-2" data-i18n="ui.text_194">直接编辑表格中的 Cost/Freight/Weight 数值，Cog 会自动计算。</li>
+                        <li class="mb-2" data-i18n="ui.text_195">Cost/Freight：正数，最多2位小数。Weight：大于0的正整数。</li>
+                        <li class="mb-2" data-i18n="ui.text_196">仅被修改的行会在验证步骤中显示，未修改的行不会上传。</li>
+                        <li data-i18n="ui.text_197">完成编辑后点击「验证数据」按钮进入下一步。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 数据加载区域（纯表格，无验证UI/按钮） -->
+            <div id="cogs-data-container" data-testid="cogs-data-table">
+                <div class="text-center py-5" id="cogs-loading">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="text-white-50 mt-3" data-i18n="common.loading">正在加载产品数据...</p>
+                </div>
+                <div id="cogs-table-wrapper" class="d-none"></div>
+            </div>
+
+            <div id="step1-error" class="text-danger small text-center mb-3"></div>
+
+            <!-- Wizard Actions: Step1 只有"验证数据"按钮 -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left">
+                    <span class="text-white-50 small" id="dirty-count-label">
+                        <i class="fas fa-edit me-1"></i><span data-i18n="ui.icon_3082">已修改:</span><strong id="dirty-count">0</strong> 行
+                    </span>
+                </div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="btn-step1-next">
+                        验证数据 <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- Step 2: 验证数据 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content" id="step-validate" data-testid="step-validate">
+            <!-- 验证结果区域 -->
+            <div class="glass-card p-4 mb-4" id="validate-result-card"
+                style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);">
+
+                <!-- 错误汇总 -->
+                <div id="error-summary" class="d-none mb-4">
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                            <strong class="text-danger" data-i18n="modal.password.verify_failed">验证失败</strong>
+                        </div>
+                        <ul class="mb-0 small" id="error-list"></ul>
+                    </div>
+                </div>
+
+                <!-- 无修改提示 -->
+                <div id="no-changes-notice" class="d-none text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-secondary opacity-50 mb-3"></i>
+                    <p class="text-white-50 mb-0" data-i18n="ui.text_199">未检测到任何修改，无需保存。</p>
+                </div>
+
+                <!-- 差异表格 -->
+                <div id="diff-table-wrapper" class="d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="text-white mb-0">
+                            <i class="fas fa-exchange-alt text-warning me-2"></i>
+                            <span data-i18n="ui.changes_to_save">待保存的修改（</span><span id="diff-row-count">0</span><span data-i18n="ui.rows_suffix">行）</span>
+                        </h6>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="apple-table" id="diff-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th data-i18n="products.field">字段</th>
+                                    <th data-i18n="products.old_value">原值</th>
+                                    <th class="text-end" data-i18n="products.new_value">新值</th>
+                                </tr>
+                            </thead>
+                            <tbody id="diff-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden security inputs (d-none 隐藏容器，供 GlobalModal 回填) -->
+            <form id="cogs-submit-form" class="d-none">
+                {% csrf_token %}
+                <input type="hidden" name="cogs_data" id="cogs-submit-data">
+                {% security_inputs "btn_batch_update_cogs" %}
+            </form>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-step2-back">
+                        <i class="fas fa-arrow-left me-2"></i><span data-i18n="common.back_modify">返回修改</span>
+                    </button>
+                </div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-success rounded-pill px-4" id="btn-step2-submit"
+                        data-testid="primary-action-btn" data-requires-global-modal="true"
+                        data-action-key="btn_batch_update_cogs" data-action-display="{% trans 'Product Data Update' %}" disabled>
+                        <i class="fas fa-save me-2"></i><span data-i18n="products.save_changes">保存修改</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- Step 3: 完成 -->
+        <!-- ========================================== -->
+        <div class="wizard-step-content" id="step-done" data-testid="step-done">
+            <!-- 执行状态 -->
+            <div class="glass-card p-4" id="result-panel" data-testid="result-panel">
+                <div id="execute-loading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-success mb-3" role="status"></div>
+                    <p class="text-white-50 mb-0" data-i18n="common.loading">正在保存数据...</p>
+                    <p class="text-muted small" data-i18n="ui.text_169">请勿关闭页面</p>
+                </div>
+
+                <!-- 成功结果 -->
+                <div id="success-result" class="d-none">
+                    <div class="wizard-done-header">
+                        <div class="icon"><i class="fas fa-check-circle text-success"></i></div>
+                        <h3 data-i18n="ui.text_201">保存成功</h3>
+                        <p data-i18n="ui.text_202">产品数据已更新，审计记录已写入。</p>
+                    </div>
+
+                    <div class="wizard-done-summary">
+                        <div class="wizard-done-summary-header">
+                            <i class="fas fa-chart-bar me-2"></i><span data-i18n="ui.icon_3083">更新统计</span>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-success" id="result-total-rows">0</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2053">更新行数</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-info" id="result-total-fields">0</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2054">变更字段</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-warning" id="result-timestamp">-</div>
+                                <div class="text-white-50 small" data-i18n="ui.text_2055">完成时间</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-done-details">
+                        <div class="wizard-done-details-header">
+                            <i class="fas fa-list-ul me-2"></i><span data-i18n="ui.icon_3084">变更明细</span>
+                        </div>
+                        <div id="change-details-list" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+
+                <!-- 失败结果 -->
+                <div id="error-result" class="d-none">
+                    <div class="wizard-done-header">
+                        <div class="icon"><i class="fas fa-times-circle text-danger"></i></div>
+                        <h3 data-i18n="toast.save_failed">保存失败</h3>
+                        <p id="error-result-message" data-i18n="ui.text_173">请查看错误信息并重试。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="wizard-actions-left"></div>
+                <div class="wizard-actions-right">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-new-round">
+                        <i class="fas fa-redo me-2"></i><span data-i18n="ui.icon_3085">继续修改</span>
+                    </button>
+                    <a href="{% url 'web_ui:products:hub' %}" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-home me-2"></i><span data-i18n="ui.icon_3069">返回Products</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ============================================================
+        // State Management
+        // ============================================================
+        let baselineMap = {};       // 原始数据快照: { rowKey: { field: value } }
+        let dirtyMap = {};          // 修改追踪: { rowKey: { changes: {field: {from, to}}, rowData: {} } }
+        let validationErrors = [];  // 校验错误列表
+
+        // ============================================================
+        // Initialize Wizard
+        // ============================================================
+        const wizard = new GlobalWizard({
+            containerId: 'product-data-wizard-container',
+            steps: [
+                { id: 'edit', label: (window.i18n?.t('js.modify_data') || 'Modify Data'), contentSelector: '#step-edit' },
+                { id: 'validate', label: (window.i18n?.t('js.validate_data') || 'Validate'), contentSelector: '#step-validate' },
+                { id: 'done', label: (window.i18n?.t('js.complete') || 'Complete'), type: 'done', contentSelector: '#step-done' }
+            ],
+            onStepChange: function (from, to) {
+                console.log('[ProductDataWizard] Step changed:', from, '->', to);
+                if (to === 1) {
+                    renderValidationStep();
+                }
+            },
+            onBeforeNext: async function (currentStep) {
+                if (currentStep.id === 'edit') {
+                    return validateStep1();
+                }
+                if (currentStep.id === 'validate') {
+                    if (validationErrors.length > 0) {
+                        createAndShowToast(i18n.t('toast.fix_validation_errors'), 'warning');
+                        return false;
+                    }
+                    if (Object.keys(dirtyMap).length === 0) {
+                        createAndShowToast(i18n.t('toast.no_change_data'), 'warning');
+                        return false;
+                    }
+                    return await triggerAuthAndSubmit();
+                }
+                return true;
+            },
+            onRestart: function () {
+                location.reload();
+            }
+        });
+
+        // ============================================================
+        // Load Initial Data (使用纯表格版本，无验证UI/按钮)
+        // ============================================================
+        loadCogsData();
+
+        function loadCogsData() {
+            fetch('{% url "web_ui:db_admin:cogs_load_table_only" %}')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('cogs-loading').classList.add('d-none');
+                    const wrapper = document.getElementById('cogs-table-wrapper');
+                    wrapper.innerHTML = html;
+                    wrapper.classList.remove('d-none');
+
+                    // 初始化数据追踪
+                    initializeDataTracking();
+                })
+                .catch(error => {
+                    console.error('Load error:', error);
+                    const loadingEl = document.getElementById('cogs-loading');
+                    loadingEl.textContent = '';
+
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger';
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-exclamation-circle me-2';
+                    alertDiv.appendChild(icon);
+                    alertDiv.appendChild(document.createTextNode((window.i18n?.t('js.load_failed_retry') || 'Load failed, please refresh')));
+                    loadingEl.appendChild(alertDiv);
+                });
+        }
+
+        // ============================================================
+        // Data Tracking: Baseline & Dirty Detection
+        // ============================================================
+        function initializeDataTracking() {
+            const table = document.getElementById('cogs-table');
+            if (!table) {
+                console.warn('[ProductDataWizard] cogs-table not found');
+                return;
+            }
+
+            const rows = table.querySelectorAll('tbody tr');
+            baselineMap = {};
+            dirtyMap = {};
+
+            rows.forEach(row => {
+                const sku = row.getAttribute('data-sku');
+                if (!sku) return;
+
+                // 创建基线快照
+                baselineMap[sku] = {
+                    category: row.querySelector('select[name=category]')?.value || '',
+                    subcategory: row.querySelector('select[name=subcategory]')?.value || '',
+                    type: row.querySelector('select[name=type]')?.value || '',
+                    cost: row.querySelector('.cost-input')?.value || '0',
+                    freight: row.querySelector('.freight-input')?.value || '0',
+                    weight: row.querySelector('.weight-input')?.value || '0'
+                };
+
+                // 绑定编辑事件
+                bindEditEvents(row, sku);
+            });
+
+            updateDirtyCount();
+            console.log('[ProductDataWizard] Baseline initialized:', Object.keys(baselineMap).length, 'rows');
+        }
+
+        function bindEditEvents(row, sku) {
+            const editableFields = [
+                { selector: 'select[name=category]', field: 'category' },
+                { selector: 'select[name=subcategory]', field: 'subcategory' },
+                { selector: 'select[name=type]', field: 'type' },
+                { selector: '.cost-input', field: 'cost' },
+                { selector: '.freight-input', field: 'freight' },
+                { selector: '.weight-input', field: 'weight' }
+            ];
+
+            editableFields.forEach(({ selector, field }) => {
+                const el = row.querySelector(selector);
+                if (!el) return;
+
+                el.addEventListener('change', () => handleFieldChange(row, sku, field, el.value));
+                el.addEventListener('input', () => handleFieldChange(row, sku, field, el.value));
+            });
+        }
+
+        function handleFieldChange(row, sku, field, newValue) {
+            const baseline = baselineMap[sku];
+            if (!baseline) return;
+
+            const originalValue = baseline[field];
+            const isChanged = String(originalValue).trim() !== String(newValue).trim();
+
+            if (!dirtyMap[sku]) {
+                dirtyMap[sku] = { changes: {}, rowData: {} };
+            }
+
+            if (isChanged) {
+                // 字段被修改
+                dirtyMap[sku].changes[field] = { from: originalValue, to: newValue };
+            } else {
+                // 恢复原值，移除该字段的修改记录
+                delete dirtyMap[sku].changes[field];
+            }
+
+            // 更新当前行完整数据
+            dirtyMap[sku].rowData = getCurrentRowData(row);
+
+            // 如果该行没有任何修改，移除整个记录
+            if (Object.keys(dirtyMap[sku].changes).length === 0) {
+                delete dirtyMap[sku];
+            }
+
+            updateDirtyCount();
+            updateCogValue(row);
+        }
+
+        function getCurrentRowData(row) {
+            return {
+                SKU: row.getAttribute('data-sku'),
+                Category: row.querySelector('select[name=category]')?.value || '',
+                SubCategory: row.querySelector('select[name=subcategory]')?.value || '',
+                Type: row.querySelector('select[name=type]')?.value || '',
+                Cost: parseFloat(row.querySelector('.cost-input')?.value) || 0,
+                Freight: parseFloat(row.querySelector('.freight-input')?.value) || 0,
+                Weight: parseInt(row.querySelector('.weight-input')?.value) || 0
+            };
+        }
+
+        function updateCogValue(row) {
+            const cost = parseFloat(row.querySelector('.cost-input')?.value) || 0;
+            const freight = parseFloat(row.querySelector('.freight-input')?.value) || 0;
+            const cogEl = row.querySelector('.cog-value');
+            if (cogEl) {
+                cogEl.textContent = (cost + freight).toFixed(2);
+            }
+        }
+
+        function updateDirtyCount() {
+            const count = Object.keys(dirtyMap).length;
+            document.getElementById('dirty-count').textContent = count;
+
+            // 更新按钮状态
+            const nextBtn = document.getElementById('btn-step1-next');
+            if (count === 0) {
+                nextBtn.classList.add('btn-outline-primary');
+                nextBtn.classList.remove('btn-primary');
+            } else {
+                nextBtn.classList.remove('btn-outline-primary');
+                nextBtn.classList.add('btn-primary');
+            }
+        }
+
+        // ============================================================
+        // Step 1 Validation
+        // ============================================================
+        function validateStep1() {
+            const errorEl = document.getElementById('step1-error');
+            errorEl.textContent = '';
+
+            if (Object.keys(dirtyMap).length === 0) {
+                errorEl.textContent = (window.i18n?.t('js.no_changes_detected') || 'No changes detected. Please edit first.');
+                return false;
+            }
+            return true;
+        }
+
+        // ============================================================
+        // Step 2: Validation & Diff Rendering
+        // ============================================================
+        function renderValidationStep() {
+            const dirtyRows = Object.entries(dirtyMap);
+
+            // 重置状态
+            validationErrors = [];
+            document.getElementById('error-summary').classList.add('d-none');
+            document.getElementById('no-changes-notice').classList.add('d-none');
+            document.getElementById('diff-table-wrapper').classList.add('d-none');
+
+            if (dirtyRows.length === 0) {
+                document.getElementById('no-changes-notice').classList.remove('d-none');
+                document.getElementById('btn-step2-submit').disabled = true;
+                return;
+            }
+
+            // 执行验证
+            dirtyRows.forEach(([sku, data]) => {
+                validateRow(sku, data.rowData);
+            });
+
+            // 渲染差异表格（使用安全 DOM 构建）
+            renderDiffTableSafe(dirtyRows);
+
+            // 显示错误汇总（使用安全 DOM 构建）
+            if (validationErrors.length > 0) {
+                renderErrorListSafe(validationErrors);
+                document.getElementById('error-summary').classList.remove('d-none');
+                document.getElementById('btn-step2-submit').disabled = true;
+            } else {
+                document.getElementById('btn-step2-submit').disabled = false;
+            }
+        }
+
+        function validateRow(sku, rowData) {
+            // Cost: float >= 0, 最多2位小数
+            if (!isValidDecimal(rowData.Cost)) {
+                validationErrors.push({ sku, field: 'Cost', message: (window.i18n?.t('js.must_be_non_negative') || 'Must be non-negative, max 2 decimals') });
+            }
+
+            // Freight: float >= 0, 最多2位小数
+            if (!isValidDecimal(rowData.Freight)) {
+                validationErrors.push({ sku, field: 'Freight', message: (window.i18n?.t('js.must_be_non_negative') || 'Must be non-negative, max 2 decimals') });
+            }
+
+            // Weight: 正整数 > 0
+            if (!isPositiveInteger(rowData.Weight)) {
+                validationErrors.push({ sku, field: 'Weight', message: (window.i18n?.t('js.must_be_positive_int') || 'Must be positive integer') });
+            }
+        }
+
+        function isValidDecimal(val) {
+            if (val === '' || val === null || val === undefined) return false;
+            const num = parseFloat(val);
+            if (isNaN(num) || !isFinite(num) || num < 0) return false;
+            const parts = String(val).split('.');
+            if (parts.length > 1 && parts[1].length > 2) return false;
+            return true;
+        }
+
+        function isPositiveInteger(val) {
+            if (val === '' || val === null || val === undefined) return false;
+            const num = parseInt(val, 10);
+            return !isNaN(num) && num > 0 && String(num) === String(val).toString().trim();
+        }
+
+        // ============================================================
+        // Safe DOM Rendering (禁止 innerHTML 注入)
+        // ============================================================
+
+        /**
+         * 安全渲染错误列表（纯 DOM 构建，无 innerHTML）
+         */
+        function renderErrorListSafe(errors) {
+            const errorList = document.getElementById('error-list');
+            errorList.textContent = ''; // 清空
+
+            errors.forEach(e => {
+                const li = document.createElement('li');
+                li.appendChild(document.createTextNode('SKU '));
+
+                const strong = document.createElement('strong');
+                strong.textContent = e.sku;
+                li.appendChild(strong);
+
+                li.appendChild(document.createTextNode(' - ' + e.field + ': ' + e.message));
+                errorList.appendChild(li);
+            });
+        }
+
+        /**
+         * 安全渲染差异表格（纯 DOM 构建，无 innerHTML）
+         */
+        function renderDiffTableSafe(dirtyRows) {
+            const tbody = document.getElementById('diff-table-body');
+            tbody.textContent = ''; // 清空
+
+            const fieldLabels = {
+                category: 'Category',
+                subcategory: 'SubCategory',
+                type: 'Type',
+                cost: 'Cost',
+                freight: 'Freight',
+                weight: 'Weight'
+            };
+
+            dirtyRows.forEach(([sku, data]) => {
+                const changes = data.changes;
+                const changeEntries = Object.entries(changes);
+
+                changeEntries.forEach(([field, { from, to }], idx) => {
+                    const isError = validationErrors.some(e => e.sku === sku && e.field.toLowerCase() === field);
+
+                    const tr = document.createElement('tr');
+                    if (isError) tr.classList.add('row-invalid');
+
+                    // SKU 列（仅第一行显示）
+                    if (idx === 0) {
+                        const tdSku = document.createElement('td');
+                        tdSku.setAttribute('rowspan', changeEntries.length);
+                        tdSku.classList.add('fw-bold');
+                        tdSku.textContent = sku;
+                        tr.appendChild(tdSku);
+                    }
+
+                    // 字段列
+                    const tdField = document.createElement('td');
+                    tdField.textContent = fieldLabels[field] || field;
+                    tr.appendChild(tdField);
+
+                    // 原值列
+                    const tdFrom = document.createElement('td');
+                    tdFrom.classList.add('text-white-50');
+                    tdFrom.textContent = from;
+                    tr.appendChild(tdFrom);
+
+                    // 新值列
+                    const tdTo = document.createElement('td');
+                    tdTo.classList.add('text-end');
+                    if (isError) tdTo.classList.add('cell-invalid');
+                    const strong = document.createElement('strong');
+                    strong.textContent = to;
+                    tdTo.appendChild(strong);
+                    tr.appendChild(tdTo);
+
+                    tbody.appendChild(tr);
+                });
+            });
+
+            document.getElementById('diff-row-count').textContent = dirtyRows.length;
+            document.getElementById('diff-table-wrapper').classList.remove('d-none');
+        }
+
+        /**
+         * 安全渲染成功结果页（纯 DOM 构建）
+         */
+        function renderSuccessResultSafe() {
+            const dirtyRows = Object.entries(dirtyMap);
+            let totalFields = 0;
+            dirtyRows.forEach(([, data]) => {
+                totalFields += Object.keys(data.changes).length;
+            });
+
+            document.getElementById('result-total-rows').textContent = dirtyRows.length;
+            document.getElementById('result-total-fields').textContent = totalFields;
+            document.getElementById('result-timestamp').textContent = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+            // 渲染变更明细（纯 DOM 构建）
+            const detailsList = document.getElementById('change-details-list');
+            detailsList.textContent = ''; // 清空
+
+            dirtyRows.forEach(([sku, data]) => {
+                // 外层容器
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'mb-3 p-3 rounded';
+                rowDiv.style.background = 'rgba(255,255,255,0.03)';
+
+                // SKU 标题
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'fw-bold text-white mb-2';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-cube me-2 text-info';
+                titleDiv.appendChild(icon);
+                titleDiv.appendChild(document.createTextNode(sku));
+                rowDiv.appendChild(titleDiv);
+
+                // 字段变更列表
+                const changesDiv = document.createElement('div');
+                changesDiv.className = 'ps-4';
+
+                Object.entries(data.changes).forEach(([field, { from, to }]) => {
+                    const changeRow = document.createElement('div');
+                    changeRow.className = 'small text-white-50 mb-1';
+
+                    const fieldSpan = document.createElement('span');
+                    fieldSpan.className = 'text-info';
+                    fieldSpan.textContent = field;
+                    changeRow.appendChild(fieldSpan);
+
+                    changeRow.appendChild(document.createTextNode(': '));
+
+                    const fromSpan = document.createElement('span');
+                    fromSpan.className = 'text-danger';
+                    fromSpan.textContent = from;
+                    changeRow.appendChild(fromSpan);
+
+                    const arrowIcon = document.createElement('i');
+                    arrowIcon.className = 'fas fa-arrow-right mx-2 text-muted';
+                    changeRow.appendChild(arrowIcon);
+
+                    const toSpan = document.createElement('span');
+                    toSpan.className = 'text-success';
+                    toSpan.textContent = to;
+                    changeRow.appendChild(toSpan);
+
+                    changesDiv.appendChild(changeRow);
+                });
+
+                rowDiv.appendChild(changesDiv);
+                detailsList.appendChild(rowDiv);
+            });
+
+            document.getElementById('success-result').classList.remove('d-none');
+            createAndShowToast(i18n.t('toast.product_saved'), 'success');
+        }
+
+        // ============================================================
+        // Step 2 -> 3: Auth and Submit
+        // ============================================================
+        function triggerAuthAndSubmit() {
+            return new Promise((resolve) => {
+                requestPasswordVerify(
+                    'btn_batch_update_cogs',
+                    function (passwords) {
+                        // Fill security inputs
+                        for (const [slot, code] of Object.entries(passwords)) {
+                            const input = document.querySelector(`input[name="sec_code_${slot}"]`);
+                            if (input) input.value = code;
+                        }
+                        // Go to step 3 and execute
+                        wizard.goToStep('done');
+                        executeSubmit();
+                        resolve(false); // Don't auto-advance
+                    },
+                    document.getElementById('cogs-submit-form'),
+                    (window.i18n?.t('js.product_data_update') || 'Product Data Update'),
+                    function () {
+                        console.log('Submit cancelled');
+                        resolve(false);
+                    }
+                );
+            });
+        }
+
+        function executeSubmit() {
+            document.getElementById('execute-loading').classList.remove('d-none');
+            document.getElementById('success-result').classList.add('d-none');
+            document.getElementById('error-result').classList.add('d-none');
+
+            // 构建只包含修改行的 payload
+            const submitData = [];
+            Object.entries(dirtyMap).forEach(([sku, data]) => {
+                submitData.push({
+                    ...data.rowData,
+                    Cog: data.rowData.Cost + data.rowData.Freight
+                });
+            });
+
+            const form = document.getElementById('cogs-submit-form');
+            const formData = new FormData(form);
+            formData.set('cogs_data', JSON.stringify(submitData));
+
+            fetch('{% url "web_ui:db_admin:cogs_batch_update" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(response => response.text())
+                .then(responseText => {
+                    document.getElementById('execute-loading').classList.add('d-none');
+
+                    // 解析后端响应（提取纯文本信息，不直接渲染 HTML）
+                    if (responseText.includes('alert-success') || responseText.includes((window.i18n?.t('js.success') || 'Success'))) {
+                        renderSuccessResultSafe();
+                    } else {
+                        // 提取错误信息纯文本
+                        const errorMessage = extractTextFromHtml(responseText);
+                        showErrorResult(errorMessage || (window.i18n?.t('js.save_failed_retry') || 'Save failed, retry'));
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('execute-loading').classList.add('d-none');
+                    showErrorResult((window.i18n?.t('js.network_error_check_retry') || 'Network error, check connection'));
+                    console.error('Submit error:', error);
+                });
+        }
+
+        /**
+         * 从 HTML 字符串中提取纯文本（安全处理，不渲染 HTML）
+         */
+        function extractTextFromHtml(htmlString) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+                return doc.body.textContent?.trim() || '';
+            } catch (e) {
+                return htmlString;
+            }
+        }
+
+        function showErrorResult(message) {
+            // 使用 textContent 确保纯文本显示
+            document.getElementById('error-result-message').textContent = typeof message === 'string' ? message : (window.i18n?.t('js.unknown_error') || 'Unknown Error');
+            document.getElementById('error-result').classList.remove('d-none');
+            createAndShowToast(i18n.t('toast.save_failed'), 'danger');
+        }
+
+        // ============================================================
+        // Button Bindings
+        // ============================================================
+        document.getElementById('btn-step1-next').addEventListener('click', () => wizard.next());
+        document.getElementById('btn-step2-back').addEventListener('click', () => wizard.back());
+        document.getElementById('btn-step2-submit').addEventListener('click', () => wizard.next());
+        document.getElementById('btn-new-round').addEventListener('click', () => wizard.restart());
+    });
+</script>
+{% endblock %}

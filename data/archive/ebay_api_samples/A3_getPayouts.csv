@@ -1,0 +1,19 @@
+﻿amount.currency,amount.value,bankReference,lastAttemptedPayoutDate,payoutDate,payoutId,payoutInstrument.accountLastFourDigits,payoutInstrument.instrumentType,payoutInstrument.nickname,payoutMemo,payoutStatus,payoutStatusDescription,transactionCount
+USD,529.68,4RI2VPNTJ6PFK60,2025-12-02T11:08:10.593Z,2025-11-28T09:52:54.000Z,7203145421,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,39
+USD,1114.24,ZRQK4I0RPQKPI6M,2025-11-29T11:06:55.139Z,2025-11-27T10:00:58.000Z,7201699805,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,56
+USD,269.6,FUO7DPARHQV5D61,2025-11-29T11:11:36.808Z,2025-11-26T09:32:49.000Z,7200127949,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,64
+USD,95.4,GYVFNSDQGE6CT6F,2025-11-27T11:02:24.827Z,2025-11-25T10:10:40.000Z,7198555781,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,48
+USD,2580.26,WSE6HDR3EFCBW6M,2025-11-26T11:07:52.272Z,2025-11-24T10:10:15.000Z,7196732525,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,130
+USD,397.85,VCRWAZT2QQD6R67,2025-11-25T11:09:55.516Z,2025-11-21T09:52:48.000Z,7192003637,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,63
+USD,619.98,SATNDYRG6O6G068,2025-11-22T11:05:19.522Z,2025-11-20T09:47:40.000Z,7190332157,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,57
+USD,0.63,VKNPCMERGV2RL6B,2025-11-21T11:07:22.644Z,2025-11-19T09:34:50.000Z,7188810917,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,128
+USD,2369.74,DWSFFTIQ6CVRE69,2025-11-19T11:06:39.881Z,2025-11-17T10:09:17.000Z,7184948717,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,162
+USD,677.94,WTCSJFPTIGSTB64,2025-11-18T11:03:00.419Z,2025-11-14T09:57:25.000Z,7180324661,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,59
+USD,547.94,MWCRIHKTQWUGT62,2025-11-15T11:08:13.439Z,2025-11-13T09:42:07.000Z,7178159501,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,57
+USD,405.61,LOSTHKVTHCP4C62,2025-11-14T11:04:06.586Z,2025-11-12T09:37:52.000Z,7176625661,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,100
+USD,2371.91,SZC8XLNSIKC7Y6G,2025-11-13T11:14:27.767Z,2025-11-10T09:45:38.000Z,7173141245,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,168
+USD,593.59,NC85JNPRCIBUN66,2025-11-11T11:07:55.030Z,2025-11-07T09:43:24.000Z,7168676837,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,64
+USD,466.71,KA8SR3DRMESEE67,2025-11-08T15:02:26.571Z,2025-11-06T09:41:43.000Z,7166728685,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,58
+USD,326.47,DWG1W9NRIO8KI65,2025-11-07T11:02:42.911Z,2025-11-05T09:36:49.000Z,7165249397,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,67
+USD,51.4,YO5B61SOQABCG62,2025-11-06T11:08:54.931Z,2025-11-04T10:21:54.000Z,7163502149,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,45
+USD,1062.87,TP6RSWGTG9ND76B,2025-11-05T11:04:27.616Z,2025-11-03T09:53:39.000Z,7161566069,2950,BANK,Chase Bank,"Payout takes 1 to 3 business days, to arrive depending on your bank",SUCCEEDED,Funds sent,156
