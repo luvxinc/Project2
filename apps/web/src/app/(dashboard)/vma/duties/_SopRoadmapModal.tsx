@@ -42,8 +42,7 @@ const CARD_W = 650;           // Standard width: Wide enough for no wrapping
 const CARD_GAP = 180;         // Breathable gap between items
 const SLOT_W = CARD_W + CARD_GAP; 
 
-// Apple macOS 风格: 单一强调色，克制、统一
-const ACCENT = '#0A84FF'; // Apple Blue
+
 
 export default function SopRoadmapModal({
   department,
@@ -332,14 +331,14 @@ export default function SopRoadmapModal({
             {t('sopRequirementsModal.title') || 'SOP Requirements Roadmap'}
           </h2>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-lg font-bold" style={{ color: '#BF5AF2' }}>{department.code}</span>
+            <span className="text-lg font-bold" style={{ color: colors.indigo }}>{department.code}</span>
             <div className={`h-1 w-1 rounded-full opacity-50 ${isDark ? 'bg-white' : 'bg-black'}`} />
-            <span className="text-lg opacity-60 font-medium" style={{ color: isDark ? '#bbb' : '#6b7280' }}>{department.duties}</span>
+            <span className="text-lg opacity-60 font-medium" style={{ color: colors.textSecondary }}>{department.duties}</span>
           </div>
         </div>
         <div className="pointer-events-auto">
           <button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition backdrop-blur-md border border-white/10 group">
-             <svg className="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke={isDark ? '#fff' : '#000'} viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+             <svg className="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke={colors.text} viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
       </div>
@@ -355,7 +354,7 @@ export default function SopRoadmapModal({
         ) : history.length === 0 ? (
           <div className="h-full w-full flex flex-col items-center justify-center gap-6">
             <div className="text-xl font-medium opacity-50">No history found</div>
-            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: '#BF5AF2', color: '#fff' }}>Create First Milestone</button>
+            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: colors.indigo, color: '#fff' }}>Create First Milestone</button>
           </div>
         ) : (
           /* PADDING-LEFT: 33vw to start at 1/3 screen */
@@ -370,10 +369,10 @@ export default function SopRoadmapModal({
                     <div key={gi} className={`ms-card-${gi} flex-shrink-0 relative group opacity-0`} style={{ width: `${CARD_W}px`, marginRight: `${CARD_GAP}px`, marginBottom: '20px' }}>
                       <div className={`w-full rounded-[24px] overflow-hidden transition-all duration-300 hover:-translate-y-2 cursor-default ${isDark ? 'glass-card-dark' : 'glass-card-light'}`}
                          style={{ 
-                           borderColor: isLatest ? '#BF5AF2' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
-                           boxShadow: isLatest ? '0 0 40px -10px rgba(191, 90, 242, 0.5)' : undefined,
+                           borderColor: isLatest ? colors.indigo : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
+                           boxShadow: isLatest ? `0 0 40px -10px ${colors.indigo}80` : undefined,
                            height: '50vh',
-                           color: isDark ? '#fff' : '#000'
+                           color: colors.text
                          }}>
                         <div className="px-6 py-5 border-b flex items-center justify-between" 
                              style={{ 
@@ -394,11 +393,11 @@ export default function SopRoadmapModal({
                                 <div key={ci} className="px-6 py-4 border-b border-dashed flex items-center gap-4 hover:bg-white/5 transition" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
                                   <div className="flex-shrink-0 w-24">
                                       <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border" 
-                                            style={{ color: ACCENT, borderColor: `${ACCENT}40`, backgroundColor: `${ACCENT}10` }}>
+                                            style={{ color: colors.blue, borderColor: `${colors.blue}40`, backgroundColor: `${colors.blue}10` }}>
                                           {c.sopNo}
                                       </span>
                                   </div>
-                                  <span className="text-sm font-medium leading-relaxed opacity-90 break-words" style={{ color: isDark ? '#e5e7eb' : '#374151' }}>{c.sopName}</span>
+                                  <span className="text-sm font-medium leading-relaxed opacity-90 break-words" style={{ color: colors.text }}>{c.sopName}</span>
                                 </div>
                               );
                           })}
@@ -415,7 +414,7 @@ export default function SopRoadmapModal({
                 <div className="timeline-line absolute top-1/2 left-0 right-0 -translate-y-1/2"
                      style={{ 
                          height: '2px', 
-                         background: 'linear-gradient(90deg, #BF5AF2 0%, #0A84FF 100%)', 
+                         background: `linear-gradient(90deg, ${colors.indigo} 0%, ${colors.blue} 100%)`, 
                          transformOrigin: 'left center', 
                          width: `${history.length * SLOT_W + 200}px`,
                          boxShadow: '0 0 15px rgba(191,90,242,0.5)'
@@ -429,14 +428,14 @@ export default function SopRoadmapModal({
                       <div className={`ms-node-${gi} relative w-8 h-8 -ml-4 flex items-center justify-center cursor-pointer hover:scale-125 transition-transform duration-300 opacity-0 group`} onClick={() => openMilestonePopup(gi)}>
                          <div className={`w-5 h-5 rounded-full border-[3px] shadow-lg z-10 transition-colors ${isLatest ? 'pulse-node' : ''}`} 
                               style={{ 
-                                  backgroundColor: isDark ? '#000' : '#fff',
-                                  borderColor: isLatest ? '#BF5AF2' : (isDark ? '#fff' : '#000')
+                                  backgroundColor: colors.bg,
+                                  borderColor: isLatest ? colors.indigo : colors.text
                               }} />
                          <div className="absolute bottom-4 left-1/2 w-[1px] h-[60px] -ml-[0.5px]" 
-                              style={{ background: `linear-gradient(to top, #BF5AF2, transparent)` }} />
+                              style={{ background: `linear-gradient(to top, ${colors.indigo}, transparent)` }} />
                       </div>
                       <div className={`ms-date-${gi} absolute top-12 left-1/2 -translate-x-1/2 text-center w-[200px] opacity-0`}>
-                        <div className="text-sm font-bold" style={{ color: isDark ? '#fff' : '#111' }}>{fmtDateShort(group.changeDate)}</div>
+                        <div className="text-sm font-bold" style={{ color: colors.text }}>{fmtDateShort(group.changeDate)}</div>
                         <div className="text-[10px] opacity-70 mt-1 uppercase tracking-widest font-semibold">{group.changes.length} Items</div>
                       </div>
                     </div>
@@ -461,7 +460,7 @@ export default function SopRoadmapModal({
             className={`relative w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'glass-card-dark' : 'glass-card-light'}`}
             style={{ 
               borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-              color: isDark ? '#fff' : '#000'
+              color: colors.text
             }}
           >
             <div 
@@ -494,9 +493,9 @@ export default function SopRoadmapModal({
                  onChange={e => setPopupSearch(e.target.value)} 
                />
                <div className="flex gap-4 mt-3 text-sm">
-                 <button onClick={() => setPopupSelected(new Set(popupFiltered.map(s => s.sopNo)))} className="text-[#BF5AF2] font-bold hover:underline">Select All</button>
+                 <button onClick={() => setPopupSelected(new Set(popupFiltered.map(s => s.sopNo)))} style={{ color: colors.indigo }} className="font-bold hover:underline">Select All</button>
                  <button onClick={() => setPopupSelected(new Set())} className="font-bold opacity-60 hover:opacity-100 hover:underline">Deselect All</button>
-                 <div className="ml-auto font-mono text-[#BF5AF2]">{popupSelected.size} selected</div>
+                 <div className="ml-auto font-mono" style={{ color: colors.indigo }}>{popupSelected.size} selected</div>
                </div>
             </div>
 
@@ -514,17 +513,17 @@ export default function SopRoadmapModal({
                           backgroundColor: isActive 
                             ? (isDark ? 'rgba(10, 132, 255, 0.15)' : 'rgba(10, 132, 255, 0.08)')
                             : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.4)'),
-                          borderColor: isActive ? ACCENT : 'transparent',
+                          borderColor: isActive ? colors.blue : 'transparent',
                         }}
                       >
                         <div 
                           className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isActive ? 'text-white' : 'border-white/20'}`}
-                          style={isActive ? { backgroundColor: ACCENT, borderColor: ACCENT } : {}}
+                          style={isActive ? { backgroundColor: colors.blue, borderColor: colors.blue } : {}}
                         >
                           {isActive && '✓'}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold font-mono" style={{ color: ACCENT }}>{sop.sopNo}</span>
+                          <span className="text-xs font-bold font-mono" style={{ color: colors.blue }}>{sop.sopNo}</span>
                           <span className="text-sm truncate opacity-90">{sop.name}</span>
                         </div>
                       </div>
@@ -541,11 +540,11 @@ export default function SopRoadmapModal({
             >
                <input 
                  type="date" 
-                 className="px-4 py-2 rounded-lg border outline-none focus:border-[#BF5AF2]"
+                 className="px-4 py-2 rounded-lg border outline-none"
                  style={{ 
                    backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : '#fff',
                    color: 'inherit',
-                   borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
+                   borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                  }}
                  value={popupDate} 
                  onChange={e => setPopupDate(e.target.value)} 
@@ -560,7 +559,8 @@ export default function SopRoadmapModal({
                <button 
                  onClick={handleSaveRequirements} 
                  disabled={saving} 
-                 className="ml-auto px-8 py-3 bg-[#BF5AF2] hover:bg-[#a542d6] text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-transform active:scale-95 disabled:opacity-50 tracking-wide"
+                 className="ml-auto px-8 py-3 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 tracking-wide"
+                 style={{ backgroundColor: colors.indigo }}
                >
                  {saving ? 'SAVING...' : 'SAVE CHANGES'}
                </button>

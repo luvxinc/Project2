@@ -51,7 +51,7 @@ export default function DeliverySystemPage() {
 
   const fetchSpecOptions = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/vma/inventory-spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() });
       if (res.ok) setSpecOptions(await res.json());
     } catch (e) { console.error(e); }
   }, []);
@@ -200,11 +200,11 @@ export default function DeliverySystemPage() {
                     <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: colors.textSecondary }}>{txn.serialNo || '—'}</td>
                     <td className="px-3 py-2.5 text-[12px] font-bold tabular-nums" style={{ color: colors.text }}>{txn.qty}</td>
                     <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: colors.textSecondary }}>{txn.expDate?.split('T')[0] || '—'}</td>
-                    <td className="px-3 py-2.5 text-[12px]" style={{ color: txn.inspection === 'ACCEPT' ? '#059669' : txn.inspection === 'REJECT' ? '#dc2626' : colors.textTertiary, fontWeight: txn.inspection ? 600 : 400 }}>{txn.inspection || '—'}</td>
+                    <td className="px-3 py-2.5 text-[12px]" style={{ color: txn.inspection === 'ACCEPT' ? colors.green : txn.inspection === 'REJECT' ? colors.red : colors.textTertiary, fontWeight: txn.inspection ? 600 : 400 }}>{txn.inspection || '—'}</td>
                     <td className="px-3 py-2.5 text-[12px]" style={{ color: colors.textSecondary }}>{txn.caseId || '—'}</td>
                     <td className="px-3 py-2.5 text-[12px]" style={{ color: colors.textSecondary }}>{txn.location || '—'}</td>
                     <td className="px-3 py-2.5 text-[12px]" style={{ color: colors.textSecondary }}>{txn.operator || '—'}</td>
-                    <td className="px-3 py-2.5"><button onClick={() => handleDelete(txn.id)} className="text-[11px] font-medium hover:opacity-70" style={{ color: '#dc2626' }}>×</button></td>
+                    <td className="px-3 py-2.5"><button onClick={() => handleDelete(txn.id)} className="text-[11px] font-medium hover:opacity-70" style={{ color: colors.red }}>×</button></td>
                   </tr>
                 );
               })}

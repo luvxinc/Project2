@@ -114,9 +114,9 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
     const fetchSpecs = async () => {
       try {
         const [pvRes, dsRes, opRes] = await Promise.all([
-          fetch(`${API}/vma/inventory-spec-options?productType=PVALVE`, { headers: getAuthHeaders() }),
-          fetch(`${API}/vma/inventory-spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() }),
-          fetch(`${API}/vma/inventory-operators`, { headers: getAuthHeaders() }),
+          fetch(`${API}/vma/inventory-transactions/spec-options?productType=PVALVE`, { headers: getAuthHeaders() }),
+          fetch(`${API}/vma/inventory-transactions/spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() }),
+          fetch(`${API}/vma/inventory-transactions/operators`, { headers: getAuthHeaders() }),
         ]);
         if (pvRes.ok) setPvalveSpecs(await pvRes.json());
         if (dsRes.ok) setDsSpecs(await dsRes.json());
@@ -227,7 +227,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
         })),
       };
 
-      const res = await fetch(`${API}/vma/inventory-receive`, {
+      const res = await fetch(`${API}/vma/inventory-transactions/receive-from-china`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(body),
@@ -238,6 +238,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         a.download = `receiving_inspection_${batchNo}.pdf`;
         document.body.appendChild(a);

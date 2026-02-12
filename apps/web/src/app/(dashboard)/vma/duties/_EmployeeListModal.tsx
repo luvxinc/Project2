@@ -184,8 +184,7 @@ export default function EmployeeListModal({
   // Styles
   const isDark = theme === 'dark';
   const cardBg = isDark ? 'rgba(30,30,45,0.85)' : 'rgba(255,255,255,0.85)';
-  const cardBorder = isDark ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)'; // Blue for employees
-  const accentColor = '#3b82f6'; // Blue
+  const cardBorder = `${colors.blue}4d`;
 
   // Last group index for highlighting
   const latestGroupIdx = groups.length - 1;
@@ -207,14 +206,14 @@ export default function EmployeeListModal({
       {/* HEADER */}
       <div className="absolute top-0 left-0 right-0 z-[60] px-12 py-8 flex items-start justify-between pointer-events-none">
         <div className="pointer-events-auto">
-          <h2 className="text-3xl font-bold tracking-tight drop-shadow-xl" style={{ color: isDark ? '#fff' : '#1f2937' }}>
+          <h2 className="text-3xl font-bold tracking-tight drop-shadow-xl" style={{ color: colors.text }}>
              {/* Dynamic Title based on translation keys if available, else fallback */}
              {t('employees.career.employeesTimeline') || 'Employees Timeline'}
           </h2>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-lg font-medium opacity-80" style={{ color: isDark ? '#ddd' : '#4b5563' }}>{department.code}</span>
+            <span className="text-lg font-medium opacity-80" style={{ color: colors.textSecondary }}>{department.code}</span>
             <div className="h-1 w-1 rounded-full bg-blue-500/50" />
-            <span className="text-lg opacity-60" style={{ color: isDark ? '#bbb' : '#6b7280' }}>
+            <span className="text-lg opacity-60" style={{ color: colors.textSecondary }}>
               {department.duties}
             </span>
           </div>
@@ -223,7 +222,7 @@ export default function EmployeeListModal({
         <div className="pointer-events-auto">
           <button onClick={onClose}
             className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-black/10 transition backdrop-blur-md border border-transparent hover:border-white/10"
-            style={{ color: isDark ? '#fff' : '#000' }}>
+            style={{ color: colors.text }}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -292,7 +291,7 @@ export default function EmployeeListModal({
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                   <span className="font-bold text-sm truncate" style={{ color: isDark ? '#fff' : '#111' }}>
+                                   <span className="font-bold text-sm truncate" style={{ color: colors.text }}>
                                      {emp.firstName} {emp.lastName}
                                    </span>
                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${emp.status === 'ACTIVE' ? 'bg-green-500/10 text-green-600' : 'bg-gray-500/10 text-gray-500'}`}>
@@ -321,7 +320,7 @@ export default function EmployeeListModal({
                 <div className="timeline-line absolute top-1/2 left-0 right-0 -translate-y-1/2 rounded-full"
                      style={{ 
                        height: '8px', 
-                       background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%)',
+                       background: `linear-gradient(90deg, ${colors.blue} 0%, ${colors.blue}99 50%, ${colors.blue}66 100%)`,
                        transformOrigin: 'left center',
                        width: `${groups.length * SLOT_W + 200}px`
                      }} />
@@ -340,7 +339,7 @@ export default function EmployeeListModal({
 
                       {/* Date Label (Below) */}
                       <div className={`ms-date-${gi} absolute top-10 left-1/2 -translate-x-1/2 text-center w-[200px] opacity-0`}>
-                        <div className="text-sm font-bold" style={{ color: isDark ? '#fff' : '#111' }}>
+                        <div className="text-sm font-bold" style={{ color: colors.text }}>
                           {fmtDateShort(group.date)}
                         </div>
                         <div className="text-xs opacity-50 mt-1 uppercase tracking-widest font-semibold">

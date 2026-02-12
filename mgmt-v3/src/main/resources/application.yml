@@ -1,0 +1,133 @@
+# =============================================================
+# MGMT ERP V3 — Application Configuration
+# =============================================================
+
+spring:
+  application:
+    name: mgmt-v3
+
+  # === PostgreSQL ===
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mgmt_v2?stringtype=unspecified}
+    username: ${DB_USERNAME:aaron}
+    password: ${DB_PASSWORD:***REDACTED_PASSWORD***}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # === JPA ===
+  jpa:
+    hibernate:
+      ddl-auto: none  # Prisma/Flyway manages schema — skip Hibernate validation
+      naming:
+        # Prisma created mixed naming (snake_case + camelCase columns),
+        # so we use identity strategy and specify exact names in @Column
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false   # Prevent lazy-loading issues
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+        format_sql: true
+        jdbc:
+          time_zone: America/Los_Angeles  # Pacific Time
+
+  # === Flyway ===
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: "0"
+    validate-on-migrate: true
+
+  # === Redis ===
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  # === Mail (Gmail SMTP) ===
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # === Jackson ===
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    time-zone: America/Los_Angeles
+
+# === Server ===
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# === Actuator ===
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,flyway
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# === JWT ===
+mgmt:
+  jwt:
+    secret: ${JWT_SECRET:***REDACTED_JWT_SECRET***}
+    access-token-expiry: 3600    # 1 hour (seconds)
+    refresh-token-expiry: 604800 # 7 days (seconds)
+    issuer: mgmt-v3
+  security:
+    cors:
+      allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+# === OpenAPI ===
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operations-sorter: method
+
+# === Logging ===
+logging:
+  level:
+    root: INFO
+    com.mgmt: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

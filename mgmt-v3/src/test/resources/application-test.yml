@@ -1,0 +1,48 @@
+# =============================================================
+# MGMT ERP V3 — Test Profile
+# =============================================================
+# Uses existing mgmt_v2 DB with real data for integration tests
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mgmt_v2?stringtype=unspecified
+    username: aaron
+    password: ***REDACTED_PASSWORD***
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: "0"
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+mgmt:
+  jwt:
+    secret: test-secret-key-must-be-at-least-32-characters-long-for-hmac
+    access-token-expiry: 3600
+    refresh-token-expiry: 604800
+  security:
+    cors:
+      allowed-origins: http://localhost:3000
+
+server:
+  port: 0
+  servlet:
+    context-path: /api/v1
+
+logging:
+  level:
+    root: WARN
+    com.mgmt: DEBUG
+    org.hibernate.SQL: DEBUG

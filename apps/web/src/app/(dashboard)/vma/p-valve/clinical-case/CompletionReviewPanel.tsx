@@ -74,8 +74,8 @@ export default function CompletionReviewPanel({
                     <span
                       className="px-2 py-0.5 rounded text-[10px] font-semibold"
                       style={{
-                        backgroundColor: txn.productType === 'PVALVE' ? 'rgba(0,122,255,0.12)' : 'rgba(175,82,222,0.12)',
-                        color: txn.productType === 'PVALVE' ? '#007AFF' : '#AF52DE',
+                        backgroundColor: txn.productType === 'PVALVE' ? `${colors.blue}1f` : `${colors.indigo}1f`,
+                        color: txn.productType === 'PVALVE' ? colors.blue : colors.indigo,
                       }}
                     >
                       {txn.productType === 'PVALVE' ? 'P-Valve' : 'DS'}
@@ -95,7 +95,7 @@ export default function CompletionReviewPanel({
                         ));
                       }}
                       className="relative inline-flex items-center h-[22px] w-[40px] rounded-full transition-colors duration-200"
-                      style={{ backgroundColor: ci.returned ? '#34C759' : colors.bgTertiary, border: `1px solid ${ci.returned ? '#34C759' : colors.border}` }}
+                      style={{ backgroundColor: ci.returned ? colors.green : colors.bgTertiary, border: `1px solid ${ci.returned ? colors.green : colors.border}` }}
                     >
                       <span
                         className="inline-block h-[18px] w-[18px] rounded-full bg-white shadow transition-transform duration-200"
@@ -114,8 +114,8 @@ export default function CompletionReviewPanel({
                       }}
                       className="relative inline-flex items-center h-[22px] w-[40px] rounded-full transition-colors duration-200"
                       style={{
-                        backgroundColor: disabled ? colors.bgTertiary : (ci.accepted ? '#34C759' : '#FF3B30'),
-                        border: `1px solid ${disabled ? colors.border : (ci.accepted ? '#34C759' : '#FF3B30')}`,
+                        backgroundColor: disabled ? colors.bgTertiary : (ci.accepted ? colors.green : colors.red),
+                        border: `1px solid ${disabled ? colors.border : (ci.accepted ? colors.green : colors.red)}`,
                         opacity: disabled ? 0.35 : 1,
                         cursor: disabled ? 'not-allowed' : 'pointer',
                       }}
@@ -131,7 +131,7 @@ export default function CompletionReviewPanel({
                     {disabled ? (
                       <span className="text-[11px] italic" style={{ color: colors.textTertiary, opacity: 0.4 }}>—</span>
                     ) : ci.accepted ? (
-                      <span className="text-[11px] font-medium" style={{ color: '#34C759' }}>✓ All OK</span>
+                      <span className="text-[11px] font-medium" style={{ color: colors.green }}>✓ All OK</span>
                     ) : (
                       <div className="relative">
                         <button
@@ -142,9 +142,9 @@ export default function CompletionReviewPanel({
                           }}
                           className="w-full text-left px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between gap-1"
                           style={{
-                            borderColor: ci.returnCondition.length > 0 ? '#FF3B30' : colors.border,
+                            borderColor: ci.returnCondition.length > 0 ? colors.red : colors.border,
                             backgroundColor: colors.bgTertiary,
-                            color: ci.returnCondition.length > 0 ? '#FF3B30' : colors.textSecondary,
+                            color: ci.returnCondition.length > 0 ? colors.red : colors.textSecondary,
                             width: 180,
                           }}
                         >
@@ -185,7 +185,7 @@ export default function CompletionReviewPanel({
                                     }}
                                     className="mt-0.5 accent-red-500"
                                   />
-                                  <span className="text-[11px] leading-tight" style={{ color: checked ? '#FF3B30' : colors.text }}>
+                                  <span className="text-[11px] leading-tight" style={{ color: checked ? colors.red : colors.text }}>
                                     {label}
                                   </span>
                                 </label>
@@ -207,7 +207,7 @@ export default function CompletionReviewPanel({
                           </div>
                         )}
                         {ci.returnCondition.length > 0 && (
-                          <p className="text-[10px] mt-1" style={{ color: '#FF3B30' }}>
+                          <p className="text-[10px] mt-1" style={{ color: colors.red }}>
                             ⚠ Will be moved to Demo/Sample
                           </p>
                         )}
@@ -225,7 +225,7 @@ export default function CompletionReviewPanel({
           <button
             onClick={() => setConfirmModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition"
-            style={{ backgroundColor: '#34C759', color: '#fff' }}
+            style={{ backgroundColor: colors.green, color: '#fff' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />

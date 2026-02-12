@@ -200,6 +200,41 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 - ✅ 用户侧返回友好消息, 服务端记录详细堆栈
 - ✅ 使用结构化错误码 (如 `INV_001`, `AUTH_003`)
 
+### 5.3 终端进程卡死恢复
+
+> **进程卡死 = 立即 Kill + 重试。不要等待用户。**
+
+| 信号 | 判定 | 行动 |
+|------|------|------|
+| 命令运行 > 30s 无输出 | 可能卡死 | Terminate + 重新执行 |
+| 命令运行 > 60s (非编译) | 确认卡死 | Terminate + 重新执行 |
+| `command_status` 连续 3 次 RUNNING 无输出 | 确认卡死 | Terminate + 重新执行 |
+
+```
+恢复流程:
+1. 发送 Terminate 到卡死进程
+2. 等待 1s 确认终止
+3. 用相同命令重新执行 (SafeToAutoRun=true)
+4. 如果再次卡死 → 简化命令, 拆分为多个小命令
+```
+
+### 5.4 Auto-Run 策略 (SafeToAutoRun)
+
+> **只有涉及数据库数据丢失/生产环境变更才需要用户确认。其他自己执行。**
+
+| 操作类型 | SafeToAutoRun | 理由 |
+|----------|:-------------:|------|
+| `ls`, `cat`, `find`, `grep` | ✅ true | 只读 |
+| `mkdir`, `rmdir` (空目录) | ✅ true | 无风险 |
+| `rm` (项目 MD/文档文件) | ✅ true | 不涉及数据库 |
+| `rm` (源代码文件) | ✅ true | 有 Git 可恢复 |
+| `./gradlew build/test` | ✅ true | 只读编译 |
+| `cp`, `mv` (项目文件) | ✅ true | 不涉及数据库 |
+| SQL 写操作 (INSERT/UPDATE/DELETE) | ❌ false | 数据库数据变更 |
+| `DROP TABLE`, `TRUNCATE` | ❌ false | 数据库结构变更 |
+| 生产服务器操作 | ❌ false | 生产环境 |
+| 安装系统级依赖 | ❌ false | 操作系统变更 |
+
 ---
 
 ## 6. 持续学习 (Continuous Learning)

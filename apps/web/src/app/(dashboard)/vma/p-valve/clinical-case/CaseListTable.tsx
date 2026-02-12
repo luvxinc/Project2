@@ -68,8 +68,8 @@ export default function CaseListTable({ cases, loading, colors, onCaseClick }: C
                   <span
                     className="px-2.5 py-1 rounded-full text-[11px] font-semibold"
                     style={{
-                      backgroundColor: c.status === 'COMPLETED' ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)',
-                      color: c.status === 'COMPLETED' ? '#34C759' : '#FF9F0A',
+                      backgroundColor: c.status === 'COMPLETED' ? `${colors.green}26` : `${colors.orange}26`,
+                      color: c.status === 'COMPLETED' ? colors.green : colors.orange,
                     }}
                   >
                     {c.status === 'COMPLETED' ? 'Completed' : 'In Progress'}

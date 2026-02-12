@@ -523,8 +523,9 @@ export default function EmployeesPage() {
       {toast && (
         <div
           className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50 transition-all ${
-            toast.type === 'ok' ? 'bg-green-500' : 'bg-red-500'
+            toast.type === 'ok' ? '' : ''
           }`}
+          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red }}
         >
           {toast.msg}
         </div>
@@ -561,7 +562,7 @@ function EmployeeCardModal({
   const isActive = employee.status === 'ACTIVE';
 
   // 首字母头像颜色
-  const avatarColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#06b6d4'];
+  const avatarColors = [colors.blue, colors.indigo, colors.pink || '#ec4899', colors.orange, colors.green, colors.cyan || '#06b6d4'];
   const colorIdx = employee.employeeNo.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % avatarColors.length;
 
   return (
@@ -642,8 +643,8 @@ function EmployeeCardModal({
                     key={d.id}
                     className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
                     style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)',
-                      color: theme === 'dark' ? '#93c5fd' : '#2563eb',
+                      backgroundColor: `${colors.blue}26`,
+                      color: colors.blue,
                     }}
                   >
                     {d.name} - {d.duties}
@@ -670,10 +671,10 @@ function EmployeeCardModal({
             {/* Termination Date */}
             {employee.terminationDate && (
               <div className="flex items-center gap-3">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={colors.red} viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                 </svg>
-                <span className="text-sm" style={{ color: '#ef4444' }}>
+                <span className="text-sm" style={{ color: colors.red }}>
                   {t('employees.fields.terminationDate')}:&nbsp;
                   <span className="font-medium">
                     {new Date(employee.terminationDate).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })}
@@ -691,8 +692,8 @@ function EmployeeCardModal({
             onClick={onViewCareer}
             className="w-full h-9 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition hover:opacity-80 mb-3"
             style={{
-              backgroundColor: theme === 'dark' ? 'rgba(139,92,246,0.15)' : 'rgba(139,92,246,0.08)',
-              color: '#8b5cf6',
+              backgroundColor: `${colors.indigo}26`,
+              color: colors.indigo,
             }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -708,8 +709,8 @@ function EmployeeCardModal({
               onClick={onEdit}
               className="flex-1 h-10 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition hover:opacity-80"
               style={{
-                backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)',
-                color: '#3b82f6',
+                backgroundColor: `${colors.blue}26`,
+                color: colors.blue,
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -724,9 +725,9 @@ function EmployeeCardModal({
               className="flex-1 h-10 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition hover:opacity-80"
               style={{
                 backgroundColor: isActive
-                  ? theme === 'dark' ? 'rgba(249,115,22,0.15)' : 'rgba(249,115,22,0.08)'
-                  : theme === 'dark' ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.08)',
-                color: isActive ? '#f97316' : '#10b981',
+                  ? `${colors.orange}26`
+                  : `${colors.green}26`,
+                color: isActive ? colors.orange : colors.green,
               }}
             >
               {isActive ? (
@@ -752,8 +753,8 @@ function EmployeeCardModal({
                 onClick={() => setConfirmDelete(true)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center transition hover:opacity-80"
                 style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.08)',
-                  color: '#ef4444',
+                  backgroundColor: `${colors.red}26`,
+                  color: colors.red,
                 }}
                 title={t('employees.actions.delete')}
               >
@@ -766,7 +767,7 @@ function EmployeeCardModal({
                 onClick={onDelete}
                 className="h-10 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition animate-pulse"
                 style={{
-                  backgroundColor: '#ef4444',
+                  backgroundColor: colors.red,
                   color: '#fff',
                 }}
               >
@@ -934,7 +935,7 @@ function EmployeeFormModal({
                     className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:opacity-80"
                     style={{
                       backgroundColor: selectedDeptIds.includes(d.id)
-                        ? theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)'
+                        ? `${colors.blue}26`
                         : 'transparent',
                     }}
                   >

@@ -6,9 +6,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { animate } from 'animejs';
 import { useRouter } from 'next/navigation';
 import VmaTabSelector from '../components/VmaTabSelector';
+import { getAuthHeaders } from '@/lib/vma-api';
 import TrainingMatrixRoadmap from './_TrainingMatrixRoadmap';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1`;
 
 // ================================
 // Types
@@ -68,12 +69,8 @@ export default function TrainingRecordsPage() {
 
   // API helper (same as training page)
   const api = useCallback(async (path: string, options?: RequestInit) => {
-    const token = document.cookie.match(/auth_session=([^;]+)/)?.[1];
     const res = await fetch(`${API}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: getAuthHeaders(),
       ...options,
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -199,14 +196,12 @@ export default function TrainingRecordsPage() {
 
   // Download PDF
   const handleDownload = useCallback(async (session: TrainingSession) => {
-    const token = document.cookie.match(/auth_session=([^;]+)/)?.[1];
-    const url = `${API}/vma/training-records/download/training_${session.trainingNo}.pdf`;
+    const url = `${API}/vma/training-sessions/${session.trainingNo}/pdf`;
     try {
-      const res = await fetch(url, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
+      const headers = getAuthHeaders();
+      // Remove Content-Type for download requests (not sending JSON body)
+      delete headers['Content-Type'];
+      const res = await fetch(url, { headers });
       if (!res.ok) {
         console.error(`Download failed: ${res.status}`);
         return;
@@ -214,9 +209,12 @@ export default function TrainingRecordsPage() {
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = blobUrl;
       a.download = `training_${session.trainingNo}.pdf`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('Download failed', err);
@@ -297,7 +295,7 @@ export default function TrainingRecordsPage() {
                 onClick={() => setViewMode('roadmap')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${viewMode === 'roadmap' ? 'text-white' : ''}`}
                 style={{
-                  backgroundColor: viewMode === 'roadmap' ? '#8b5cf6' : 'transparent',
+                  backgroundColor: viewMode === 'roadmap' ? colors.indigo : 'transparent',
                   color: viewMode === 'roadmap' ? '#fff' : colors.textSecondary,
                 }}
               >
@@ -371,7 +369,7 @@ export default function TrainingRecordsPage() {
                               style={{ borderColor: colors.border }}
                               className="border-b last:border-b-0 transition-colors cursor-pointer hover:opacity-80"
                             >
-                              <td className="px-5 py-3.5 text-sm font-mono font-semibold" style={{ color: theme === 'dark' ? '#60a5fa' : '#2563eb' }}>
+                              <td className="px-5 py-3.5 text-sm font-mono font-semibold" style={{ color: colors.blue }}>
                                 {session.trainingNo}
                               </td>
                               <td className="px-5 py-3.5 text-sm" style={{ color: colors.text }}>
@@ -380,15 +378,15 @@ export default function TrainingRecordsPage() {
                               <td className="px-5 py-3.5">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium" style={{
                                   backgroundColor: session.trainingSubject.includes('New Employee')
-                                    ? (theme === 'dark' ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.1)')
+                                    ? (theme === 'dark' ? `${colors.green}26` : `${colors.green}1a`)
                                     : session.trainingSubject.includes('New SOP')
-                                      ? (theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)')
-                                      : (theme === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.1)'),
+                                      ? (theme === 'dark' ? `${colors.blue}26` : `${colors.blue}1a`)
+                                      : (theme === 'dark' ? `${colors.orange}26` : `${colors.orange}1a`),
                                   color: session.trainingSubject.includes('New Employee')
-                                    ? '#22c55e'
+                                    ? colors.green
                                     : session.trainingSubject.includes('New SOP')
-                                      ? '#3b82f6'
-                                      : '#f59e0b',
+                                      ? colors.blue
+                                      : colors.orange,
                                 }}>
                                   {session.trainingSubject}
                                 </span>
@@ -407,8 +405,8 @@ export default function TrainingRecordsPage() {
                                   onClick={() => handleDownload(session)}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 active:scale-95"
                                   style={{
-                                    backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)',
-                                    color: '#3b82f6',
+                                    backgroundColor: theme === 'dark' ? `${colors.blue}26` : `${colors.blue}1a`,
+                                    color: colors.blue,
                                   }}
                                 >
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -459,9 +457,9 @@ export default function TrainingRecordsPage() {
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
                       style={{
                         backgroundColor: selectedSession.evaluationMethod === 'self_training'
-                          ? (theme === 'dark' ? 'rgba(168,85,247,0.15)' : 'rgba(168,85,247,0.1)')
-                          : (theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)'),
-                        color: selectedSession.evaluationMethod === 'self_training' ? '#a855f7' : '#3b82f6',
+                          ? (theme === 'dark' ? `${colors.indigo}26` : `${colors.indigo}1a`)
+                          : (theme === 'dark' ? `${colors.blue}26` : `${colors.blue}1a`),
+                        color: selectedSession.evaluationMethod === 'self_training' ? colors.indigo : colors.blue,
                       }}
                     >
                       {selectedSession.evaluationMethod === 'self_training' ? t('trainingRecords.evaluation.selfTraining') : t('trainingRecords.evaluation.oralQA')}
@@ -491,7 +489,7 @@ export default function TrainingRecordsPage() {
                             <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('trainingRecords.detail.columns.version')}</th>
                             <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('trainingRecords.detail.columns.trainees')}</th>
                             {editMode && (
-                              <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: '#EF4444' }}>{t('trainingRecords.detail.columns.remove')}</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.red }}>{t('trainingRecords.detail.columns.remove')}</th>
                             )}
                           </tr>
                         </thead>
@@ -506,7 +504,7 @@ export default function TrainingRecordsPage() {
                                   <button
                                     onClick={() => sop.employees.forEach(r => handleRemoveRecord(selectedSession.id, r.id))}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                    style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                                    style={{ backgroundColor: colors.red, color: '#FFFFFF' }}
                                   >
                                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -547,8 +545,8 @@ export default function TrainingRecordsPage() {
                             onClick={() => setEditMode(!editMode)}
                             className="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
                             style={{
-                              backgroundColor: editMode ? 'rgba(239,68,68,0.15)' : (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-                              color: editMode ? '#ef4444' : colors.textSecondary,
+                              backgroundColor: editMode ? `${colors.red}26` : (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                              color: editMode ? colors.red : colors.textSecondary,
                             }}
                           >
                             {editMode ? t('trainingRecords.actions.done') : t('trainingRecords.actions.edit')}
@@ -557,7 +555,7 @@ export default function TrainingRecordsPage() {
                           <button
                             onClick={() => setDeleteConfirm(selectedSession.id)}
                             className="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
-                            style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                            style={{ backgroundColor: `${colors.red}1a`, color: colors.red }}
                           >
                             🗑
                           </button>
@@ -569,7 +567,7 @@ export default function TrainingRecordsPage() {
                             <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('trainingRecords.detail.columns.employeeNo')}</th>
                             <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('trainingRecords.detail.columns.sopsCol')}</th>
                             {editMode && (
-                              <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: '#EF4444' }}>{t('trainingRecords.detail.columns.remove')}</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.red }}>{t('trainingRecords.detail.columns.remove')}</th>
                             )}
                           </tr>
                         </thead>
@@ -585,7 +583,7 @@ export default function TrainingRecordsPage() {
                                   <button
                                     onClick={() => emp.sops.forEach(r => handleRemoveRecord(selectedSession.id, r.id))}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                    style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                                    style={{ backgroundColor: colors.red, color: '#FFFFFF' }}
                                   >
                                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -630,14 +628,14 @@ export default function TrainingRecordsPage() {
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb', color: colors.text }}
+                style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : colors.gray5, color: colors.text }}
               >
                 {t('trainingRecords.delete.cancel')}
               </button>
               <button
                 onClick={() => handleDeleteSession(deleteConfirm)}
                 className="px-4 py-2 rounded-lg text-sm font-semibold"
-                style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                style={{ backgroundColor: colors.red, color: '#FFFFFF' }}
               >
                 {t('trainingRecords.delete.confirm')}
               </button>

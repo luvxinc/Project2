@@ -174,7 +174,7 @@ export default function InventoryPage() {
     }, 400);
 
     try {
-      const res = await fetch(`${API}/vma/inventory-detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API}/vma/inventory-transactions/detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`, { headers: getAuthHeaders() });
       if (res.ok) setDetail(await res.json());
     } catch (e) { console.error(e); }
     setLoadingDetail(false);
@@ -609,10 +609,10 @@ export default function InventoryPage() {
                 </div>
               ) : detail && (
                 <div className="rounded-b-2xl border border-t-0 overflow-hidden" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
-                  {renderDetailSection('Available', detail.available, '#22C55E')}
-                  {renderDetailSection('WIP', detail.wip, colors.orange || '#F59E0B')}
-                  {renderDetailSection('Near Exp', detail.nearExp, '#F59E0B')}
-                  {renderDetailSection('Expired', detail.expired, '#EF4444')}
+                  {renderDetailSection('Available', detail.available, colors.green)}
+                  {renderDetailSection('WIP', detail.wip, colors.orange)}
+                  {renderDetailSection('Near Exp', detail.nearExp, colors.orange)}
+                  {renderDetailSection('Expired', detail.expired, colors.red)}
                   {renderDetailSection('Returned to CN', detail.returnedToCn, colors.textSecondary)}
                 </div>
               )}
@@ -785,16 +785,19 @@ function LedgerEntry({
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
     try {
-      const res = await fetch(`${API}/vma/inventory-receive-pdf/${encodeURIComponent(txn.id)}`, {
+      const res = await fetch(`${API}/vma/inventory-transactions/receive-pdf/${encodeURIComponent(txn.id)}`, {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         a.download = `receiving_inspection_${txn.specNo}_${txn.serialNo || 'N-A'}_${txn.date}.pdf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (e) { console.error(e); }

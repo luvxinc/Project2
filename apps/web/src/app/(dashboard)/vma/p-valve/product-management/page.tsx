@@ -19,14 +19,14 @@ interface PValveProduct {
   expandedLengthD: number | null;
   expandedLengthE: number | null;
   crimpedTotalLength: number | null;
-  deliverySystemFits: { deliverySystem: { id: string; model: string; specification: string } }[];
+  fits: { id: string; model: string; specification: string }[];
 }
 
 interface DeliverySystemProduct {
   id: string;
   model: string;
   specification: string;
-  pvalveFits: { pvalve: { id: string; model: string; specification: string } }[];
+  fits: { id: string; model: string; specification: string }[];
 }
 
 export default function ProductManagementPage() {
@@ -80,7 +80,7 @@ export default function ProductManagementPage() {
         <div
           className="inline-flex items-center rounded-xl"
           style={{
-            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : '#f0f0f5',
+            backgroundColor: colors.gray5,
             padding: '3px',
           }}
         >
@@ -97,10 +97,10 @@ export default function ProductManagementPage() {
                   fontWeight: isActive ? 600 : 400,
                   fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
                   color: isActive
-                    ? (theme === 'dark' ? '#ffffff' : '#1d1d1f')
-                    : (theme === 'dark' ? 'rgba(255,255,255,0.45)' : '#86868b'),
+                    ? colors.text
+                    : colors.textTertiary,
                   backgroundColor: isActive
-                    ? (theme === 'dark' ? 'rgba(255,255,255,0.12)' : '#ffffff')
+                    ? colors.bg
                     : 'transparent',
                   boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                   cursor: 'pointer',
@@ -193,8 +193,8 @@ function PValveTable({ products, colors, theme, onRowClick }: { products: PValve
                 <td className="px-4 py-3 text-[13px]" style={{ color: colors.text }}>{p.expandedLengthE ?? '—'}</td>
                 <td className="px-4 py-3 text-[13px]" style={{ color: colors.text }}>{p.crimpedTotalLength ?? '—'}</td>
                 <td className="px-4 py-3 text-[13px]" style={{ color: colors.textSecondary }}>
-                  {p.deliverySystemFits.length > 0
-                    ? p.deliverySystemFits.map(f => f.deliverySystem.specification).join(', ')
+                  {(p.fits || []).length > 0
+                    ? p.fits.map(f => f.specification).join(', ')
                     : '—'}
                 </td>
               </tr>
@@ -252,8 +252,8 @@ function DeliverySystemTable({ products, colors, theme, onRowClick }: { products
                 <td className="px-4 py-3 text-[13px] font-medium" style={{ color: colors.text }}>{p.model}</td>
                 <td className="px-4 py-3 text-[13px]" style={{ color: colors.controlAccent, fontWeight: 600 }}>{p.specification}</td>
                 <td className="px-4 py-3 text-[13px]" style={{ color: colors.textSecondary }}>
-                  {p.pvalveFits.length > 0
-                    ? p.pvalveFits.map(f => f.pvalve.specification).join(', ')
+                  {(p.fits || []).length > 0
+                    ? p.fits.map(f => f.specification).join(', ')
                     : '—'}
                 </td>
               </tr>
@@ -282,7 +282,7 @@ function FitMatrixView({
   // Build a fit lookup: DS spec → Set<PV spec>
   const fitLookup = new Map<string, Set<string>>();
   deliverySystems.forEach(ds => {
-    const pvSpecs = new Set(ds.pvalveFits.map(f => f.pvalve.specification));
+    const pvSpecs = new Set((ds.fits || []).map(f => f.specification));
     fitLookup.set(ds.specification, pvSpecs);
   });
 
@@ -336,8 +336,8 @@ function FitMatrixView({
                         <span
                           className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold"
                           style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(52, 199, 89, 0.2)' : 'rgba(52, 199, 89, 0.12)',
-                            color: '#34c759',
+                            backgroundColor: `${colors.green}33`,
+                            color: colors.green,
                           }}
                         >
                           ✓

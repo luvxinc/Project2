@@ -61,12 +61,17 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
 // ================================
 // Doc type config (NO EMOJI — SVG only)
 // ================================
-const DOC_TYPE_CONFIG: Record<string, { accent: string; bg: string }> = {
-  'Procedure Document':    { accent: '#3b82f6', bg: 'rgba(59,130,246,0.07)' },
-  'Management Regulation': { accent: '#a855f7', bg: 'rgba(168,85,247,0.07)' },
-  'Technical Document':    { accent: '#ea580c', bg: 'rgba(234,88,12,0.07)' },
-  'Quality Manual':        { accent: '#10b981', bg: 'rgba(16,185,129,0.07)' },
-};
+// NOTE: These are initialized with placeholder values, dynamically overridden at render time
+// via getDocTypeConfig() using themeColors tokens
+const DOC_TYPE_CONFIG_KEYS = ['Procedure Document', 'Management Regulation', 'Technical Document', 'Quality Manual'] as const;
+function getDocTypeConfig(colors: any): Record<string, { accent: string; bg: string }> {
+  return {
+    'Procedure Document':    { accent: colors.blue,   bg: `${colors.blue}12` },
+    'Management Regulation': { accent: colors.indigo,  bg: `${colors.indigo}12` },
+    'Technical Document':    { accent: colors.orange,  bg: `${colors.orange}12` },
+    'Quality Manual':        { accent: colors.green,   bg: `${colors.green}12` },
+  };
+}
 const DOC_TYPE_ORDER = ['Quality Manual', 'Procedure Document', 'Management Regulation', 'Technical Document'];
 
 // Strip #N suffix used for DB uniqueness — never shown in UI
@@ -105,7 +110,7 @@ const IconClock = ({ color = 'currentColor' }: { color?: string }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
-const IconEdit = ({ color = '#3b82f6' }: { color?: string }) => (
+const IconEdit = ({ color = 'currentColor' }: { color?: string }) => (
   <svg className="w-3.5 h-3.5" fill="none" stroke={color} viewBox="0 0 24 24" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
   </svg>
@@ -315,7 +320,7 @@ export default function TrainingSopPage() {
         ) : (
           <div className="space-y-8">
             {sections.map(({ documentType, groups }) => {
-              const cfg = DOC_TYPE_CONFIG[documentType] || DOC_TYPE_CONFIG['Procedure Document'];
+              const cfg = getDocTypeConfig(colors)[documentType] || getDocTypeConfig(colors)['Procedure Document'];
               const TypeIcon = DOC_TYPE_ICONS[documentType] || IconDoc;
               return (
                 <DocTypeSection
@@ -591,8 +596,8 @@ function SopRow({
         {/* Training Required */}
         <div className="flex justify-center">
           {latest.trainingRequired ? (
-            <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(59,130,246,0.12)' }}>
-              <IconGrad color="#3b82f6" />
+            <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: `${colors.blue}1f` }}>
+              <IconGrad color={colors.blue} />
             </span>
           ) : (
             <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }}>
@@ -603,8 +608,13 @@ function SopRow({
 
         {/* Status */}
         <div className="flex justify-end">
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${isActive ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-orange-400'}`} />
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium`}
+            style={{
+              backgroundColor: isActive ? `${colors.green}1a` : `${colors.orange}1a`,
+              color: isActive ? colors.green : colors.orange,
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? colors.green : colors.orange }} />
             {isActive ? t('trainingSop.status.active') : t('trainingSop.status.deprecated')}
           </span>
         </div>
@@ -642,7 +652,7 @@ function SopRow({
         <div
           className="shadow-lg border-x border-b rounded-b-xl overflow-hidden"
           style={{
-            backgroundColor: theme === 'dark' ? '#1e1e2e' : '#fdfdff',
+            backgroundColor: theme === 'dark' ? colors.bgTertiary : colors.bgElevated,
             borderColor: accent + '30',
             borderTop: `2px solid ${accent}`,
           }}
@@ -687,7 +697,7 @@ function SopRow({
                 <span className="text-xs font-mono" style={{ color: colors.textSecondary }}>
                   {displaySopNo(latest.sopNo)}
                   {isFirst && (
-                    <span className="ml-1.5 text-[9px] px-1 rounded bg-green-100 text-green-600 font-medium">
+                    <span className="ml-1.5 text-[9px] px-1 rounded font-medium" style={{ backgroundColor: `${colors.green}1a`, color: colors.green }}>
                       {t('trainingSop.status.latest')}
                     </span>
                   )}
@@ -699,16 +709,21 @@ function SopRow({
                 <span className="text-[11px]" style={{ color: colors.textSecondary, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{latest.structureClassification === 'Master Document' ? (t('trainingSop.structureTypes.Master') || 'Master') : (t(`trainingSop.structureTypes.${latest.structureClassification}`) || latest.structureClassification)}</span>
                 <div className="flex justify-center">
                   {v.trainingRequired ? (
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(59,130,246,0.12)' }}>
-                      <IconGrad color="#3b82f6" />
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${colors.blue}1f` }}>
+                      <IconGrad color={colors.blue} />
                     </span>
                   ) : (
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors.textTertiary }} />
                   )}
                 </div>
                 <div className="flex justify-end">
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${isActive ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
-                    <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-green-500' : 'bg-orange-400'}`} />
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium`}
+                    style={{
+                      backgroundColor: isActive ? `${colors.green}1a` : `${colors.orange}1a`,
+                      color: isActive ? colors.green : colors.orange,
+                    }}
+                  >
+                    <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isActive ? colors.green : colors.orange }} />
                     {isActive ? t('trainingSop.status.active') : t('trainingSop.status.deprecated')}
                   </span>
                 </div>
@@ -883,21 +898,26 @@ function SopFormModal({
           <div className="flex items-center gap-3">
             <h2 style={{ color: colors.text }} className="text-lg font-bold">{title}</h2>
             {isRevision && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `rgba(59,130,246,0.1)`, color: '#3b82f6' }}>
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${colors.blue}1a`, color: colors.blue }}>
                 {displaySopNo(sop!.sopNo)}
               </span>
             )}
           </div>
           {isEdit && (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${sop!.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${sop!.status === 'ACTIVE' ? 'bg-green-500' : 'bg-orange-400'}`} />
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium`}
+              style={{
+                backgroundColor: sop!.status === 'ACTIVE' ? `${colors.green}1a` : `${colors.orange}1a`,
+                color: sop!.status === 'ACTIVE' ? colors.green : colors.orange,
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sop!.status === 'ACTIVE' ? colors.green : colors.orange }} />
               {sop!.status === 'ACTIVE' ? t('trainingSop.status.active') : t('trainingSop.status.deprecated')}
             </span>
           )}
         </div>
 
         {isRevision && (
-          <div className="mx-6 mb-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(59,130,246,0.06)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.15)' }}>
+          <div className="mx-6 mb-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: `${colors.blue}0f`, color: colors.blue, border: `1px solid ${colors.blue}26` }}>
             {t('trainingSop.form.revisionHint')}
           </div>
         )}
@@ -1010,7 +1030,7 @@ function SopFormModal({
             <button
               type="button"
               onClick={() => setTrainingRequired(!trainingRequired)}
-              style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: trainingRequired ? '#3b82f6' : '#d1d5db', position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}
+              style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: trainingRequired ? colors.blue : colors.gray4, position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}
             >
               <span style={{ position: 'absolute', top: 2, left: trainingRequired ? 22 : 2, width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s' }} />
             </button>
@@ -1028,9 +1048,11 @@ function SopFormModal({
               {isEdit && (
                 <button
                   type="button" onClick={handleDeprecate} disabled={saving}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 ${
-                    sop!.status === 'ACTIVE' ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
-                  }`}
+                  className="px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
+                  style={{
+                    backgroundColor: sop!.status === 'ACTIVE' ? `${colors.orange}1a` : `${colors.green}1a`,
+                    color: sop!.status === 'ACTIVE' ? colors.orange : colors.green,
+                  }}
                 >
                   {sop!.status === 'ACTIVE' ? t('trainingSop.actions.deprecate') : t('trainingSop.actions.activate')}
                 </button>
@@ -1040,9 +1062,10 @@ function SopFormModal({
                   type="button"
                   onClick={() => onRevision(sop!)}
                   disabled={saving}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
+                  style={{ backgroundColor: `${colors.blue}1a`, color: colors.blue }}
                 >
-                  <IconRevision color="#3b82f6" />
+                  <IconRevision color={colors.blue} />
                   {t('trainingSop.actions.newRevision')}
                 </button>
               )}

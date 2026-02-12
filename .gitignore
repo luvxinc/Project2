@@ -79,6 +79,7 @@ htmlcov/
 
 # Output files
 output/
+generated-pdfs/
 
 # Legacy
 legacy_streamlit/

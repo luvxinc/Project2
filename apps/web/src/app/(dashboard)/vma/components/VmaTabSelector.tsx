@@ -127,9 +127,7 @@ export default function VmaTabSelector() {
         ref={containerRef}
         className="relative inline-flex items-center rounded-full"
         style={{ 
-          backgroundColor: theme === 'dark' 
-            ? 'rgba(255,255,255,0.1)' 
-            : '#e8e8ed',
+          backgroundColor: colors.gray5,
           padding: '4px',
         }}
       >
@@ -140,7 +138,7 @@ export default function VmaTabSelector() {
             bottom: '4px',
             left: `${pillPos.left}px`,
             width: `${pillPos.width}px`,
-            backgroundColor: theme === 'dark' ? '#ffffff' : '#1d1d1f',
+            backgroundColor: colors.text,
             transition: ready 
               ? 'left 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), width 0.15s ease' 
               : 'none',
@@ -162,8 +160,8 @@ export default function VmaTabSelector() {
                 zIndex: 2,
                 padding: '10px 24px',
                 color: isActive 
-                  ? (theme === 'dark' ? '#1d1d1f' : '#ffffff')
-                  : (theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6e6e73'),
+                  ? colors.bg
+                  : colors.gray,
                 fontSize: '14px',
                 fontWeight: 400,
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
