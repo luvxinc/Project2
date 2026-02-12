@@ -1,5 +1,5 @@
 #!/bin/bash
-# MGMT V2 开发服务器管理脚本
+# MGMT V3 开发服务器管理脚本
 # 用法: ./scripts/dev.sh [start|stop|restart|status]
 
 set -e
@@ -34,8 +34,7 @@ cleanup_dev_processes() {
     pkill -f "next dev" 2>/dev/null || true
     pkill -f "next-server" 2>/dev/null || true
     
-    # 终止 nest 相关进程
-    pkill -f "nest start" 2>/dev/null || true
+
     
     # 等待进程退出
     sleep 1
@@ -44,7 +43,7 @@ cleanup_dev_processes() {
     pkill -9 -f "turbo dev" 2>/dev/null || true
     pkill -9 -f "next dev" 2>/dev/null || true
     pkill -9 -f "next-server" 2>/dev/null || true
-    pkill -9 -f "nest start" 2>/dev/null || true
+
     
     # 清理 turbo daemon stale PIDs
     rm -rf /var/folders/zr/*/T/turbod/* 2>/dev/null || true
@@ -59,7 +58,7 @@ cleanup_dev_processes() {
 check_ports() {
     local ports_in_use=0
     
-    for port in 3000 3001 3002; do
+    for port in 3000 3002; do
         if lsof -i ":$port" -sTCP:LISTEN >/dev/null 2>&1; then
             log_warn "端口 $port 被占用"
             ports_in_use=1
@@ -129,17 +128,17 @@ stop_dev() {
 
 # 显示状态
 show_status() {
-    echo "=== MGMT V2 开发服务器状态 ==="
+    echo "=== MGMT V3 开发服务器状态 ==="
     echo ""
     
     # 检查进程
     echo "运行中的进程:"
-    ps aux | grep -E "(turbo|next|nest)" | grep -v grep || echo "  (无)"
+    ps aux | grep -E "(turbo|next)" | grep -v grep || echo "  (无)"
     echo ""
     
     # 检查端口
     echo "端口状态:"
-    for port in 3000 3001 3002; do
+    for port in 3000 3002; do
         if lsof -i ":$port" -sTCP:LISTEN >/dev/null 2>&1; then
             local pid=$(lsof -i ":$port" -sTCP:LISTEN -t 2>/dev/null | head -1)
             echo "  端口 $port: 占用 (PID: $pid)"

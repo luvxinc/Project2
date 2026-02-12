@@ -1,6 +1,6 @@
 {
-  "name": "mgmt-v2",
-  "version": "0.1.0",
+  "name": "mgmt-v3",
+  "version": "3.0.0",
   "private": true,
   "packageManager": "pnpm@10.23.0",
   "scripts": {
@@ -14,39 +14,17 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "clean": "turbo clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "gen:api-client": "turbo gen:api-client",
-    "db:generate": "npx prisma generate --schema=prisma/schema",
-    "db:push": "npx prisma db push --schema=prisma/schema",
-    "db:migrate": "npx prisma migrate dev --schema=prisma/schema",
-    "db:studio": "npx prisma studio --schema=prisma/schema"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
 
   "devDependencies": {
     "@types/pdfkit": "^0.17.4",
     "prettier": "^3.2.0",
-    "prisma": "5.22.0",
     "ts-node": "^10.9.2",
     "turbo": "^2.3.0",
     "typescript": "^5.3.0"
   },
   "engines": {
     "node": ">=20.10.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "@prisma/client",
-      "@prisma/engines",
-      "bcrypt",
-      "prisma"
-    ]
-  },
-  "dependencies": {
-    "@prisma/client": "5.22.0",
-    "@types/bcrypt": "^5.0.2",
-    "bcrypt": "^6.0.0",
-    "dotenv": "^17.2.3",
-    "mysql2": "^3.16.3"
   }
 }
