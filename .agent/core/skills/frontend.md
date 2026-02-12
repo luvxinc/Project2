@@ -418,5 +418,16 @@ trackEvent('order.created', { total: 1500, items: 3 });
 
 ---
 
-*Version: 2.0.0 — Generic Core (expanded: i18n + monitoring + analytics)*
+## 10. L3 工具库引用 (按需加载)
+
+| 场景 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| UI 设计决策 | UI UX Pro: 风格配色 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` | 20 种风格 + 行业配色 + 字体配对 |
+| UX 交付检查 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 反模式 + 交付检查 |
+| React 代码审查 | ECC: React 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React/Next.js 反模式检查 |
+| 动画开发 | Anime.js API | `warehouse/tools/animejs.md` | Anime.js 4.0 完整 API (~9KB) |
+
+---
+
+*Version: 2.1.0 — Generic Core (expanded: i18n + monitoring + analytics + 工具引用)*
 *Based on: battle-tested enterprise patterns*

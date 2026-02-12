@@ -298,4 +298,17 @@ function HubPage() {
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## §4 工具库引用 (L3 按需加载)
+
+> **在本 Workflow 的特定环节中, 可以加载以下 L3 工具切片获取设计参考。**
+
+| 环节 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| §1 Hub 设计 | UI UX Pro: 风格 + 配色 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` | 20 种 UI 风格 + 行业配色 HEX + 字体配对 |
+| §1 Hub 设计 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 反模式 + 交付前检查 |
+| §2 主题系统 | UI UX Pro: 配色方案 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` §2 | 按行业分类的 HEX 配色 (SaaS/电商/医疗/金融) |
+| §3 动画库 | Anime.js 完整 API | `warehouse/tools/animejs.md` | Anime.js 4.0 完整 API 参考 (~9KB) |
+
+---
+
+*Version: 1.1.0 — Added §4 工具库引用 (2026-02-12)*

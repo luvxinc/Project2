@@ -458,5 +458,15 @@ management:
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## 8. L3 工具库引用 (按需加载)
+
+| 场景 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| 编码规范参考 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 强制规则: 不可变性/输入验证/错误处理/文件组织 |
+| 后端代码审查 | ECC: Backend 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | N+1 查询 / 未验证输入 / 缺少超时 / 错误泄漏 |
+| TDD 流程 | ECC: 测试规则 | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | RED→GREEN→REFACTOR + 80% 覆盖率 |
+
+---
+
+*Version: 1.1.0 — Generic Core + 工具引用*
 *Based on: battle-tested enterprise patterns*

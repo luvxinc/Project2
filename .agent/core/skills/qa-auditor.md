@@ -212,6 +212,19 @@ DTO 字段名改了 → 前端 TypeScript 接口跟上了吗?
 
 ---
 
+## 2.7 L3 工具库引用 (按需加载)
+
+> **审计时可参考的外部最佳实践。只在需要更深入的审查时加载。**
+
+| 场景 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| 安全审计加深 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 8 项 CRITICAL 安全检查 (SQL注入/XSS/CSRF...) |
+| 代码质量审查 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | HIGH/MEDIUM/LOW 分级质量清单 |
+| 前端审计 | ECC: React 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React/Next.js 反模式检查 |
+| UX 交付检查 | UI UX Pro: 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 交付前检查清单 |
+
+---
+
 ## 3. 实时质量监督
 
 ### 3.1 过程监督
