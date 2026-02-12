@@ -348,4 +348,17 @@ data/
 
 ---
 
-*Version: 1.1.0 — Added §7 验证门禁 + 文件管理 (2026-02-12)*
+## §8 工具库引用 (L3 按需加载)
+
+> **在本 Workflow 的特定环节中, 可以加载以下 L3 工具切片获取详细指导。**
+
+| 环节 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| §0 需求规划 | ECC: Planner 详解 | `warehouse/tools/everything-claude-code/01-agents-review.md` §2 | 计划格式模板 + 最佳实践 + 红旗清单 |
+| §1 新建后端 | Anthropic Skills | `warehouse/tools/anthropic-skills/01-spec-template.md` | 如需创建新 Skill 时参考格式 |
+| §2 新建前端 | UI UX Pro: 配色 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` | 选配色方案 / 字体配对 |
+| §6 模块验证 | ECC: 审查清单 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 安全/质量/性能审查清单 |
+
+---
+
+*Version: 1.2.0 — Added §7 验证门禁 + §8 工具库引用 (2026-02-12)*

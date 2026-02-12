@@ -269,4 +269,17 @@ kubectl top pods -n prod
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## §7 工具库引用 (L3 按需加载)
+
+> **在本 Workflow 的特定环节中, 可以加载以下 L3 工具切片获取深度参考。**
+
+| 环节 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| §2 代码审查 | ECC: Code Reviewer 完整清单 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | CRITICAL→LOW 四级审查清单 + 输出格式 |
+| §3 安全审查 | ECC: 安全清单 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 安全部分 | 8 项安全 CRITICAL 检查 |
+| §3 安全审查 | ECC: Rules 规则 | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 强制规则: 不可变性 / 输入验证 / 错误处理 |
+| §4 构建错误 | (直接参考 L1 backend.md / frontend.md) | — | 构建错误优先查 L1 |
+
+---
+
+*Version: 1.1.0 — Added §7 工具库引用 (2026-02-12)*

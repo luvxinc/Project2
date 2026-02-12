@@ -224,5 +224,17 @@ projects/{project}/data/progress/engineering-status.md
 
 ---
 
-*Version: 2.0.0 — 强化版 (含具体命令 + 影响分析 + 精确驳回)*
+---
+
+## 8. L3 工具库引用 (按需加载)
+
+| 场景 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| 任务分解规划 | ECC: Planner | `warehouse/tools/everything-claude-code/01-agents-review.md` §2 | 计划格式模板 + 阶段拆分最佳实践 |
+| 整合验证 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | CRITICAL→LOW 审查清单 |
+| 架构决策 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 强制规则: 不可变性/输入验证/文件组织 |
+
+---
+
+*Version: 2.0.0 — 强化版 (含具体命令 + 影响分析 + 精确驳回 + 工具引用)*
 *Updated: 2026-02-12*
