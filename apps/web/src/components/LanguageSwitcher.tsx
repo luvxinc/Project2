@@ -97,7 +97,7 @@ export function LanguageSwitcher({ currentLocale }: { currentLocale: Locale }) {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInDown {
           from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }

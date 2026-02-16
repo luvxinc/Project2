@@ -319,7 +319,7 @@ export default function EmployeeCareerRoadmap({
                     </span>
                 </h2>
                 <div className="text-lg opacity-60 mt-1 font-mono" style={{ color: colors.textSecondary }}>
-                    #{employee.employeeNo} · Career Timeline
+                    #{employee.employeeNo} · {t('employees.career.careerTimeline') || 'Career Timeline'}
                 </div>
                </>
            )}
@@ -362,7 +362,7 @@ export default function EmployeeCareerRoadmap({
                                         <span className="font-bold text-xs uppercase tracking-widest opacity-60">
                                             {fmtDate(group.date)}
                                         </span>
-                                        <button onClick={() => openEditGroup(group)} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition">EDIT ✎</button>
+                                        <button onClick={() => openEditGroup(group)} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition">{t('employees.career.editButton') || 'EDIT ✎'}</button>
                                     </div>
 
                                     <div className="p-0 overflow-y-auto h-[calc(50vh-60px)]">
@@ -416,7 +416,7 @@ export default function EmployeeCareerRoadmap({
                                 <span className="text-3xl font-light mb-1">+</span>
                             </div>
                             <div className="absolute top-16 left-1/2 -translate-x-1/2 text-center w-[120px] opacity-60 text-xs font-bold uppercase tracking-widest text-blue-500">
-                                New Event
+                                 {t('employees.career.newEvent') || 'New Event'}
                             </div>
                         </div>
 

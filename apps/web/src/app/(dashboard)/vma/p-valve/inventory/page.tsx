@@ -9,6 +9,7 @@ import { useInventorySummary, useActiveOperators, useSpecOptions, vmaKeys } from
 import { animate } from 'animejs';
 import PValveTabSelector from '../components/PValveTabSelector';
 import ReceiveFromChinaModal from './ReceiveFromChinaModal';
+import ReturnToChinaModal from './ReturnToChinaModal';
 
 interface SpecSummary {
   specNo: string;
@@ -16,6 +17,7 @@ interface SpecSummary {
   wip: number;
   approachingExp: number;
   expired: number;
+  returned: number;
 }
 
 interface SpecOption {
@@ -95,6 +97,7 @@ export default function InventoryPage() {
   const { data: dsSummary = [], isLoading: dsLoading } = useInventorySummary('DELIVERY_SYSTEM');
   const loading = pvLoading || dsLoading;
   const [receiveModalOpen, setReceiveModalOpen] = useState(false);
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
 
   // Detail slide state
   const [selectedSpec, setSelectedSpec] = useState<{ specNo: string; productType: 'PVALVE' | 'DELIVERY_SYSTEM' } | null>(null);
@@ -234,9 +237,25 @@ export default function InventoryPage() {
     } catch (e) { console.error(e); }
   };
 
-  const summaryColumns = ['Spec#', 'Available', 'WIP', 'Near Exp.', 'Expired'];
+  const summaryColumns = [
+    t('p_valve.inventory.columns.specNo'),
+    t('p_valve.inventory.columns.available'),
+    t('p_valve.inventory.columns.wip'),
+    t('p_valve.inventory.columns.nearExp'),
+    t('p_valve.inventory.columns.expired'),
+    t('p_valve.inventory.columns.returned'),
+  ];
 
-  const detailColumns = ['Batch #', 'Spec #', 'Rec. Date', 'Serial No.', 'Exp. Date', 'Quantity', 'Action Date', 'Operator'];
+  const detailColumns = [
+    t('p_valve.inventory.detail.batchNo'),
+    t('p_valve.inventory.columns.specNo'),
+    t('p_valve.inventory.detail.recDate'),
+    t('p_valve.inventory.form.serialNo'),
+    t('p_valve.inventory.form.expDate'),
+    t('p_valve.inventory.detail.quantity'),
+    t('p_valve.inventory.detail.actionDate'),
+    t('p_valve.inventory.form.operator'),
+  ];
 
   // Open edit modal for a detail row
   const openEditModal = async (row: DetailRow) => {
@@ -376,13 +395,13 @@ export default function InventoryPage() {
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={5} className="px-4 py-12 text-center text-[13px]" style={{ color: colors.textTertiary }}>Loading...</td></tr>
+            <tr><td colSpan={6} className="px-4 py-12 text-center text-[13px]" style={{ color: colors.textTertiary }}>{t('p_valve.inventory.loading')}</td></tr>
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-4 py-12 text-center" style={{ color: colors.textTertiary }}>
+              <td colSpan={6} className="px-4 py-12 text-center" style={{ color: colors.textTertiary }}>
                 <div className="flex flex-col items-center gap-2">
                   {emptyIcon}
-                  <p className="text-[13px]">No inventory data</p>
+                  <p className="text-[13px]">{t('p_valve.inventory.empty')}</p>
                 </div>
               </td>
             </tr>
@@ -397,6 +416,7 @@ export default function InventoryPage() {
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.wip > 0 ? colors.orange : colors.textTertiary, fontWeight: row.wip > 0 ? 600 : 400 }}>{row.wip}</td>
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.approachingExp > 0 ? colors.orange : colors.textTertiary, fontWeight: row.approachingExp > 0 ? 600 : 400 }}>{row.approachingExp}</td>
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.expired > 0 ? colors.red : colors.textTertiary, fontWeight: row.expired > 0 ? 600 : 400 }}>{row.expired}</td>
+              <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.returned > 0 ? colors.textSecondary : colors.textTertiary, fontWeight: row.returned > 0 ? 600 : 400 }}>{row.returned}</td>
             </tr>
           ))}
         </tbody>
@@ -416,20 +436,20 @@ export default function InventoryPage() {
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
           <p style={{ color: colors.textSecondary }} className="text-[13px]">
-            Current inventory across all specifications
+            {t('p_valve.inventory.subtitle')}
           </p>
           <div className="flex items-center gap-2">
             <button onClick={() => setReceiveModalOpen(true)}
               style={{ backgroundColor: colors.blue }}
               className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-              Receive from China
+              {t('p_valve.inventory.actions.receiveFromChina')}
             </button>
-            <button onClick={() => openForm('OUT_CN')}
+            <button onClick={() => setReturnModalOpen(true)}
               style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
               className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-80 transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
-              Return to China
+              {t('p_valve.inventory.actions.returnToChina')}
             </button>
 
           </div>
@@ -535,7 +555,7 @@ export default function InventoryPage() {
               <button onClick={handleSubmit} disabled={!formData.specNo}
                 className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
                 style={{ backgroundColor: colors.blue }}>
-                Save Transaction
+                {t('p_valve.inventory.actions.saveTransaction')}
               </button>
             </div>
           </div>
@@ -555,7 +575,7 @@ export default function InventoryPage() {
             <div ref={frontRef}>
               <div className="flex gap-4">
                 {renderSummaryTable(
-                  'P-Valve Inventory',
+                  t('p_valve.inventory.pvalveInventory'),
                   pvalveSummary,
                   <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -563,7 +583,7 @@ export default function InventoryPage() {
                   'PVALVE',
                 )}
                 {renderSummaryTable(
-                  'Delivery System Inventory',
+                  t('p_valve.inventory.dsInventory'),
                   dsSummary,
                   <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
@@ -628,6 +648,13 @@ export default function InventoryPage() {
         onSuccess={refetchSummary}
       />
 
+      {/* Return to China Modal */}
+      <ReturnToChinaModal
+        open={returnModalOpen}
+        onClose={() => setReturnModalOpen(false)}
+        onSuccess={refetchSummary}
+      />
+
       {/* ======== Transaction Ledger Modal ======== */}
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -688,7 +715,7 @@ export default function InventoryPage() {
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textTertiary }}>Net Summary</p>
                     <div className="flex gap-6">
                       {(() => {
-                        let recCn = 0, outCn = 0, outCase = 0, recCase = 0, usedCase = 0, moveDemo = 0;
+                        let recCn = 0, outCn = 0, outCase = 0, recCase = 0, usedCase = 0, moveDemo = 0, returnDemo = 0;
                         editTransactions.forEach(t => {
                           const q = t.qty;
                           switch (t.action) {
@@ -698,9 +725,10 @@ export default function InventoryPage() {
                             case 'REC_CASE': recCase += q; break;
                             case 'USED_CASE': usedCase += q; break;
                             case 'MOVE_DEMO': moveDemo += q; break;
+                            case 'RETURN_DEMO': returnDemo += q; break;
                           }
                         });
-                        const onShelf = recCn + recCase - outCase - outCn - moveDemo;
+                        const onShelf = recCn + recCase - outCase - outCn - moveDemo + returnDemo;
                         const inWip = outCase - recCase - usedCase;
                         return (
                           <>
@@ -742,12 +770,13 @@ export default function InventoryPage() {
 
 // ======== Action label config — monochrome macOS style ========
 const ACTION_CONFIG: Record<string, { label: string; abbr: string }> = {
-  REC_CN:    { label: 'Receive from China', abbr: 'REC' },
-  OUT_CN:    { label: 'Return to China',    abbr: 'OUT' },
-  OUT_CASE:  { label: 'Out for Case',       abbr: 'CASE' },
-  REC_CASE:  { label: 'Return from Case',   abbr: 'RET' },
-  USED_CASE: { label: 'Used in Case',       abbr: 'USED' },
-  MOVE_DEMO: { label: 'Move to DEMO',       abbr: 'DEMO' },
+  REC_CN:      { label: 'Receive from China',     abbr: 'REC' },
+  OUT_CN:      { label: 'Return to China',        abbr: 'OUT' },
+  OUT_CASE:    { label: 'Out for Case',           abbr: 'CASE' },
+  REC_CASE:    { label: 'Return from Case',       abbr: 'RET' },
+  USED_CASE:   { label: 'Used in Case',           abbr: 'USED' },
+  MOVE_DEMO:   { label: 'Move to DEMO',           abbr: 'DEMO' },
+  RETURN_DEMO: { label: 'Return from DEMO',       abbr: 'R-DEMO' },
 };
 
 // Actions that can be edited from the Inventory tab (warehouse actions only)

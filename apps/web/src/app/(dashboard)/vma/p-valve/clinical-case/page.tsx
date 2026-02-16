@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { useTranslations } from 'next-intl';
 import PValveTabSelector from '../components/PValveTabSelector';
 import { useClinicalCases } from './useClinicalCases';
 import CaseListTable from './CaseListTable';
@@ -14,6 +15,7 @@ import EditItemModal from './EditItemModal';
 export default function ClinicalCasePage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const t = useTranslations('vma');
 
   const hook = useClinicalCases();
 
@@ -36,14 +38,14 @@ export default function ClinicalCasePage() {
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
           <p style={{ color: colors.textSecondary }} className="text-sm">
-            {hook.cases.length} clinical case{hook.cases.length !== 1 ? 's' : ''} recorded
+            {t('p_valve.clinicalCase.caseCount', { count: hook.cases.length })}
           </p>
           <button
             onClick={() => { hook.resetModal(); hook.setModalOpen(true); }}
             style={{ backgroundColor: colors.controlAccent }}
             className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
           >
-            + New Case
+            {t('p_valve.clinicalCase.newCase')}
           </button>
         </div>
 
@@ -222,7 +224,7 @@ export default function ClinicalCasePage() {
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 13,
             }}
           >
-            Dismiss
+            {t('p_valve.clinicalCase.dismiss')}
           </button>
         </div>
       )}

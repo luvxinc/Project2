@@ -345,7 +345,7 @@ function GlobalModal() {
       </div>
 
       {/* Animation Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes modalIn {
           from {
             opacity: 0;

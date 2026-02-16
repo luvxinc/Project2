@@ -178,7 +178,7 @@ export function LandingPage({ locale }: LandingPageProps) {
       />
 
       {/* Scrollbar Styles */}
-      <style jsx>{`
+      <style>{`
         .timeline-scroll::-webkit-scrollbar {
           width: 6px;
         }

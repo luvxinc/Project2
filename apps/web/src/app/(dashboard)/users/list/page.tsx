@@ -370,7 +370,7 @@ function GroupCarousel({
       </div>
       
       {/* Hide scrollbar */}
-      <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`div::-webkit-scrollbar { display: none; }`}</style>
     </div>
   );
 }
@@ -798,7 +798,7 @@ export default function UsersListPage() {
       )}
 
       {/* Animation Keyframes */}
-      <style jsx global>{`
+      <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }

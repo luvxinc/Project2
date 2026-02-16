@@ -18,8 +18,7 @@ interface Department {
   duties: string;
   sopTrainingReq: string | null;
   isActive: boolean;
-  _count?: { employees: number; employeeAssignments: number };
-  employees: number;
+  employeeCount?: number;
 }
 
 interface SopItem {
@@ -353,8 +352,8 @@ export default function SopRoadmapModal({
           <div className="h-full w-full flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" /></div>
         ) : history.length === 0 ? (
           <div className="h-full w-full flex flex-col items-center justify-center gap-6">
-            <div className="text-xl font-medium opacity-50">No history found</div>
-            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: colors.indigo, color: '#fff' }}>Create First Milestone</button>
+            <div className="text-xl font-medium opacity-50">{t('sopHistory.noHistoryFound') || 'No history found'}</div>
+            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: colors.indigo, color: '#fff' }}>{t('sopHistory.createFirstMilestone') || 'Create First Milestone'}</button>
           </div>
         ) : (
           /* PADDING-LEFT: 33vw to start at 1/3 screen */
@@ -385,7 +384,7 @@ export default function SopRoadmapModal({
                               : 'bg-green-500/10 text-green-500 border-green-500/20'
                           }`}>{typeLabel(group.changeType)}</span>
                           
-                          <button onClick={() => openMilestonePopup(gi)} className="text-xs font-bold px-4 py-1.5 rounded-full bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 hover:scale-105 transition border border-purple-500/20">EDIT</button>
+                          <button onClick={() => openMilestonePopup(gi)} className="text-xs font-bold px-4 py-1.5 rounded-full bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 hover:scale-105 transition border border-purple-500/20">{t('sopHistory.editButton') || 'EDIT'}</button>
                         </div>
                         <div className="p-0 overflow-y-auto h-[calc(50vh-80px)] no-scrollbar">
                           {group.changes.map((c, ci) => {
@@ -401,7 +400,7 @@ export default function SopRoadmapModal({
                                 </div>
                               );
                           })}
-                          {group.changes.length === 0 && <div className="p-8 text-center text-sm opacity-40 italic">No SOPs listed</div>}
+                          {group.changes.length === 0 && <div className="p-8 text-center text-sm opacity-40 italic">{t('sopHistory.noSopsListed') || 'No SOPs listed'}</div>}
                         </div>
                       </div>
                     </div>
@@ -436,7 +435,7 @@ export default function SopRoadmapModal({
                       </div>
                       <div className={`ms-date-${gi} absolute top-12 left-1/2 -translate-x-1/2 text-center w-[200px] opacity-0`}>
                         <div className="text-sm font-bold" style={{ color: colors.text }}>{fmtDateShort(group.changeDate)}</div>
-                        <div className="text-[10px] opacity-70 mt-1 uppercase tracking-widest font-semibold">{group.changes.length} Items</div>
+                        <div className="text-[10px] opacity-70 mt-1 uppercase tracking-widest font-semibold">{group.changes.length} {t('sopHistory.items') || 'Items'}</div>
                       </div>
                     </div>
                   );
@@ -444,7 +443,7 @@ export default function SopRoadmapModal({
 
                 <div className="ms-add-node absolute top-1/2 left-0 -translate-y-1/2 opacity-0" style={{ transform: `translateX(${history.length * SLOT_W + CARD_W / 2}px)` }}>
                    <div onClick={openNewPopup} className="w-12 h-12 -ml-6 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(191,90,242,0.6)] cursor-pointer hover:scale-110 hover:bg-purple-500 transition-all z-20"><span className="text-2xl font-light mb-1">+</span></div>
-                   <div className="absolute top-16 left-1/2 -translate-x-1/2 text-center w-[100px] opacity-60 text-xs font-bold uppercase tracking-widest">New Entry</div>
+                   <div className="absolute top-16 left-1/2 -translate-x-1/2 text-center w-[100px] opacity-60 text-xs font-bold uppercase tracking-widest">{t('sopHistory.newEntry') || 'New Entry'}</div>
                 </div>
               </div>
             </div>
@@ -468,7 +467,7 @@ export default function SopRoadmapModal({
               style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
             >
               <h3 className="text-xl font-bold tracking-tight">
-                {popupIdx === -1 ? 'Create New Milestone' : `Edit Milestone: ${fmtDateShort(history[popupIdx].changeDate)}`}
+                {popupIdx === -1 ? (t('sopHistory.createNewMilestone') || 'Create New Milestone') : `${t('sopHistory.editMilestone') || 'Edit Milestone'}: ${fmtDateShort(history[popupIdx].changeDate)}`}
               </h3>
               <button 
                 onClick={() => setPopupIdx(null)} 
@@ -482,7 +481,7 @@ export default function SopRoadmapModal({
             >
                <input 
                  type="text" 
-                 placeholder="Search SOPs..." 
+                 placeholder={t('sopHistory.searchSops') || 'Search SOPs...'} 
                  className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
                  style={{ 
                    backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
@@ -493,15 +492,15 @@ export default function SopRoadmapModal({
                  onChange={e => setPopupSearch(e.target.value)} 
                />
                <div className="flex gap-4 mt-3 text-sm">
-                 <button onClick={() => setPopupSelected(new Set(popupFiltered.map(s => s.sopNo)))} style={{ color: colors.indigo }} className="font-bold hover:underline">Select All</button>
-                 <button onClick={() => setPopupSelected(new Set())} className="font-bold opacity-60 hover:opacity-100 hover:underline">Deselect All</button>
-                 <div className="ml-auto font-mono" style={{ color: colors.indigo }}>{popupSelected.size} selected</div>
+                 <button onClick={() => setPopupSelected(new Set(popupFiltered.map(s => s.sopNo)))} style={{ color: colors.indigo }} className="font-bold hover:underline">{t('sopHistory.selectAll') || 'Select All'}</button>
+                 <button onClick={() => setPopupSelected(new Set())} className="font-bold opacity-60 hover:opacity-100 hover:underline">{t('sopHistory.deselectAll') || 'Deselect All'}</button>
+                 <div className="ml-auto font-mono" style={{ color: colors.indigo }}>{t('sopHistory.selectedCount', { count: popupSelected.size }) || `${popupSelected.size} selected`}</div>
                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-2" style={{ backgroundColor: isDark ? 'transparent' : 'rgba(255,255,255,0.5)' }}>
                {loadingSops ? (
-                 <div className="col-span-2 text-center py-10 opacity-50">Loading master list...</div>
+                 <div className="col-span-2 text-center py-10 opacity-50">{t('sopHistory.loadingMasterList') || 'Loading master list...'}</div>
                ) : popupFiltered.map(sop => {
                     const isActive = popupSelected.has(sop.sopNo);
                     return (
@@ -554,7 +553,7 @@ export default function SopRoadmapModal({
                  <button 
                    onClick={() => handleDeleteGroup(history[popupIdx], fmtDateShort(history[popupIdx].changeDate))} 
                    className="px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition font-bold uppercase tracking-wider text-xs"
-                 >Delete Group</button>
+                 >{t('sopHistory.deleteGroup') || 'Delete Group'}</button>
                )}
                <button 
                  onClick={handleSaveRequirements} 
@@ -562,7 +561,7 @@ export default function SopRoadmapModal({
                  className="ml-auto px-8 py-3 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 tracking-wide"
                  style={{ backgroundColor: colors.indigo }}
                >
-                 {saving ? 'SAVING...' : 'SAVE CHANGES'}
+                  {saving ? (t('sopHistory.saving') || 'SAVING...') : (t('sopHistory.saveChanges') || 'SAVE CHANGES')}
                </button>
             </div>
           </div>

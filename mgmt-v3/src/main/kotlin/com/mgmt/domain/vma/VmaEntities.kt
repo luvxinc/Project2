@@ -336,7 +336,7 @@ class VmaInventoryTransaction(
     @Column(name = "deleted_at") var deletedAt: Instant? = null,
 )
 
-enum class VmaInventoryAction { REC_CN, REC_CASE, OUT_CASE, OUT_CN, USED_CASE, MOVE_DEMO }
+enum class VmaInventoryAction { REC_CN, REC_CASE, OUT_CASE, OUT_CN, USED_CASE, MOVE_DEMO, RETURN_DEMO }
 enum class VmaProductType { PVALVE, DELIVERY_SYSTEM }
 enum class VmaInspectionResult { ACCEPT, REJECT }
 

@@ -301,12 +301,12 @@ export default function TrainingMatrixRoadmap({
                                                               </div>
                                                               {emp.name}
                                                             </div>
-                                                            <div className="text-red-500 font-bold">{emp.missing} missing</div>
+                                                            <div className="text-red-500 font-bold">{emp.missing} {t('trainingMatrix.missing_label') || 'missing'}</div>
                                                         </div>
                                                     ))}
                                                     {ms.topNonCompliant.length > 4 && (
                                                         <button className="w-full py-1 text-[10px] text-center opacity-50 hover:opacity-100 transition uppercase tracking-widest font-bold">
-                                                          View All {ms.topNonCompliant.length} Pending
+                                                          {t('trainingMatrix.viewAllPending', { count: ms.topNonCompliant.length }) || `View All ${ms.topNonCompliant.length} Pending`}
                                                         </button>
                                                     )}
                                                 </div>
@@ -315,8 +315,8 @@ export default function TrainingMatrixRoadmap({
                                             <div className="mb-5 p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-black shadow-lg shadow-green-500/40 text-xl">✓</div>
                                                 <div>
-                                                  <div className="text-sm font-bold text-green-500 uppercase tracking-wide">System Compliant</div>
-                                                  <div className="text-[10px] opacity-70">All training records verified</div>
+                                                  <div className="text-sm font-bold text-green-500 uppercase tracking-wide">{t('trainingMatrix.systemCompliant') || 'System Compliant'}</div>
+                                                  <div className="text-[10px] opacity-70">{t('trainingMatrix.allVerified') || 'All training records verified'}</div>
                                                 </div>
                                             </div>
                                         )}

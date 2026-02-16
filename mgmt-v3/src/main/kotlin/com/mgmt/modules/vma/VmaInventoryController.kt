@@ -99,6 +99,13 @@ class VmaInventoryController(
     fun getOperatorOptions(): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getActiveOperators())
 
+    @GetMapping("/inventory-transactions/returnable")
+    @RequirePermission("vma.employees.manage")
+    fun getReturnableInventory(
+        @RequestParam productType: String,
+        @RequestParam specNo: String,
+    ): ResponseEntity<Any> =
+        ResponseEntity.ok(invService.getReturnableInventory(productType, specNo))
     // ═══════════ Receiving ═══════════
 
     /**

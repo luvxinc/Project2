@@ -6,6 +6,7 @@ description: 界面 — Hub 页面模板, 主题系统, 动画库
 
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
+> 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
 ## 路由表
 
@@ -229,6 +230,32 @@ Rule 9: Dynamic Mapping of Static Configurations
 | §6 UX 检查 | UI UX Pro: Rules | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 99 条准则 + 交付检查 |
 | §4 React 审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React 反模式检查 |
 | 提交前 | 🔴 Rules 层 | `core/rules/frontend.md` | **必查** — 前端 10 反模式 + Checklist |
+
+---
+
+## §7.5 问题复盘铁律 (🔴 全链必须执行)
+
+> **修复任何 UI 问题后, 必须执行以下两步, 不可跳过:**
+
+```
+1. 记录错题本:
+   写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
+   关键词索引更新 (便于日后检索)
+
+2. 交叉检查 (`memory.md` §3.5):
+   a. 抽象错误模式: "在 {组件类型} 中做了 {操作} 导致 {后果}"
+   b. grep 搜索同类代码: 其他组件是否有同样问题?
+   c. 逐一检查 + 批量修复
+   d. 记录: "交叉检查发现 N 处同类问题, 已全部修复"
+```
+
+**典型 UI 交叉检查场景:**
+| 原始问题 | 交叉检查方向 |
+|---------|------------|
+| 某组件 dark 模式下颜色错误 | grep 同类组件是否都正确适配 dark 模式 |
+| i18n key 遗漏 | grep 同模块其他页面是否也有遗漏 |
+| 动画清理遗漏 (scope.revert) | grep 所有 createScope 调用是否都有清理 |
+| CSS 变量硬编码 | grep 同类硬编码颜色值 |
 
 ---
 

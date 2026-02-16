@@ -2,6 +2,7 @@
 
 import type { ClinicalCase, CaseTransaction, CompletionItem } from './types';
 import { CONDITIONAL_NOTES_ITEMS } from './types';
+import { useTranslations } from 'next-intl';
 
 interface CompletionReviewPanelProps {
   selectedCase: ClinicalCase;
@@ -17,6 +18,7 @@ export default function CompletionReviewPanel({
   selectedCase, caseDetail, completionItems, setCompletionItems, colors,
   closeCompletionReview, setConfirmModalOpen,
 }: CompletionReviewPanelProps) {
+  const t = useTranslations('vma');
   return (
     <>
       {/* Header */}
@@ -36,7 +38,7 @@ export default function CompletionReviewPanel({
         </button>
         <div className="flex-1">
           <h3 style={{ color: colors.text }} className="text-base font-semibold">
-            Return for Completion
+            {t('p_valve.clinicalCase.completion.title')}
             <span className="ml-2 text-sm font-normal" style={{ color: colors.textSecondary }}>
               {selectedCase.caseId}
             </span>
@@ -52,15 +54,15 @@ export default function CompletionReviewPanel({
         <table className="w-full text-xs">
           <thead>
             <tr style={{ backgroundColor: colors.bgTertiary }}>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Type</th>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Spec #</th>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Serial No.</th>
-              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Qty</th>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Exp Date</th>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Batch #</th>
-              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Return</th>
-              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Acceptance</th>
-              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>Note</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.type')}</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.specNo')}</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.serialNo')}</th>
+              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.qty')}</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.expDate')}</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.batchNo')}</th>
+              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.return')}</th>
+              <th className="text-center py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.acceptance')}</th>
+              <th className="text-left py-2 px-4 font-semibold uppercase" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.completion.note')}</th>
             </tr>
           </thead>
           <tbody>
@@ -131,7 +133,7 @@ export default function CompletionReviewPanel({
                     {disabled ? (
                       <span className="text-[11px] italic" style={{ color: colors.textTertiary, opacity: 0.4 }}>—</span>
                     ) : ci.accepted ? (
-                      <span className="text-[11px] font-medium" style={{ color: colors.green }}>✓ All OK</span>
+                      <span className="text-[11px] font-medium" style={{ color: colors.green }}>{t('p_valve.clinicalCase.completion.allOk')}</span>
                     ) : (
                       <div className="relative">
                         <button
@@ -150,8 +152,8 @@ export default function CompletionReviewPanel({
                         >
                           <span className="truncate">
                             {ci.returnCondition.length === 0
-                              ? 'Select reason(s)...'
-                              : `${ci.returnCondition.length} issue(s) selected`}
+                              ? t('p_valve.clinicalCase.completion.selectReasons')
+                              : t('p_valve.clinicalCase.completion.issuesSelected', { count: ci.returnCondition.length })}
                           </span>
                           <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -201,14 +203,14 @@ export default function CompletionReviewPanel({
                                 className="text-[11px] font-medium px-3 py-1 rounded-lg"
                                 style={{ color: colors.controlAccent }}
                               >
-                                Done
+                                {t('p_valve.clinicalCase.completion.done')}
                               </button>
                             </div>
                           </div>
                         )}
                         {ci.returnCondition.length > 0 && (
                           <p className="text-[10px] mt-1" style={{ color: colors.red }}>
-                            ⚠ Will be moved to Demo/Sample
+                            {t('p_valve.clinicalCase.completion.demoWarning')}
                           </p>
                         )}
                       </div>
@@ -230,7 +232,7 @@ export default function CompletionReviewPanel({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            Confirm Completion
+            {t('p_valve.clinicalCase.completion.confirmCompletion')}
           </button>
         </div>
       </div>

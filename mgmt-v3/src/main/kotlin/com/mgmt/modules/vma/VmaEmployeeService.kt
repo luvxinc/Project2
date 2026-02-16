@@ -273,7 +273,7 @@ class VmaEmployeeService(
     fun findAllDepartments(): List<DepartmentResponse> {
         val departments = departmentRepo.findAllByOrderByCodeAscDutiesAsc()
         return departments.map { dept ->
-            val empCount = assignmentRepo.countByDepartmentId(dept.id)
+            val empCount = assignmentRepo.countByDepartmentIdAndRemovedAtIsNull(dept.id)
             toDepartmentResponse(dept, empCount)
         }
     }
@@ -314,7 +314,7 @@ class VmaEmployeeService(
         dept.updatedAt = Instant.now()
         departmentRepo.save(dept)
 
-        val empCount = assignmentRepo.countByDepartmentId(dept.id)
+        val empCount = assignmentRepo.countByDepartmentIdAndRemovedAtIsNull(dept.id)
         return toDepartmentResponse(dept, empCount)
     }
 

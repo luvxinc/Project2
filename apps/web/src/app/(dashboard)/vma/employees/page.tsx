@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEmployees, useDepartments, vmaKeys, vmaFetch } from '@/lib/hooks/use-vma-queries';
 import VmaTabSelector from '../components/VmaTabSelector';
@@ -16,7 +16,7 @@ interface Department {
   name: string;
   duties: string;
   isActive: boolean;
-  _count?: { employees: number };
+  employeeCount?: number;
 }
 
 interface Employee {
@@ -121,10 +121,7 @@ export default function EmployeesPage() {
   // Career timeline modal
   const [careerEmp, setCareerEmp] = useState<Employee | null>(null);
 
-  // Show error toast on query error
-  useMemo(() => {
-    if (empError) showToast((empError as Error).message, 'err');
-  }, [empError]);
+  // Show error toast on query error (moved after showToast declaration below)
 
   // Helper to refetch all employee data
   const refetchEmployees = () => queryClient.invalidateQueries({ queryKey: vmaKeys.employees.all });
@@ -168,6 +165,11 @@ export default function EmployeesPage() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  // Show error toast on query error
+  useEffect(() => {
+    if (empError) showToast((empError as Error).message, 'err');
+  }, [empError]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {

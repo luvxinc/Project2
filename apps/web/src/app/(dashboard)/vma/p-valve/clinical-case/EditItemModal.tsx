@@ -1,6 +1,7 @@
 'use client';
 
 import type { CaseTransaction, SpecOption, PickedProduct } from './types';
+import { useTranslations } from 'next-intl';
 
 interface EditItemModalProps {
   editTxn: CaseTransaction;
@@ -22,6 +23,7 @@ export default function EditItemModal({
   editSpecOptions, editAvailable, editLoadingAvail,
   colors, onClose, onSpecChange, onSerialChange, onSave,
 }: EditItemModalProps) {
+  const t = useTranslations('vma');
   const inputStyle: React.CSSProperties = {
     backgroundColor: colors.bgTertiary,
     color: colors.text,
@@ -40,7 +42,7 @@ export default function EditItemModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: `1px solid ${colors.border}` }}>
-          <h3 style={{ color: colors.text }} className="text-sm font-semibold">Edit Case Item</h3>
+          <h3 style={{ color: colors.text }} className="text-sm font-semibold">{t('p_valve.clinicalCase.editModal.title')}</h3>
           <button onClick={onClose} style={{ color: colors.textSecondary }} className="text-lg hover:opacity-70">✕</button>
         </div>
         <div className="px-5 pt-4 pb-2">
@@ -54,21 +56,21 @@ export default function EditItemModal({
         </div>
         <div className="px-5 py-3 grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-medium mb-1" style={{ color: colors.textSecondary }}>Spec #</label>
+            <label className="block text-[11px] font-medium mb-1" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.editModal.specNo')}</label>
             <select value={editForm.specNo} onChange={e => onSpecChange(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle}>
-              <option value="">Select spec...</option>
+              <option value="">{t('p_valve.clinicalCase.editModal.selectSpec')}</option>
               {editSpecOptions.map(s => <option key={s.specification} value={s.specification}>{s.specification} ({s.model})</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium mb-1" style={{ color: colors.textSecondary }}>Serial No.</label>
+            <label className="block text-[11px] font-medium mb-1" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.editModal.serialNo')}</label>
             {editLoadingAvail ? (
-              <div className="w-full px-3 py-2 rounded-lg text-sm border" style={inputStyle}>Loading...</div>
+              <div className="w-full px-3 py-2 rounded-lg text-sm border" style={inputStyle}>{t('p_valve.clinicalCase.editModal.loading')}</div>
             ) : (
               <select value={editForm.serialNo} onChange={e => onSerialChange(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle}>
-                <option value="">Select serial...</option>
+                <option value="">{t('p_valve.clinicalCase.editModal.selectSerial')}</option>
                 {(() => {
                   const seen = new Set<string>();
                   return editAvailable.filter(a => {
@@ -91,10 +93,10 @@ export default function EditItemModal({
           {editError ? <p className="text-xs text-red-500">{editError}</p> : <div />}
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm hover:opacity-70 transition"
-              style={{ color: colors.textSecondary }}>Cancel</button>
+              style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.editModal.cancel')}</button>
             <button onClick={onSave} disabled={editSaving} style={{ backgroundColor: colors.controlAccent }}
               className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
-            >{editSaving ? 'Saving...' : 'Save'}</button>
+            >{editSaving ? t('p_valve.clinicalCase.editModal.saving') : t('p_valve.clinicalCase.editModal.save')}</button>
           </div>
         </div>
       </div>

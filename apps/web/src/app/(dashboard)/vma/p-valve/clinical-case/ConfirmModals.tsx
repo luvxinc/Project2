@@ -1,6 +1,7 @@
 'use client';
 
 import type { ClinicalCase, CompletionItem } from './types';
+import { useTranslations } from 'next-intl';
 
 interface ConfirmCompletionModalProps {
   selectedCase: ClinicalCase | null;
@@ -14,6 +15,7 @@ interface ConfirmCompletionModalProps {
 export function ConfirmCompletionModal({
   selectedCase, completionItems, completing, colors, onClose, onConfirm,
 }: ConfirmCompletionModalProps) {
+  const t = useTranslations('vma');
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -31,15 +33,15 @@ export function ConfirmCompletionModal({
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold" style={{ color: colors.text }}>Confirm Case Completion</h3>
+          <h3 className="text-lg font-semibold" style={{ color: colors.text }}>{t('p_valve.clinicalCase.confirmModal.title')}</h3>
         </div>
         <p className="text-sm mb-1" style={{ color: colors.textSecondary }}>
-          This will finalize <span className="font-mono font-semibold" style={{ color: colors.text }}>{selectedCase?.caseId}</span> and update inventory:
+          {t('p_valve.clinicalCase.confirmModal.description', { caseId: selectedCase?.caseId || '' })}
         </p>
         <ul className="text-xs mb-5 space-y-1 ml-4" style={{ color: colors.textSecondary }}>
-          <li>• <strong>{completionItems.filter(i => !i.returned).length}</strong> item(s) marked as <span style={{ color: colors.orange }}>Used (consumed)</span></li>
-          <li>• <strong>{completionItems.filter(i => i.returned && i.accepted).length}</strong> item(s) <span style={{ color: colors.green }}>Returned (All OK)</span></li>
-          <li>• <strong>{completionItems.filter(i => i.returned && !i.accepted).length}</strong> item(s) <span style={{ color: colors.red }}>Returned → Demo/Sample</span></li>
+          <li>• <strong>{completionItems.filter(i => !i.returned).length}</strong> {t('p_valve.clinicalCase.confirmModal.usedItems', { count: completionItems.filter(i => !i.returned).length })}</li>
+          <li>• <strong>{completionItems.filter(i => i.returned && i.accepted).length}</strong> {t('p_valve.clinicalCase.confirmModal.returnedOk', { count: completionItems.filter(i => i.returned && i.accepted).length })}</li>
+          <li>• <strong>{completionItems.filter(i => i.returned && !i.accepted).length}</strong> {t('p_valve.clinicalCase.confirmModal.returnedDemo', { count: completionItems.filter(i => i.returned && !i.accepted).length })}</li>
         </ul>
         <div className="flex justify-end gap-3">
           <button
@@ -47,13 +49,13 @@ export function ConfirmCompletionModal({
             disabled={completing}
             className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-70 transition"
             style={{ color: colors.textSecondary }}
-          >Cancel</button>
+          >{t('p_valve.clinicalCase.confirmModal.cancel')}</button>
           <button
             onClick={onConfirm}
             disabled={completing}
             className="px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
             style={{ backgroundColor: colors.green }}
-          >{completing ? 'Processing...' : 'Confirm'}</button>
+          >{completing ? t('p_valve.clinicalCase.confirmModal.processing') : t('p_valve.clinicalCase.confirmModal.confirm')}</button>
         </div>
       </div>
     </div>
@@ -71,6 +73,7 @@ interface ReverseCompletionModalProps {
 export function ReverseCompletionModal({
   selectedCase, reversing, colors, onClose, onReverse,
 }: ReverseCompletionModalProps) {
+  const t = useTranslations('vma');
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -88,11 +91,10 @@ export function ReverseCompletionModal({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold" style={{ color: colors.text }}>Reverse Completion</h3>
+          <h3 className="text-lg font-semibold" style={{ color: colors.text }}>{t('p_valve.clinicalCase.reverseModal.title')}</h3>
         </div>
         <p className="text-sm mb-5" style={{ color: colors.textSecondary }}>
-          This will undo the completion of <span className="font-mono font-semibold" style={{ color: colors.text }}>{selectedCase?.caseId}</span>.
-          All inventory changes from the completion will be reversed, and the case will return to <strong>In Progress</strong> status.
+          {t('p_valve.clinicalCase.reverseModal.description', { caseId: selectedCase?.caseId || '' })}
         </p>
         <div className="flex justify-end gap-3">
           <button
@@ -100,13 +102,13 @@ export function ReverseCompletionModal({
             disabled={reversing}
             className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-70 transition"
             style={{ color: colors.textSecondary }}
-          >Cancel</button>
+          >{t('p_valve.clinicalCase.reverseModal.cancel')}</button>
           <button
             onClick={onReverse}
             disabled={reversing}
             className="px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
             style={{ backgroundColor: colors.orange }}
-          >{reversing ? 'Reversing...' : 'Reverse'}</button>
+          >{reversing ? t('p_valve.clinicalCase.reverseModal.reversing') : t('p_valve.clinicalCase.reverseModal.reverse')}</button>
         </div>
       </div>
     </div>

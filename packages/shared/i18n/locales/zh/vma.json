@@ -69,6 +69,400 @@
         "title": "站点管理",
         "description": "管理医院和诊所站点信息"
       }
+    },
+    "inventory": {
+      "title": "库存管理",
+      "subtitle": "所有规格的当前库存情况",
+      "pvalveInventory": "P-Valve 库存",
+      "dsInventory": "Delivery System 库存",
+      "columns": {
+        "specNo": "Spec#",
+        "available": "可用",
+        "wip": "WIP",
+        "nearExp": "即将过期",
+        "expired": "已过期",
+        "returned": "已退回"
+      },
+      "empty": "暂无库存数据",
+      "loading": "加载中...",
+      "actions": {
+        "receiveFromChina": "从中国接收",
+        "returnToChina": "退回中国",
+        "saveTransaction": "保存交易"
+      },
+      "form": {
+        "productType": "产品类型",
+        "date": "日期",
+        "specNo": "Spec#",
+        "qty": "数量",
+        "expDate": "过期日期",
+        "serialNo": "Serial No.",
+        "batchNo": "Batch#",
+        "inspection": "检验",
+        "location": "位置",
+        "operator": "操作人",
+        "notes": "备注",
+        "cancel": "取消",
+        "select": "请选择..."
+      },
+      "detail": {
+        "back": "← 返回",
+        "batchNo": "Batch #",
+        "recDate": "接收日期",
+        "actionDate": "操作日期",
+        "quantity": "数量",
+        "available": "可用",
+        "wip": "WIP",
+        "nearExp": "即将过期",
+        "expired": "已过期",
+        "returnedToCn": "已退回中国"
+      }
+    },
+    "receiveFromChina": {
+      "title": "从中国接收",
+      "batchNo": "Batch#",
+      "poNo": "PO No.",
+      "dateShipped": "发货日期",
+      "dateReceived": "接收日期",
+      "timeReceived": "接收时间",
+      "operator": "操作人",
+      "comments": "备注",
+      "commentsPlaceholder": "留空则为 N/A",
+      "batchPlaceholder": "仅限数字",
+      "columns": {
+        "row": "#",
+        "type": "类型",
+        "serialNo": "Serial No.",
+        "model": "型号",
+        "qty": "数量",
+        "expDate": "过期日期",
+        "condition": "状态",
+        "condNotes": "检验备注",
+        "result": "结果"
+      },
+      "conditionItems": {
+        "0": "收到的数量与发货数量一致",
+        "1": "包装完好无损",
+        "2": "封口贴纸完好且仍有铰链",
+        "3": "无变形或水渍",
+        "4": "标签无遗漏或撕裂",
+        "5": "印刷清晰且无信息遗漏",
+        "6": "无额外外部标签",
+        "7": "产品仍在有效期内",
+        "8": "温度显示为 \"OK\" 且未触发"
+      },
+      "condDropdownTitle": "勾选未通过检验的项目：",
+      "condDone": "完成",
+      "issueCount": "{count} 项问题",
+      "allOk": "全部通过",
+      "accept": "接受",
+      "reject": "拒收",
+      "select": "请选择...",
+      "serialPlaceholder": "如 28P30...",
+      "copyFromPrev": "从上一行复制",
+      "addProductLine": "添加产品行",
+      "footerInfo": "{count} 个产品 — 确认后将生成PDF",
+      "cancel": "取消",
+      "confirm": "确认并下载PDF",
+      "processing": "处理中...",
+      "submitFailed": "提交失败，请重试。",
+      "networkError": "网络错误。",
+      "validation": {
+        "headerRequired": "请填写必填的表头字段：",
+        "atLeastOneLine": "请至少添加一个产品行。",
+        "lineErrors": "请修正以下产品行错误：",
+        "serialRequired": "Serial No. 为必填项",
+        "modelRequired": "型号为必填项",
+        "qtyMin": "数量至少为1",
+        "expDateRequired": "过期日期为必填项"
+      }
+    },
+    "returnToChina": {
+      "title": "退回中国",
+      "dateShipped": "发货日期",
+      "operator": "操作人",
+      "columns": {
+        "row": "#",
+        "type": "类型",
+        "model": "型号",
+        "serialNo": "Serial No.",
+        "expDate": "过期日期",
+        "qty": "数量",
+        "batchNo": "Batch#",
+        "recDate": "接收日期"
+      },
+      "select": "请选择...",
+      "selectModelFirst": "请先选择型号",
+      "noReturnableStock": "暂无可退库存",
+      "noSerial": "（无序列号）",
+      "addProductLine": "添加产品行",
+      "readyToReturn": "{count} 个产品已准备退回",
+      "cancel": "取消",
+      "confirm": "确认退回",
+      "processing": "处理中...",
+      "loading": "加载中...",
+      "validation": {
+        "dateRequired": "发货日期为必填项",
+        "operatorRequired": "操作人为必填项",
+        "atLeastOneLine": "至少需要一个包含型号和序列号的产品",
+        "serialRequired": "序列号为必填项",
+        "qtyMin": "数量至少为1",
+        "qtyExceedsAvailable": "数量超出可用库存 ({max})"
+      },
+      "submitFailed": "提交失败，请重试。",
+      "networkError": "网络错误。"
+    },
+    "demoInventory": {
+      "title": "演示库存",
+      "subtitle": "演示产品、样品和拒收物品",
+      "addDemo": "添加演示品",
+      "columns": {
+        "type": "类型",
+        "specNo": "Spec#",
+        "serialNo": "Serial No.",
+        "expDate": "过期日期",
+        "qty": "数量",
+        "status": "状态",
+        "notes": "备注"
+      },
+      "status": {
+        "manual": "手动移入",
+        "rejRecv": "接收拒收",
+        "rejCase": "Case 拒收",
+        "expired": "已过期"
+      },
+      "empty": "暂无演示库存",
+      "detail": {
+        "batchNo": "Batch#",
+        "serialNo": "Serial No.",
+        "productType": "产品类型",
+        "demoDate": "演示日期",
+        "recDate": "接收日期",
+        "expDate": "有效期",
+        "operator": "操作人",
+        "location": "位置",
+        "inspection": "检验",
+        "notes": "备注 / 状况",
+        "created": "创建时间",
+        "back": "← 返回"
+      },
+      "returnToInventory": {
+        "title": "退回库存",
+        "confirmTitle": "确认退回库存",
+        "selectOperator": "选择操作人",
+        "confirm": "确认",
+        "cancel": "取消",
+        "processing": "退回中..."
+      },
+      "addModal": {
+        "title": "添加演示产品",
+        "dateShipped": "演示日期",
+        "operator": "操作人",
+        "select": "请选择...",
+        "addLine": "添加产品行",
+        "cancel": "取消",
+        "confirm": "确认",
+        "processing": "保存中..."
+      }
+    },
+    "overview": {
+      "title": "交易台账",
+      "refresh": "刷新",
+      "filters": {
+        "allActions": "所有操作",
+        "allTypes": "所有类型",
+        "specPlaceholder": "Spec#",
+        "to": "至",
+        "clear": "清除",
+        "recordCount": "{count} 条记录"
+      },
+      "actions": {
+        "recCn": "从中国接收",
+        "recCase": "Case 退回",
+        "outCase": "发往 Case",
+        "outCn": "退回中国",
+        "usedCase": "Case 使用",
+        "moveDemo": "移至演示"
+      },
+      "columns": {
+        "date": "日期",
+        "action": "操作",
+        "type": "类型",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "数量",
+        "batchNo": "Batch #",
+        "expDate": "过期日期",
+        "operator": "操作人",
+        "notes": "备注"
+      },
+      "loading": "加载中...",
+      "noMatch": "没有匹配的记录",
+      "empty": "暂无交易记录",
+      "pagination": {
+        "prev": "上一页",
+        "next": "下一页"
+      }
+    },
+    "siteManagement": {
+      "subtitle": "管理医院和诊所站点记录",
+      "addSite": "添加站点",
+      "columns": {
+        "siteId": "站点编号",
+        "siteName": "站点名称",
+        "address": "地址",
+        "address2": "地址2",
+        "city": "城市",
+        "state": "州/省",
+        "zip": "邮编",
+        "country": "国家"
+      },
+      "loading": "加载站点中...",
+      "empty": "暂无站点",
+      "emptyHint": "点击\"添加站点\"创建第一个站点。",
+      "modal": {
+        "titleAdd": "新增站点",
+        "titleEdit": "编辑站点",
+        "siteId": "站点编号",
+        "siteName": "站点名称",
+        "addressLine1": "地址行 1",
+        "addressLine2": "地址行 2",
+        "city": "城市",
+        "state": "州/省",
+        "zipCode": "邮编",
+        "country": "国家",
+        "siteIdPlaceholder": "如 001",
+        "addressPlaceholder": "街道地址",
+        "address2Placeholder": "单元号、楼层（可选）",
+        "required": "必填：{fields}",
+        "saveFailed": "保存失败",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "saveChanges": "保存更改",
+        "createSite": "创建站点"
+      }
+    },
+    "clinicalCase": {
+      "caseCount": "已记录 {count} 个临床病例",
+      "newCase": "+ 新建病例",
+      "dismiss": "关闭",
+      "columns": {
+        "caseNo": "Case #",
+        "caseId": "Case ID",
+        "site": "站点",
+        "date": "日期",
+        "status": "状态"
+      },
+      "status": {
+        "completed": "已完成",
+        "inProgress": "进行中"
+      },
+      "loading": "加载中...",
+      "empty": "暂无临床病例记录",
+      "emptyHint": "创建新病例以开始追踪",
+      "detail": {
+        "back": "返回",
+        "editInfo": "✎ 编辑信息",
+        "returnForCompletion": "退还完成",
+        "reverseCompletion": "撤销完成",
+        "editCaseInfo": "编辑病例信息",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "如 123 或 123A",
+        "siteLabel": "站点",
+        "patientId": "患者编号",
+        "caseDate": "病例日期",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "save": "保存",
+        "products": "产品",
+        "noProducts": "本病例未关联产品",
+        "type": "类型",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "数量",
+        "expDate": "过期日期",
+        "batchNo": "Batch #",
+        "actions": "操作",
+        "deleteYes": "是",
+        "deleteNo": "否",
+        "addProducts": "+ 添加产品",
+        "addProductsTitle": "添加产品到病例",
+        "addRow": "+ 行",
+        "dsHint": "先添加 P-Valve 规格以查看兼容 DS",
+        "adding": "添加中...",
+        "addToCase": "添加到病例"
+      },
+      "newCaseModal": {
+        "title": "新建临床病例",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "如 123 或 123A",
+        "caseNoDup": "Case # 已存在",
+        "siteId": "站点编号",
+        "selectSite": "选择站点...",
+        "patientId": "患者编号 (3位数)",
+        "patientIdPlaceholder": "001",
+        "caseDate": "病例日期",
+        "pvRequested": "P-Valve 需求",
+        "dsRequested": "Delivery System 需求",
+        "addRow": "+ 添加行",
+        "selectPvFirst": "请先选择 P-Valve 规格",
+        "creating": "创建中...",
+        "createAndDownload": "创建病例并下载装箱单"
+      },
+      "editModal": {
+        "title": "编辑病例项目",
+        "specNo": "Spec #",
+        "selectSpec": "选择规格...",
+        "serialNo": "Serial No.",
+        "selectSerial": "选择序列号...",
+        "loading": "加载中...",
+        "cancel": "取消",
+        "saving": "保存中...",
+        "save": "保存"
+      },
+      "productLine": {
+        "specPlaceholder": "Spec #",
+        "pick": "选取",
+        "serialNo": "Serial No.",
+        "expDate": "过期日期",
+        "qty": "数量"
+      },
+      "completion": {
+        "backToCase": "返回病例",
+        "title": "退还完成",
+        "type": "类型",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "数量",
+        "expDate": "过期日期",
+        "batchNo": "Batch #",
+        "return": "退还",
+        "acceptance": "验收",
+        "note": "备注",
+        "allOk": "✓ 全部合格",
+        "selectReasons": "选择原因...",
+        "issuesSelected": "已选 {count} 个问题",
+        "done": "完成",
+        "demoWarning": "⚠ 将移至演示/样品库",
+        "confirmCompletion": "确认完成"
+      },
+      "confirmModal": {
+        "title": "确认病例完成",
+        "description": "将完结 {caseId} 并更新库存：",
+        "usedItems": "{count} 件标记为已使用（消耗）",
+        "returnedOk": "{count} 件退还（全部合格）",
+        "returnedDemo": "{count} 件退还 → 演示/样品",
+        "cancel": "取消",
+        "processing": "处理中...",
+        "confirm": "确认"
+      },
+      "reverseModal": {
+        "title": "撤销完成",
+        "description": "将撤销 {caseId} 的完成操作。所有完成时的库存变更将被恢复，病例将恢复为进行中状态。",
+        "cancel": "取消",
+        "reversing": "撤销中...",
+        "reverse": "撤销"
+      }
     }
   },
   "employees": {
@@ -171,7 +565,10 @@
       "employeesTimeline": "员工时间线",
       "assignedDuty": "分配职责：",
       "relievedFromDuty": "解除职责：",
-      "duration": "任期："
+      "duration": "任期：",
+      "newEvent": "新事件",
+      "careerTimeline": "职业时间线",
+      "editButton": "EDIT ✎"
     }
   },
   "departments": {
@@ -263,7 +660,22 @@
     "start": "起点",
     "edit": "编辑",
     "addNew": "添加",
-    "dateError": "日期必须晚于最后一个里程碑日期"
+    "dateError": "日期必须晚于最后一个里程碑日期",
+    "noHistoryFound": "未找到历史记录",
+    "createFirstMilestone": "创建首个里程碑",
+    "noSopsListed": "无SOP记录",
+    "createNewMilestone": "创建新里程碑",
+    "editMilestone": "编辑里程碑",
+    "searchSops": "搜索SOP...",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "selectedCount": "已选 {count} 项",
+    "loadingMasterList": "加载主列表中...",
+    "items": "项",
+    "newEntry": "新记录",
+    "editButton": "编辑",
+    "saving": "保存中...",
+    "saveChanges": "保存更改"
   },
   "trainingSop": {
     "title": "培训SOP文件管理",
@@ -287,7 +699,7 @@
       "documentType": "SOP种类",
       "trainingRequired": "是否需要培训",
       "status": "状态",
-      "daNo": "审批号",
+      "daNo": "DA#",
       "initial": "初始"
     },
     "documentTypes": {
@@ -364,7 +776,7 @@
         "date": "日期",
         "trainer": "培训师",
         "name": "名称",
-        "da": "审批号",
+        "da": "DA",
         "effective": "生效日期"
       }
     },
@@ -467,6 +879,19 @@
     "pendingAction": "待处理",
     "triggers": "触发项",
     "allCompliant": "全部合规",
-    "baseline": "基线"
+    "baseline": "基线",
+    "viewAllPending": "查看全部 {count} 项待处理",
+    "systemCompliant": "系统合规",
+    "allVerified": "所有培训记录已验证",
+    "missing_label": "缺失"
+  },
+  "productDetail": {
+    "dimensions": "尺寸参数",
+    "compatibleDS": "兼容输送系统",
+    "noneConfigured": "未配置",
+    "productDetails": "产品详情",
+    "model": "型号",
+    "specification": "规格",
+    "compatiblePV": "兼容P-Valve"
   }
 }

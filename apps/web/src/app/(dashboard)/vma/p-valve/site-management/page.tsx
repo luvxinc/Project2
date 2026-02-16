@@ -4,6 +4,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useState } from 'react';
 import { useSites, useCreateSite, useUpdateSite } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
+import { useTranslations } from 'next-intl';
 
 interface Site {
   siteId: string;
@@ -30,6 +31,7 @@ const emptySite: Site = {
 export default function SiteManagementPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const t = useTranslations('vma');
 
   // React Query: replaces raw fetch + useState + useEffect
   const { data: sites = [], isLoading: loading } = useSites();
@@ -59,15 +61,15 @@ export default function SiteManagementPage() {
 
   const handleSave = async () => {
     const errors: string[] = [];
-    if (!form.siteId.trim()) errors.push('Site ID');
-    if (!form.siteName.trim()) errors.push('Site Name');
-    if (!form.address.trim()) errors.push('Address');
-    if (!form.city.trim()) errors.push('City');
-    if (!form.state.trim()) errors.push('State');
-    if (!form.zipCode.trim()) errors.push('Zip Code');
-    if (!form.country.trim()) errors.push('Country');
+    if (!form.siteId.trim()) errors.push(t('p_valve.siteManagement.modal.siteId'));
+    if (!form.siteName.trim()) errors.push(t('p_valve.siteManagement.modal.siteName'));
+    if (!form.address.trim()) errors.push(t('p_valve.siteManagement.modal.addressLine1'));
+    if (!form.city.trim()) errors.push(t('p_valve.siteManagement.modal.city'));
+    if (!form.state.trim()) errors.push(t('p_valve.siteManagement.modal.state'));
+    if (!form.zipCode.trim()) errors.push(t('p_valve.siteManagement.modal.zipCode'));
+    if (!form.country.trim()) errors.push(t('p_valve.siteManagement.modal.country'));
     if (errors.length > 0) {
-      setError(`Required: ${errors.join(', ')}`);
+      setError(t('p_valve.siteManagement.modal.required', { fields: errors.join(', ') }));
       return;
     }
 
@@ -81,12 +83,12 @@ export default function SiteManagementPage() {
       }
       setModalOpen(false);
     } catch (e: any) {
-      setError(e?.message || 'Failed to save');
+      setError(e?.message || t('p_valve.siteManagement.modal.saveFailed'));
     }
     setSaving(false);
   };
 
-  const columns = ['Site ID', 'Site Name', 'Address', 'Address 2', 'City', 'State', 'Zip', 'Country'];
+  const columns = [t('p_valve.siteManagement.columns.siteId'), t('p_valve.siteManagement.columns.siteName'), t('p_valve.siteManagement.columns.address'), t('p_valve.siteManagement.columns.address2'), t('p_valve.siteManagement.columns.city'), t('p_valve.siteManagement.columns.state'), t('p_valve.siteManagement.columns.zip'), t('p_valve.siteManagement.columns.country')];
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20">
@@ -102,7 +104,7 @@ export default function SiteManagementPage() {
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
           <p style={{ color: colors.textSecondary }} className="text-[13px]">
-            Manage hospital and clinic site records
+            {t('p_valve.siteManagement.subtitle')}
           </p>
           <button
             onClick={openCreate}
@@ -112,7 +114,7 @@ export default function SiteManagementPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Add Site
+            {t('p_valve.siteManagement.addSite')}
           </button>
         </div>
 
@@ -139,14 +141,14 @@ export default function SiteManagementPage() {
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center" style={{ color: colors.textTertiary }}>
-                    <span className="text-[15px]">Loading sites...</span>
+                    <span className="text-[15px]">{t('p_valve.siteManagement.loading')}</span>
                   </td>
                 </tr>
               ) : sites.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center" style={{ color: colors.textTertiary }}>
-                    <p className="text-[15px] font-medium">No sites found</p>
-                    <p className="text-[13px] mt-1">Click &quot;Add Site&quot; to create your first site.</p>
+                    <p className="text-[15px] font-medium">{t('p_valve.siteManagement.empty')}</p>
+                    <p className="text-[13px] mt-1">{t('p_valve.siteManagement.emptyHint')}</p>
                   </td>
                 </tr>
               ) : (
@@ -207,7 +209,7 @@ export default function SiteManagementPage() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: colors.border }}>
               <h3 className="text-[16px] font-semibold" style={{ color: colors.text }}>
-                {editMode ? 'Edit Site' : 'Add New Site'}
+                {editMode ? t('p_valve.siteManagement.modal.titleEdit') : t('p_valve.siteManagement.modal.titleAdd')}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -223,7 +225,7 @@ export default function SiteManagementPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: colors.textSecondary }}>
-                  Site ID *
+                  {t('p_valve.siteManagement.modal.siteId')} *
                 </label>
                 <input
                   type="text"
@@ -231,7 +233,7 @@ export default function SiteManagementPage() {
                   onChange={(e) => setForm((p) => ({ ...p, siteId: e.target.value }))}
                   disabled={editMode}
                   maxLength={10}
-                  placeholder="e.g. 001"
+                  placeholder={t('p_valve.siteManagement.modal.siteIdPlaceholder')}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border transition-colors focus:outline-none"
                   style={{
                     backgroundColor: colors.bg,
@@ -246,7 +248,7 @@ export default function SiteManagementPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: colors.textSecondary }}>
-                  Site Name *
+                  {t('p_valve.siteManagement.modal.siteName')} *
                 </label>
                 <input
                   type="text"
@@ -261,13 +263,13 @@ export default function SiteManagementPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: colors.textSecondary }}>
-                  Address Line 1 *
+                  {t('p_valve.siteManagement.modal.addressLine1')} *
                 </label>
                 <input
                   type="text"
                   value={form.address}
                   onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-                  placeholder="Street address"
+                  placeholder={t('p_valve.siteManagement.modal.addressPlaceholder')}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border transition-colors focus:outline-none"
                   style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }}
                 />
@@ -277,13 +279,13 @@ export default function SiteManagementPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: colors.textSecondary }}>
-                  Address Line 2
+                  {t('p_valve.siteManagement.modal.addressLine2')}
                 </label>
                 <input
                   type="text"
                   value={form.address2}
                   onChange={(e) => setForm((p) => ({ ...p, address2: e.target.value }))}
-                  placeholder="Suite, building, floor (optional)"
+                  placeholder={t('p_valve.siteManagement.modal.address2Placeholder')}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border transition-colors focus:outline-none"
                   style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }}
                 />
@@ -294,7 +296,7 @@ export default function SiteManagementPage() {
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: colors.textSecondary }}>
-                    City *
+                    {t('p_valve.siteManagement.modal.city')} *
                   </label>
                   <input
                     type="text"
@@ -307,7 +309,7 @@ export default function SiteManagementPage() {
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: colors.textSecondary }}>
-                    State *
+                    {t('p_valve.siteManagement.modal.state')} *
                   </label>
                   <input
                     type="text"
@@ -324,7 +326,7 @@ export default function SiteManagementPage() {
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: colors.textSecondary }}>
-                    Zip Code *
+                    {t('p_valve.siteManagement.modal.zipCode')} *
                   </label>
                   <input
                     type="text"
@@ -337,7 +339,7 @@ export default function SiteManagementPage() {
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: colors.textSecondary }}>
-                    Country *
+                    {t('p_valve.siteManagement.modal.country')} *
                   </label>
                   <input
                     type="text"
@@ -363,7 +365,7 @@ export default function SiteManagementPage() {
                 className="px-4 py-2 rounded-xl text-sm font-medium transition hover:opacity-80"
                 style={{ color: colors.textSecondary }}
               >
-                Cancel
+                {t('p_valve.siteManagement.modal.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -371,7 +373,7 @@ export default function SiteManagementPage() {
                 className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
                 style={{ backgroundColor: colors.blue }}
               >
-                {saving ? 'Saving...' : editMode ? 'Save Changes' : 'Create Site'}
+                {saving ? t('p_valve.siteManagement.modal.saving') : editMode ? t('p_valve.siteManagement.modal.saveChanges') : t('p_valve.siteManagement.modal.createSite')}
               </button>
             </div>
           </div>

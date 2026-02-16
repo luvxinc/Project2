@@ -233,7 +233,7 @@ export default function ProductsHubPage() {
       </section>
 
       {/* Hide scrollbar */}
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none;
         }

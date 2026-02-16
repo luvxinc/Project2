@@ -244,7 +244,7 @@ export default function UsersHubPage() {
       </section>
 
       {/* Hide scrollbar */}
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none;
         }
