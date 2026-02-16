@@ -175,4 +175,30 @@ class VmaInventoryController(
             .contentLength(pdfBytes.size.toLong())
             .body(pdfBytes)
     }
+
+    // ═══════════ Fridge Shelf ═══════════
+
+    @GetMapping("/fridge-slots")
+    @RequirePermission("vma.employees.manage")
+    fun getFridgeSlots(): ResponseEntity<Any> =
+        ResponseEntity.ok(invService.getAllFridgeSlots())
+
+    @PostMapping("/fridge-slots")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "PLACE_FRIDGE_SLOT")
+    fun placeFridgeSlot(@RequestBody dto: PlaceFridgeSlotRequest): ResponseEntity<Any> =
+        ResponseEntity.status(HttpStatus.CREATED).body(invService.placeFridgeSlot(dto))
+
+    @DeleteMapping("/fridge-slots/{id}")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "REMOVE_FRIDGE_SLOT")
+    fun removeFridgeSlot(@PathVariable id: String): ResponseEntity<Any> {
+        invService.removeFridgeSlot(id)
+        return ResponseEntity.ok(mapOf("deleted" to true))
+    }
+
+    @GetMapping("/fridge-slots/eligible")
+    @RequirePermission("vma.employees.manage")
+    fun getEligibleFridgeProducts(): ResponseEntity<Any> =
+        ResponseEntity.ok(invService.getEligibleFridgeProducts())
 }

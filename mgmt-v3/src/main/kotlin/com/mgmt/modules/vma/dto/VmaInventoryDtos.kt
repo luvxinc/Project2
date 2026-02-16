@@ -261,3 +261,40 @@ data class UpdateSiteRequest(
     val zipCode: String? = null,
     val country: String? = null,
 )
+
+// ─── Fridge Slot DTOs ───────────────────────────────────────────
+
+data class PlaceFridgeSlotRequest(
+    val shelfNo: Int,
+    val rowNo: Int,
+    val colNo: Int,
+    val productType: String,   // PVALVE, DELIVERY_SYSTEM
+    val specNo: String,
+    val serialNo: String? = null,
+    val placedBy: String? = null,
+)
+
+data class FridgeSlotResponse(
+    val id: String,
+    val shelfNo: Int,
+    val rowNo: Int,
+    val colNo: Int,
+    val productType: String,
+    val specNo: String,
+    val serialNo: String?,
+    val placedAt: Instant,
+    val placedBy: String?,
+)
+
+/**
+ * Product eligible for fridge placement.
+ * Only P-Valve products in Available / NearExp / Expired / Demo status.
+ */
+data class FridgeEligibleProduct(
+    val specNo: String,
+    val serialNo: String,
+    val expDate: String?,
+    val batchNo: String?,
+    val status: String,    // AVAILABLE, NEAR_EXP, EXPIRED, DEMO
+    val alreadyInFridge: Boolean,
+)
