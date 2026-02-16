@@ -34,6 +34,7 @@ class VmaSiteController(
 
     @PatchMapping("/sites/{siteId}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_SITE")
     fun update(@PathVariable siteId: String, @RequestBody dto: UpdateSiteRequest): ResponseEntity<Any> =
         ResponseEntity.ok(siteService.update(siteId, dto))
 }

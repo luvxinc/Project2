@@ -1,4 +1,4 @@
-# Skill Seekers 详细参考: 命令 + C3 模块
+# Skill Seekers v3.0 详细参考: 命令 + RAG + AI 集成 + C3 模块
 
 > **加载时机**: 需要使用 Skill Seekers 从外部源生成 Skill 时
 
@@ -73,6 +73,56 @@ skill-seekers analyze --dir ./src --name my-codebase --architecture
 
 # 安全扫描
 skill-seekers analyze --dir ./src --name my-codebase --security
+```
+
+### RAG 框架集成 (v2.9.0+)
+```bash
+# 导出为 LangChain Document 格式 (page_content + metadata)
+skill-seekers package output/ --target langchain
+
+# 导出为 LlamaIndex TextNode 格式 (unique IDs + embeddings)
+skill-seekers package output/ --target llamaindex
+
+# 导出为 Pinecone-Ready 格式 (vector database upsert)
+skill-seekers package output/ --target pinecone
+
+# 导出为 Haystack 格式
+skill-seekers package output/ --target haystack
+```
+
+### AI Coding Assistant 集成 (v2.10.0+)
+```bash
+# 生成 Cursor IDE .cursorrules
+skill-seekers package output/ --target cursor
+
+# 生成 Windsurf .windsurfrules
+skill-seekers package output/ --target windsurf
+
+# 生成 Cline .clinerules + MCP
+skill-seekers package output/ --target cline
+
+# 生成 Continue.dev HTTP context providers
+skill-seekers package output/ --target continue
+```
+
+### Multi-LLM 平台 (v2.5.0+)
+```bash
+# Claude (默认)
+skill-seekers package output/ --target claude
+
+# Google Gemini
+pip install skill-seekers[gemini]
+skill-seekers package output/ --target gemini
+
+# OpenAI ChatGPT
+pip install skill-seekers[openai]
+skill-seekers package output/ --target openai
+
+# 通用 Markdown
+skill-seekers package output/ --target markdown
+
+# 全平台
+pip install skill-seekers[all-llms]
 ```
 
 ## 2. C3.x AI 增强模块详解
@@ -152,6 +202,9 @@ skill-seekers analyze --dir ./src --name my-codebase --security
 | 大型代码库 | `analyze --architecture` (先看架构再细看) |
 | 私有代码 | 不爬取, Agent 本地分析 (安全) |
 | 大型文档 | `scrape --strategy router` (智能拆分) |
+| RAG Pipeline | `package --target langchain/llamaindex/pinecone` |
+| IDE AI 助手 | `package --target cursor/windsurf/cline/continue` |
+| 多 LLM 平台 | `package --target gemini/openai/markdown` |
 
 ## 4. 产出入库流程 (与我们系统对接)
 
@@ -167,7 +220,7 @@ skill-seekers analyze --dir ./src --name my-codebase --security
 3. 放入对应层级
    - 通用工具 → .agent/warehouse/tools/{name}/
    - 内核增强 → .agent/core/skills/{name}.md
-   - 项目特定 → .agent/projects/{project}/recipes/{name}.md
+   - 项目特定 → .agent/projects/{project}/playbooks/{name}.md
 
 4. 更新索引
    - warehouse/README.md (工具库)

@@ -5,310 +5,252 @@ description: 界面 — Hub 页面模板, 主题系统, 动画库
 # /ui — 界面
 
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
+> **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
 
 ## 路由表
 
 | 关键词 | 跳转 |
 |--------|------|
-| `hub`, `首页`, `模块入口`, `iPad` | → §1 Hub 页面模板 |
-| `主题`, `theme`, `暗色`, `亮色`, `dark`, `light` | → §2 主题系统 |
-| `动画`, `animation`, `anime.js` | → §3 动画库 |
+| `Hub`, `模板`, `列表页`, `layout` | → §1 Hub 页面模板 |
+| `主题`, `dark`, `light`, `切换` | → §2 主题系统 |
+| `动画`, `Anime.js`, `过渡`, `交互` | → §3 动画库 |
+| `组件`, `Modal`, `Table`, `表单` | → §4 组件规范 |
+| `i18n`, `国际化`, `翻译` | → §5 i18n 管理 |
+| `配色`, `字体`, `风格`, `设计` | → §6 设计系统 |
 
 ---
 
-## §1 Hub 页面模板 (Apple iPad 风格)
+## §1 Hub 页面模板
 
-### 设计理念
+> **加载:** `skills/frontend.md` §2 (页面与路由)
 
-每个模块的首页是一个 **Hub 页面**, 采用 Apple iPad 风格的网格布局:
+### 标准 Hub 结构
 
 ```
-┌──────────────────────────────────────────────┐
-│  Module Hub                                   │
-│                                               │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐      │
-│  │  📦     │  │  📊     │  │  🔧     │      │
-│  │ Sub-A   │  │ Sub-B   │  │ Sub-C   │      │
-│  │ 简要描述 │  │ 简要描述 │  │ 简要描述 │      │
-│  └─────────┘  └─────────┘  └─────────┘      │
-│                                               │
-│  ┌─────────┐  ┌─────────┐                    │
-│  │  📋     │  │  ⚙️     │                    │
-│  │ Sub-D   │  │ Sub-E   │                    │
-│  │ 简要描述 │  │ 简要描述 │                    │
-│  └─────────┘  └─────────┘                    │
-└──────────────────────────────────────────────┘
+Hub 页面 (标准模板)
+├── Header: 模块标题 + 搜索 + 操作按钮
+├── Sub-nav: Pill 切换 (动画子导航栏)
+├── Content: 基于当前 Pill 的内容区
+│   ├── 列表视图 (Table + 分页)
+│   ├── 卡片视图 (Grid)
+│   └── 详情视图 (表单/只读)
+└── Footer: 统计信息 + 操作
 ```
 
-### 代码模板
+### Pill 切换实现 (Rule 40)
 
-```tsx
-'use client';
-
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useTheme } from '@/contexts/ThemeContext';
-import { PageLayout } from '@/components/layout/PageLayout';
-
-interface HubItem {
-  icon: string;
-  title: string;
-  description: string;
-  path: string;
-  gradient: string;  // 渐变背景色
-}
-
-export default function ModuleHubPage() {
-  const t = useTranslations('module');
-  const router = useRouter();
-  const { theme } = useTheme();
-
-  const items: HubItem[] = [
-    {
-      icon: '📦',
-      title: t('hub.subA'),
-      description: t('hub.subADesc'),
-      path: '/module/sub-a',
-      gradient: 'linear-gradient(135deg, #667eea, #764ba2)',
-    },
-    // ... more items
-  ];
-
-  return (
-    <PageLayout>
-      <h1 className="hub-title">{t('hub.title')}</h1>
-      <div className="hub-grid">
-        {items.map((item) => (
-          <div
-            key={item.path}
-            className="hub-card"
-            style={{ background: item.gradient }}
-            onClick={() => router.push(item.path)}
-          >
-            <span className="hub-card-icon">{item.icon}</span>
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-          </div>
-        ))}
-      </div>
-    </PageLayout>
-  );
-}
+```
+动画子导航规则:
+1. 使用 CSS transition (不用 JS 动画)
+2. 激活 Pill 有数据 Badge
+3. 内容区无闪烁过渡
+4. 路由同步 (URL 反映当前 Pill)
 ```
 
-### Hub 样式规范
-
-| 属性 | 值 |
-|------|-----|
-| 网格 | `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))` |
-| 卡片圆角 | `border-radius: 16px` |
-| 卡片阴影 | `box-shadow: 0 4px 20px rgba(0,0,0,0.1)` |
-| 悬停效果 | `transform: translateY(-4px)` + 阴影增强 |
-| 入场动画 | 交错淡入 (stagger fade-in) — 使用 §3 动画库 |
-| 图标大小 | `font-size: 2.5rem` |
+### L4 项目参考
+- MGMT ERP Hub 实现: `projects/mgmt/playbooks/vma.md`
 
 ---
 
-## §2 主题系统 (Apple Design)
+## §2 主题系统
 
-### 双主题架构
+> **加载:** `skills/frontend.md` §5 (双模式主题)
 
-```tsx
-// contexts/ThemeContext.tsx
-const themeColors = {
-  light: {
-    bgPrimary: '#ffffff',
-    bgSecondary: '#f5f5f7',
-    textPrimary: '#1d1d1f',
-    textSecondary: '#86868b',
-    accent: '#0071e3',
-    border: '#d2d2d7',
-    glassBg: 'rgba(255, 255, 255, 0.72)',
-    glassBlur: '20px',
-  },
-  dark: {
-    bgPrimary: '#000000',
-    bgSecondary: '#1d1d1f',
-    textPrimary: '#f5f5f7',
-    textSecondary: '#86868b',
-    accent: '#2997ff',
-    border: '#424245',
-    glassBg: 'rgba(29, 29, 31, 0.72)',
-    glassBlur: '20px',
-  },
-};
-```
-
-### CSS 变量
+### CSS 变量体系
 
 ```css
 :root {
+  /* 语义化颜色 */
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
   --text-primary: #1d1d1f;
-  --text-secondary: #86868b;
-  --accent: #0071e3;
+  --text-secondary: #6e6e73;
+  --accent: #007aff;
   --border: #d2d2d7;
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-blur: 20px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --hover: #f2f2f2;
+  
+  /* 间距 */
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 32px;
+  
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #000000;
-  --bg-secondary: #1d1d1f;
+  --bg-primary: #1c1c1e;
+  --bg-secondary: #2c2c2e;
   --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --accent: #2997ff;
-  --border: #424245;
-  --glass-bg: rgba(29, 29, 31, 0.72);
+  --text-secondary: #98989d;
+  --accent: #0a84ff;
+  --border: #38383a;
+  --hover: #3a3a3c;
 }
 ```
 
-### 毛玻璃效果 (Glassmorphism)
+### ThemeContext
 
-```css
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
+```jsx
+// 主题切换: 尊重系统设置 + 用户覆盖
+const themes = ['light', 'dark', 'system'];
+// prefers-color-scheme 监听
+// localStorage 持久化
 ```
 
-### 主题切换铁律
-
-| 规则 | 说明 |
-|------|------|
-| **禁止硬编码颜色** | 必须使用 CSS 变量或 `themeColors[theme]` |
-| **图片/图标适配** | 使用 `filter` 或提供明暗两套资源 |
-| **表单控件** | 统一使用 shadcn/Radix 封装, 自动适配 |
-| **第三方组件** | AG Grid 等使用自定义主题覆盖 |
+### Rule 44: Dynamic Baseline Synchronization
+- 主题切换时所有组件动态同步
+- 无闪烁 (使用 CSS 变量, 非 class 切换)
 
 ---
 
-## §3 动画库 (Anime.js 4.x)
+## §3 动画库
 
-### 引入
+> **加载:** `skills/frontend.md` §3 + L3: `warehouse/tools/animejs/`
 
-```bash
-pnpm add animejs
+### Anime.js 4.0 集成
+
+```javascript
+import { animate, createScope, stagger, spring } from 'animejs';
 ```
 
-### 常用动画模式
+### 标准动画模式
 
-```typescript
-import anime from 'animejs';
+| 场景 | 模式 | 持续时间 |
+|------|------|---------|
+| 元素进入 | translateY + opacity | 400-800ms |
+| 列表加载 | stagger (80-120ms 间隔) | — |
+| 页面过渡 | [data-animate] + stagger | 600-1000ms |
+| 悬停反馈 | scale 1.02-1.05 | 200-300ms |
+| 微交互 | spring({ bounce: 0.5 }) | 自动 |
 
-// 1. 交错入场 (Hub 卡片)
-anime({
-  targets: '.hub-card',
-  translateY: [30, 0],
-  opacity: [0, 1],
-  delay: anime.stagger(80),
-  duration: 600,
-  easing: 'easeOutCubic',
-});
-
-// 2. 弹性出现 (Modal)
-anime({
-  targets: '.modal-content',
-  scale: [0.9, 1],
-  opacity: [0, 1],
-  duration: 300,
-  easing: 'spring(1, 80, 10, 0)',
-});
-
-// 3. 滑入 (Sidebar)
-anime({
-  targets: '.sidebar',
-  translateX: [-280, 0],
-  duration: 400,
-  easing: 'easeOutExpo',
-});
-
-// 4. 数字滚动 (Dashboard 数据)
-anime({
-  targets: { value: 0 },
-  value: targetNumber,
-  round: 1,
-  duration: 1000,
-  easing: 'easeOutExpo',
-  update: (anim) => {
-    el.textContent = Math.round(anim.animations[0].currentValue).toLocaleString();
-  },
-});
-
-// 5. 路径动画 (Loading)
-anime({
-  targets: '.loading-path',
-  strokeDashoffset: [anime.setDashoffset, 0],
-  duration: 1500,
-  easing: 'easeInOutQuart',
-  loop: true,
-});
-```
-
-### React Hook 封装
-
-```tsx
-import { useEffect, useRef } from 'react';
-import anime from 'animejs';
-
-export function useStaggerAnimation(selector: string, deps: any[] = []) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const targets = containerRef.current.querySelectorAll(selector);
-    if (targets.length === 0) return;
-
-    anime({
-      targets,
+### React 集成 (createScope)
+```jsx
+useEffect(() => {
+  scope.current = createScope({ root }).add(() => {
+    animate('.item', {
       translateY: [20, 0],
       opacity: [0, 1],
-      delay: anime.stagger(60),
-      duration: 500,
-      easing: 'easeOutCubic',
+      delay: stagger(80),
+      ease: 'outExpo',
     });
-  }, deps);
-
-  return containerRef;
-}
-
-// 使用
-function HubPage() {
-  const containerRef = useStaggerAnimation('.hub-card', [items]);
-  return <div ref={containerRef}>...</div>;
-}
+  });
+  return () => scope.current.revert(); // ⚠️ 必需清理
+}, [deps]);
 ```
 
-### 性能规范
-
-| 规则 | 说明 |
-|------|------|
-| **只动画 transform/opacity** | 避免触发 Layout (width, height, margin) |
-| **用 will-change** | 提前通知浏览器 GPU 合成 |
-| **Cleanup** | `useEffect` return 中 `anime.remove()` |
-| **Reduce Motion** | 尊重 `prefers-reduced-motion` |
+### L3 完整 API 参考
+- 核心: `warehouse/tools/animejs/01-core-api.md`
+- 高级: `warehouse/tools/animejs/02-advanced-patterns.md`
 
 ---
 
-## §4 工具库引用 (L3 按需加载)
+## §4 组件规范
 
-> **在本 Workflow 的特定环节中, 可以加载以下 L3 工具切片获取设计参考。**
+> **加载:** `skills/frontend.md` §3 (组件封装)
 
-| 环节 | 推荐加载 | 文件路径 | 作用 |
-|------|---------|---------|------|
-| §1 Hub 设计 | UI UX Pro: 风格 + 配色 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` | 20 种 UI 风格 + 行业配色 HEX + 字体配对 |
-| §1 Hub 设计 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 反模式 + 交付前检查 |
-| §2 主题系统 | UI UX Pro: 配色方案 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` §2 | 按行业分类的 HEX 配色 (SaaS/电商/医疗/金融) |
-| §3 动画库 | Anime.js 完整 API | `warehouse/tools/animejs.md` | Anime.js 4.0 完整 API 参考 (~9KB) |
+### 组件分类
+
+| 类型 | 职责 | 示例 |
+|------|------|------|
+| **原子组件** | 最小 UI 单元 | Button, Input, Badge |
+| **分子组件** | 原子组合 | SearchBar, FormField |
+| **有机组件** | 业务独立 | DataTable, ModalForm |
+| **模板组件** | 页面骨架 | HubLayout, DetailLayout |
+
+### 组件编写规则
+
+```
+1. 单一职责 (一个组件做一件事)
+2. Props 接口明确 (TypeScript interface)
+3. 默认值合理 (减少使用成本)
+4. Loading/Error/Empty 三态
+5. 支持 className 覆盖
+6. forwardRef (需要 DOM 访问时)
+```
 
 ---
 
-*Version: 1.1.0 — Added §4 工具库引用 (2026-02-12)*
+## §5 i18n 管理
+
+> **加载:** `skills/frontend.md` §7 (next-intl)
+
+### 规则
+
+```
+Rule 8: Sub-component i18n Injection (显式注入)
+Rule 9: Dynamic Mapping of Static Configurations
+
+模式: 
+1. 每个模块有独立命名空间 (VMA/Users/Products)
+2. 子组件通过 props 接收翻译
+3. 避免深层嵌套 key
+4. 日期/时间使用 Intl API
+```
+
+---
+
+## §6 设计系统
+
+> **加载:** L3: `warehouse/tools/ui-ux-pro-max/`
+
+### 设计决策流程
+
+```
+1. 确定场景: SaaS / 电商 / 医疗 / 金融
+2. 生成设计系统: 读 L3 01-design-system.md → 运行推理引擎
+3. 补充风格细节: 读 L3 02-styles-palettes-typography.md
+4. 交付检查: 读 L3 03-ux-rules-checklist.md → 过检查清单
+```
+
+### L3 设计参考
+- Design System 生成器: `warehouse/tools/ui-ux-pro-max/01-design-system.md`
+- 风格 + 配色 + 字体: `warehouse/tools/ui-ux-pro-max/02-styles-palettes-typography.md`
+- 99条 UX 准则 + 交付清单: `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md`
+
+---
+
+## §7 L3 工具库引用
+
+| 环节 | 推荐工具 | 路径 | 何时加载 |
+|------|---------|------|---------| 
+| §3 动画核心 | Anime.js Core | `warehouse/tools/animejs/01-core-api.md` | animate/缓动/关键帧 |
+| §3 动画高级 | Anime.js Advanced | `warehouse/tools/animejs/02-advanced-patterns.md` | Timeline/Scope/Stagger |
+| §6 设计系统 | UI UX Pro: Design System | `warehouse/tools/ui-ux-pro-max/01-design-system.md` | v2.0 推理引擎 |
+| §6 风格配色 | UI UX Pro: Styles | `warehouse/tools/ui-ux-pro-max/02-styles-palettes-typography.md` | 67 风格 + 96 配色 |
+| §6 UX 检查 | UI UX Pro: Rules | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 99 条准则 + 交付检查 |
+| §4 React 审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React 反模式检查 |
+| 提交前 | 🔴 Rules 层 | `core/rules/frontend.md` | **必查** — 前端 10 反模式 + Checklist |
+
+---
+
+## §8 交接闭环
+
+每个 UI 任务必须以下列之一结束:
+
+| 结果 | 交接对象 | 行动 |
+|------|----------|------|
+| ✅ 完成 | CTO → QA | 交付物: 页面截图 + 响应式验证 + 主题切换截图 |
+| ⚠️ 部分完成 | CTO | 已完成项 + 待完成项清单 |
+| ❌ 方案变更 | PM | 退回原因 + 新方案建议 |
+
+```markdown
+## UI 完成报告
+任务: {新页面 / 主题修改 / 动画开发}
+结果: {✅ 完成 / ⚠️ 部分}
+验证: 响应式 [✅/❌] | Light [✅/❌] | Dark [✅/❌] | i18n [✅/❌]
+交接: {CTO/QA}
+```
+
+---
+
+*Version: 2.1.0 — +§8 交接闭环*
+*Created: 2026-02-14 | Updated: 2026-02-15*

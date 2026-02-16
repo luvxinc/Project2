@@ -390,5 +390,15 @@ jobs:
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## 7. L3 工具库引用 (按需加载)
+
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| 部署策略 | Ship 工作流 | `workflows/ship.md` | CI/CD + Docker + K8s 部署流程 |
+| 代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 基建配置反模式检查 |
+| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | IaC 命名/组织规范 |
+
+---
+
+*Version: 1.1.0 — 含 L3 工具引用*
 *Based on: battle-tested enterprise patterns*

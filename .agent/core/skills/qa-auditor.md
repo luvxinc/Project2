@@ -70,14 +70,16 @@ QA 审计 ← 你在这里
 | **数据** | 数据完整性无损 | 🔴 | `SELECT count(*) FROM {table};` → 数量与预期一致 |
 | **Diff** | 无意外文件变更 | 🟡 | `git diff --stat` → 只含预期文件 |
 | **代码质量** | 符合编码标准 | 🟡 | 文件 <800 行, 函数 <50 行, 嵌套 <4 层 |
-| **i18n** | 新增文本已翻译 | 🟡 | `grep -r "newKey" packages/shared/i18n/` → en + zh 都存在 |
+| **i18n** | 新增文本已翻译 | 🟡 | 对照 Spec 中所有新增 UI 文本 → 逐条在 en.json + zh.json 中搜索对应 key → 两个 locale 都存在 |
 | **日志** | 写操作有审计日志 | 🟡 | 执行操作 → `SELECT * FROM action_logs ORDER BY id DESC LIMIT 5;` |
 | **性能** | 无明显性能退化 | 🟢 | `curl -o /dev/null -s -w "%{time_total}" localhost:8080/api/v1/{endpoint}` → <500ms |
 | **引用完整性** | 无断链/旧路径引用 | 🟡 | `grep -r "旧模块名" --include="*.kt" --include="*.ts" .` → 零匹配 |
 | **文档同步** | API 变更后相关文档已更新 | 🟡 | 检查 README/KI/CONTEXT.md 对应部分 |
 | **跨端对齐** | 后端 DTO 与前端 Types 一致 | 🟡 | 对比 DTO 字段 ↔ TypeScript 接口字段 |
 
-### 2.3 审计报告
+### 2.3 审计报告 (ECC Review Output Format)
+
+> **存储/命名/删除规则: `project-structure.md` §3.7 + §4**
 
 ```markdown
 ## 📋 QA 审计报告
@@ -88,27 +90,42 @@ Spec 文件: {路径}
 
 ### 审计结果
 
-| 类别 | 状态 | 备注 |
-|------|------|------|
-| 编译 | ✅/❌ | |
-| 类型 | ✅/❌ | |
-| 运行 | ✅/❌ | |
-| 功能 | ✅/❌ | |
-| 回归 | ✅/❌ | |
-| 安全 | ✅/❌ | |
-| 数据 | ✅/❌ | |
-| Diff | ✅/⚠️ | X files changed |
-| 代码质量 | ✅/⚠️ | |
-| i18n | ✅/⚠️ | |
-| 日志 | ✅/⚠️ | |
-| 性能 | ✅/⚠️ | |
+| 类别 | 状态 | 严重级 | 备注 |
+|------|------|--------|------|
+| 编译 | ✅/❌ | 🔴 | |
+| 类型 | ✅/❌ | 🔴 | |
+| 运行 | ✅/❌ | 🔴 | |
+| 功能 | ✅/❌ | 🔴 | |
+| 回归 | ✅/❌ | 🔴 | |
+| 安全 | ✅/❌ | 🔴 | |
+| 数据 | ✅/❌ | 🔴 | |
+| Diff | ✅/⚠️ | 🟡 | X files changed |
+| 代码质量 | ✅/⚠️ | 🟡 | |
+| i18n | ✅/⚠️ | 🟡 | |
+| 日志 | ✅/⚠️ | 🟡 | |
+| 性能 | ✅/⚠️ | 🟢 | |
 
-### 结论
-- [ ] ✅ **通过** — 可交付给 PM
-- [ ] ⚠️ **有条件通过** — 轻微问题, 记录后放行
-- [ ] ❌ **不通过** — 退回总工, 原因如下:
-  - 问题 1: ...
-  - 问题 2: ...
+### 严重级汇总 (Summary)
+
+| Severity | Count | Status |
+|----------|-------|--------|
+| CRITICAL | 0 | pass |
+| HIGH | 0 | pass |
+| MEDIUM | 0 | info |
+| LOW | 0 | note |
+
+### 判定 (Verdict)
+- [ ] ✅ **Approve** — 零 CRITICAL/HIGH, 可交付给 PM
+- [ ] ⚠️ **Warning** — 仅 HIGH 问题, 记录后可放行
+- [ ] 🔴 **Block** — 有 CRITICAL, 必须修复后重审
+
+### 发现的问题 (ECC 格式)
+
+## [FILE_PATH]
+### 🔴 CRITICAL: [Issue Title]
+**Line**: [number]
+**Issue**: [description]
+**Fix**: [fix]
 
 ### 发现的错误 (归档到 L4 data/errors/)
 - ...
@@ -121,13 +138,24 @@ QA 审计不通过
     ↓
 写审计报告 (列出所有问题)
     ↓
+开返工工单 (标准格式: workflows/build.md §7)
+    ↓
 退回给总工
     ↓
 总工分配修复任务给对应工程师
     ↓
 修复后重新交给 QA
     ↓
-QA 重新审计 (只检查之前失败的项)
+QA 复审 (默认只检查之前失败的项)
+```
+
+### 复审追踪
+
+```
+复审与初审的区别:
+  - 初审: 执行完整 16 项清单 + 分场景模板
+  - 复审: 只执行返工工单中列出的驳回项
+  - 3 次复审不通过 → 升级 PM (参考 build.md §7.3)
 ```
 
 ---
@@ -221,7 +249,8 @@ DTO 字段名改了 → 前端 TypeScript 接口跟上了吗?
 | 安全审计加深 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 8 项 CRITICAL 安全检查 (SQL注入/XSS/CSRF...) |
 | 代码质量审查 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | HIGH/MEDIUM/LOW 分级质量清单 |
 | 前端审计 | ECC: React 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React/Next.js 反模式检查 |
-| UX 交付检查 | UI UX Pro: 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 交付前检查清单 |
+| UX 交付检查 | UI UX Pro: 准则 | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 99 条 UX 准则 + 交付前检查清单 |
+| 🔴 工程师自检确认 | Rules 层 | `core/rules/common.md` + `frontend.md` / `backend.md` | **审计时确认**: 工程师是否已过自检 Checklist |
 
 ---
 
@@ -334,7 +363,7 @@ QA 同时负责项目知识的沉淀:
 |----------|------|----------|
 | 常见错误 | 审计中发现 | `projects/{project}/data/errors/` |
 | 最佳实践 | 优秀实现 | 更新到对应 L1 Skill |
-| 项目特定知识 | 项目经验 | 更新到 L4 recipes/ |
+| 项目特定知识 | 项目经验 | 更新到 L4 playbooks/ |
 | 跨项目通用知识 | 多项目共性 | 更新到 L1 Skills |
 
 ---
@@ -422,5 +451,15 @@ export default function () {
 
 ---
 
-*Version: 3.0.0 — 强化版 (含验证命令 + 分场景模板 + 影响半径分析)*
+## 9. 标准交接格式 (引用)
+
+| 交接对 | 格式定义位置 | 内容概要 |
+|--------|-------------|----------|
+| CTO → QA | `workflows/build.md` §4 | 审计包: 验证结果 + 变更总览 |
+| QA → PM | `workflows/build.md` §5 | 交付包: 审计摘要 |
+| QA → CTO (驳回) | `workflows/build.md` §7 | 返工工单: 驳回项 + 追踪 |
+
+---
+
+*Version: 3.1.0 — 强化版 (含复审追踪 + 标准交接索引)*
 *Updated: 2026-02-12*

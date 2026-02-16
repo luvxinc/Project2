@@ -1,8 +1,8 @@
 'use client';
-import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useSites, useCreateSite, useUpdateSite } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
 
 interface Site {
@@ -31,8 +31,10 @@ export default function SiteManagementPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
-  const [sites, setSites] = useState<Site[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query: replaces raw fetch + useState + useEffect
+  const { data: sites = [], isLoading: loading } = useSites();
+  const createSite = useCreateSite();
+  const updateSite = useUpdateSite();
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,17 +42,6 @@ export default function SiteManagementPage() {
   const [form, setForm] = useState<Site>({ ...emptySite });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  const fetchSites = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/vma/sites`, { headers: getAuthHeaders() });
-      if (res.ok) setSites(await res.json());
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchSites(); }, [fetchSites]);
 
   const openCreate = () => {
     setForm({ ...emptySite });
@@ -83,24 +74,14 @@ export default function SiteManagementPage() {
     setSaving(true);
     setError('');
     try {
-      const url = editMode
-        ? `${API}/vma/sites/${form.siteId}`
-        : `${API}/vma/sites`;
-      const method = editMode ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: getAuthHeaders(),
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
-        setModalOpen(false);
-        fetchSites();
+      if (editMode) {
+        await updateSite.mutateAsync({ siteId: form.siteId, data: form });
       } else {
-        const data = await res.json().catch(() => null);
-        setError(data?.message || 'Failed to save');
+        await createSite.mutateAsync(form);
       }
-    } catch {
-      setError('Network error');
+      setModalOpen(false);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to save');
     }
     setSaving(false);
   };

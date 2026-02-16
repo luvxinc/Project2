@@ -5,19 +5,20 @@ description: Agent 行为优化 — 验证循环, 渐进检索, 编码标准, �
 
 # Agent 行为精通
 
-> **⚠️ 本文件 ~17KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> **⚠️ 本文件 ~10KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> **🔴 编码规范/验证循环/反模式已迁移到 `core/rules/` 目录 (强制规则)。本文件保留 Agent 行为优化。**
 
 ## 路由表
 
 | 关键词 | 跳转 |
 |--------|------|
-| `验证`, `loop`, `检查`, `PR` | → §1 验证循环 |
-| `检索`, `搜索`, `codebase`, `查找` | → §2 渐进检索 |
-| `编码`, `命名`, `规范`, `代码风格` | → §3 编码标准 |
-| `上下文`, `context`, `token`, `篇幅` | → §4 上下文窗口管理 |
-| `错误`, `error`, `异常` | → §5 错误处理 |
-| `学习`, `持续改进`, `经验` | → §6 持续学习 |
-| `skill seekers`, `自动化`, `技能生成` | → §7 Skill Seekers |
+| `验证`, `loop`, `检查`, `PR` | → `core/rules/common.md` §5 验证循环 |
+| `检索`, `搜索`, `codebase`, `查找` | → §1 渐进检索 |
+| `编码`, `命名`, `规范`, `代码风格` | → `core/rules/common.md` §1 代码风格 |
+| `上下文`, `context`, `token`, `篇幅` | → §2 上下文窗口管理 |
+| `错误`, `error`, `异常`, `卡死` | → §3 错误/进程管理 |
+| `学习`, `持续改进`, `经验` | → §4 持续学习 |
+| `skill seekers`, `自动化`, `技能生成` | → §5 Skill Seekers |
 
 ---
 
@@ -26,46 +27,7 @@ description: Agent 行为优化 — 验证循环, 渐进检索, 编码标准, �
 
 ---
 
-## 1. 验证循环 (Verification Loop)
-
-每个功能完成后、PR 提交前, 必须执行 6 阶段验证:
-
-### 6 阶段验证
-
-| 阶段 | 检查内容 | 命令 |
-|------|----------|------|
-| 1. 构建 | 编译通过 | `./gradlew build` (V3) / `pnpm build` (V2) |
-| 2. 类型 | 类型安全 | `./gradlew compileKotlin` / `npx tsc --noEmit` |
-| 3. Lint | 代码风格 | `./gradlew ktlintCheck` / `pnpm lint` |
-| 4. 测试 | 覆盖率 ≥ 80% | `./gradlew test jacocoTestReport` |
-| 5. 安全 | 无密钥泄漏 | `grep -rn "sk-\|api_key\|password" src/` |
-| 6. Diff | 无意外变更 | `git diff --stat` |
-
-### 验证报告模板
-
-```
-VERIFICATION REPORT
-==================
-Build:     [PASS/FAIL]
-Types:     [PASS/FAIL] (X errors)
-Lint:      [PASS/FAIL] (X warnings)
-Tests:     [PASS/FAIL] (X/Y passed, Z% coverage)
-Security:  [PASS/FAIL] (X issues)
-Diff:      [X files changed]
-
-Overall:   [READY/NOT READY] for PR
-```
-
-### 何时运行
-
-- 每完成一个功能后
-- 每 15 分钟主动运行一次 (长会话)
-- 重构完成后
-- PR 提交前 (强制)
-
----
-
-## 2. 渐进检索 (Iterative Retrieval)
+## 1. 渐进检索 (Iterative Retrieval)
 
 Agent 处理复杂任务时, 用 4 阶段循环逐步精炼上下文:
 
@@ -98,52 +60,9 @@ Agent 处理复杂任务时, 用 4 阶段循环逐步精炼上下文:
 
 ---
 
-## 3. 编码标准 (Coding Standards)
+## 2. 上下文窗口管理 (Context Window)
 
-### 3.1 不可变性 (CRITICAL)
-
-```kotlin
-// ❌ WRONG: 修改原对象
-fun updateUser(user: User) { user.name = "new" }
-
-// ✅ CORRECT: 返回新对象
-fun updateUser(user: User, name: String): User = user.copy(name = name)
-```
-
-### 3.2 文件组织
-
-| 规则 | 限制 |
-|------|------|
-| 单文件行数 | ≤ 400 行 (理想), ≤ 800 行 (最大) |
-| 单函数行数 | ≤ 50 行 |
-| 嵌套深度 | ≤ 4 层 |
-| 组织方式 | 按功能/领域, 非按类型 |
-
-### 3.3 代码异味检测
-
-| 异味 | 阈值 | 对策 |
-|------|------|------|
-| 长函数 | > 50 行 | 提取子函数 |
-| 深嵌套 | > 4 层 | 早返回/提取 |
-| 魔术数字 | 任何硬编码 | 使用常量 |
-| 重复代码 | > 3 次 | DRY — 提取公共函数 |
-| 大类 | > 300 行 | 拆分职责 |
-
-### 3.4 完成前检查清单
-
-- [ ] 代码可读性: 命名清晰, 注释充分
-- [ ] 函数 < 50 行, 文件 < 800 行
-- [ ] 无 > 4 层嵌套
-- [ ] 正确的错误处理
-- [ ] 无硬编码值 (用常量/配置)
-- [ ] 不可变模式
-- [ ] 输入验证在边界层
-
----
-
-## 4. 上下文窗口管理 (Context Window)
-
-### 4.1 危险阈值
+### 2.1 危险阈值
 
 | 阶段 | 使用率 | 行动 |
 |------|--------|------|
@@ -152,14 +71,14 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 | 🟠 高危 | 70-85% | 立即保存, 考虑新对话 |
 | 🔴 危险 | > 85% | 停止, 保存, 新对话 |
 
-### 4.2 危险信号
+### 2.2 危险信号
 
 - Agent 回答变慢/重复
 - Agent 忘记之前的约定
 - Agent 反复问相同问题
 - Agent 回答与之前矛盾
 
-### 4.3 Skill 加载纪律
+### 2.3 Skill 加载纪律
 
 ```
 规则:
@@ -169,7 +88,7 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 4. 优先读 SKILL.md 索引, 再按指引加载具体 Skill
 ```
 
-### 4.4 检查点流程 (长会话)
+### 2.4 检查点流程 (长会话)
 
 ```
 1. 停止当前操作
@@ -181,18 +100,11 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 
 ---
 
-## 5. 错误处理 (Error Handling)
+## 3. 错误处理与进程管理
 
-### 5.1 分层处理
+> **进程卡死 = 立即 Kill + 重试。不要等待用户。**
 
-| 层 | 职责 | 示例 |
-|----|------|------|
-| Controller | 协议转换, 返回规范错误 | HTTP 400/404/500 |
-| Service | 业务异常, 领域错误 | `InsufficientInventoryException` |
-| Repository | 数据访问异常 | `DataIntegrityViolationException` |
-| Global | 兜底, 统一格式 | `@ControllerAdvice` |
-
-### 5.2 铁律
+### 错误处理
 
 - ❌ 禁止静默吞异常
 - ❌ 禁止 catch-all 不记录日志
@@ -200,9 +112,7 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 - ✅ 用户侧返回友好消息, 服务端记录详细堆栈
 - ✅ 使用结构化错误码 (如 `INV_001`, `AUTH_003`)
 
-### 5.3 终端进程卡死恢复
-
-> **进程卡死 = 立即 Kill + 重试。不要等待用户。**
+### 终端进程卡死恢复
 
 | 信号 | 判定 | 行动 |
 |------|------|------|
@@ -218,7 +128,7 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 4. 如果再次卡死 → 简化命令, 拆分为多个小命令
 ```
 
-### 5.4 Auto-Run 策略 (SafeToAutoRun)
+### 3.1 Auto-Run 策略 (SafeToAutoRun)
 
 > **只有涉及数据库数据丢失/生产环境变更才需要用户确认。其他自己执行。**
 
@@ -237,276 +147,45 @@ fun updateUser(user: User, name: String): User = user.copy(name = name)
 
 ---
 
-## 6. 持续学习 (Continuous Learning)
+## 4. 持续学习 (Continuous Learning)
 
-> **来源**: ECC Continuous Learning v2 (Instinct-Based Architecture)
-> **适配**: 从 Claude Code Hooks 适配到 Antigravity + Knowledge Items 环境
-
-### 6.1 核心理念
-
-Agent 应该从每次会话中学习模式, 并将其沉淀为可复用的 "本能 (Instinct)":
-
-```
-会话活动
-    │
-    │ 观察: 用户修正, 错误解决, 重复工作流
-    ▼
-┌─────────────────────────────────────┐
-│         模式检测 (Pattern Detection) │
-│  • 用户修正 → 本能                   │
-│  • 错误解决方案 → 本能               │
-│  • 重复工作流 → 本能                 │
-└─────────────────────────────────────┘
-    │
-    │ 创建/更新
-    ▼
-┌─────────────────────────────────────┐
-│       本能库 (Instinct Registry)     │
-│  • 置信度: 0.3(试探) → 0.9(确定)    │
-│  • 领域标签: code-style, testing,    │
-│    git, debugging, workflow, domain  │
-└─────────────────────────────────────┘
-    │
-    │ 聚合演化 (/evolve)
-    ▼
-┌─────────────────────────────────────┐
-│       技能演化 (Skill Evolution)     │
-│  • 3+ 相关本能 → 新 Skill           │
-│  • 5+ 相关本能 → 新 Workflow        │
-│  • 10+ 相关本能 → 新 Agent          │
-└─────────────────────────────────────┘
-```
-
-### 6.2 本能模型
-
-一个本能是一个小的学习行为:
-
-```yaml
----
-id: prefer-data-class-over-entity
-trigger: "创建新的数据对象时"
-confidence: 0.8
-domain: "code-style"
-source: "session-observation"
----
-
-# 优先使用 data class 而非 Entity
-
-## 行为
-Kotlin 中传递数据时优先使用 data class, Entity 只用于 JPA 持久化层。
-
-## 证据
-- 在 5 次会话中发现用户都修正了直接传 Entity 的做法
-- V3 架构规范 (02-backend.md) 明确要求 DDD 分层
-```
-
-### 6.3 置信度评分
-
-| 分值 | 含义 | Agent 行为 |
-|------|------|-----------|
-| 0.3 | 试探性 | 建议但不强制 |
-| 0.5 | 中等 | 相关时应用 |
-| 0.7 | 强 | 自动应用 |
-| 0.9 | 近确定 | 核心行为 |
-
-**置信度上升**: 同一模式被重复观察, 用户未修正
-**置信度下降**: 用户明确修正, 长期未观察到, 出现矛盾证据
-
-### 6.4 Antigravity 适配 (关键差异)
-
-ECC 使用 Claude Code Hooks (文件系统)。我们使用 Antigravity Knowledge Items:
-
-| ECC 原始机制 | 我们的适配 |
-|-------------|-----------|
-| `hooks.json` PreToolUse/PostToolUse | Antigravity Knowledge Items 自动存储 |
-| `~/.claude/homunculus/observations.jsonl` | KI Summaries (每次会话自动生成) |
-| `instincts/personal/*.md` | `.agent/skills/learned/*.md` |
-| `/instinct-status` 命令 | 人工审计 + KI 查阅 |
-| `/evolve` 聚合 | 手动提取 → 写入现有 Skill |
-
-### 6.5 实践协议
-
-**每次会话结束前** (Agent 主动执行):
-
-```
-1. 回顾: 本次会话中有哪些模式值得记录?
-   - 用户修正了什么? → 可能的新本能
-   - 解决了什么棘手 Bug? → 排查方案
-   - 什么工作流被重复了 3+ 次? → 自动化候选
-
-2. 记录: 值得沉淀的模式写入以下位置:
-   - 通用模式 → 更新 agent-mastery/SKILL.md 对应 section
-   - 领域模式 → 更新对应 V3 Skill
-   - 项目特定 → 更新 projects/{project}/reference/ 或 recipes/
-
-3. 置信度检查: 已有本能是否需要调整?
-   - 如果被用户修正 → 降低置信度或删除
-   - 如果被反复验证 → 提升置信度
-```
-
-### 6.6 模式检测类型
-
-| 类型 | 触发条件 | 示例 |
-|------|----------|------|
-| `user_corrections` | 用户修正了 Agent 的做法 | "不要用 Entity 直接返回 API" |
-| `error_resolutions` | 解决了难以复现的 Bug | "Prisma 热加载需要 restart" |
-| `repeated_workflows` | 同一流程被执行 3+ 次 | "每次加新模块都要改 AppModule" |
-| `tool_preferences` | 用户偏好特定工具/方式 | "总是先看 outline 再看 code" |
-| `project_conventions` | 项目独特的约定 | "日志四表, 不用 console.log" |
+> **已拆分到独立文件**: [`skills/continuous-learning.md`](continuous-learning.md) (~5KB)
+> 包含: 本能模型 + 置信度评分 + Antigravity 适配 + 实践协议 + 模式检测类型
+> **何时读**: 会话结束前回顾, 或需要理解 Agent 学习机制时
 
 ---
 
-## 7. Skill Seekers — 自动化技能生成
+## 5. Skill Seekers — 自动化技能生成
 
-> **来源**: [Skill Seekers v3.0.0 "Universal Intelligence Platform"](https://github.com/yusufkaraaslan/Skill_Seekers) (MIT, 1200+ tests)
 > **本地路径**: `/Users/aaron/Library/Python/3.12/bin/skill-seekers`
 > **网站**: [skillseekersweb.com](https://skillseekersweb.com/) (24+ 预设配置)
-> **状态**: ✅ 已安装 (需升级到 v3.0.0), OCR/Poppler 已验证
+> **状态**: ✅ 已安装 v3.0.0, OCR/Poppler 已验证
 
-### 7.1 核心能力
+### 5.1 核心能力
 
-文档/代码/PDF → 16 种生产格式 (Claude, LangChain, LlamaIndex, Pinecone, Cursor, 等):
-
-```
-┌──────────────────────────────────────────────────┐
-│           3-Stream Architecture (v2.6+)          │
-├────────────────┬───────────────┬─────────────────┤
-│  Stream 1:     │  Stream 2:    │  Stream 3:      │
-│  Code (AST)    │  Docs (MD)    │  Insights       │
-│  函数/类/API   │  教程/指南     │  Issue/PR/社区   │
-│  C3.x 深度分析 │  llms.txt 优先 │  Stars/Labels   │
-├────────────────┴───────────────┴─────────────────┤
-│              Conflict Detection                   │
-│         (代码 vs 文档 差异检测)                     │
-├──────────────────────────────────────────────────┤
-│         16 Output Formats (v3.0.0)               │
-│  Claude | Gemini | OpenAI | Markdown             │
-│  LangChain | LlamaIndex | Pinecone | Weaviate   │
-│  Cursor | Windsurf | Cline | Continue.dev        │
-└──────────────────────────────────────────────────┘
-```
-
-### 7.2 C3.x AI 增强引擎
-
-| 模块 | 能力 | 适用场景 |
-|------|------|----------|
-| **C3.1** | 设计模式识别 (Singleton, Factory, MVC) | 架构分析 |
-| **C3.2** | 测试用例合成 (基于代码路径) | 自动生成测试 |
-| **C3.3** | AI 增强 How-To (75行→500+行) | 文档升级 |
-| **C3.4** | 配置模式提取 (9 格式, 安全扫描) | 安全审计 |
-| **C3.5** | 架构映射 (服务依赖, 数据流) | 系统理解 |
-
-```bash
-# 快速分析 (1-2 分钟)
-skill-seekers analyze --directory tests/ --quick
-
-# 深度 C3.x 分析 + AI 增强 (20-60 分钟)
-skill-seekers analyze --directory tests/ --comprehensive --enhance
-```
-
-### 7.3 常用命令
-
-```bash
-# ─── 爬取源 ───
-skill-seekers scrape --config configs/react.json          # 预设配置
-skill-seekers scrape --url https://docs.example.com --name my-docs  # 自定义 URL
-skill-seekers scrape --config configs/godot.json --async --workers 8  # 异步 3x 加速
-
-# ─── GitHub 仓库 ───
-skill-seekers github --repo facebook/react                 # 基础
-skill-seekers github --repo django/django \
-  --include-issues --max-issues 100 \
-  --include-changelog --include-releases                   # 完整
-
-# ─── PDF ───
-skill-seekers pdf --pdf docs/manual.pdf --name myskill     # 基础
-skill-seekers pdf --pdf scan.pdf --name myskill --ocr      # OCR 扫描件
-skill-seekers pdf --pdf docs/encrypted.pdf --password pw   # 加密 PDF
-
-# ─── 多源统一 (v2.0+) ───
-skill-seekers unified --config multi-source.json           # 文档 + GitHub + PDF 混合
-
-# ─── 预估 + 拆分 ───
-skill-seekers estimate --config react                      # 预估页数
-skill-seekers split-config large-docs.json --strategy router  # 大文档拆分
-
-# ─── 多目标打包 (v3.0.0) ───
-skill-seekers package output/react --target claude         # Claude (默认)
-skill-seekers package output/react --target langchain      # LangChain RAG
-skill-seekers package output/react --target llama-index    # LlamaIndex
-skill-seekers package output/react --target pinecone       # Pinecone 向量库
-skill-seekers package output/react --target cursor         # Cursor IDE
-skill-seekers package output/react --target markdown       # 通用 Markdown
-```
-
-### 7.4 MCP Server (18 个工具)
-
-v2.4.0 起支持 5 个 AI Agent 的 MCP 集成:
-
-| 分类 | 工具 (9 核心 + 9 扩展) |
-|------|----------------------|
-| **核心** | `list_configs`, `generate_config`, `validate_config`, `estimate_pages`, `scrape_docs`, `package_skill`, `upload_skill`, `split_config`, `generate_router` |
-| **扩展** | `scrape_github`, `scrape_pdf`, `unified_scrape`, `merge_sources`, `detect_conflicts`, `add_config_source`, `fetch_config`, `list_config_sources`, `extract_config_patterns` |
-
-```bash
-# 一键配置 5 个 Agent (Claude Code, Cursor, Windsurf, Cline, IntelliJ)
-./setup_mcp.sh
-
-# 然后在任何 Agent 中用自然语言:
-# "Generate a React skill from https://react.dev/"
-# "Scrape PDF at docs/manual.pdf and create skill"
-```
-
-### 7.5 典型使用场景
-
-| 场景 | 命令 | 产出 |
+| 能力 | 命令 | 说明 |
 |------|------|------|
-| 学习 Spring Boot | `skill-seekers github --repo spring-projects/spring-boot` | 框架 Skill |
-| 学习 Next.js 16 | `skill-seekers scrape --url https://nextjs.org/docs --name nextjs` | 前端 Skill |
-| Kotlin 协程深入 | `skill-seekers github --repo Kotlin/kotlinx.coroutines` | 并发 Skill |
-| ISO 合规文档 | `skill-seekers pdf --pdf ISO27001.pdf --ocr` | 安全 Skill |
-| RAG 知识库 | `skill-seekers package output/ --target langchain` | LangChain 文档 |
-| 内部私有代码 | Agent 直接分析代码库 (**推荐, 隐私安全**) | 项目特定 Skill |
+| 文档→Skill | `skill-seekers -u <URL>` | 将任意 URL 转为 AI Skill |
+| RAG 集成 | `-f langchain\|llamaindex\|pinecone` | 多框架 RAG 格式输出 |
+| AI Coding | `-f cursor\|windsurf\|cline` | 生成对应格式的 Skill 文件 |
+| GitHub Repo | `skill-seekers -u <repo_url>` | 自动拉取/分析/生成 |
+| PDF/OCR | `skill-seekers -f pdf <file>` | 技术文档转换 |
 
-### 7.6 最佳实践
-
-| 原则 | 说明 |
-|------|------|
-| **一技能一职责** | 专精 Skill 优于宽泛 Skill |
-| **YAML 前置** | 必须有 `name` + `description` frontmatter |
-| **优先 llms.txt** | 目标站有 `llms.txt` / `llms-full.txt` 时 10x 更快 |
-| **Router/Hub** | 超大文档 (10K+ 页) 用 `--strategy router` 拆分 |
-| **隐私优先** | 私有代码不应外部爬取, Agent 本地分析 |
-| **冲突检测** | `detect-conflicts` 检查代码 vs 文档差异 |
-| **Checkpoint/Resume** | 大型爬取自动断点续传 |
-| **GITHUB_TOKEN** | 设置 Token 可将 60 req/h → 5000 req/h |
-
-### 7.7 产出入库流程
-
-```
-1. skill-seekers 生成原始 Skill (.zip / .md)
-2. 人工审核 + 适配为项目风格
-3. 放入 .agent/core/skills/ 或 .agent/projects/{project}/
-4. 更新 SKILL.md 索引
-5. 验证加载: 读 SKILL.md → 确认 frontmatter 正确
-```
-
-### 7.8 本地升级
-
-```bash
-# 升级到 v3.0.0
-pip install --upgrade skill-seekers
-
-# 验证版本
-skill-seekers --version
-
-# 安装全平台支持
-pip install skill-seekers[all-llms]
-```
+> **详细命令参考**: `warehouse/tools/skill-seekers/01-commands-modules.md`
 
 ---
 
-*Version: 2.1.0 — 来源: ECC v1.4.1 + Skill Seekers v3.0.0 — Generic Core*
-*Last Updated: 2026-02-11*
+## 6. L3 工具库引用
 
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| 编码规范/反模式 | Rules 层 | `core/rules/common.md` | 强制规则 + 6 阶段验证 |
+| 前端自检 | Frontend Rules | `core/rules/frontend.md` | 10 反模式 + Checklist |
+| 后端自检 | Backend Rules | `core/rules/backend.md` | 10 反模式 + Checklist |
+| 审查清单 | ECC: Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | CRITICAL→LOW 审查 |
+| 技能生成 | Skill Seekers | `warehouse/tools/skill-seekers/01-commands-modules.md` | 全命令参考 |
 
+---
+
+*Version: 2.0.0 — 精简版 (编码规范/验证循环迁移到 core/rules/)*
+*Created: 2026-02-12 | Updated: 2026-02-15*

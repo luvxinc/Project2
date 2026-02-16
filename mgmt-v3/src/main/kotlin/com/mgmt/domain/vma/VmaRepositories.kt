@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -125,7 +126,9 @@ interface VmaTrainingRecordRepository : JpaRepository<VmaTrainingRecord, String>
 
     fun findAllBySessionId(sessionId: String): List<VmaTrainingRecord>
 
-    fun deleteAllBySessionId(sessionId: String)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM VmaTrainingRecord r WHERE r.sessionId = :sid")
+    fun deleteAllBySessionId(@org.springframework.data.repository.query.Param("sid") sessionId: String)
 
     @Query("SELECT DISTINCT r.employeeNo FROM VmaTrainingRecord r WHERE r.sessionId = :sessionId")
     fun findDistinctEmployeeNosBySessionId(sessionId: String): List<String>
@@ -164,7 +167,9 @@ interface VmaDeliverySystemFitRepository : JpaRepository<VmaDeliverySystemFit, S
 
     fun findAllByPvalveId(pvalveId: String): List<VmaDeliverySystemFit>
 
-    fun deleteAllByDeliverySystemId(deliverySystemId: String)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM VmaDeliverySystemFit f WHERE f.deliverySystemId = :dsId")
+    fun deleteAllByDeliverySystemId(@org.springframework.data.repository.query.Param("dsId") deliverySystemId: String)
 
     fun findAllByDeliverySystemIdIn(dsIds: List<String>): List<VmaDeliverySystemFit>
 
@@ -215,6 +220,8 @@ interface VmaClinicalCaseRepository : JpaRepository<VmaClinicalCase, String> {
     fun findAllByOrderByCaseDateDesc(): List<VmaClinicalCase>
 
     fun findByCaseId(caseId: String): VmaClinicalCase?
+
+    fun findByCaseNo(caseNo: String): VmaClinicalCase?
 }
 
 // ─── Site ────────────────────────────────────────────────

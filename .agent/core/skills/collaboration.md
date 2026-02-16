@@ -241,5 +241,27 @@ Schema 加了新字段
 
 ---
 
-*Version: 2.0.0 — 强化版 (含变更传播协议 + 影响矩阵)*
+## 8. 与全局工作流的关系
+
+> **本 SOP 定义“工程师之间”的协作规则。“角色之间” (PM↔CTO↔QA) 的交接格式在 `workflows/build.md` 定义。**
+
+| 交接对 | 协议位置 |
+|--------|-------------|
+| 工程师 ↔ 工程师 | 本文件 §2-§7 |
+| 工程师 → CTO | `workflows/build.md` §3 完工报告 |
+| CTO → 工程师 | `workflows/build.md` §2 任务工单 |
+| 返工流转 | `workflows/build.md` §7 返工工单 |
+
+---
+
+## 9. L3 工具库引用 (按需加载)
+
+| 场景 | 推荐加载 | 文件路径 | 作用 |
+|------|---------|---------|------|
+| API 契约定义 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 不可变性/输入验证/文件组织 |
+| 跨层审查 | ECC: Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 代码审查清单 + 反模式 |
+
+---
+
+*Version: 2.1.0 — 强化版 (含全局工作流引用 + L3 工具)*
 *Updated: 2026-02-12*

@@ -1,8 +1,8 @@
-# ECC 详细参考: Agents + 审查清单
+# ECC v1.5.0 详细参考: 14 Agents + 审查清单 + 生态工具
 
 > **加载时机**: 需要了解 ECC Agent 设计 或 代码审查最佳实践时
 
-## 1. 12 个 Agent 速查
+## 1. 14 个 Agent 速查 (v1.5.0 Universal Edition)
 
 | Agent | 职责 | 限定工具 |
 |-------|------|---------|
@@ -16,8 +16,10 @@
 | refactorer | 重构 (单一职责) | Read, Write, Grep |
 | git-manager | Git 操作 | Bash |
 | ci-helper | CI/CD 管道 | Read, Bash |
-| pm2-manager | 进程管理 | Bash |
+| pm2-manager | 进程管理 + Multi-Agent | Bash |
 | skill-creator | 从 Git 历史生成 Skill | Read, Write |
+| **e2e-tester** | E2E 测试编写和执行 | Read, Write, Bash |
+| **architecture-guide** | 架构设计指导 | Read, Grep, Glob |
 
 ## 2. Planner Agent 详解
 
@@ -165,4 +167,41 @@
 | LOW      | 1     | note   |
 
 Verdict: WARNING — 2 HIGH issues should be resolved before merge.
+```
+
+## 4. v1.5.0 生态工具
+
+### AgentShield — 安全审计器
+```bash
+# 快速扫描 (无需安装)
+npx ecc-agentshield scan
+
+# 自动修复安全问题
+npx ecc-agentshield scan --fix
+
+# 深度分析 (3 个 Opus Agent 红队/蓝队/审计员)
+npx ecc-agentshield scan --opus --stream
+
+# 从零生成安全配置
+npx ecc-agentshield init
+```
+
+扫描范围: CLAUDE.md, settings.json, MCP configs, hooks, agent definitions, skills
+5 类别: 密钥检测 (14 模式), 权限审计, Hook 注入分析, MCP 风险评估, Agent 配置审查
+输出: Terminal (A-F 色级), JSON (CI), Markdown, HTML
+
+### Continuous Learning v2 (Instinct 进化系统)
+```bash
+/instinct-status    # 显示已学习的 instinct + 置信度
+/instinct-import    # 从外部导入 instinct
+/instinct-export    # 导出 instinct 供分享
+/evolve             # 将相关 instinct 聚合为 skill
+```
+
+原理: 从 Git 历史自动学习编码模式, 进化为可复用的 Instinct 文件.
+
+### Skill Creator
+```bash
+/skill-create               # 本地分析当前仓库
+/skill-create --instincts   # 同时生成 instinct 文件
 ```

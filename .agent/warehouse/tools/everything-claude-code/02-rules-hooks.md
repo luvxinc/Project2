@@ -1,4 +1,4 @@
-# ECC 详细参考: Rules + Hooks + 验证循环
+# ECC v1.5.0 详细参考: 6 语言 Rules + Hooks + 28 Skills + 30 Commands
 
 > **加载时机**: 需要了解 ECC 的强制规则系统 或 Hook 自动化时
 
@@ -16,9 +16,17 @@ rules/
 │   └── coding-standards.md
 ├── python/             # Python 特定
 │   └── coding-standards.md
-└── golang/             # Go 特定
+├── golang/             # Go 特定
+│   └── coding-standards.md
+├── java/               # Java + Spring Boot (v1.5.0)
+│   └── coding-standards.md
+├── django/             # Django (v1.2.0+)
+│   └── coding-standards.md
+└── springboot/         # Spring Boot 专用 (v1.2.0+)
     └── coding-standards.md
 ```
+
+> ✅ 按需安装: `npx ecc-install typescript` / `npx ecc-install python` / `npx ecc-install java`
 
 ### coding-style.md 核心规则
 ```
@@ -118,3 +126,28 @@ export default function postToolUse(event) {
 3. 打开文件 → 只看需要的部分
 4. 用完 → 释放上下文
 ```
+
+## 5. 28 Skills 概览 (v1.5.0)
+
+| 语言/领域 | Skills | 典型内容 |
+|-----------|--------|--------|
+| TypeScript | patterns, security, tdd, verification | React/Next.js 模式 |
+| Python | patterns, security, tdd, verification | Django 安全 + TDD |
+| Go | patterns, security, tdd, verification | Go 并发模式 |
+| Java | patterns, security, tdd, verification | Spring Boot 架构 |
+| 通用 | continuous-learning-v2, configure-ecc | Instinct 进化 |
+| 审计 | agentshield, security-scan | 安全扫描 |
+
+## 6. 30 Commands 概览 (v1.5.0)
+
+| 分类 | 命令 | 说明 |
+|------|------|------|
+| 核心 | /plan, /review, /test, /debug | 基础工作流 |
+| TDD | /tdd-start, /tdd-verify | 红绿重构 |
+| Git | /commit, /pr, /changelog | 版本管理 |
+| 安全 | /security-scan, /audit | 漏洞检测 |
+| 多代理 | /pm2, /multi-plan, /multi-execute | PM2 编排 |
+| 多服务 | /multi-backend, /multi-frontend, /multi-workflow | 前后端协同 |
+| 学习 | /instinct-status, /instinct-import, /evolve | Instinct 进化 |
+| 配置 | /sessions, /configure-ecc | 会话管理 |
+| Skill | /skill-create | 从仓库生成 Skill |

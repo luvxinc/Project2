@@ -422,10 +422,11 @@ trackEvent('order.created', { total: 1500, items: 3 });
 
 | 场景 | 推荐加载 | 文件路径 | 作用 |
 |------|---------|---------|------|
-| UI 设计决策 | UI UX Pro: 风格配色 | `warehouse/tools/ui-ux-pro-max/01-styles-palettes.md` | 20 种风格 + 行业配色 + 字体配对 |
-| UX 交付检查 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/02-ux-rules.md` | 70 条 UX 准则 + 反模式 + 交付检查 |
+| UI 设计决策 | UI UX Pro: Design System | `warehouse/tools/ui-ux-pro-max/01-design-system.md` | v2.0 设计系统生成器 + 67 风格 + 96 配色 |
+| UX 交付检查 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 99 条 UX 准则 + 反模式 + 交付检查 |
 | React 代码审查 | ECC: React 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React/Next.js 反模式检查 |
-| 动画开发 | Anime.js API | `warehouse/tools/animejs.md` | Anime.js 4.0 完整 API (~9KB) |
+| 动画开发 | Anime.js API | `warehouse/tools/animejs/INDEX.md` | Anime.js 4.0 核心 + 高级模式 (2 切片) |
+| 🔴 提交前自检 | Rules: 前端 | `core/rules/frontend.md` | **必查** — 10 反模式 (F1-F10) + CRITICAL/HIGH Checklist |
 
 ---
 
