@@ -362,3 +362,35 @@ class VmaSite(
     @Column(name = "created_at", nullable = false, updatable = false) var createdAt: Instant = Instant.now(),
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
 )
+
+// ============================================================
+// VMA Fridge Shelf Entity
+// ============================================================
+
+/**
+ * VmaFridgeSlot — maps to 'vma_fridge_slots' table.
+ * Tracks product placement in fridge shelves.
+ * Shelves 1-10: odd=left door, even=right door, 5 shelves per side.
+ * Each shelf: 3 rows × 4 cols = 12 positions.
+ */
+@Entity
+@Table(
+    name = "vma_fridge_slots",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["shelf_no", "row_no", "col_no"])],
+    indexes = [
+        Index(columnList = "shelf_no"),
+        Index(columnList = "serial_no"),
+    ]
+)
+class VmaFridgeSlot(
+    @Id @Column(length = 36) var id: String = "",
+    @Column(name = "shelf_no", nullable = false) var shelfNo: Int = 1,
+    @Column(name = "row_no", nullable = false) var rowNo: Int = 1,
+    @Column(name = "col_no", nullable = false) var colNo: Int = 1,
+    @Enumerated(EnumType.STRING) @Column(name = "product_type", nullable = false) var productType: VmaProductType = VmaProductType.PVALVE,
+    @Column(name = "spec_no", nullable = false) var specNo: String = "",
+    @Column(name = "serial_no") var serialNo: String? = null,
+    @Column(name = "placed_at", nullable = false) var placedAt: Instant = Instant.now(),
+    @Column(name = "placed_by") var placedBy: String? = null,
+    @Column(name = "created_at", nullable = false, updatable = false) var createdAt: Instant = Instant.now(),
+)

@@ -30,6 +30,7 @@ class VmaClinicalCaseService(
     private val fitRepo: VmaDeliverySystemFitRepository,
     private val dsRepo: VmaDeliverySystemProductRepository,
     private val packingListPdfService: VmaPackingListPdfService,
+    private val invService: VmaInventoryTransactionService,
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -245,6 +246,8 @@ class VmaClinicalCaseService(
                 batchNo = item.batchNo,
                 caseId = caseId,
             ))
+            // Auto-remove from fridge when going to WIP
+            invService.clearFridgeSlotBySerial(item.specNo, item.serialNo)
         }
 
         return mapOf(
@@ -390,7 +393,10 @@ class VmaClinicalCaseService(
             expDate = dto.expDate?.let { LocalDate.parse(it) },
             batchNo = dto.batchNo,
             caseId = caseId,
-        ))
+        )).also {
+            // Auto-remove from fridge when going to WIP
+            invService.clearFridgeSlotBySerial(dto.specNo, dto.serialNo)
+        }
     }
 
     // ═══════════ Case Completion ═══════════

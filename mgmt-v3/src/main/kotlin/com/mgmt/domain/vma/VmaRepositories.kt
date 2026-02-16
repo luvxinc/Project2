@@ -236,3 +236,17 @@ interface VmaSiteRepository : JpaRepository<VmaSite, String> {
     fun findBySiteId(siteId: String): VmaSite?
 }
 
+// ─── Fridge Shelf ───────────────────────────────────────
+
+@Repository
+interface VmaFridgeSlotRepository : JpaRepository<VmaFridgeSlot, String> {
+
+    fun findAllByOrderByShelfNoAscRowNoAscColNoAsc(): List<VmaFridgeSlot>
+
+    fun findByShelfNoAndRowNoAndColNo(shelfNo: Int, rowNo: Int, colNo: Int): VmaFridgeSlot?
+
+    fun findAllBySerialNo(serialNo: String): List<VmaFridgeSlot>
+
+    fun findAllBySpecNoAndSerialNo(specNo: String, serialNo: String): List<VmaFridgeSlot>
+}
+

@@ -27,6 +27,7 @@ class VmaInventoryTransactionService(
     private val pvRepo: VmaPValveProductRepository,
     private val dsRepo: VmaDeliverySystemProductRepository,
     private val employeeRepo: VmaEmployeeRepository,
+    private val fridgeSlotRepo: VmaFridgeSlotRepository,
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -55,8 +56,8 @@ class VmaInventoryTransactionService(
         return employees.map { "${it.firstName} ${it.lastName}" }
     }
 
-    fun create(dto: CreateInventoryTransactionRequest): VmaInventoryTransaction =
-        txnRepo.save(VmaInventoryTransaction(
+    fun create(dto: CreateInventoryTransactionRequest): VmaInventoryTransaction {
+        val txn = txnRepo.save(VmaInventoryTransaction(
             id = UUID.randomUUID().toString(),
             date = parsePacificDate(dto.date),
             action = VmaInventoryAction.valueOf(dto.action),
@@ -73,6 +74,15 @@ class VmaInventoryTransactionService(
             batchNo = dto.batchNo,
             condition = dto.condition?.toTypedArray() ?: arrayOf(),
         ))
+
+        // Auto-remove from fridge when product leaves inventory
+        val action = VmaInventoryAction.valueOf(dto.action)
+        if (action == VmaInventoryAction.OUT_CASE || action == VmaInventoryAction.OUT_CN) {
+            clearFridgeSlotBySerial(dto.specNo, dto.serialNo)
+        }
+
+        return txn
+    }
 
     fun update(id: String, dto: UpdateInventoryTransactionRequest): VmaInventoryTransaction {
         val txn = findOne(id)
@@ -493,5 +503,162 @@ class VmaInventoryTransactionService(
         }
 
         return rows.sortedByDescending { it["date"] as? String ?: "" }
+    }
+
+    // ═══════════ Fridge Shelf ═══════════
+
+    fun getAllFridgeSlots(): List<FridgeSlotResponse> =
+        fridgeSlotRepo.findAllByOrderByShelfNoAscRowNoAscColNoAsc().map { toFridgeSlotResponse(it) }
+
+    fun placeFridgeSlot(dto: PlaceFridgeSlotRequest): FridgeSlotResponse {
+        // Validate shelf range
+        require(dto.shelfNo in 1..10) { "Shelf number must be 1-10" }
+        require(dto.rowNo in 1..3) { "Row must be 1-3" }
+        require(dto.colNo in 1..4) { "Column must be 1-4" }
+
+        // Check slot is not occupied
+        val existing = fridgeSlotRepo.findByShelfNoAndRowNoAndColNo(dto.shelfNo, dto.rowNo, dto.colNo)
+        require(existing == null) { "Slot ${dto.shelfNo}-${dto.rowNo}-${dto.colNo} is already occupied" }
+
+        val slot = VmaFridgeSlot(
+            id = java.util.UUID.randomUUID().toString(),
+            shelfNo = dto.shelfNo,
+            rowNo = dto.rowNo,
+            colNo = dto.colNo,
+            productType = VmaProductType.valueOf(dto.productType),
+            specNo = dto.specNo,
+            serialNo = dto.serialNo,
+            placedBy = dto.placedBy,
+            placedAt = Instant.now(),
+            createdAt = Instant.now(),
+        )
+        fridgeSlotRepo.save(slot)
+        log.info("Placed product {} (SN: {}) in fridge slot {}-{}-{}", dto.specNo, dto.serialNo, dto.shelfNo, dto.rowNo, dto.colNo)
+        return toFridgeSlotResponse(slot)
+    }
+
+    fun removeFridgeSlot(id: String) {
+        val slot = fridgeSlotRepo.findById(id).orElseThrow { NotFoundException("Fridge slot not found: $id") }
+        fridgeSlotRepo.delete(slot)
+        log.info("Removed product from fridge slot {}-{}-{}", slot.shelfNo, slot.rowNo, slot.colNo)
+    }
+
+    /**
+     * Auto-cleanup: remove product from fridge when it leaves inventory.
+     * Called when OUT_CASE (WIP) or OUT_CN (return to China) transaction is created.
+     */
+    fun clearFridgeSlotBySerial(specNo: String, serialNo: String?) {
+        if (serialNo == null) return
+        val slots = fridgeSlotRepo.findAllBySpecNoAndSerialNo(specNo, serialNo)
+        if (slots.isNotEmpty()) {
+            fridgeSlotRepo.deleteAll(slots)
+            log.info("Auto-cleared {} fridge slot(s) for {} SN:{}", slots.size, specNo, serialNo)
+        }
+    }
+
+    private fun toFridgeSlotResponse(slot: VmaFridgeSlot) = FridgeSlotResponse(
+        id = slot.id,
+        shelfNo = slot.shelfNo,
+        rowNo = slot.rowNo,
+        colNo = slot.colNo,
+        productType = slot.productType.name,
+        specNo = slot.specNo,
+        serialNo = slot.serialNo,
+        placedAt = slot.placedAt,
+        placedBy = slot.placedBy,
+    )
+
+    /**
+     * Returns all P-Valve products eligible for fridge placement.
+     * Eligible statuses: Available, NearExp, Expired, Demo.
+     * Each product includes whether it's already placed in the fridge.
+     */
+    fun getEligibleFridgeProducts(): Map<String, List<FridgeEligibleProduct>> {
+        val today = LocalDate.now()
+        val in30Days = today.plusDays(30)
+        val results = mutableListOf<FridgeEligibleProduct>()
+
+        // Get all fridge slots to mark "already in fridge"
+        val fridgeSerials = fridgeSlotRepo.findAllByOrderByShelfNoAscRowNoAscColNoAsc()
+            .filter { it.serialNo != null }
+            .map { "${it.specNo}|${it.serialNo}" }
+            .toSet()
+
+        // ─── Source 1: On-shelf inventory (Available + NearExp + Expired) ───
+        val allTxns = txnRepo.findAllByProductTypeAndDeletedAtIsNullOrderByDateDesc(VmaProductType.PVALVE)
+        val nonDemoTxns = allTxns.filter {
+            it.action != VmaInventoryAction.MOVE_DEMO && it.action != VmaInventoryAction.RETURN_DEMO
+        }
+        val serialMap = nonDemoTxns.groupBy { "${it.specNo}|${it.serialNo ?: "__none__"}" }
+
+        for ((key, txns) in serialMap) {
+            val parts = key.split("|")
+            val specNo = parts[0]
+            val serialNo = parts.getOrElse(1) { "__none__" }
+            if (serialNo == "__none__") continue  // Skip products without serial number
+
+            var recCn = 0; var outCase = 0; var recCase = 0; var usedCase = 0; var outCn = 0
+            var expDate: LocalDate? = null; var batchNo: String? = null
+
+            for (txn in txns) {
+                when (txn.action) {
+                    VmaInventoryAction.REC_CN -> { recCn += txn.qty; if (expDate == null) { expDate = txn.expDate; batchNo = txn.batchNo } }
+                    VmaInventoryAction.OUT_CASE -> outCase += txn.qty
+                    VmaInventoryAction.REC_CASE -> recCase += txn.qty
+                    VmaInventoryAction.USED_CASE -> usedCase += txn.qty
+                    VmaInventoryAction.OUT_CN -> outCn += txn.qty
+                    else -> {}
+                }
+            }
+
+            val onShelf = maxOf(0, recCn + recCase - outCase - outCn)
+            if (onShelf <= 0) continue
+
+            val status = when {
+                expDate != null && expDate < today -> "EXPIRED"
+                expDate != null && expDate <= in30Days -> "NEAR_EXP"
+                else -> "AVAILABLE"
+            }
+
+            results.add(FridgeEligibleProduct(
+                specNo = specNo,
+                serialNo = serialNo,
+                expDate = expDate?.toString(),
+                batchNo = batchNo,
+                status = status,
+                alreadyInFridge = "$specNo|$serialNo" in fridgeSerials,
+            ))
+        }
+
+        // ─── Source 2: Demo products ───
+        val returnDemoKeys = mutableMapOf<String, Int>()
+        for (txn in allTxns) {
+            if (txn.action != VmaInventoryAction.RETURN_DEMO) continue
+            val dk = "${txn.specNo}|${txn.serialNo ?: ""}"
+            returnDemoKeys[dk] = (returnDemoKeys[dk] ?: 0) + txn.qty
+        }
+
+        val demoTxns = allTxns.filter { it.action == VmaInventoryAction.MOVE_DEMO }
+        val returnBudget = returnDemoKeys.toMutableMap()
+
+        for (tx in demoTxns) {
+            if (tx.serialNo == null) continue
+            val dk = "${tx.specNo}|${tx.serialNo}"
+            val budget = returnBudget[dk] ?: 0
+            if (budget >= tx.qty) { returnBudget[dk] = budget - tx.qty; continue }
+            if (budget > 0) returnBudget[dk] = 0
+
+            results.add(FridgeEligibleProduct(
+                specNo = tx.specNo,
+                serialNo = tx.serialNo!!,
+                expDate = tx.expDate?.toString(),
+                batchNo = tx.batchNo,
+                status = "DEMO",
+                alreadyInFridge = "${tx.specNo}|${tx.serialNo}" in fridgeSerials,
+            ))
+        }
+
+        // Group by specNo for the frontend dropdown
+        return results.groupBy { it.specNo }
     }
 }
