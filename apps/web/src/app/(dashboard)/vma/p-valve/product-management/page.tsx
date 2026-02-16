@@ -1,9 +1,9 @@
 'use client';
-import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { usePValveProducts, useDeliverySystemProducts } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
 import ProductDetailModal from './ProductDetailModal';
 
@@ -35,30 +35,12 @@ export default function ProductManagementPage() {
   const t = useTranslations('vma');
 
   const [subTab, setSubTab] = useState<SubTab>('pvalve');
-  const [pvalveProducts, setPValveProducts] = useState<PValveProduct[]>([]);
-  const [dsProducts, setDsProducts] = useState<DeliverySystemProduct[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalItem, setModalItem] = useState<{ type: 'pvalve'; product: PValveProduct } | { type: 'ds'; product: DeliverySystemProduct } | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [pvRes, dsRes] = await Promise.all([
-        fetch(`${API}/vma/pvalve-products`, { headers: getAuthHeaders(), credentials: 'include' }),
-        fetch(`${API}/vma/delivery-system-products`, { headers: getAuthHeaders(), credentials: 'include' }),
-      ]);
-      if (pvRes.ok) setPValveProducts(await pvRes.json());
-      if (dsRes.ok) setDsProducts(await dsRes.json());
-    } catch (e) {
-      console.error('Failed to fetch products:', e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // React Query: replaces raw fetch + useState + useEffect
+  const { data: pvalveProducts = [], isLoading: pvLoading } = usePValveProducts();
+  const { data: dsProducts = [], isLoading: dsLoading } = useDeliverySystemProducts();
+  const loading = pvLoading || dsLoading;
 
   const subTabs: { key: SubTab; label: string }[] = [
     { key: 'pvalve', label: 'P-Valve' },

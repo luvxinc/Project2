@@ -426,5 +426,15 @@ P3 (不影响用户): 下个工作日处理
 
 ---
 
-*Version: 2.0.0 — Generic Core (expanded: SRE practices)*
+## 9. L3 工具库引用 (按需加载)
+
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| 告警审查 | Guard 工作流 | `workflows/guard.md` | 故障排查 + 事故响应流程 |
+| 代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 日志/指标反模式检查 |
+| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 结构化日志格式规范 |
+
+---
+
+*Version: 2.1.0 — 含 L3 工具引用*
 *Based on: battle-tested enterprise patterns*

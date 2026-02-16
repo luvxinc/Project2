@@ -88,10 +88,11 @@ class VmaClinicalCaseService(
             throw IllegalStateException("Cannot modify a completed case")
 
         if (dto.caseNo != null && dto.caseNo != c.caseNo) {
-            // Check uniqueness
-            val all = caseRepo.findAll()
-            if (all.any { it.caseNo == dto.caseNo && it.caseId != caseId }) {
-                throw ConflictException("Case # \"${dto.caseNo}\" already exists")
+            // Check uniqueness via indexed query instead of loading all cases
+            caseRepo.findByCaseNo(dto.caseNo)?.let { existing ->
+                if (existing.caseId != caseId) {
+                    throw ConflictException("Case # \"${dto.caseNo}\" already exists")
+                }
             }
         }
 
@@ -208,7 +209,7 @@ class VmaClinicalCaseService(
             throw ConflictException("Case \"$caseId\" already exists")
         }
         if (!dto.caseNo.isNullOrBlank()) {
-            if (caseRepo.findAll().any { it.caseNo == dto.caseNo }) {
+            caseRepo.findByCaseNo(dto.caseNo)?.let {
                 throw ConflictException("Case # \"${dto.caseNo}\" already exists")
             }
         }

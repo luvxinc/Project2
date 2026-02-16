@@ -7,6 +7,7 @@ import com.mgmt.modules.vma.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 /**
  * VmaSiteService — 站点 CRUD
@@ -50,6 +51,7 @@ class VmaSiteService(
         dto.state?.let { site.state = it }
         dto.zipCode?.let { site.zipCode = it }
         dto.country?.let { site.country = it }
+        site.updatedAt = Instant.now()
 
         return siteRepo.save(site)
     }

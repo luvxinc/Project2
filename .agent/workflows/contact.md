@@ -24,7 +24,8 @@ PM 启动 (你正处于这一步)
 ```
 [ ] 读 core/skills/project-manager.md §2 — 需求领悟铁律
 [ ] 读 core/skills/requirements.md §Phase 1 — 自动采集 (GATHER)
-[ ] 如果是 MGMT 项目: 读 projects/mgmt/CONTEXT.md — 项目上下文
+[ ] 🔴 加载项目上下文: `ls projects/` → 找到当前项目 → 读 `projects/{project}/CONTEXT.md`
+     (含铁律 R0-R4 + 当前阶段 + 实施方案路由)
 [ ] 完成领悟后: 输出需求文档 → 存 projects/{project}/data/specs/
 [ ] 交给 CTO (chief-engineer.md) 做任务分配
 ```

@@ -59,6 +59,7 @@ class VmaInventoryController(
 
     @PatchMapping("/inventory-transactions/{id}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_INVENTORY_TRANSACTION")
     fun update(@PathVariable id: String, @RequestBody dto: UpdateInventoryTransactionRequest): ResponseEntity<Any> =
         ResponseEntity.ok(invService.update(id, dto))
 

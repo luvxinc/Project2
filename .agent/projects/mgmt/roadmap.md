@@ -1,6 +1,6 @@
 # MGMT ERP — 项目规划路线图
 
-> **Agent 用此文件判断: 当前在哪个阶段, 需要加载哪些菜谱。**
+> **Agent 用此文件判断: 当前在哪个阶段, 需要加载哪些实施方案。**
 > **用户可随时更新阶段状态。**
 
 ---
@@ -27,7 +27,7 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | Apple Design 主题系统 | ✅ |
 | 审计日志四表 | ✅ |
 
-**需要的菜谱**: 无 (已完成)
+**需要的实施方案**: 无 (已完成)
 
 ---
 
@@ -41,7 +41,7 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | Redis 锁定策略 | ✅ |
 | Superuser God Mode | ✅ |
 
-**需要的菜谱**: `recipes/security.md`
+**需要的实施方案**: `playbooks/security.md`
 
 ---
 
@@ -54,13 +54,13 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | macOS dense table UI | ✅ |
 | Legacy MySQL 数据对齐 | ✅ |
 
-**需要的菜谱**: 无 (已完成)
+**需要的实施方案**: 无 (已完成)
 
 ---
 
 ## Phase 6: VMA 模块 🔄 进行中
 
-> **当前活跃阶段 — Agent 进入 VMA 任务时加载 `recipes/vma.md`**
+> **当前活跃阶段 — Agent 进入 VMA 任务时加载 `playbooks/vma.md`**
 
 | 子阶段 | 交付物 | 状态 |
 |--------|--------|------|
@@ -76,17 +76,17 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | 6.10 | VMA 后端拆分 (子模块化) | 📋 待做 |
 | 6.11 | React Query 集成 | 📋 待做 |
 
-### Phase 6 需要加载的菜谱
+### Phase 6 需要加载的实施方案
 
-| 菜谱 | 核心内容 | L1 食材 |
+| 实施方案 | 核心内容 | L1 通用 SOP |
 |------|----------|---------|
-| `recipes/vma.md` | VMA 模块的完整烹饪指南 | backend, frontend, data |
+| `playbooks/vma.md` | VMA 模块的完整实施方案 | backend, frontend, data |
 
 ---
 
 ## Phase 7: V2→V3 迁移 📋 待做
 
-> **Agent 进入迁移任务时加载 `recipes/migration.md`**
+> **Agent 进入迁移任务时加载 `playbooks/migration.md`**
 
 | 子阶段 | 交付物 | 状态 |
 |--------|--------|------|
@@ -99,11 +99,11 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | 7.6 | Logs 模块迁移 | 📋 |
 | 7.7 | API Gateway 流量切换 | 📋 |
 
-### Phase 7 需要加载的菜谱
+### Phase 7 需要加载的实施方案
 
-| 菜谱 | 核心内容 | L1 食材 |
+| 实施方案 | 核心内容 | L1 通用 SOP |
 |------|----------|---------|
-| `recipes/migration.md` | V2→V3 迁移烹饪指南 | backend, data, infrastructure |
+| `playbooks/migration.md` | V2→V3 迁移实施方案 | backend, data, infrastructure |
 
 ### Phase 7 需要查阅的参考
 
@@ -128,12 +128,12 @@ Phase 1-3    Phase 4       Phase 5       Phase 6         Phase 7          Phase 
 | 8.7 | ClickHouse 集成 | 📋 |
 | 8.8 | NestJS 退役 | 📋 |
 
-### Phase 8 需要加载的菜谱
+### Phase 8 需要加载的实施方案
 
-| 菜谱 | L1 食材 |
+| 实施方案 | L1 通用 SOP |
 |------|---------|
-| `recipes/migration.md` | backend, data, infrastructure |
-| `recipes/data-layer.md` | data |
+| `playbooks/migration.md` | backend, data, infrastructure |
+| `playbooks/data-layer.md` | data |
 
 ### Phase 8 需要查阅的参考
 

@@ -14,7 +14,7 @@ license: Apache-2.0
 
 | 文件 | 内容 | 大小 | 何时加载 |
 |------|------|------|---------|
-| `01-architecture-examples.md` | 插件架构详解 + plugin.json + Productivity 深度剖析 + 11 插件速查 | ~6KB | 创建插件/理解架构时 |
+| `01-architecture-examples.md` | 插件架构详解 + plugin.json + Productivity 深度剖析 + 11 插件速查 | ~4KB | 创建插件/理解架构时 |
 
 ## 快速参考
 

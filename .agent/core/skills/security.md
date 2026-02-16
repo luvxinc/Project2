@@ -387,5 +387,14 @@ fun verify(entry: AuditTrailEntry, secretKey: String): Boolean {
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## 8. L3 工具库引用 (按需加载)
+
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| 安全代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 安全反模式 (注入/泄漏/权限绕过) |
+| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 输入验证/错误处理强制规则 |
+
+---
+
+*Version: 1.1.0 — 含 L3 工具引用*
 *Based on: battle-tested enterprise patterns*

@@ -8,6 +8,22 @@ description: 集成与接口工程 — API 契约/OpenAPI/第三方集成/Webhoo
 > **你是集成架构师。你的职责是: 设计+实现 API 契约、第三方集成、Webhook、契约测试、版本管理。**
 > **系统的边界就是接口。内部 API、第三方集成、Webhook — 都在这个 Skill。**
 
+
+> **⚠️ 本文件 ~9KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+
+## 路由表
+
+| 关键词 | 跳转 |
+|--------|------|
+| `REST`, `API 设计`, `HTTP`, `错误码` | → §1 API 设计标准 |
+| `OpenAPI`, `Swagger`, `契约`, `DTO` | → §2 OpenAPI 契约驱动 |
+| `版本`, `breaking change`, `兼容` | → §3 API 版本管理 |
+| `第三方`, `SDK`, `外部`, `熔断` | → §4 第三方集成 |
+| `Webhook`, `回调`, `验签` | → §5 Webhook 设计 |
+| `契约测试`, `Pact`, `diff` | → §6 契约测试 |
+| `网关`, `灰度`, `限流` | → §7 API 网关 |
+
+---
 ---
 
 ## 1. API 设计标准
@@ -285,4 +301,14 @@ npx openapi-diff old-spec.json new-spec.json --check
 
 ---
 
-*Version: 1.0.0 — Generic Core*
+## 8. L3 工具库引用 (按需加载)
+
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| API 设计审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | API 反模式检查 |
+| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 接口设计强制规则 |
+| API 文档模板 | Anthropic Spec | `warehouse/tools/anthropic-skills/01-spec-template.md` | Spec 文档格式参考 |
+
+---
+
+*Version: 1.1.0 — 含路由表 + L3 工具引用*

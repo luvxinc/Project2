@@ -33,7 +33,7 @@ class VmaInventoryTransactionService(
     private val pacific = ZoneId.of("America/Los_Angeles")
 
     private fun parsePacificDate(dateStr: String): LocalDate =
-        LocalDate.parse(dateStr)
+        LocalDate.parse(dateStr)  // Date strings from frontend are already in Pacific locale (R1 compliance)
 
     // ═══════════ CRUD ═══════════
 
@@ -318,9 +318,11 @@ class VmaInventoryTransactionService(
         val today = LocalDate.now()
         val rows = mutableListOf<Map<String, Any?>>()
 
+        // Single load — partition in memory (was 2x findAll before P-1 fix)
+        val allTxns = txnRepo.findAllByDeletedAtIsNullOrderByDateDesc()
+
         // Source 1: Explicit MOVE_DEMO transactions
-        val demoTxns = txnRepo.findAllByDeletedAtIsNullOrderByDateDesc()
-            .filter { it.action == VmaInventoryAction.MOVE_DEMO }
+        val demoTxns = allTxns.filter { it.action == VmaInventoryAction.MOVE_DEMO }
 
         for (tx in demoTxns) {
             val status = when {
@@ -339,8 +341,7 @@ class VmaInventoryTransactionService(
             ))
         }
 
-        // Source 2: Expired on-shelf (in-memory aggregation)
-        val allTxns = txnRepo.findAllByDeletedAtIsNullOrderByDateDesc()
+        // Source 2: Expired on-shelf (reuse same allTxns)
         val availMult = mapOf(
             VmaInventoryAction.REC_CN to 1, VmaInventoryAction.REC_CASE to 1,
             VmaInventoryAction.OUT_CASE to -1, VmaInventoryAction.OUT_CN to -1,

@@ -14,7 +14,7 @@ license: Apache-2.0 (核心) / Source-Available (文档类)
 
 | 文件 | 内容 | 大小 | 何时加载 |
 |------|------|------|---------|
-| `01-spec-template.md` | 完整规范 + YAML 示例 + 企业级模板 + 与我们的对比 | ~5KB | 创建新 Skill 时 |
+| `01-spec-template.md` | 完整规范 + YAML 示例 + 企业级模板 + 与我们的对比 | ~3KB | 创建新 Skill 时 |
 
 ## 快速参考
 

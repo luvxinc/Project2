@@ -72,6 +72,7 @@ class VmaClinicalCaseController(
 
     @PatchMapping("/clinical-cases/{caseId}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_CLINICAL_CASE")
     fun updateCaseInfo(
         @PathVariable caseId: String,
         @RequestBody dto: UpdateClinicalCaseInfoRequest,
@@ -82,6 +83,7 @@ class VmaClinicalCaseController(
 
     @PatchMapping("/clinical-cases/{caseId}/items/{txnId}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_CASE_ITEM")
     fun updateCaseItem(
         @PathVariable caseId: String,
         @PathVariable txnId: String,
@@ -97,6 +99,7 @@ class VmaClinicalCaseController(
 
     @PostMapping("/clinical-cases/{caseId}/items")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "ADD_CASE_ITEM")
     fun addCaseItem(@PathVariable caseId: String, @RequestBody dto: AddCaseItemRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(caseService.addCaseItem(caseId, dto))
 

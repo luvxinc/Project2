@@ -8,6 +8,22 @@ description: 平台工程 — 脚手架/代码生成/CLI工具/Feature Flag/技�
 > **你是平台工程师。你的职责是: 构建+维护脚手架、代码生成、Feature Flag、技术债治理体系。**
 > **大厂的核心竞争力不在语言, 在于内部平台效率。本 Skill 覆盖提升全员效率的工具和体系。**
 
+
+> **⚠️ 本文件 ~7KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+
+## 路由表
+
+| 关键词 | 跳转 |
+|--------|------|
+| `脚手架`, `模板`, `scaffold` | → §1 脚手架与模板 |
+| `代码生成`, `OpenAPI`, `Entity` | → §2 代码生成 |
+| `Feature Flag`, `开关`, `灰度` | → §3 Feature Flag |
+| `技术债`, `重构`, `清理` | → §4 技术债治理 |
+| `dev.sh`, `效率`, `Git Hook` | → §5 开发者效率工具 |
+| `文档`, `CHANGELOG`, `Swagger` | → §6 内部文档平台 |
+| `目录重组`, `重命名`, `迁移` | → §7 目录重组检查清单 |
+
+---
 ---
 
 ## 1. 脚手架与模板
@@ -53,14 +69,17 @@ app/(dashboard)/purchase-orders/
 
 ### 1.3 模板维护
 
-| 模板类型 | 存储位置 | 维护者 |
-|----------|----------|--------|
-| 后端模块 (简化版) | `warehouse/tools/templates/backend-simple/` | 后端架构师 |
-| 后端模块 (DDD 版) | `warehouse/tools/templates/backend-ddd/` | 后端架构师 |
-| 前端列表页 | `warehouse/tools/templates/frontend-list/` | 前端架构师 |
-| 前端表单页 | `warehouse/tools/templates/frontend-form/` | 前端架构师 |
-| Flyway 迁移 | `warehouse/tools/templates/flyway/` | 数据架构师 |
-| 测试文件 | `warehouse/tools/templates/test/` | QA |
+> **⚠️ 以下模板为规划中。首次需要时由对应工程师创建, 创建后更新路径。**
+
+| 模板类型 | 规划位置 | 维护者 | 状态 |
+|----------|----------|--------|------|
+| 后端模块 (简化版) | `warehouse/templates/backend-simple/` | 后端架构师 | 📋 待创建 |
+| 后端模块 (DDD 版) | `warehouse/templates/backend-ddd/` | 后端架构师 | 📋 待创建 |
+| 前端列表页 | `warehouse/templates/frontend-list/` | 前端架构师 | 📋 待创建 |
+| 前端表单页 | `warehouse/templates/frontend-form/` | 前端架构师 | 📋 待创建 |
+| Flyway 迁移 | `warehouse/templates/flyway/` | 数据架构师 | 📋 待创建 |
+| 测试文件 | `warehouse/templates/test/` | QA | 📋 待创建 |
+
 
 ---
 
@@ -276,5 +295,17 @@ npx lint-staged            # 前端 lint
 
 ---
 
-*Version: 1.1.0 — Generic Core (SV-001 校准)*
+## 8. L3 工具库引用 (按需加载)
+
+| 场景 | 工具 | 路径 | 说明 |
+|------|------|------|------|
+| 创建新 Skill | Anthropic Skills | `warehouse/tools/anthropic-skills/01-spec-template.md` | Skill 文件规范 |
+| Skill 自动生成 | Skill Seekers | `warehouse/tools/skill-seekers/01-commands-modules.md` | 文档→Skill 转换 |
+| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 文件组织/命名规范 |
+| 记忆架构 | Claude-Mem | `warehouse/tools/claude-mem/01-architecture.md` | 上下文管理参考 |
+| 插件架构 | Knowledge Work Plugins | `warehouse/tools/knowledge-work-plugins/01-architecture-examples.md` | Cowork 插件架构 + 示例 |
+
+---
+
+*Version: 1.2.0 — 含路由表 + L3 工具引用*
 

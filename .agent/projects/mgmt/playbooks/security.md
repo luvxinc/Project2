@@ -1,6 +1,6 @@
-# 菜谱: 安全等级系统
+# 实施方案: 安全等级系统
 
-> **L1 security.md → MGMT L1-L4 安全等级的烹饪指南**
+> **L1 security.md → MGMT L1-L4 安全等级的项目实施指南**
 
 ---
 
@@ -14,7 +14,7 @@ Bearer Token   Token+密码    Token+安全码    Token+系统码
 GET 请求       POST/PUT/DEL  备份/批量/迁移   清库/权限重配
 ```
 
-### 用 L1 食材的方式
+### 用 L1 通用 SOP的方式
 
 | L1 security.md 泛化 | MGMT 具体用法 |
 |---------------------|-------------|

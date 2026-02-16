@@ -1,8 +1,9 @@
 'use client';
-import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useDemoInventory, useActiveOperators, useSpecOptions, useInventoryDetail, useCreateTransaction, vmaKeys } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
 
 // 9 conditional inspection items — indices match receiving checklist
@@ -102,10 +103,14 @@ function fmtDate(d: string | null | undefined): string {
 export default function DemoInventoryPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const queryClient = useQueryClient();
 
-  // Demo inventory data
-  const [rows, setRows] = useState<DemoRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query: replaces raw fetch + useState + useEffect for main data
+  const { data: rows = [], isLoading: loading } = useDemoInventory();
+  const { data: operatorOptions = [] } = useActiveOperators();
+  const { data: pvSpecs = [] } = useSpecOptions('PVALVE');
+  const { data: dsSpecs = [] } = useSpecOptions('DELIVERY_SYSTEM');
+  const createTxn = useCreateTransaction();
 
   // Legend panel
   const [showLegend, setShowLegend] = useState(false);
@@ -116,59 +121,28 @@ export default function DemoInventoryPage() {
   const [demoOperator, setDemoOperator] = useState('');
   const [demoSubmitting, setDemoSubmitting] = useState(false);
   const [demoLines, setDemoLines] = useState<DemoLine[]>([emptyDemoLine()]);
-  const [operatorOptions, setOperatorOptions] = useState<string[]>([]);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const r = await fetch(`${API}/vma/inventory-transactions/demo`, { headers: getAuthHeaders() });
-      if (r.ok) setRows(await r.json());
-    } catch { /* */ }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  // Fetch operators once
-  useEffect(() => {
-    fetch(`${API}/vma/inventory-transactions/operators`, { headers: getAuthHeaders() })
-      .then(r => r.ok ? r.json() : [])
-      .then(setOperatorOptions)
-      .catch(() => {});
-  }, []);
 
   // ===== Modal handlers =====
-  const openModal = async () => {
+  const openModal = () => {
     setDemoDate(new Date().toISOString().split('T')[0]);
     setDemoOperator('');
-    const [pvR, dsR] = await Promise.all([
-      fetch(`${API}/vma/inventory-transactions/spec-options?productType=PVALVE`, { headers: getAuthHeaders() }),
-      fetch(`${API}/vma/inventory-transactions/spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() }),
-    ]);
-    const pvSpecs: SpecOption[] = pvR.ok ? await pvR.json() : [];
-    const dsSpecs: SpecOption[] = dsR.ok ? await dsR.json() : [];
-    setDemoLines([{ ...emptyDemoLine(), _specOptions: pvSpecs }]);
-    (window as any).__demoSpecCache = { PVALVE: pvSpecs, DELIVERY_SYSTEM: dsSpecs };
+    // pvSpecs & dsSpecs already loaded via React Query — no need to fetch
+    setDemoLines([{ ...emptyDemoLine(), _specOptions: pvSpecs as SpecOption[] }]);
     setModalOpen(true);
   };
 
   const handleProductTypeChange = (idx: number, pt: 'PVALVE' | 'DELIVERY_SYSTEM') => {
-    const specs = (window as any).__demoSpecCache?.[pt] || [];
-    setDemoLines(prev => prev.map((l, i) => i === idx ? { ...emptyDemoLine(), productType: pt, _specOptions: specs } : l));
+    const specs = pt === 'PVALVE' ? pvSpecs : dsSpecs;
+    setDemoLines(prev => prev.map((l, i) => i === idx ? { ...emptyDemoLine(), productType: pt, _specOptions: specs as SpecOption[] } : l));
   };
 
   const handleSpecChange = async (idx: number, specNo: string, productType: 'PVALVE' | 'DELIVERY_SYSTEM') => {
     setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, specNo, serialNo: '', batchNo: '', recDate: '', expDate: '', qty: 1, maxQty: 1, _selectedRowIdx: -1, _loadingRows: true, _availableRows: [] } : l));
     if (!specNo) return;
     try {
-      const res = await fetch(`${API}/vma/inventory-transactions/detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`, { headers: getAuthHeaders() });
-      if (res.ok) {
-        const data: InventoryDetail = await res.json();
-        const avail = [...data.available, ...data.nearExp, ...data.expired];
-        setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, _availableRows: avail, _loadingRows: false } : l));
-      } else {
-        setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, _loadingRows: false } : l));
-      }
+      const data: InventoryDetail = await (await import('@/lib/hooks/use-vma-queries')).vmaFetch(`/vma/inventory-transactions/detail?specNo=${encodeURIComponent(specNo)}&productType=${productType}`);
+      const avail = [...data.available, ...data.nearExp, ...data.expired];
+      setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, _availableRows: avail, _loadingRows: false } : l));
     } catch {
       setDemoLines(prev => prev.map((l, i) => i === idx ? { ...l, _loadingRows: false } : l));
     }
@@ -186,8 +160,7 @@ export default function DemoInventoryPage() {
   };
 
   const addLine = () => {
-    const specs = (window as any).__demoSpecCache?.PVALVE || [];
-    setDemoLines(prev => [...prev, { ...emptyDemoLine(), _specOptions: specs }]);
+    setDemoLines(prev => [...prev, { ...emptyDemoLine(), _specOptions: pvSpecs as SpecOption[] }]);
   };
 
   const removeLine = (idx: number) => {
@@ -200,24 +173,21 @@ export default function DemoInventoryPage() {
     setDemoSubmitting(true);
     try {
       for (const line of validLines) {
-        await fetch(`${API}/vma/inventory-transactions`, {
-          method: 'POST', headers: getAuthHeaders(),
-          body: JSON.stringify({
-            date: demoDate,
-            action: 'MOVE_DEMO',
-            productType: line.productType,
-            specNo: line.specNo,
-            serialNo: line.serialNo || undefined,
-            qty: line.qty,
-            batchNo: line.batchNo || undefined,
-            expDate: line.expDate || undefined,
-            operator: demoOperator,
-            notes: line.note || 'Manual Move to Demo',
-          }),
+        await createTxn.mutateAsync({
+          date: demoDate,
+          action: 'MOVE_DEMO',
+          productType: line.productType,
+          specNo: line.specNo,
+          serialNo: line.serialNo || undefined,
+          qty: line.qty,
+          batchNo: line.batchNo || undefined,
+          expDate: line.expDate || undefined,
+          operator: demoOperator,
+          notes: line.note || 'Manual Move to Demo',
         });
       }
       setModalOpen(false);
-      load();
+      // Cache auto-invalidated by createTxn onSuccess
     } catch (e) { console.error(e); }
     setDemoSubmitting(false);
   };
@@ -260,7 +230,7 @@ export default function DemoInventoryPage() {
               style={inputSx}>
               {showLegend ? 'Hide' : 'Show'} Legend
             </button>
-            <button onClick={load}
+            <button onClick={() => queryClient.invalidateQueries({ queryKey: vmaKeys.inventory.all })}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium border hover:opacity-80 transition"
               style={inputSx}>
               Refresh

@@ -1,9 +1,10 @@
 'use client';
-import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useInventoryTransactions, useSpecOptions, useCreateTransaction, vmaKeys, vmaFetch } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
 
 const ACTION_META: Record<string, { label: string }> = {
@@ -27,36 +28,20 @@ export default function DeliverySystemPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const t = useTranslations('vma');
+  const queryClient = useQueryClient();
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query: replaces raw fetch + useState + useEffect
+  const { data: transactions = [], isLoading: loading } = useInventoryTransactions('DELIVERY_SYSTEM');
+  const { data: specOptions = [] } = useSpecOptions('DELIVERY_SYSTEM');
+  const createTxn = useCreateTransaction();
+
   const [showForm, setShowForm] = useState<string | null>(null);
-  const [specOptions, setSpecOptions] = useState<SpecOption[]>([]);
-
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     batchNo: '', specNo: '', serialNo: '', qty: '1',
     expDate: '', inspection: '', notes: '', caseId: '',
     operator: '', location: '',
   });
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/vma/inventory-transactions?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() });
-      if (res.ok) setTransactions(await res.json());
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }, []);
-
-  const fetchSpecOptions = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=DELIVERY_SYSTEM`, { headers: getAuthHeaders() });
-      if (res.ok) setSpecOptions(await res.json());
-    } catch (e) { console.error(e); }
-  }, []);
-
-  useEffect(() => { fetchData(); fetchSpecOptions(); }, [fetchData, fetchSpecOptions]);
 
   const resetForm = () => {
     setFormData({ date: new Date().toISOString().split('T')[0], batchNo: '', specNo: '', serialNo: '', qty: '1', expDate: '', inspection: '', notes: '', caseId: '', operator: '', location: '' });
@@ -75,15 +60,15 @@ export default function DeliverySystemPage() {
       if (formData.caseId) body.caseId = formData.caseId;
       if (formData.operator) body.operator = formData.operator;
       if (formData.location) body.location = formData.location;
-      const res = await fetch(`${API}/vma/inventory-transactions`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) });
-      if (res.ok) { resetForm(); fetchData(); }
+      await createTxn.mutateAsync(body);
+      resetForm();
     } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`${API}/vma/inventory-transactions/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-      if (res.ok) fetchData();
+      await vmaFetch(`/vma/inventory-transactions/${id}`, { method: 'DELETE' });
+      queryClient.invalidateQueries({ queryKey: vmaKeys.inventory.all });
     } catch (e) { console.error(e); }
   };
 

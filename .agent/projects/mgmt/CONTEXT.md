@@ -1,7 +1,7 @@
 # MGMT ERP — 项目上下文 (L4 总索引)
 
 > **Agent 进入 MGMT 项目时第一个读的文件。**
-> **告诉 Agent: 这是什么项目, 当前在做什么, 该读哪些菜谱。**
+> **告诉 Agent: 这是什么项目, 当前在做什么, 该读哪些实施方案。**
 
 ---
 
@@ -25,17 +25,28 @@ V1 (Django+MySQL) → V2 (NestJS+PostgreSQL, **当前生产**) → V3 (Kotlin/Sp
 
 ---
 
-## 3. 菜谱目录
+## 3. 实施方案目录
 
-Agent 根据当前任务类型, 加载对应菜谱:
+Agent 根据当前任务类型, 加载对应实施方案:
 
-| 你在做什么 | 加载菜谱 | 引用的 L1 食材 |
+| 你在做什么 | 加载实施方案 | 引用的 L1 通用 SOP |
 |------------|----------|----------------|
-| VMA 模块开发 (员工/培训/库存/临床) | [`recipes/vma.md`](recipes/vma.md) | backend, frontend, data |
-| V2→V3 迁移 (NestJS→Spring Boot) | [`recipes/migration.md`](recipes/migration.md) | backend, data, infrastructure |
-| 安全等级 / 权限 / 审计 | [`recipes/security.md`](recipes/security.md) | security, backend |
+| VMA 模块开发 (员工/培训/库存/临床) | [`playbooks/vma.md`](playbooks/vma.md) | backend, frontend, data |
+| V2→V3 迁移 (NestJS→Spring Boot) | [`playbooks/migration.md`](playbooks/migration.md) | backend, data, infrastructure |
+| 安全等级 / 权限 / 审计 | [`playbooks/security.md`](playbooks/security.md) | security, backend |
 | UI/Hub 页面 / 主题 | 直接用 L1: `core/workflows/ui.md` | frontend |
 | 数据库 / FIFO / 成本计算 | 直接用 L1: `core/skills/data.md` | data |
+
+### L3 工具库快速入口
+
+| 场景 | L3 工具 |
+|------|--------|
+| Agent 架构/审查清单 | `warehouse/tools/everything-claude-code/` (ECC v1.5.0) |
+| UI 设计系统生成 | `warehouse/tools/ui-ux-pro-max/` (67 风格 + 96 配色) |
+| 动画开发 | `warehouse/tools/animejs/` (v4.0.0 API) |
+| 记忆架构参考 | `warehouse/tools/claude-mem/` (v10.0.7 上下文工程) |
+| 文档→Skill 生成 | `warehouse/tools/skill-seekers/` (v3.0.0 RAG+AI) |
+| Skill/插件规范 | `warehouse/tools/anthropic-skills/` + `knowledge-work-plugins/` |
 
 ---
 
@@ -91,4 +102,4 @@ Agent 根据当前任务类型, 加载对应菜谱:
 
 ---
 
-*MGMT Project Context v2.0 — 2026-02-11*
+*MGMT Project Context v2.1 — 2026-02-15 (审计校准, +L3工具入口)*

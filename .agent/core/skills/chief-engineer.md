@@ -67,22 +67,20 @@ PM 交来的文档必须包含:
 | **依赖排序** | 有依赖的任务按顺序, 无依赖的并行 |
 | **数据先行** | Schema/迁移永远排第一位 |
 | **接口在前** | DTO/API 契约要在实现之前定义 |
+| **并行判定** | API 契约已定义 → 前后端可并行; 前端依赖后端新 API → 必须串行 |
 
-### 3.2 分配矩阵
+### 3.2 域路由分配
 
-| 需求类型 | 主工程师 | 协助 | 参考 SOP |
-|----------|----------|------|----------|
-| 数据库变更 | 数据架构师 | — | data.md |
-| 后端模块/API | 后端架构师 | 数据架构师 | backend.md |
-| 前端页面/组件 | 前端架构师 | — | frontend.md |
-| 全栈 (前+后+数据) | 后端主导 | 前端 + 数据 | backend.md + frontend.md |
-| 安全/权限 | 安全架构师 | 后端 | security.md |
-| 性能问题 | 性能工程师 | 涉及方 | performance.md |
-| 部署/基建 | SRE/基建 | — | infrastructure.md |
-| 监控/告警/SRE | 可观测工程师 | SRE | observability.md |
-| 消息/异步/事件流 | 消息架构师 | 后端 + 数据 | messaging.md |
-| API 集成/第三方/Webhook | 集成架构师 | 后端 + 安全 | integration.md |
-| 脚手架/代码生成/技术债 | 平台工程师 | 全员 | platform.md |
+> **CTO 不直接查 10 个工程师。先按域路由, 再由域索引定位具体工程师。**
+
+| PM 标注的域 | 加载域索引 | 典型场景 |
+|------------|-----------|---------|
+| 产品工程 | `domains/product.md` | 前端页面/组件/主题/i18n/动画 |
+| 服务工程 | `domains/service.md` | 后端模块/API/数据库/安全/消息 |
+| 平台工程 | `domains/platform.md` | 部署/监控/性能/脚手架/技术债 |
+| 多域 | 按需加载多个域索引 | 全栈任务 (产品+服务) |
+
+> **域索引内含:** 工程师索引表 + 域内协调规则 + 域级 L3 工具推荐
 
 ### 3.3 任务分配单
 
@@ -166,22 +164,42 @@ PM 交来的文档必须包含:
 [ ] 性能没有明显退化
 ```
 
-### 5.2 不通过时 (精确驳回格式)
+### 5.2 置信度过滤 (ECC Confidence-Based Filtering)
+
+> 总工审查时只报告 **>80% 确信是真问题** 的发现:
+
+| 动作 | 条件 |
+|------|------|
+| **报告** | >80% 确信是真正的 bug/安全/数据风险 |
+| **跳过** | 纯风格偏好 (除非违反 Rules 层) |
+| **跳过** | 未变更代码中的问题 (除非是 CRITICAL 安全) |
+| **合并** | 同类问题 ("5 个函数缺错误处理" 而非 5 条) |
+| **优先** | 可能导致 bug / 安全漏洞 / 数据丢失 的问题 |
+
+### 5.3 审批判定 (ECC Approval Criteria)
+
+| 结果 | 条件 | 行为 |
+|------|------|------|
+| **Approve** ✅ | 零 CRITICAL, 零 HIGH | 打包审计包 → 交 QA |
+| **Warning** ⚠️ | 仅 HIGH (无 CRITICAL) | 总工判断: 放行交 QA 或发回 REWORK |
+| **Block** 🔴 | 有 CRITICAL 问题 | 必须修复, 发回 REWORK |
+
+### 5.4 不通过时 (精确驳回格式)
 
 ```
 发现问题 → 定位到哪个工程师的产出 → 精确驳回
 驳回必须包含:
+  - 严重级: CRITICAL / HIGH / MEDIUM
   - 具体文件和行号
   - 预期行为 vs 实际行为
   - 重现步骤 (如有)
 
-模板:
-  ## ❌ 驳回说明
-  文件: src/modules/vma/controller/EmployeeController.kt:45
-  预期: GET /api/v1/vma/employees 返回员工列表含 department
-  实际: 返回的 DTO 缺少 department 字段
-  影响: 前端 EmployeeTable.tsx 显示部门列为空
-  修复方向: EmployeeResponse DTO 加 department 字段
+模板 (ECC Review Output):
+  ## [FILE_PATH]
+  ### 🔴 CRITICAL: [Issue Title]
+  **Line**: src/modules/vma/controller/EmployeeController.kt:45
+  **Issue**: GET /api/v1/vma/employees 返回的 DTO 缺少 department 字段
+  **Fix**: EmployeeResponse DTO 加 department 字段
 ```
 
 ---
@@ -205,6 +223,8 @@ PM 交来的文档必须包含:
 projects/{project}/data/progress/engineering-status.md
 ```
 
+> **目录规范: `project-structure.md` §3.5.2**
+
 内容:
 ```markdown
 ## 工程状态: {项目名}
@@ -224,17 +244,30 @@ projects/{project}/data/progress/engineering-status.md
 
 ---
 
+## 9. 标准交接格式 (引用)
+
+> **以下模板的完整定义在 `workflows/build.md`, 本节仅做索引。**
+
+| 交接对 | 格式定义位置 | 内容概要 |
+|--------|-------------|----------|
+| PM → CTO | `build.md` §1 | 需求交接包: Spec + 确认记录 + 分类 + 风险 |
+| CTO → 工程师 | `build.md` §2 | 任务工单: 依赖 + SOP + 验收标准 |
+| 工程师 → CTO | `build.md` §3 | 完工报告: 变更 + 影响分析 + 自测 |
+| CTO → QA | `build.md` §4 | 审计包: 验证结果 + 变更总览 |
+| 驳回任何方 | `build.md` §7 | 返工工单: 驳回项 + 分配 + 追踪 |
+
 ---
 
-## 8. L3 工具库引用 (按需加载)
+## 10. L3 工具库引用 (按需加载)
 
 | 场景 | 推荐加载 | 文件路径 | 作用 |
 |------|---------|---------|------|
 | 任务分解规划 | ECC: Planner | `warehouse/tools/everything-claude-code/01-agents-review.md` §2 | 计划格式模板 + 阶段拆分最佳实践 |
 | 整合验证 | ECC: Code Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | CRITICAL→LOW 审查清单 |
 | 架构决策 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 强制规则: 不可变性/输入验证/文件组织 |
+| 🔴 交付前自检 | Rules 层 | `core/rules/common.md` | **必查** — 6 阶段验证循环 + 跨文件影响分析 |
 
 ---
 
-*Version: 2.0.0 — 强化版 (含具体命令 + 影响分析 + 精确驳回 + 工具引用)*
+*Version: 2.1.0 — 强化版 (含标准交接索引 + L3 重组)*
 *Updated: 2026-02-12*

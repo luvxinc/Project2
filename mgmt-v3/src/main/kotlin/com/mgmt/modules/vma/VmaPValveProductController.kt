@@ -49,6 +49,7 @@ class VmaPValveProductController(
 
     @PatchMapping("/pvalve-products/{id}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_PVALVE_PRODUCT")
     fun updatePValveProduct(@PathVariable id: String, @RequestBody dto: UpdatePValveProductRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updatePValveProduct(id, dto))
 
@@ -73,6 +74,7 @@ class VmaPValveProductController(
 
     @PatchMapping("/delivery-system-products/{id}")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_DS_PRODUCT")
     fun updateDeliverySystemProduct(@PathVariable id: String, @RequestBody dto: UpdateDeliverySystemProductRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updateDeliverySystemProduct(id, dto))
 
@@ -91,6 +93,7 @@ class VmaPValveProductController(
 
     @PatchMapping("/fit-relationship")
     @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "UPDATE_FIT_RELATIONSHIP")
     fun updateFitRelationship(@RequestBody dto: UpdateFitRelationshipRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updateFitRelationship(dto))
 }
