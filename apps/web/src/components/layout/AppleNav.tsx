@@ -557,7 +557,7 @@ export function AppleNav({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
       )}
 
       {/* Animation */}
-      <style jsx>{`
+      <style>{`
         @keyframes slideDown {
           from {
             opacity: 0;

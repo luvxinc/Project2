@@ -21,8 +21,7 @@ interface Department {
   duties: string;
   sopTrainingReq: string | null;
   isActive: boolean;
-  _count?: { employees: number; employeeAssignments: number };
-  employees: number;
+  employeeCount?: number;
 }
 
 interface SopItem {
@@ -217,7 +216,7 @@ function DeptGroupCarousel({
         <div className="flex-shrink-0 w-[max(24px,calc((100vw-1200px)/2))]" />
       </div>
 
-      <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`div::-webkit-scrollbar { display: none; }`}</style>
     </div>
   );
 }
@@ -248,7 +247,7 @@ function DutyCard({
   onSopReq: () => void;
   onViewEmployees: () => void;
 }) {
-  const empCount = dept._count?.employeeAssignments || 0;
+  const empCount = dept.employeeCount || 0;
   const canDelete = empCount === 0;
 
   return (
@@ -663,7 +662,7 @@ export default function DutiesPage() {
       )}
 
       {/* Keyframe animation */}
-      <style jsx global>{`
+      <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }

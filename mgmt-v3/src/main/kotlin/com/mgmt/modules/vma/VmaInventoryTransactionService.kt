@@ -16,7 +16,7 @@ import java.util.UUID
  *
  * V2 parity: inventory-transaction.service.ts (505 lines)
  *
- * Available = REC_CN + REC_CASE - OUT_CASE - OUT_CN - MOVE_DEMO
+ * Available = REC_CN + REC_CASE - OUT_CASE - OUT_CN - MOVE_DEMO + RETURN_DEMO
  * WIP       = OUT_CASE - REC_CASE - USED_CASE
  */
 @Service
@@ -167,18 +167,19 @@ class VmaInventoryTransactionService(
             VmaInventoryAction.REC_CN to 1, VmaInventoryAction.REC_CASE to 1,
             VmaInventoryAction.OUT_CASE to -1, VmaInventoryAction.OUT_CN to -1,
             VmaInventoryAction.MOVE_DEMO to -1, VmaInventoryAction.USED_CASE to 0,
+            VmaInventoryAction.RETURN_DEMO to 1,
         )
         val wipMult = mapOf(
             VmaInventoryAction.OUT_CASE to 1, VmaInventoryAction.REC_CASE to -1,
             VmaInventoryAction.USED_CASE to -1,
             VmaInventoryAction.REC_CN to 0, VmaInventoryAction.OUT_CN to 0,
-            VmaInventoryAction.MOVE_DEMO to 0,
+            VmaInventoryAction.MOVE_DEMO to 0, VmaInventoryAction.RETURN_DEMO to 0,
         )
 
         val today = LocalDate.now()
         val in30Days = today.plusDays(30)
 
-        data class Entry(var available: Int = 0, var wip: Int = 0, var nearExp: Int = 0, var expired: Int = 0)
+        data class Entry(var available: Int = 0, var wip: Int = 0, var nearExp: Int = 0, var expired: Int = 0, var returned: Int = 0)
         val specMap = mutableMapOf<String, Entry>()
 
         // Pass 1: totals per (specNo, action)
@@ -189,13 +190,14 @@ class VmaInventoryTransactionService(
             val totalQty = group.sumOf { it.qty }
             entry.available += totalQty * (availMult[action] ?: 0)
             entry.wip += totalQty * (wipMult[action] ?: 0)
+            if (action == VmaInventoryAction.OUT_CN) entry.returned += totalQty
         }
 
         // Pass 2: expiry tracking
         val shelfActions = setOf(
             VmaInventoryAction.REC_CN, VmaInventoryAction.REC_CASE,
             VmaInventoryAction.OUT_CASE, VmaInventoryAction.OUT_CN,
-            VmaInventoryAction.MOVE_DEMO,
+            VmaInventoryAction.MOVE_DEMO, VmaInventoryAction.RETURN_DEMO,
         )
         val expMap = mutableMapOf<String, Int>()  // "specNo|expDate" → net qty
         for (txn in txns) {
@@ -226,6 +228,7 @@ class VmaInventoryTransactionService(
                     "wip" to maxOf(0, data.wip),
                     "approachingExp" to maxOf(0, data.nearExp),
                     "expired" to maxOf(0, data.expired),
+                    "returned" to data.returned,
                 )
             }
     }
@@ -235,7 +238,7 @@ class VmaInventoryTransactionService(
     fun getInventoryDetail(specNo: String, productType: String): Map<String, List<InventoryDetailRow>> {
         val pt = VmaProductType.valueOf(productType)
         val txns = txnRepo.findAllBySpecNoAndProductTypeAndDeletedAtIsNull(specNo, pt)
-            .filter { it.action != VmaInventoryAction.MOVE_DEMO }
+            .filter { it.action != VmaInventoryAction.MOVE_DEMO && it.action != VmaInventoryAction.RETURN_DEMO }
 
         val today = LocalDate.now()
         val in30Days = today.plusDays(30)
@@ -312,6 +315,82 @@ class VmaInventoryTransactionService(
         )
     }
 
+    // ═══════════ Returnable Inventory (for Return to China) ═══════════
+
+    /**
+     * Returns items that can be returned to China, grouped by serialNo.
+     * Includes: Available + NearExp + Expired + Demo (all types)
+     * Excludes: WIP (items currently out for case)
+     */
+    fun getReturnableInventory(productType: String, specNo: String): List<Map<String, Any?>> {
+        val pt = VmaProductType.valueOf(productType)
+        val allTxns = txnRepo.findAllBySpecNoAndProductTypeAndDeletedAtIsNull(specNo, pt)
+        val today = LocalDate.now()
+
+        // Group by serialNo
+        val serialMap = allTxns.groupBy { it.serialNo ?: "__no_serial__" }
+        val result = mutableListOf<Map<String, Any?>>()
+
+        for ((serialKey, serialTxns) in serialMap) {
+            var recCn = 0; var outCase = 0; var recCase = 0; var usedCase = 0
+            var outCn = 0; var moveDemo = 0; var returnDemo = 0
+            var recDate: LocalDate? = null; var batchNo = ""; var expDate: LocalDate? = null
+
+            for (txn in serialTxns) {
+                when (txn.action) {
+                    VmaInventoryAction.REC_CN -> {
+                        recCn += txn.qty
+                        if (recDate == null || txn.date < recDate) {
+                            recDate = txn.date; batchNo = txn.batchNo ?: ""; expDate = txn.expDate
+                        }
+                    }
+                    VmaInventoryAction.OUT_CASE -> outCase += txn.qty
+                    VmaInventoryAction.REC_CASE -> recCase += txn.qty
+                    VmaInventoryAction.USED_CASE -> usedCase += txn.qty
+                    VmaInventoryAction.OUT_CN -> outCn += txn.qty
+                    VmaInventoryAction.MOVE_DEMO -> moveDemo += txn.qty
+                    VmaInventoryAction.RETURN_DEMO -> returnDemo += txn.qty
+                }
+            }
+
+            val sn = if (serialKey == "__no_serial__") null else serialKey
+
+            // On-shelf (available, not in WIP) = REC_CN + REC_CASE - OUT_CASE - OUT_CN - MOVE_DEMO + RETURN_DEMO
+            // But we want to INCLUDE items in demo, so: total physically present = on-shelf + in-demo
+            // on-shelf = recCn + recCase - outCase - outCn - moveDemo + returnDemo
+            // in-demo = moveDemo - returnDemo
+            // physically present = on-shelf + in-demo = recCn + recCase - outCase - outCn
+            // Exclude WIP: wip = outCase - recCase - usedCase → physically present excluding WIP:
+            // = recCn - outCn - usedCase - (outCase - recCase - usedCase) ... let's reason differently:
+            //
+            // Total received = recCn
+            // Returned to CN = outCn
+            // Used in case = usedCase
+            // In WIP = max(0, outCase - recCase - usedCase)
+            // Returnable = recCn - outCn - usedCase - inWip
+            val inWip = maxOf(0, outCase - recCase - usedCase)
+            val returnable = recCn - outCn - usedCase - inWip
+
+            if (returnable <= 0) continue
+
+            result.add(mapOf(
+                "serialNo" to (sn ?: ""),
+                "batchNo" to batchNo,
+                "recDate" to (recDate?.toString() ?: ""),
+                "expDate" to (expDate?.toString() ?: ""),
+                "quantity" to returnable,
+                "specNo" to specNo,
+                "productType" to productType,
+            ))
+        }
+
+        // Sort by expDate ascending (earliest first), nulls/empty last
+        return result.sortedBy {
+            val ed = it["expDate"] as? String
+            if (ed.isNullOrEmpty()) "9999-12-31" else ed
+        }
+    }
+
     // ═══════════ Demo Inventory ═══════════
 
     fun getDemoInventory(): List<Map<String, Any?>> {
@@ -321,10 +400,32 @@ class VmaInventoryTransactionService(
         // Single load — partition in memory (was 2x findAll before P-1 fix)
         val allTxns = txnRepo.findAllByDeletedAtIsNullOrderByDateDesc()
 
-        // Source 1: Explicit MOVE_DEMO transactions
+        // Build a set of RETURN_DEMO "cancellation keys" to exclude returned items
+        // Key = "productType|specNo|serialNo" — a RETURN_DEMO cancels a MOVE_DEMO of the same product
+        val returnDemoKeys = mutableMapOf<String, Int>()  // key → total returned qty
+        for (txn in allTxns) {
+            if (txn.action != VmaInventoryAction.RETURN_DEMO) continue
+            val key = "${txn.productType}|${txn.specNo}|${txn.serialNo ?: ""}"
+            returnDemoKeys[key] = (returnDemoKeys[key] ?: 0) + txn.qty
+        }
+
+        // Source 1: Explicit MOVE_DEMO transactions (exclude returned ones)
         val demoTxns = allTxns.filter { it.action == VmaInventoryAction.MOVE_DEMO }
 
+        // Track remaining return budget per key
+        val returnBudget = returnDemoKeys.toMutableMap()
+
         for (tx in demoTxns) {
+            val key = "${tx.productType}|${tx.specNo}|${tx.serialNo ?: ""}"
+            val budget = returnBudget[key] ?: 0
+            if (budget >= tx.qty) {
+                // This MOVE_DEMO is fully offset by RETURN_DEMO — skip it
+                returnBudget[key] = budget - tx.qty
+                continue
+            }
+            val effectiveQty = tx.qty - budget
+            if (budget > 0) returnBudget[key] = 0
+
             val status = when {
                 tx.notes?.startsWith("RECEIVING_AUTO") == true -> "Rejected (Receiving)"
                 tx.notes?.startsWith("COMPLETION_AUTO") == true -> "Rejected (Case)"
@@ -334,10 +435,14 @@ class VmaInventoryTransactionService(
                 "id" to tx.id, "batchNo" to (tx.batchNo ?: ""),
                 "productType" to tx.productType.name, "specNo" to tx.specNo,
                 "recDate" to tx.date.toString(), "serialNo" to (tx.serialNo ?: ""),
-                "expDate" to (tx.expDate?.toString() ?: ""), "qty" to tx.qty,
+                "expDate" to (tx.expDate?.toString() ?: ""), "qty" to effectiveQty,
                 "status" to status, "notes" to (tx.notes ?: ""),
                 "condition" to tx.condition.toList(),
                 "date" to tx.date.toString(),
+                "operator" to (tx.operator ?: ""),
+                "location" to (tx.location ?: ""),
+                "inspection" to (tx.inspection?.name ?: ""),
+                "createdAt" to tx.createdAt.toString(),
             ))
         }
 
@@ -345,7 +450,7 @@ class VmaInventoryTransactionService(
         val availMult = mapOf(
             VmaInventoryAction.REC_CN to 1, VmaInventoryAction.REC_CASE to 1,
             VmaInventoryAction.OUT_CASE to -1, VmaInventoryAction.OUT_CN to -1,
-            VmaInventoryAction.MOVE_DEMO to -1,
+            VmaInventoryAction.MOVE_DEMO to -1, VmaInventoryAction.RETURN_DEMO to 1,
         )
 
         data class ShelfGroup(
@@ -380,6 +485,10 @@ class VmaInventoryTransactionService(
                 "status" to "Expired", "notes" to "",
                 "condition" to emptyList<Int>(),
                 "date" to (g.expDate?.toString() ?: ""),
+                "operator" to "",
+                "location" to "",
+                "inspection" to "",
+                "createdAt" to "",
             ))
         }
 

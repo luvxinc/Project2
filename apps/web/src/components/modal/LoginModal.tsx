@@ -243,7 +243,7 @@ export function LoginModal({ isOpen, onClose, locale = 'zh' }: LoginModalProps) 
       </div>
 
       {/* Animation Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes modalIn {
           from {
             opacity: 0;

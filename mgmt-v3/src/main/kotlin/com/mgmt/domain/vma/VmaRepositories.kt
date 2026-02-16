@@ -46,6 +46,8 @@ interface VmaEmployeeDepartmentRepository : JpaRepository<VmaEmployeeDepartment,
     fun findAllByEmployeeIdOrderByAssignedAtDesc(employeeId: String): List<VmaEmployeeDepartment>
 
     fun countByDepartmentId(departmentId: String): Long
+
+    fun countByDepartmentIdAndRemovedAtIsNull(departmentId: String): Long
 }
 
 // ─── Duty SOP Requirements ─────────────────────────────

@@ -1,6 +1,7 @@
 'use client';
 
 import ValveWireframe from './ValveWireframe';
+import { useTranslations } from 'next-intl';
 
 interface PValveProduct {
   id: string;
@@ -34,6 +35,7 @@ interface ProductDetailModalProps {
 }
 
 export default function ProductDetailModal({ item, colors, theme, onClose }: ProductDetailModalProps) {
+  const t = useTranslations('vma');
   const isPValve = item.type === 'pvalve';
   const pv = isPValve ? item.product as PValveProduct : null;
   const ds = !isPValve ? item.product as DeliverySystemProduct : null;
@@ -89,7 +91,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
               {item.product.specification}
             </h2>
             <p className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
-              Model: {item.product.model}
+              {t('productDetail.model')}: {item.product.model}
             </p>
           </div>
         </div>
@@ -125,7 +127,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
             <>
               <h3 className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-              }}>Dimensions</h3>
+              }}>{ t('productDetail.dimensions')}</h3>
               <div className="space-y-0">
                 {pvSpecs.map((spec, idx) => (
                   <div key={spec.label} className="flex items-center justify-between py-3" style={{
@@ -158,7 +160,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
 
               <h3 className="text-[11px] font-semibold uppercase tracking-widest mt-6 mb-3" style={{
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-              }}>Compatible Delivery Systems</h3>
+              }}>{t('productDetail.compatibleDS')}</h3>
               <div className="flex flex-wrap gap-2">
                 {(pv.fits || []).length > 0 ? pv.fits.map(f => (
                   <span key={f.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
@@ -173,7 +175,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                 )) : (
                   <p className="text-[13px]" style={{
                     color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-                  }}>None configured</p>
+                  }}>{t('productDetail.noneConfigured')}</p>
                 )}
               </div>
             </>
@@ -181,22 +183,22 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
             <>
               <h3 className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-              }}>Product Details</h3>
+              }}>{t('productDetail.productDetails')}</h3>
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>Model</span>
+                  <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>{t('productDetail.model')}</span>
                   <span className="text-[16px] font-bold" style={{ color: colors.text }}>{ds.model}</span>
                 </div>
                 <div className="h-px" style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>Specification</span>
+                  <span className="text-[13px]" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>{t('productDetail.specification')}</span>
                   <span className="text-[16px] font-bold" style={{ color: colors.blue }}>{ds.specification}</span>
                 </div>
               </div>
 
               <h3 className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{
                 color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-              }}>Compatible P-Valves</h3>
+              }}>{t('productDetail.compatiblePV')}</h3>
               <div className="flex flex-wrap gap-2">
                 {(ds.fits || []).length > 0 ? ds.fits.map(f => (
                   <span key={f.id} className="inline-flex items-center px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{
@@ -211,7 +213,7 @@ export default function ProductDetailModal({ item, colors, theme, onClose }: Pro
                 )) : (
                   <p className="text-[13px]" style={{
                     color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-                  }}>None configured</p>
+                  }}>{t('productDetail.noneConfigured')}</p>
                 )}
               </div>
             </>

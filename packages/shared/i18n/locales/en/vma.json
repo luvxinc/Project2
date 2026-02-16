@@ -69,6 +69,400 @@
         "title": "Site Management",
         "description": "Manage hospital and clinic site information"
       }
+    },
+    "inventory": {
+      "title": "Inventory",
+      "subtitle": "Current inventory across all specifications",
+      "pvalveInventory": "P-Valve Inventory",
+      "dsInventory": "Delivery System Inventory",
+      "columns": {
+        "specNo": "Spec#",
+        "available": "Available",
+        "wip": "WIP",
+        "nearExp": "Near Exp.",
+        "expired": "Expired",
+        "returned": "Returned"
+      },
+      "empty": "No inventory data",
+      "loading": "Loading...",
+      "actions": {
+        "receiveFromChina": "Receive from China",
+        "returnToChina": "Return to China",
+        "saveTransaction": "Save Transaction"
+      },
+      "form": {
+        "productType": "Product Type",
+        "date": "Date",
+        "specNo": "Spec#",
+        "qty": "Qty",
+        "expDate": "Exp. Date",
+        "serialNo": "Serial No.",
+        "batchNo": "Batch#",
+        "inspection": "Inspection",
+        "location": "Location",
+        "operator": "Operator",
+        "notes": "Notes",
+        "cancel": "Cancel",
+        "select": "Select..."
+      },
+      "detail": {
+        "back": "← Back",
+        "batchNo": "Batch #",
+        "recDate": "Rec. Date",
+        "actionDate": "Action Date",
+        "quantity": "Quantity",
+        "available": "Available",
+        "wip": "WIP",
+        "nearExp": "Approaching Exp.",
+        "expired": "Expired",
+        "returnedToCn": "Returned to CN"
+      }
+    },
+    "receiveFromChina": {
+      "title": "Receive from China",
+      "batchNo": "Batch#",
+      "poNo": "PO No.",
+      "dateShipped": "Date Shipped",
+      "dateReceived": "Date Received",
+      "timeReceived": "Time Received",
+      "operator": "Operator",
+      "comments": "Comments",
+      "commentsPlaceholder": "Leave blank for N/A",
+      "batchPlaceholder": "Numbers only",
+      "columns": {
+        "row": "#",
+        "type": "Type",
+        "serialNo": "Serial No.",
+        "model": "Model",
+        "qty": "Qty",
+        "expDate": "Exp. Date",
+        "condition": "Condition",
+        "condNotes": "Cond. Notes",
+        "result": "Result"
+      },
+      "conditionItems": {
+        "0": "Quantity received matches quantity shipped",
+        "1": "Packaging is in good condition and not damaged",
+        "2": "Sealing sticker is undamaged and remains hinged",
+        "3": "No strain or waterlogging",
+        "4": "No labels are missing or torn",
+        "5": "Printing is clear and no information missing",
+        "6": "No additional external labels",
+        "7": "Products are still within the expiration date",
+        "8": "Temperature displayed as \"OK\" and is not triggered"
+      },
+      "condDropdownTitle": "Check items that FAILED inspection:",
+      "condDone": "Done",
+      "issueCount": "{count} issue(s)",
+      "allOk": "All OK",
+      "accept": "Accept",
+      "reject": "Reject",
+      "select": "Select...",
+      "serialPlaceholder": "e.g. 28P30...",
+      "copyFromPrev": "Copy from previous row",
+      "addProductLine": "Add Product Line",
+      "footerInfo": "{count} product(s) — PDF will be generated upon confirmation",
+      "cancel": "Cancel",
+      "confirm": "Confirm & Download PDF",
+      "processing": "Processing...",
+      "submitFailed": "Failed to submit. Please try again.",
+      "networkError": "Network error.",
+      "validation": {
+        "headerRequired": "Please fill in required header fields:",
+        "atLeastOneLine": "Please add at least one product line.",
+        "lineErrors": "Please fix the following product line errors:",
+        "serialRequired": "Serial No. is required",
+        "modelRequired": "Model is required",
+        "qtyMin": "Qty must be at least 1",
+        "expDateRequired": "Exp. Date is required"
+      }
+    },
+    "returnToChina": {
+      "title": "Return to China",
+      "dateShipped": "Date Shipped",
+      "operator": "Operator",
+      "columns": {
+        "row": "#",
+        "type": "Type",
+        "model": "Model",
+        "serialNo": "Serial No.",
+        "expDate": "Exp. Date",
+        "qty": "Qty",
+        "batchNo": "Batch#",
+        "recDate": "Rec. Date"
+      },
+      "select": "Select...",
+      "selectModelFirst": "Select model first",
+      "noReturnableStock": "No returnable stock",
+      "noSerial": "(no SN)",
+      "addProductLine": "Add Product Line",
+      "readyToReturn": "{count} product(s) ready to return",
+      "cancel": "Cancel",
+      "confirm": "Confirm Return",
+      "processing": "Processing...",
+      "loading": "Loading...",
+      "validation": {
+        "dateRequired": "Date Shipped is required",
+        "operatorRequired": "Operator is required",
+        "atLeastOneLine": "At least one product with Model and Serial No. is required",
+        "serialRequired": "Serial No. is required",
+        "qtyMin": "Qty must be at least 1",
+        "qtyExceedsAvailable": "Qty exceeds available ({max})"
+      },
+      "submitFailed": "Failed to submit. Please try again.",
+      "networkError": "Network error."
+    },
+    "demoInventory": {
+      "title": "Demo Inventory",
+      "subtitle": "Demo products, samples, and rejected items",
+      "addDemo": "Add Demo",
+      "columns": {
+        "type": "Type",
+        "specNo": "Spec#",
+        "serialNo": "Serial No.",
+        "expDate": "Exp. Date",
+        "qty": "Qty",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "status": {
+        "manual": "Manual",
+        "rejRecv": "Rej. Recv.",
+        "rejCase": "Rej. Case",
+        "expired": "Expired"
+      },
+      "empty": "No demo inventory items",
+      "detail": {
+        "batchNo": "Batch#",
+        "serialNo": "Serial No.",
+        "productType": "Product Type",
+        "demoDate": "Demo Date",
+        "recDate": "Receive Date",
+        "expDate": "Expiration",
+        "operator": "Operator",
+        "location": "Location",
+        "inspection": "Inspection",
+        "notes": "Notes / Condition",
+        "created": "Created",
+        "back": "← Back"
+      },
+      "returnToInventory": {
+        "title": "Return to Inventory",
+        "confirmTitle": "Confirm Return to Inventory",
+        "selectOperator": "Select operator",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "processing": "Returning..."
+      },
+      "addModal": {
+        "title": "Add Demo Product",
+        "dateShipped": "Demo Date",
+        "operator": "Operator",
+        "select": "Select...",
+        "addLine": "Add Product Line",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "processing": "Saving..."
+      }
+    },
+    "overview": {
+      "title": "Transaction Ledger",
+      "refresh": "Refresh",
+      "filters": {
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "specPlaceholder": "Spec#",
+        "to": "to",
+        "clear": "Clear",
+        "recordCount": "{count} record(s)"
+      },
+      "actions": {
+        "recCn": "Receive from CN",
+        "recCase": "Return from Case",
+        "outCase": "Send to Case",
+        "outCn": "Return to CN",
+        "usedCase": "Used in Case",
+        "moveDemo": "Move to Demo"
+      },
+      "columns": {
+        "date": "Date",
+        "action": "Action",
+        "type": "Type",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "Qty",
+        "batchNo": "Batch #",
+        "expDate": "Exp. Date",
+        "operator": "Operator",
+        "notes": "Notes"
+      },
+      "loading": "Loading...",
+      "noMatch": "No matching records",
+      "empty": "No transactions yet",
+      "pagination": {
+        "prev": "Prev",
+        "next": "Next"
+      }
+    },
+    "siteManagement": {
+      "subtitle": "Manage hospital and clinic site records",
+      "addSite": "Add Site",
+      "columns": {
+        "siteId": "Site ID",
+        "siteName": "Site Name",
+        "address": "Address",
+        "address2": "Address 2",
+        "city": "City",
+        "state": "State",
+        "zip": "Zip",
+        "country": "Country"
+      },
+      "loading": "Loading sites...",
+      "empty": "No sites found",
+      "emptyHint": "Click \"Add Site\" to create your first site.",
+      "modal": {
+        "titleAdd": "Add New Site",
+        "titleEdit": "Edit Site",
+        "siteId": "Site ID",
+        "siteName": "Site Name",
+        "addressLine1": "Address Line 1",
+        "addressLine2": "Address Line 2",
+        "city": "City",
+        "state": "State",
+        "zipCode": "Zip Code",
+        "country": "Country",
+        "siteIdPlaceholder": "e.g. 001",
+        "addressPlaceholder": "Street address",
+        "address2Placeholder": "Suite, building, floor (optional)",
+        "required": "Required: {fields}",
+        "saveFailed": "Failed to save",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "saveChanges": "Save Changes",
+        "createSite": "Create Site"
+      }
+    },
+    "clinicalCase": {
+      "caseCount": "{count} clinical case(s) recorded",
+      "newCase": "+ New Case",
+      "dismiss": "Dismiss",
+      "columns": {
+        "caseNo": "Case #",
+        "caseId": "Case ID",
+        "site": "Site",
+        "date": "Date",
+        "status": "Status"
+      },
+      "status": {
+        "completed": "Completed",
+        "inProgress": "In Progress"
+      },
+      "loading": "Loading...",
+      "empty": "No clinical cases recorded yet",
+      "emptyHint": "Create a new clinical case to start tracking",
+      "detail": {
+        "back": "Back",
+        "editInfo": "✎ Edit Info",
+        "returnForCompletion": "Return for Completion",
+        "reverseCompletion": "Reverse Completion",
+        "editCaseInfo": "Edit Case Info",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "e.g. 123 or 123A",
+        "siteLabel": "Site",
+        "patientId": "Patient ID",
+        "caseDate": "Case Date",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save",
+        "products": "Products",
+        "noProducts": "No products linked to this case",
+        "type": "Type",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "Qty",
+        "expDate": "Exp Date",
+        "batchNo": "Batch #",
+        "actions": "Actions",
+        "deleteYes": "Yes",
+        "deleteNo": "No",
+        "addProducts": "+ Add Products",
+        "addProductsTitle": "Add Products to Case",
+        "addRow": "+ Row",
+        "dsHint": "Add P-Valve specs to see compatible DS",
+        "adding": "Adding...",
+        "addToCase": "Add to Case"
+      },
+      "newCaseModal": {
+        "title": "New Clinical Case",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "e.g. 123 or 123A",
+        "caseNoDup": "Case # already exists",
+        "siteId": "Site ID",
+        "selectSite": "Select site...",
+        "patientId": "Patient ID (3 digits)",
+        "patientIdPlaceholder": "001",
+        "caseDate": "Case Date",
+        "pvRequested": "P-Valve Requested",
+        "dsRequested": "Delivery System Requested",
+        "addRow": "+ Add Row",
+        "selectPvFirst": "Select P-Valve specs first",
+        "creating": "Creating...",
+        "createAndDownload": "Create Case & Download Packing List"
+      },
+      "editModal": {
+        "title": "Edit Case Item",
+        "specNo": "Spec #",
+        "selectSpec": "Select spec...",
+        "serialNo": "Serial No.",
+        "selectSerial": "Select serial...",
+        "loading": "Loading...",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save"
+      },
+      "productLine": {
+        "specPlaceholder": "Spec #",
+        "pick": "Pick",
+        "serialNo": "Serial No.",
+        "expDate": "Exp Date",
+        "qty": "Qty"
+      },
+      "completion": {
+        "backToCase": "Back to Case",
+        "title": "Return for Completion",
+        "type": "Type",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "Qty",
+        "expDate": "Exp Date",
+        "batchNo": "Batch #",
+        "return": "Return",
+        "acceptance": "Acceptance",
+        "note": "Note",
+        "allOk": "✓ All OK",
+        "selectReasons": "Select reason(s)...",
+        "issuesSelected": "{count} issue(s) selected",
+        "done": "Done",
+        "demoWarning": "⚠ Will be moved to Demo/Sample",
+        "confirmCompletion": "Confirm Completion"
+      },
+      "confirmModal": {
+        "title": "Confirm Case Completion",
+        "description": "This will finalize {caseId} and update inventory:",
+        "usedItems": "{count} item(s) marked as Used (consumed)",
+        "returnedOk": "{count} item(s) Returned (All OK)",
+        "returnedDemo": "{count} item(s) Returned → Demo/Sample",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "confirm": "Confirm"
+      },
+      "reverseModal": {
+        "title": "Reverse Completion",
+        "description": "This will undo the completion of {caseId}. All inventory changes from the completion will be reversed, and the case will return to In Progress status.",
+        "cancel": "Cancel",
+        "reversing": "Reversing...",
+        "reverse": "Reverse"
+      }
     }
   },
   "employees": {
@@ -171,7 +565,10 @@
       "employeesTimeline": "Employees Timeline",
       "assignedDuty": "Assigned duty:",
       "relievedFromDuty": "Relieved from duty:",
-      "duration": "Duration:"
+      "duration": "Duration:",
+      "newEvent": "New Event",
+      "careerTimeline": "Career Timeline",
+      "editButton": "EDIT ✎"
     }
   },
   "departments": {
@@ -263,7 +660,22 @@
     "start": "Start",
     "edit": "Edit",
     "addNew": "Add",
-    "dateError": "Date must be after the latest existing milestone date"
+    "dateError": "Date must be after the latest existing milestone date",
+    "noHistoryFound": "No history found",
+    "createFirstMilestone": "Create First Milestone",
+    "noSopsListed": "No SOPs listed",
+    "createNewMilestone": "Create New Milestone",
+    "editMilestone": "Edit Milestone",
+    "searchSops": "Search SOPs...",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selectedCount": "{count} selected",
+    "loadingMasterList": "Loading master list...",
+    "items": "Items",
+    "newEntry": "New Entry",
+    "editButton": "EDIT",
+    "saving": "SAVING...",
+    "saveChanges": "SAVE CHANGES"
   },
   "trainingSop": {
     "title": "Training SOP",
@@ -467,6 +879,19 @@
     "pendingAction": "Pending Action",
     "triggers": "Triggers",
     "allCompliant": "All Compliant",
-    "baseline": "BASELINE"
+    "baseline": "BASELINE",
+    "viewAllPending": "View All {count} Pending",
+    "systemCompliant": "System Compliant",
+    "allVerified": "All training records verified",
+    "missing_label": "missing"
+  },
+  "productDetail": {
+    "dimensions": "Dimensions",
+    "compatibleDS": "Compatible Delivery Systems",
+    "noneConfigured": "None configured",
+    "productDetails": "Product Details",
+    "model": "Model",
+    "specification": "Specification",
+    "compatiblePV": "Compatible P-Valves"
   }
 }

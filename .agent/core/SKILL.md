@@ -1,6 +1,6 @@
 ---
 name: core-engineering
-description: 工程部内核 — 层级式索引路由。18 个技能 + 3 个强制规则 + 4 个工作流, 覆盖 CTO/PM/QA/工程师/协作全部角色。
+description: 工程部内核 — 层级式索引路由。20 个技能 + 3 个强制规则 + 4 个工作流, 覆盖 CTO/PM/QA/工程师/协作全部角色。
 ---
 
 # 工程部内核 (Engineering Core)

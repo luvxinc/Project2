@@ -1,9 +1,11 @@
 'use client';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDemoInventory, useActiveOperators, useSpecOptions, useInventoryDetail, useCreateTransaction, vmaKeys } from '@/lib/hooks/use-vma-queries';
+import { animate } from 'animejs';
 import PValveTabSelector from '../components/PValveTabSelector';
 
 // 9 conditional inspection items — indices match receiving checklist
@@ -45,6 +47,10 @@ interface DemoRow {
   notes: string;
   condition: number[];
   date: string;
+  operator: string;
+  location: string;
+  inspection: string;
+  createdAt: string;
 }
 
 interface SpecOption {
@@ -100,9 +106,26 @@ function fmtDate(d: string | null | undefined): string {
   return d.split('T')[0];
 }
 
+// ======== Status badge colors ========
+function statusBadge(status: string, colors: any) {
+  switch (status) {
+    case 'Manually Moved':
+      return { bg: `${colors.blue}18`, text: colors.blue, label: 'Manual' };
+    case 'Rejected (Receiving)':
+      return { bg: `${colors.orange}18`, text: colors.orange, label: 'Rej. Recv.' };
+    case 'Rejected (Case)':
+      return { bg: `${colors.red}18`, text: colors.red, label: 'Rej. Case' };
+    case 'Expired':
+      return { bg: `${colors.textTertiary}18`, text: colors.textTertiary, label: 'Expired' };
+    default:
+      return { bg: `${colors.textTertiary}18`, text: colors.textTertiary, label: status };
+  }
+}
+
 export default function DemoInventoryPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const t = useTranslations('vma');
   const queryClient = useQueryClient();
 
   // React Query: replaces raw fetch + useState + useEffect for main data
@@ -121,6 +144,15 @@ export default function DemoInventoryPage() {
   const [demoOperator, setDemoOperator] = useState('');
   const [demoSubmitting, setDemoSubmitting] = useState(false);
   const [demoLines, setDemoLines] = useState<DemoLine[]>([emptyDemoLine()]);
+
+  // ======== Detail Card Slide State ========
+  const [selectedRow, setSelectedRow] = useState<DemoRow | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [returning, setReturning] = useState(false);
+  const [returnOperator, setReturnOperator] = useState('');
+  const [showReturnConfirm, setShowReturnConfirm] = useState(false);
+  const frontRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
 
   // ===== Modal handlers =====
   const openModal = () => {
@@ -192,12 +224,101 @@ export default function DemoInventoryPage() {
     setDemoSubmitting(false);
   };
 
+  // ======== Detail Card Slide ========
+  const handleRowClick = useCallback((row: DemoRow) => {
+    setSelectedRow(row);
+    setShowReturnConfirm(false);
+    setReturnOperator('');
+
+    const slideOut = frontRef.current
+      ? frontRef.current.getBoundingClientRect().right
+      : window.innerWidth;
+
+    if (frontRef.current) {
+      animate(frontRef.current, {
+        translateX: [0, -slideOut],
+        duration: 450,
+        ease: 'inOut(3)',
+      });
+    }
+
+    setTimeout(() => {
+      setIsFlipped(true);
+      requestAnimationFrame(() => {
+        if (backRef.current) {
+          animate(backRef.current, {
+            translateX: [window.innerWidth, 0],
+            duration: 450,
+            ease: 'inOut(3)',
+          });
+        }
+      });
+    }, 400);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    const slideOut = backRef.current
+      ? window.innerWidth - backRef.current.getBoundingClientRect().left
+      : window.innerWidth;
+
+    if (backRef.current) {
+      animate(backRef.current, {
+        translateX: [0, slideOut],
+        duration: 450,
+        ease: 'inOut(3)',
+      });
+    }
+
+    setTimeout(() => {
+      setIsFlipped(false);
+      setSelectedRow(null);
+      setShowReturnConfirm(false);
+      requestAnimationFrame(() => {
+        if (frontRef.current) {
+          animate(frontRef.current, {
+            translateX: [-window.innerWidth, 0],
+            duration: 450,
+            ease: 'inOut(3)',
+          });
+        }
+      });
+    }, 400);
+  }, []);
+
+  // ======== Return to Inventory ========
+  const handleReturnToInventory = async () => {
+    if (!selectedRow || !returnOperator) return;
+    setReturning(true);
+    try {
+      await createTxn.mutateAsync({
+        date: new Date().toISOString().split('T')[0],
+        action: 'RETURN_DEMO',
+        productType: selectedRow.productType,
+        specNo: selectedRow.specNo,
+        serialNo: selectedRow.serialNo || undefined,
+        qty: selectedRow.qty,
+        batchNo: selectedRow.batchNo || undefined,
+        expDate: selectedRow.expDate || undefined,
+        operator: returnOperator,
+        notes: `Returned from Demo — original Demo ID: ${selectedRow.id}`,
+      });
+      // Go back to list after success
+      handleBack();
+    } catch (e) { console.error(e); }
+    setReturning(false);
+  };
+
   // Notes display helper
   const notesDisplay = (row: DemoRow): string => {
     if (row.condition && row.condition.length > 0) {
       return row.condition.map(i => CONDITION_SHORT[i] || `#${i}`).join(', ');
     }
     return row.notes || '—';
+  };
+
+  // Check if row can be returned to inventory
+  const canReturn = (row: DemoRow): boolean => {
+    return row.status === 'Manually Moved' && !row.id.startsWith('expired-');
   };
 
   // Shared input style
@@ -208,7 +329,7 @@ export default function DemoInventoryPage() {
   };
 
   return (
-    <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20">
+    <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
       <section className="pt-12 pb-6 px-6">
         <div className="max-w-[1200px] mx-auto">
           <PValveTabSelector />
@@ -216,99 +337,329 @@ export default function DemoInventoryPage() {
       </section>
 
       <div className="max-w-[1200px] mx-auto px-6">
-        {/* Title row */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <h1 className="text-[18px] font-semibold" style={{ color: colors.text }}>Demo Inventory</h1>
-            <span className="text-[12px] tabular-nums" style={{ color: colors.textTertiary }}>
-              {rows.length} item{rows.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowLegend(!showLegend)}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-medium border hover:opacity-80 transition"
-              style={inputSx}>
-              {showLegend ? 'Hide' : 'Show'} Legend
-            </button>
-            <button onClick={() => queryClient.invalidateQueries({ queryKey: vmaKeys.inventory.all })}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-medium border hover:opacity-80 transition"
-              style={inputSx}>
-              Refresh
-            </button>
-            <button onClick={openModal}
-              className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold hover:opacity-90 transition"
-              style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
-              + Add Demo
-            </button>
-          </div>
-        </div>
-
-        {/* Legend panel */}
-        {showLegend && (
-          <div className="mb-4 rounded-xl border p-4" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
-            <h3 className="text-[12px] font-semibold mb-2" style={{ color: colors.text }}>Condition Notes Reference</h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-1">
-              {CONDITION_ITEMS.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-[11px]" style={{ color: colors.textSecondary }}>
-                  <span className="font-mono font-semibold shrink-0" style={{ color: colors.textTertiary }}>{CONDITION_SHORT[i]}</span>
-                  <span>— {item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Click-outside overlay when detail is shown */}
+        {isFlipped && (
+          <div
+            className="fixed inset-0 z-10"
+            onClick={handleBack}
+          />
         )}
+        <div className="relative z-20">
 
-        {/* Table */}
-        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <span className="text-[13px]" style={{ color: colors.textTertiary }}>Loading...</span>
+          {/* ═══════ FRONT: Table List ═══════ */}
+          {!isFlipped && (
+            <div ref={frontRef}>
+              {/* Title row */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-[18px] font-semibold" style={{ color: colors.text }}>{t('p_valve.demoInventory.title')}</h1>
+                  <span className="text-[12px] tabular-nums" style={{ color: colors.textTertiary }}>
+                    {rows.length} item{rows.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowLegend(!showLegend)}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-medium border hover:opacity-80 transition"
+                    style={inputSx}>
+                    {showLegend ? 'Hide' : 'Show'} Legend
+                  </button>
+                  <button onClick={() => queryClient.invalidateQueries({ queryKey: vmaKeys.inventory.all })}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-medium border hover:opacity-80 transition"
+                    style={inputSx}>
+                    Refresh
+                  </button>
+                  <button onClick={openModal}
+                    className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold hover:opacity-90 transition"
+                    style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
+                    + {t('p_valve.demoInventory.addDemo')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Legend panel */}
+              {showLegend && (
+                <div className="mb-4 rounded-xl border p-4" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
+                  <h3 className="text-[12px] font-semibold mb-2" style={{ color: colors.text }}>Condition Notes Reference</h3>
+                  <div className="grid grid-cols-3 gap-x-6 gap-y-1">
+                    {CONDITION_ITEMS.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[11px]" style={{ color: colors.textSecondary }}>
+                        <span className="font-mono font-semibold shrink-0" style={{ color: colors.textTertiary }}>{CONDITION_SHORT[i]}</span>
+                        <span>— {item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Table */}
+              <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
+                {loading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <span className="text-[13px]" style={{ color: colors.textTertiary }}>{t('p_valve.inventory.loading')}</span>
+                  </div>
+                ) : rows.length === 0 ? (
+                  <div className="flex flex-col items-center py-20" style={{ color: colors.textTertiary }}>
+                    <svg className="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
+                    </svg>
+                    <p className="text-[14px] font-medium">{t('p_valve.demoInventory.empty')}</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-[12px]" style={{ color: colors.text }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                        {['Batch #', 'Type', 'Spec #', 'Serial No.', 'Exp. Date', 'Qty', 'Status', 'Notes'].map(h => (
+                          <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider"
+                            style={{ color: colors.textTertiary }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row: DemoRow, i: number) => {
+                        const badge = statusBadge(row.status, colors);
+                        return (
+                          <tr key={row.id}
+                            onClick={() => handleRowClick(row)}
+                            style={{ borderBottom: i < rows.length - 1 ? `1px solid ${colors.border}` : 'none' }}
+                            className="cursor-pointer transition-colors hover:opacity-80">
+                            <td className="px-3 py-2 font-mono" style={{ color: colors.textSecondary }}>{row.batchNo || '—'}</td>
+                            <td className="px-3 py-2" style={{ color: colors.textSecondary }}>
+                              {row.productType === 'PVALVE' ? 'P-Valve' : 'DS'}
+                            </td>
+                            <td className="px-3 py-2 font-mono font-semibold" style={{ color: colors.blue }}>{row.specNo}</td>
+                            <td className="px-3 py-2 font-mono" style={{ color: row.serialNo ? colors.text : colors.textTertiary }}>
+                              {row.serialNo || '—'}
+                            </td>
+                            <td className="px-3 py-2 tabular-nums" style={{ color: colors.textSecondary }}>{fmtDate(row.expDate)}</td>
+                            <td className="px-3 py-2 font-semibold tabular-nums">{row.qty}</td>
+                            <td className="px-3 py-2">
+                              <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold"
+                                style={{ backgroundColor: badge.bg, color: badge.text }}>
+                                {badge.label}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 max-w-[180px] truncate" style={{ color: colors.textTertiary }} title={notesDisplay(row)}>
+                              {notesDisplay(row)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
-          ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center py-20" style={{ color: colors.textTertiary }}>
-              <svg className="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
-              </svg>
-              <p className="text-[14px] font-medium">No demo inventory yet</p>
-              <p className="text-[13px] mt-1">Add demo products to track samples and demonstration units</p>
+          )}
+
+          {/* ═══════ BACK: Detail Card (名片) ═══════ */}
+          {isFlipped && selectedRow && (
+            <div ref={backRef}>
+              {/* Back button header */}
+              <div
+                className="flex items-center gap-4 px-5 py-4 rounded-t-2xl border border-b-0"
+                style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
+              >
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1.5 text-[13px] font-medium transition hover:opacity-70"
+                  style={{ color: colors.blue }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  {t('p_valve.demoInventory.detail.back')}
+                </button>
+                <div className="flex-1">
+                  <h3 style={{ color: colors.text }} className="text-base font-semibold">
+                    Product Detail
+                  </h3>
+                </div>
+              </div>
+
+              {/* macOS Card */}
+              <div
+                className="rounded-b-2xl border border-t-0 overflow-hidden"
+                style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
+              >
+                {/* Card header strip */}
+                <div className="px-6 pt-6 pb-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h2 className="text-[22px] font-bold tracking-tight" style={{ color: colors.text }}>
+                          {selectedRow.specNo}
+                        </h2>
+                        {(() => {
+                          const badge = statusBadge(selectedRow.status, colors);
+                          return (
+                            <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+                              style={{ backgroundColor: badge.bg, color: badge.text }}>
+                              {selectedRow.status}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <p className="text-[13px]" style={{ color: colors.textSecondary }}>
+                        {selectedRow.productType === 'PVALVE' ? 'P-Valve' : 'Delivery System'}
+                        {selectedRow.serialNo ? ` · SN: ${selectedRow.serialNo}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[36px] font-bold tabular-nums leading-none" style={{ color: colors.text }}>
+                        {selectedRow.qty}
+                      </p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mt-1" style={{ color: colors.textTertiary }}>
+                        Unit{selectedRow.qty !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail fields grid */}
+                <div className="px-6 py-5">
+                  <div className="grid grid-cols-3 gap-x-8 gap-y-5">
+                    {/* Batch No */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.batchNo')}</p>
+                      <p className="text-[14px] font-mono" style={{ color: colors.text }}>{selectedRow.batchNo || '—'}</p>
+                    </div>
+                    {/* Serial No */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.serialNo')}</p>
+                      <p className="text-[14px] font-mono" style={{ color: selectedRow.serialNo ? colors.text : colors.textTertiary }}>
+                        {selectedRow.serialNo || '—'}
+                      </p>
+                    </div>
+                    {/* Product Type */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.productType')}</p>
+                      <p className="text-[14px]" style={{ color: colors.text }}>
+                        {selectedRow.productType === 'PVALVE' ? 'P-Valve' : 'Delivery System'}
+                      </p>
+                    </div>
+                    {/* Demo Date */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.demoDate')}</p>
+                      <p className="text-[14px] tabular-nums" style={{ color: colors.text }}>{fmtDate(selectedRow.date)}</p>
+                    </div>
+                    {/* Rec Date */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.recDate')}</p>
+                      <p className="text-[14px] tabular-nums" style={{ color: colors.text }}>{fmtDate(selectedRow.recDate)}</p>
+                    </div>
+                    {/* Exp Date */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.expDate')}</p>
+                      <p className="text-[14px] tabular-nums" style={{ color: colors.text }}>{fmtDate(selectedRow.expDate)}</p>
+                    </div>
+                    {/* Operator */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.operator')}</p>
+                      <p className="text-[14px]" style={{ color: colors.text }}>{selectedRow.operator || '—'}</p>
+                    </div>
+                    {/* Location */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.location')}</p>
+                      <p className="text-[14px]" style={{ color: colors.text }}>{selectedRow.location || '—'}</p>
+                    </div>
+                    {/* Inspection */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.inspection')}</p>
+                      <p className="text-[14px]" style={{ color: colors.text }}>{selectedRow.inspection || '—'}</p>
+                    </div>
+                  </div>
+
+                  {/* Notes / Condition */}
+                  <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${colors.border}` }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.detail.notes')}</p>
+                    {selectedRow.condition && selectedRow.condition.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedRow.condition.map((idx: number) => (
+                          <span key={idx} className="inline-block px-2 py-1 rounded-md text-[11px] font-medium"
+                            style={{ backgroundColor: `${colors.orange}15`, color: colors.orange }}>
+                            {CONDITION_SHORT[idx] || `#${idx}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[13px]" style={{ color: colors.textSecondary }}>
+                        {selectedRow.notes || 'No notes'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Created timestamp */}
+                  {selectedRow.createdAt && (
+                    <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${colors.border}` }}>
+                      <p className="text-[10px]" style={{ color: colors.textTertiary }}>
+                        {t('p_valve.demoInventory.detail.created')}: {new Date(selectedRow.createdAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* ═══════ Return to Inventory Button (only for Manually Moved, non-expired) ═══════ */}
+                {canReturn(selectedRow) && (
+                  <div className="px-6 pb-6">
+                    {!showReturnConfirm ? (
+                      <button
+                        onClick={() => setShowReturnConfirm(true)}
+                        className="w-full py-3 rounded-xl text-[13px] font-semibold transition hover:opacity-90 flex items-center justify-center gap-2"
+                        style={{ backgroundColor: colors.green, color: '#fff' }}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                        </svg>
+                        {t('p_valve.demoInventory.returnToInventory.title')}
+                      </button>
+                    ) : (
+                      <div className="rounded-xl border p-4" style={{
+                        backgroundColor: theme === 'dark' ? `${colors.green}08` : `${colors.green}05`,
+                        borderColor: `${colors.green}30`,
+                      }}>
+                        <p className="text-[12px] font-semibold mb-3" style={{ color: colors.text }}>
+                            {t('p_valve.demoInventory.returnToInventory.confirmTitle')}: {selectedRow.qty} × {selectedRow.specNo}
+                          {selectedRow.serialNo ? ` (SN: ${selectedRow.serialNo})` : ''}?
+                        </p>
+                        <div className="mb-3">
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>
+                            {t('p_valve.demoInventory.detail.operator')} *
+                          </label>
+                          <select
+                            value={returnOperator}
+                            onChange={e => setReturnOperator(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg text-[13px] border"
+                            style={inputSx}
+                          >
+                            <option value="">{t('p_valve.demoInventory.returnToInventory.selectOperator')}</option>
+                            {operatorOptions.map((name: string) => <option key={name} value={name}>{name}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowReturnConfirm(false)}
+                            className="flex-1 py-2 rounded-xl text-[13px] font-medium transition hover:opacity-80"
+                            style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
+                          >
+                             {t('p_valve.demoInventory.returnToInventory.cancel')}
+                          </button>
+                          <button
+                            onClick={handleReturnToInventory}
+                            disabled={returning || !returnOperator}
+                            className="flex-1 py-2 rounded-xl text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-40"
+                            style={{ backgroundColor: colors.green, color: '#fff' }}
+                          >
+                             {returning ? t('p_valve.demoInventory.returnToInventory.processing') : t('p_valve.demoInventory.returnToInventory.confirm')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <table className="w-full text-[12px]" style={{ color: colors.text }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                  {['Batch #', 'Type', 'Spec #', 'Rec. Date', 'Serial No.', 'Exp. Date', 'Qty', 'Status', 'Notes'].map(h => (
-                    <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: colors.textTertiary }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr key={row.id} style={{ borderBottom: i < rows.length - 1 ? `1px solid ${colors.border}` : 'none' }}
-                    className="hover:brightness-95 transition-colors">
-                    <td className="px-3 py-2 font-mono" style={{ color: colors.textSecondary }}>{row.batchNo || '—'}</td>
-                    <td className="px-3 py-2" style={{ color: colors.textSecondary }}>
-                      {row.productType === 'PVALVE' ? 'P-Valve' : 'DS'}
-                    </td>
-                    <td className="px-3 py-2 font-mono">{row.specNo}</td>
-                    <td className="px-3 py-2 tabular-nums" style={{ color: colors.textSecondary }}>{fmtDate(row.recDate)}</td>
-                    <td className="px-3 py-2 font-mono" style={{ color: row.serialNo ? colors.text : colors.textTertiary }}>
-                      {row.serialNo || '—'}
-                    </td>
-                    <td className="px-3 py-2 tabular-nums" style={{ color: colors.textSecondary }}>{fmtDate(row.expDate)}</td>
-                    <td className="px-3 py-2 font-semibold tabular-nums">{row.qty}</td>
-                    <td className="px-3 py-2">
-                      <span className="text-[11px] font-medium" style={{ color: colors.textSecondary }}>{row.status}</span>
-                    </td>
-                    <td className="px-3 py-2 max-w-[220px] truncate" style={{ color: colors.textTertiary }} title={notesDisplay(row)}>
-                      {notesDisplay(row)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           )}
         </div>
       </div>
@@ -321,7 +672,7 @@ export default function DemoInventoryPage() {
             style={{ backgroundColor: colors.bgSecondary }}>
             {/* Header */}
             <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: `1px solid ${colors.border}` }}>
-              <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>Add Demo</h2>
+              <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>{t('p_valve.demoInventory.addModal.title')}</h2>
               <button onClick={() => !demoSubmitting && setModalOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-70 transition" style={{ backgroundColor: colors.bgTertiary }}>
                 <svg className="w-4 h-4" fill="none" stroke={colors.textSecondary} viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -332,16 +683,16 @@ export default function DemoInventoryPage() {
             {/* Global Fields */}
             <div className="px-6 py-4 flex gap-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
               <div className="flex-1">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Move Date *</label>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.addModal.dateShipped')} *</label>
                 <input type="date" value={demoDate} onChange={e => setDemoDate(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputSx} />
               </div>
               <div className="flex-1">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Operator *</label>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.demoInventory.addModal.operator')} *</label>
                 <select value={demoOperator} onChange={e => setDemoOperator(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputSx}>
-                  <option value="">Select operator...</option>
-                  {operatorOptions.map(name => <option key={name} value={name}>{name}</option>)}
+                  <option value="">{t('p_valve.demoInventory.returnToInventory.selectOperator')}</option>
+                  {operatorOptions.map((name: string) => <option key={name} value={name}>{name}</option>)}
                 </select>
               </div>
             </div>
@@ -440,7 +791,7 @@ export default function DemoInventoryPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Add Product Line
+                {t('p_valve.demoInventory.addModal.addLine')}
               </button>
             </div>
 
@@ -452,12 +803,12 @@ export default function DemoInventoryPage() {
               <div className="flex gap-3">
                 <button onClick={() => !demoSubmitting && setModalOpen(false)}
                   className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-80 transition"
-                  style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>Cancel</button>
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>{t('p_valve.demoInventory.addModal.cancel')}</button>
                 <button onClick={handleSubmit}
                   disabled={demoSubmitting || !demoOperator || demoLines.filter(l => l.specNo).length === 0}
                   className="px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition disabled:opacity-40"
                   style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
-                  {demoSubmitting ? 'Moving...' : 'Confirm Add to Demo'}
+                  {demoSubmitting ? t('p_valve.demoInventory.addModal.processing') : t('p_valve.demoInventory.addModal.confirm')}
                 </button>
               </div>
             </div>

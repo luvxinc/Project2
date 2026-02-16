@@ -69,6 +69,400 @@
         "title": "Quản lý địa điểm",
         "description": "Quản lý thông tin bệnh viện và phòng khám"
       }
+    },
+    "inventory": {
+      "title": "Quản lý kho",
+      "subtitle": "Tồn kho hiện tại cho tất cả quy cách",
+      "pvalveInventory": "Kho P-Valve",
+      "dsInventory": "Kho Delivery System",
+      "columns": {
+        "specNo": "Spec#",
+        "available": "Có sẵn",
+        "wip": "WIP",
+        "nearExp": "Sắp hết hạn",
+        "expired": "Đã hết hạn",
+        "returned": "Đã trả lại"
+      },
+      "empty": "Không có dữ liệu tồn kho",
+      "loading": "Đang tải...",
+      "actions": {
+        "receiveFromChina": "Nhận từ Trung Quốc",
+        "returnToChina": "Trả về Trung Quốc",
+        "saveTransaction": "Lưu giao dịch"
+      },
+      "form": {
+        "productType": "Loại sản phẩm",
+        "date": "Ngày",
+        "specNo": "Spec#",
+        "qty": "SL",
+        "expDate": "Ngày hết hạn",
+        "serialNo": "Serial No.",
+        "batchNo": "Batch#",
+        "inspection": "Kiểm tra",
+        "location": "Vị trí",
+        "operator": "Người thao tác",
+        "notes": "Ghi chú",
+        "cancel": "Hủy",
+        "select": "Chọn..."
+      },
+      "detail": {
+        "back": "← Quay lại",
+        "batchNo": "Batch #",
+        "recDate": "Ngày nhận",
+        "actionDate": "Ngày thao tác",
+        "quantity": "Số lượng",
+        "available": "Có sẵn",
+        "wip": "WIP",
+        "nearExp": "Sắp hết hạn",
+        "expired": "Đã hết hạn",
+        "returnedToCn": "Đã trả về TQ"
+      }
+    },
+    "receiveFromChina": {
+      "title": "Nhận từ Trung Quốc",
+      "batchNo": "Batch#",
+      "poNo": "PO No.",
+      "dateShipped": "Ngày gửi",
+      "dateReceived": "Ngày nhận",
+      "timeReceived": "Giờ nhận",
+      "operator": "Người thao tác",
+      "comments": "Ghi chú",
+      "commentsPlaceholder": "Để trống nếu N/A",
+      "batchPlaceholder": "Chỉ nhập số",
+      "columns": {
+        "row": "#",
+        "type": "Loại",
+        "serialNo": "Serial No.",
+        "model": "Mẫu",
+        "qty": "SL",
+        "expDate": "Ngày hết hạn",
+        "condition": "Tình trạng",
+        "condNotes": "Ghi chú KT",
+        "result": "Kết quả"
+      },
+      "conditionItems": {
+        "0": "Số lượng nhận khớp với số lượng gửi",
+        "1": "Bao bì nguyên vẹn, không hư hỏng",
+        "2": "Miếng dán niêm phong không hư hỏng và vẫn còn bản lề",
+        "3": "Không bị biến dạng hoặc ngấm nước",
+        "4": "Không thiếu hoặc rách nhãn",
+        "5": "In ấn rõ ràng, không thiếu thông tin",
+        "6": "Không có nhãn ngoài bổ sung",
+        "7": "Sản phẩm vẫn trong hạn sử dụng",
+        "8": "Nhiệt độ hiển thị \"OK\" và không bị kích hoạt"
+      },
+      "condDropdownTitle": "Đánh dấu các mục KHÔNG đạt kiểm tra:",
+      "condDone": "Xong",
+      "issueCount": "{count} lỗi",
+      "allOk": "Tất cả OK",
+      "accept": "Chấp nhận",
+      "reject": "Từ chối",
+      "select": "Chọn...",
+      "serialPlaceholder": "VD: 28P30...",
+      "copyFromPrev": "Sao chép từ dòng trước",
+      "addProductLine": "Thêm dòng sản phẩm",
+      "footerInfo": "{count} sản phẩm — PDF sẽ được tạo khi xác nhận",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận & Tải PDF",
+      "processing": "Đang xử lý...",
+      "submitFailed": "Gửi thất bại. Vui lòng thử lại.",
+      "networkError": "Lỗi mạng.",
+      "validation": {
+        "headerRequired": "Vui lòng điền các trường bắt buộc:",
+        "atLeastOneLine": "Vui lòng thêm ít nhất một dòng sản phẩm.",
+        "lineErrors": "Vui lòng sửa các lỗi sau:",
+        "serialRequired": "Serial No. là bắt buộc",
+        "modelRequired": "Mẫu là bắt buộc",
+        "qtyMin": "Số lượng ít nhất là 1",
+        "expDateRequired": "Ngày hết hạn là bắt buộc"
+      }
+    },
+    "returnToChina": {
+      "title": "Trả về Trung Quốc",
+      "dateShipped": "Ngày gửi",
+      "operator": "Người thao tác",
+      "columns": {
+        "row": "#",
+        "type": "Loại",
+        "model": "Mẫu",
+        "serialNo": "Serial No.",
+        "expDate": "Ngày hết hạn",
+        "qty": "SL",
+        "batchNo": "Batch#",
+        "recDate": "Ngày nhận"
+      },
+      "select": "Chọn...",
+      "selectModelFirst": "Chọn mẫu trước",
+      "noReturnableStock": "Không có hàng có thể trả",
+      "noSerial": "(không có SN)",
+      "addProductLine": "Thêm dòng sản phẩm",
+      "readyToReturn": "{count} sản phẩm sẵn sàng trả lại",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận trả lại",
+      "processing": "Đang xử lý...",
+      "loading": "Đang tải...",
+      "validation": {
+        "dateRequired": "Ngày gửi là bắt buộc",
+        "operatorRequired": "Người thao tác là bắt buộc",
+        "atLeastOneLine": "Cần ít nhất một sản phẩm có Mẫu và Serial No.",
+        "serialRequired": "Serial No. là bắt buộc",
+        "qtyMin": "Số lượng ít nhất là 1",
+        "qtyExceedsAvailable": "Số lượng vượt quá có sẵn ({max})"
+      },
+      "submitFailed": "Gửi thất bại. Vui lòng thử lại.",
+      "networkError": "Lỗi mạng."
+    },
+    "demoInventory": {
+      "title": "Kho Demo",
+      "subtitle": "Sản phẩm demo, mẫu và hàng bị từ chối",
+      "addDemo": "Thêm Demo",
+      "columns": {
+        "type": "Loại",
+        "specNo": "Spec#",
+        "serialNo": "Serial No.",
+        "expDate": "Ngày hết hạn",
+        "qty": "SL",
+        "status": "Trạng thái",
+        "notes": "Ghi chú"
+      },
+      "status": {
+        "manual": "Thủ công",
+        "rejRecv": "Từ chối nhận",
+        "rejCase": "Từ chối Case",
+        "expired": "Hết hạn"
+      },
+      "empty": "Không có hàng demo",
+      "detail": {
+        "batchNo": "Batch#",
+        "serialNo": "Serial No.",
+        "productType": "Loại sản phẩm",
+        "demoDate": "Ngày demo",
+        "recDate": "Ngày nhận",
+        "expDate": "Hạn sử dụng",
+        "operator": "Người thao tác",
+        "location": "Vị trí",
+        "inspection": "Kiểm tra",
+        "notes": "Ghi chú / Tình trạng",
+        "created": "Ngày tạo",
+        "back": "← Quay lại"
+      },
+      "returnToInventory": {
+        "title": "Trả về kho",
+        "confirmTitle": "Xác nhận trả về kho",
+        "selectOperator": "Chọn người thao tác",
+        "confirm": "Xác nhận",
+        "cancel": "Hủy",
+        "processing": "Đang trả..."
+      },
+      "addModal": {
+        "title": "Thêm sản phẩm Demo",
+        "dateShipped": "Ngày demo",
+        "operator": "Người thao tác",
+        "select": "Chọn...",
+        "addLine": "Thêm dòng sản phẩm",
+        "cancel": "Hủy",
+        "confirm": "Xác nhận",
+        "processing": "Đang lưu..."
+      }
+    },
+    "overview": {
+      "title": "Sổ giao dịch",
+      "refresh": "Làm mới",
+      "filters": {
+        "allActions": "Tất cả thao tác",
+        "allTypes": "Tất cả loại",
+        "specPlaceholder": "Spec#",
+        "to": "đến",
+        "clear": "Xóa",
+        "recordCount": "{count} bản ghi"
+      },
+      "actions": {
+        "recCn": "Nhận từ TQ",
+        "recCase": "Trả từ Case",
+        "outCase": "Gửi cho Case",
+        "outCn": "Trả về TQ",
+        "usedCase": "Dùng trong Case",
+        "moveDemo": "Chuyển Demo"
+      },
+      "columns": {
+        "date": "Ngày",
+        "action": "Thao tác",
+        "type": "Loại",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "SL",
+        "batchNo": "Batch #",
+        "expDate": "Ngày hết hạn",
+        "operator": "Người thao tác",
+        "notes": "Ghi chú"
+      },
+      "loading": "Đang tải...",
+      "noMatch": "Không có bản ghi phù hợp",
+      "empty": "Chưa có giao dịch nào",
+      "pagination": {
+        "prev": "Trước",
+        "next": "Sau"
+      }
+    },
+    "siteManagement": {
+      "subtitle": "Quản lý hồ sơ bệnh viện và phòng khám",
+      "addSite": "Thêm cơ sở",
+      "columns": {
+        "siteId": "Mã cơ sở",
+        "siteName": "Tên cơ sở",
+        "address": "Địa chỉ",
+        "address2": "Địa chỉ 2",
+        "city": "Thành phố",
+        "state": "Tiểu bang",
+        "zip": "Mã bưu chính",
+        "country": "Quốc gia"
+      },
+      "loading": "Đang tải cơ sở...",
+      "empty": "Không tìm thấy cơ sở",
+      "emptyHint": "Nhấn \"Thêm cơ sở\" để tạo cơ sở đầu tiên.",
+      "modal": {
+        "titleAdd": "Thêm cơ sở mới",
+        "titleEdit": "Sửa cơ sở",
+        "siteId": "Mã cơ sở",
+        "siteName": "Tên cơ sở",
+        "addressLine1": "Địa chỉ dòng 1",
+        "addressLine2": "Địa chỉ dòng 2",
+        "city": "Thành phố",
+        "state": "Tiểu bang",
+        "zipCode": "Mã bưu chính",
+        "country": "Quốc gia",
+        "siteIdPlaceholder": "VD: 001",
+        "addressPlaceholder": "Địa chỉ đường phố",
+        "address2Placeholder": "Phòng, tòa nhà, tầng (tùy chọn)",
+        "required": "Bắt buộc: {fields}",
+        "saveFailed": "Lưu thất bại",
+        "cancel": "Hủy",
+        "saving": "Đang lưu...",
+        "saveChanges": "Lưu thay đổi",
+        "createSite": "Tạo cơ sở"
+      }
+    },
+    "clinicalCase": {
+      "caseCount": "Đã ghi nhận {count} ca lâm sàng",
+      "newCase": "+ Ca mới",
+      "dismiss": "Đóng",
+      "columns": {
+        "caseNo": "Case #",
+        "caseId": "Case ID",
+        "site": "Cơ sở",
+        "date": "Ngày",
+        "status": "Trạng thái"
+      },
+      "status": {
+        "completed": "Hoàn thành",
+        "inProgress": "Đang tiến hành"
+      },
+      "loading": "Đang tải...",
+      "empty": "Chưa có ca lâm sàng nào",
+      "emptyHint": "Tạo ca lâm sàng mới để bắt đầu theo dõi",
+      "detail": {
+        "back": "Quay lại",
+        "editInfo": "✎ Sửa thông tin",
+        "returnForCompletion": "Trả hàng hoàn tất",
+        "reverseCompletion": "Hoàn tác hoàn tất",
+        "editCaseInfo": "Sửa thông tin ca",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "VD: 123 hoặc 123A",
+        "siteLabel": "Cơ sở",
+        "patientId": "Mã bệnh nhân",
+        "caseDate": "Ngày ca",
+        "cancel": "Hủy",
+        "saving": "Đang lưu...",
+        "save": "Lưu",
+        "products": "Sản phẩm",
+        "noProducts": "Không có sản phẩm nào liên kết",
+        "type": "Loại",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "SL",
+        "expDate": "Hạn SD",
+        "batchNo": "Batch #",
+        "actions": "Thao tác",
+        "deleteYes": "Có",
+        "deleteNo": "Không",
+        "addProducts": "+ Thêm sản phẩm",
+        "addProductsTitle": "Thêm sản phẩm vào ca",
+        "addRow": "+ Dòng",
+        "dsHint": "Thêm spec P-Valve để xem DS tương thích",
+        "adding": "Đang thêm...",
+        "addToCase": "Thêm vào ca"
+      },
+      "newCaseModal": {
+        "title": "Ca lâm sàng mới",
+        "caseNo": "Case #",
+        "caseNoPlaceholder": "VD: 123 hoặc 123A",
+        "caseNoDup": "Case # đã tồn tại",
+        "siteId": "Mã cơ sở",
+        "selectSite": "Chọn cơ sở...",
+        "patientId": "Mã bệnh nhân (3 chữ số)",
+        "patientIdPlaceholder": "001",
+        "caseDate": "Ngày ca",
+        "pvRequested": "P-Valve yêu cầu",
+        "dsRequested": "Delivery System yêu cầu",
+        "addRow": "+ Thêm dòng",
+        "selectPvFirst": "Chọn spec P-Valve trước",
+        "creating": "Đang tạo...",
+        "createAndDownload": "Tạo ca & Tải phiếu đóng gói"
+      },
+      "editModal": {
+        "title": "Sửa mục ca",
+        "specNo": "Spec #",
+        "selectSpec": "Chọn spec...",
+        "serialNo": "Serial No.",
+        "selectSerial": "Chọn serial...",
+        "loading": "Đang tải...",
+        "cancel": "Hủy",
+        "saving": "Đang lưu...",
+        "save": "Lưu"
+      },
+      "productLine": {
+        "specPlaceholder": "Spec #",
+        "pick": "Chọn",
+        "serialNo": "Serial No.",
+        "expDate": "Hạn SD",
+        "qty": "SL"
+      },
+      "completion": {
+        "backToCase": "Quay lại ca",
+        "title": "Trả hàng hoàn tất",
+        "type": "Loại",
+        "specNo": "Spec #",
+        "serialNo": "Serial No.",
+        "qty": "SL",
+        "expDate": "Hạn SD",
+        "batchNo": "Batch #",
+        "return": "Trả lại",
+        "acceptance": "Nghiệm thu",
+        "note": "Ghi chú",
+        "allOk": "✓ Đạt",
+        "selectReasons": "Chọn lý do...",
+        "issuesSelected": "Đã chọn {count} vấn đề",
+        "done": "Xong",
+        "demoWarning": "⚠ Sẽ chuyển sang Demo/Mẫu",
+        "confirmCompletion": "Xác nhận hoàn tất"
+      },
+      "confirmModal": {
+        "title": "Xác nhận hoàn tất ca",
+        "description": "Sẽ hoàn tất {caseId} và cập nhật kho:",
+        "usedItems": "{count} mục đánh dấu Đã dùng (tiêu hao)",
+        "returnedOk": "{count} mục Trả lại (Đạt)",
+        "returnedDemo": "{count} mục Trả lại → Demo/Mẫu",
+        "cancel": "Hủy",
+        "processing": "Đang xử lý...",
+        "confirm": "Xác nhận"
+      },
+      "reverseModal": {
+        "title": "Hoàn tác hoàn tất",
+        "description": "Sẽ hoàn tác việc hoàn tất {caseId}. Mọi thay đổi kho từ lần hoàn tất sẽ được khôi phục, ca sẽ trở lại trạng thái Đang tiến hành.",
+        "cancel": "Hủy",
+        "reversing": "Đang hoàn tác...",
+        "reverse": "Hoàn tác"
+      }
     }
   },
   "employees": {
@@ -171,7 +565,10 @@
       "employeesTimeline": "Dòng thời gian nhân viên",
       "assignedDuty": "Phân công nhiệm vụ:",
       "relievedFromDuty": "Giải phóng nhiệm vụ:",
-      "duration": "Thời gian:"
+      "duration": "Thời gian:",
+      "newEvent": "Sự kiện mới",
+      "careerTimeline": "Dòng thời gian nghề nghiệp",
+      "editButton": "EDIT ✎"
     }
   },
   "departments": {
@@ -263,7 +660,22 @@
     "start": "Bắt đầu",
     "edit": "Sửa",
     "addNew": "Thêm",
-    "dateError": "Ngày phải sau ngày cột mốc mới nhất hiện có"
+    "dateError": "Ngày phải sau ngày cột mốc mới nhất hiện có",
+    "noHistoryFound": "Không tìm thấy lịch sử",
+    "createFirstMilestone": "Tạo cột mốc đầu tiên",
+    "noSopsListed": "Không có SOP",
+    "createNewMilestone": "Tạo cột mốc mới",
+    "editMilestone": "Chỉnh sửa cột mốc",
+    "searchSops": "Tìm kiếm SOP...",
+    "selectAll": "Chọn tất cả",
+    "deselectAll": "Bỏ chọn tất cả",
+    "selectedCount": "Đã chọn {count}",
+    "loadingMasterList": "Đang tải danh sách chính...",
+    "items": "mục",
+    "newEntry": "Mục mới",
+    "editButton": "SỬa",
+    "saving": "ĐANG LƯU...",
+    "saveChanges": "LƯU THAY ĐỔI"
   },
   "trainingSop": {
     "title": "SOP Đào tạo",
@@ -467,6 +879,19 @@
     "pendingAction": "Chờ xử lý",
     "triggers": "Kích hoạt",
     "allCompliant": "Tất cả tuân thủ",
-    "baseline": "CƠ SỞ"
+    "baseline": "CƠ SỞ",
+    "viewAllPending": "Xem tất cả {count} chưa xử lý",
+    "systemCompliant": "Hệ thống tuân thủ",
+    "allVerified": "Tất cả hồ sơ đào tạo đã được xác minh",
+    "missing_label": "thiếu"
+  },
+  "productDetail": {
+    "dimensions": "Kích thước",
+    "compatibleDS": "Hệ thống dẫn truyền tương thích",
+    "noneConfigured": "Chưa cấu hình",
+    "productDetails": "Chi tiết sản phẩm",
+    "model": "Model",
+    "specification": "Specification",
+    "compatiblePV": "P-Valve tương thích"
   }
 }

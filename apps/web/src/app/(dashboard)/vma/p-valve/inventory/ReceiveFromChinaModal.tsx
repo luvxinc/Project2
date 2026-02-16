@@ -2,21 +2,12 @@
 import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 
-// 9 conditional inspection items
-const CONDITIONAL_ITEMS = [
-  'Quantity received matches quantity shipped',
-  'Packaging is in good condition and not damaged',
-  'Sealing sticker is undamaged and remains hinged',
-  'No strain or waterlogging',
-  'No labels are missing or torn',
-  'Printing is clear and no information missing',
-  'No additional external labels',
-  'Products are still within the expiration date',
-  'Temperature displayed as "OK" and is not triggered',
-];
+// 9 conditional inspection items — keys loaded from i18n
+const CONDITIONAL_ITEM_COUNT = 9;
 
 interface SpecOption {
   specification: string;
@@ -71,6 +62,12 @@ interface Props {
 export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Props) {
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const t = useTranslations('vma');
+
+  const CONDITIONAL_ITEMS = useMemo(() =>
+    Array.from({ length: CONDITIONAL_ITEM_COUNT }, (_, i) =>
+      t(`p_valve.receiveFromChina.conditionItems.${i}`)
+    ), [t]);
 
   // Shared fields
   const [batchNo, setBatchNo] = useState('');
@@ -173,20 +170,20 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
   const handleSubmit = async () => {
     // ---- Header validation ----
     const headerErrors: string[] = [];
-    if (!batchNo.trim()) headerErrors.push('Batch No.');
-    if (!dateShipped) headerErrors.push('Date Shipped');
-    if (!dateReceived) headerErrors.push('Date Received');
-    if (!timeReceived) headerErrors.push('Time Received');
-    if (!operator) headerErrors.push('Operator');
+    if (!batchNo.trim()) headerErrors.push(t('p_valve.receiveFromChina.batchNo'));
+    if (!dateShipped) headerErrors.push(t('p_valve.receiveFromChina.dateShipped'));
+    if (!dateReceived) headerErrors.push(t('p_valve.receiveFromChina.dateReceived'));
+    if (!timeReceived) headerErrors.push(t('p_valve.receiveFromChina.timeReceived'));
+    if (!operator) headerErrors.push(t('p_valve.receiveFromChina.operator'));
 
     if (headerErrors.length > 0) {
-      alert(`Please fill in required header fields:\n• ${headerErrors.join('\n• ')}`);
+      alert(`${t('p_valve.receiveFromChina.validation.headerRequired')}\n• ${headerErrors.join('\n• ')}`);
       return;
     }
 
     // ---- Product lines validation ----
     if (lines.length === 0) {
-      alert('Please add at least one product line.');
+      alert(t('p_valve.receiveFromChina.validation.atLeastOneLine'));
       return;
     }
 
@@ -194,14 +191,14 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const row = `Row ${i + 1}`;
-      if (!line.serialNo.trim()) lineErrors.push(`${row}: Serial No. is required`);
-      if (!line.productModel) lineErrors.push(`${row}: Model is required`);
-      if (line.qty < 1) lineErrors.push(`${row}: Qty must be at least 1`);
-      if (!line.expDate) lineErrors.push(`${row}: Exp. Date is required`);
+      if (!line.serialNo.trim()) lineErrors.push(`${row}: ${t('p_valve.receiveFromChina.validation.serialRequired')}`);
+      if (!line.productModel) lineErrors.push(`${row}: ${t('p_valve.receiveFromChina.validation.modelRequired')}`);
+      if (line.qty < 1) lineErrors.push(`${row}: ${t('p_valve.receiveFromChina.validation.qtyMin')}`);
+      if (!line.expDate) lineErrors.push(`${row}: ${t('p_valve.receiveFromChina.validation.expDateRequired')}`);
     }
 
     if (lineErrors.length > 0) {
-      alert(`Please fix the following product line errors:\n• ${lineErrors.join('\n• ')}`);
+      alert(`${t('p_valve.receiveFromChina.validation.lineErrors')}\n• ${lineErrors.join('\n• ')}`);
       return;
     }
 
@@ -249,11 +246,11 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
         onSuccess();
         onClose();
       } else {
-        alert('Failed to submit. Please try again.');
+        alert(t('p_valve.receiveFromChina.submitFailed'));
       }
     } catch (e) {
       console.error(e);
-      alert('Network error.');
+      alert(t('p_valve.receiveFromChina.networkError'));
     } finally {
       setSubmitting(false);
     }
@@ -275,8 +272,8 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: `1px solid ${colors.border}` }}>
-          <h2 className="text-[18px] font-bold" style={{ color: colors.text }}>Receive from China</h2>
-          <button onClick={onClose} className="text-[13px] font-medium" style={{ color: colors.textTertiary }}>Cancel</button>
+          <h2 className="text-[18px] font-bold" style={{ color: colors.text }}>{t('p_valve.receiveFromChina.title')}</h2>
+          <button onClick={onClose} className="text-[13px] font-medium" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.cancel')}</button>
         </div>
 
         {/* Scrollable Content */}
@@ -284,36 +281,36 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
           {/* ===== Shared Info Section ===== */}
           <div className="grid grid-cols-5 gap-4 mb-6">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Batch# *</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.batchNo')} *</label>
               <input type="text" value={batchNo} onChange={e => setBatchNo(e.target.value.replace(/\D/g, ''))}
-                placeholder="Numbers only"
+                placeholder={t('p_valve.receiveFromChina.batchPlaceholder')}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>PO No.</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.poNo')}</label>
               <input type="text" value={poNo} onChange={e => setPoNo(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Date Shipped *</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.dateShipped')} *</label>
               <input type="date" value={dateShipped} onChange={e => setDateShipped(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Date Received *</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.dateReceived')} *</label>
               <input type="date" value={dateReceived} onChange={e => setDateReceived(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Time Received *</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.timeReceived')} *</label>
               <input type="time" value={timeReceived} onChange={e => setTimeReceived(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Operator *</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.operator')} *</label>
               <select value={operator} onChange={e => setOperator(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle}>
-                <option value="">Select...</option>
+                <option value="">{t('p_valve.receiveFromChina.select')}</option>
                 {operatorOptions.map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
@@ -322,9 +319,9 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
           </div>
           {/* Comments - batch level */}
           <div className="mb-6">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Comments</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.comments')}</label>
             <input type="text" value={comments} onChange={e => setComments(e.target.value)}
-              placeholder="Leave blank for N/A"
+              placeholder={t('p_valve.receiveFromChina.commentsPlaceholder')}
               className="w-full px-3 py-2 rounded-lg text-[13px] border" style={inputStyle} />
           </div>
 
@@ -333,7 +330,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
             <table className="w-full text-[12px]">
               <thead>
                 <tr style={{ backgroundColor: colors.bgTertiary }}>
-                  {['#', 'Type', 'Serial No.', 'Model', 'Qty', 'Exp. Date', 'Condition', 'Cond. Notes', 'Result', ''].map((h, i, arr) => (
+                  {[t('p_valve.receiveFromChina.columns.row'), t('p_valve.receiveFromChina.columns.type'), t('p_valve.receiveFromChina.columns.serialNo'), t('p_valve.receiveFromChina.columns.model'), t('p_valve.receiveFromChina.columns.qty'), t('p_valve.receiveFromChina.columns.expDate'), t('p_valve.receiveFromChina.columns.condition'), t('p_valve.receiveFromChina.columns.condNotes'), t('p_valve.receiveFromChina.columns.result'), ''].map((h, i, arr) => (
                     <th key={h} className="px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider"
                       style={{
                         color: colors.textSecondary,
@@ -365,14 +362,14 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
                         <input type="text" value={line.serialNo}
                           onChange={e => handleSerialChange(line.id, e.target.value)}
                           className="w-full px-2 py-1.5 rounded text-[11px] border" style={inputStyle}
-                          placeholder="e.g. 28P30..." />
+                          placeholder={t('p_valve.receiveFromChina.serialPlaceholder')} />
                       </td>
 
                       {/* Product Model */}
                       <td className="px-1 py-2">
                         <select value={line.productModel} onChange={e => updateLine(line.id, 'productModel', e.target.value)}
                           className="w-full px-1 py-1.5 rounded text-[11px] border" style={inputStyle}>
-                          <option value="">Select...</option>
+                          <option value="">{t('p_valve.receiveFromChina.select')}</option>
                           {specs.map(s => <option key={s.specification} value={s.specification}>{s.specification}</option>)}
                         </select>
                       </td>
@@ -406,7 +403,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
                               opacity: idx === 0 ? 0.3 : 0.7,
                               cursor: idx === 0 ? 'default' : 'pointer',
                             }}
-                            title={idx === 0 ? '' : 'Copy from previous row'}
+                            title={idx === 0 ? '' : t('p_valve.receiveFromChina.copyFromPrev')}
                           >↑</button>
                         </div>
                       </td>
@@ -415,8 +412,8 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
                       <td className="px-1 py-2">
                         <select value={line.productCondition} onChange={e => updateLine(line.id, 'productCondition', e.target.value)}
                           className="w-full px-1 py-1.5 rounded text-[11px] border" style={inputStyle}>
-                          <option value="ACCEPT">Accept</option>
-                          <option value="REJECT">Reject</option>
+                          <option value="ACCEPT">{t('p_valve.receiveFromChina.accept')}</option>
+                          <option value="REJECT">{t('p_valve.receiveFromChina.reject')}</option>
                         </select>
                       </td>
 
@@ -441,8 +438,8 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
                           style={inputStyle}
                         >
                           {line.failedNoteIndices.length > 0
-                            ? `${line.failedNoteIndices.length} issue(s)`
-                            : 'All OK'}
+                            ? t('p_valve.receiveFromChina.issueCount', { count: line.failedNoteIndices.length })
+                            : t('p_valve.receiveFromChina.allOk')}
                         </button>
                       </td>
 
@@ -450,8 +447,8 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
                       <td className="px-1 py-2">
                         <select value={line.result} onChange={e => updateLine(line.id, 'result', e.target.value)}
                           className="w-full px-1 py-1.5 rounded text-[11px] border" style={inputStyle}>
-                          <option value="ACCEPT">Accept</option>
-                          <option value="REJECT">Reject</option>
+                          <option value="ACCEPT">{t('p_valve.receiveFromChina.accept')}</option>
+                          <option value="REJECT">{t('p_valve.receiveFromChina.reject')}</option>
                         </select>
                       </td>
 
@@ -478,7 +475,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Add Product Line
+              {t('p_valve.receiveFromChina.addProductLine')}
             </button>
           </div>
         </div>
@@ -486,11 +483,11 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderTop: `1px solid ${colors.border}` }}>
           <p className="text-[11px]" style={{ color: colors.textTertiary }}>
-            {lines.length} product{lines.length !== 1 ? 's' : ''} — PDF will be generated upon confirmation
+            {t('p_valve.receiveFromChina.footerInfo', { count: lines.length })}
           </p>
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 rounded-xl text-[13px] font-medium" style={{ color: colors.text, backgroundColor: colors.bgTertiary }}>
-              Cancel
+              {t('p_valve.receiveFromChina.cancel')}
             </button>
             <button
               onClick={handleSubmit}
@@ -498,7 +495,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
               className="px-5 py-2 rounded-xl text-white text-[13px] font-medium hover:opacity-90 transition disabled:opacity-40"
               style={{ backgroundColor: colors.blue }}
             >
-              {submitting ? 'Processing...' : 'Confirm & Download PDF'}
+              {submitting ? t('p_valve.receiveFromChina.processing') : t('p_valve.receiveFromChina.confirm')}
             </button>
           </div>
         </div>
@@ -515,7 +512,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
             borderColor: colors.border,
           }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textTertiary }}>Check items that FAILED inspection:</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textTertiary }}>{t('p_valve.receiveFromChina.condDropdownTitle')}</p>
           {CONDITIONAL_ITEMS.map((item, i) => {
             const line = lines.find(l => l.id === notesDropdownOpen);
             if (!line) return null;
@@ -533,7 +530,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
           })}
           <div className="flex justify-end mt-2 pt-2" style={{ borderTop: `1px solid ${colors.border}` }}>
             <button onClick={() => { setNotesDropdownOpen(null); setDropdownPos(null); }} className="text-[11px] px-3 py-1 rounded-lg font-medium" style={{ color: colors.blue }}>
-              Done
+              {t('p_valve.receiveFromChina.condDone')}
             </button>
           </div>
         </div>,

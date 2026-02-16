@@ -1,6 +1,7 @@
 'use client';
 
 import type { ClinicalCase } from './types';
+import { useTranslations } from 'next-intl';
 
 interface CaseListTableProps {
   cases: ClinicalCase[];
@@ -10,6 +11,7 @@ interface CaseListTableProps {
 }
 
 export default function CaseListTable({ cases, loading, colors, onCaseClick }: CaseListTableProps) {
+  const t = useTranslations('vma');
   return (
     <div
       style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
@@ -18,7 +20,7 @@ export default function CaseListTable({ cases, loading, colors, onCaseClick }: C
       <table className="w-full">
         <thead>
           <tr style={{ backgroundColor: colors.bgTertiary }}>
-            {['Case #', 'Case ID', 'Site', 'Date', 'Status'].map((col) => (
+            {[t('p_valve.clinicalCase.columns.caseNo'), t('p_valve.clinicalCase.columns.caseId'), t('p_valve.clinicalCase.columns.site'), t('p_valve.clinicalCase.columns.date'), t('p_valve.clinicalCase.columns.status')].map((col) => (
               <th
                 key={col}
                 className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
@@ -33,7 +35,7 @@ export default function CaseListTable({ cases, loading, colors, onCaseClick }: C
           {loading ? (
             <tr>
               <td colSpan={5} className="px-4 py-16 text-center" style={{ color: colors.textTertiary }}>
-                Loading...
+                {t('p_valve.clinicalCase.loading')}
               </td>
             </tr>
           ) : cases.length === 0 ? (
@@ -43,8 +45,8 @@ export default function CaseListTable({ cases, loading, colors, onCaseClick }: C
                   <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                   </svg>
-                  <p className="text-[15px] font-medium">No clinical cases recorded yet</p>
-                  <p className="text-[13px]">Create a new clinical case to start tracking</p>
+                  <p className="text-[15px] font-medium">{t('p_valve.clinicalCase.empty')}</p>
+                  <p className="text-[13px]">{t('p_valve.clinicalCase.emptyHint')}</p>
                 </div>
               </td>
             </tr>
@@ -72,7 +74,7 @@ export default function CaseListTable({ cases, loading, colors, onCaseClick }: C
                       color: c.status === 'COMPLETED' ? colors.green : colors.orange,
                     }}
                   >
-                    {c.status === 'COMPLETED' ? 'Completed' : 'In Progress'}
+                    {c.status === 'COMPLETED' ? t('p_valve.clinicalCase.status.completed') : t('p_valve.clinicalCase.status.inProgress')}
                   </span>
                 </td>
               </tr>
