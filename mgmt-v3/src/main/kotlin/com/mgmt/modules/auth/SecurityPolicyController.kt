@@ -103,6 +103,34 @@ class SecurityPolicyController(
         }
     }
 
+    // ─── Public Single-Action Policy Query ─────────────────────────
+
+    /**
+     * GET /auth/security-policies/action/{actionKey}
+     * Returns required tokens for a single action.
+     *
+     * Unlike GET /auth/security-policies (superuser-only, returns ALL policies),
+     * this endpoint is available to any authenticated user and returns only
+     * the tokens required for the specified action.
+     *
+     * Used by frontend to dynamically show/skip SecurityCodeDialog
+     * based on the current policy configuration.
+     *
+     * V1 parity: SecurityPolicyManager.get_required_tokens(actionKey) was
+     * used by {% security_inputs %} template tag to conditionally render inputs.
+     */
+    @GetMapping("/action/{actionKey}")
+    fun getActionTokens(
+        @PathVariable actionKey: String,
+    ): ApiResponse<Map<String, Any>> {
+        val tokens = sessionService.getRequiredTokensForAction(actionKey)
+        return ApiResponse.ok(mapOf(
+            "actionKey" to actionKey,
+            "requiredTokens" to tokens,
+            "requiresSecurityCode" to tokens.isNotEmpty(),
+        ))
+    }
+
     private fun requireSuperuser(request: HttpServletRequest): JwtTokenProvider.TokenClaims {
         val claims = extractClaims(request)
         if ("superuser" !in claims.roles) {
