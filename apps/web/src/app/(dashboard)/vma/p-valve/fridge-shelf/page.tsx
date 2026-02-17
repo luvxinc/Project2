@@ -16,6 +16,8 @@ interface FridgeSlot {
   productType: string;
   specNo: string;
   serialNo: string | null;
+  batchNo: string | null;
+  expDate: string | null;
   placedAt: string;
   placedBy: string | null;
 }
@@ -199,38 +201,91 @@ export default function FridgeShelfPage() {
 
   // ─── Rendering ───
 
-  const renderSlotCell = (shelfNo: number, rowNo: number, colNo: number) => {
+  const renderSlotCell = (shelfNo: number, rowNo: number, colNo: number, isFrontRow: boolean) => {
     const slot = getSlot(shelfNo, rowNo, colNo);
     const occupied = !!slot;
+    const frontTint = isFrontRow && !occupied
+      ? (theme === 'dark' ? 'rgba(0, 113, 227, 0.10)' : 'rgba(0, 113, 227, 0.06)')
+      : undefined;
+    const frontBorder = isFrontRow && !occupied
+      ? 'rgba(0, 113, 227, 0.25)'
+      : undefined;
+
+    // — Occupied: business card style —
+    if (occupied) {
+      const isExpired = slot.expDate ? slot.expDate < new Date().toISOString().slice(0, 10) : false;
+      return (
+        <button
+          key={`${shelfNo}-${rowNo}-${colNo}`}
+          onClick={() => handleSlotClick(shelfNo, rowNo, colNo)}
+          title={`${slot.specNo} · ${slot.serialNo || ''}`}
+          className="w-full rounded-lg border overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:shadow-xl cursor-pointer text-left"
+          style={{
+            background: theme === 'dark'
+              ? 'linear-gradient(135deg, rgba(0,113,227,0.18) 0%, rgba(0,60,140,0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(0,113,227,0.10) 0%, rgba(0,80,180,0.05) 100%)',
+            borderColor: 'rgba(0, 113, 227, 0.35)',
+            height: '68px',
+          }}
+        >
+          <div className="flex h-full">
+            {/* Left accent bar */}
+            <div className="w-[3px] rounded-l-lg flex-shrink-0" style={{ backgroundColor: isExpired ? '#ff453a' : '#0071e3' }} />
+            <div className="flex-1 px-2 py-1.5 flex flex-col justify-between min-w-0">
+              {/* Spec + Batch (same line) */}
+              <div className="flex items-center gap-1 leading-tight min-w-0">
+                <span className="font-bold text-[11px] truncate" style={{ color: colors.text }}>
+                  {slot.specNo}
+                </span>
+                {slot.batchNo && (
+                  <span className="text-[8px] px-1 py-[0.5px] rounded border flex-shrink-0" style={{
+                    borderColor: theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                    color: colors.textSecondary,
+                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  }}>
+                    {slot.batchNo}
+                  </span>
+                )}
+              </div>
+              {/* Serial */}
+              {slot.serialNo && (
+                <div className="text-[10px] truncate leading-tight mt-0.5" style={{ color: colors.textSecondary }}>
+                  SN: …{slot.serialNo.slice(-4)}
+                </div>
+              )}
+              {/* Bottom row: batch + exp */}
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {slot.expDate && (
+                  <span className="text-[9px] px-1 py-[1px] rounded font-medium" style={{
+                    backgroundColor: isExpired ? 'rgba(255,69,58,0.12)' : 'rgba(255,159,10,0.10)',
+                    color: isExpired ? '#ff453a' : '#ff9f0a',
+                  }}>
+                    {slot.expDate}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    // — Empty slot —
     return (
       <button
         key={`${shelfNo}-${rowNo}-${colNo}`}
         onClick={() => handleSlotClick(shelfNo, rowNo, colNo)}
-        title={occupied ? `${slot.specNo} ${slot.serialNo || ''}` : `${t('p_valve.fridgeShelf.shelf')} ${shelfNo} R${rowNo}C${colNo}`}
+        title={`${t('p_valve.fridgeShelf.shelf')} ${shelfNo} R${rowNo}C${colNo}`}
         style={{
-          backgroundColor: occupied
-            ? 'rgba(0, 113, 227, 0.35)'
-            : (theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
-          borderColor: occupied
-            ? 'rgba(0, 113, 227, 0.6)'
-            : (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+          backgroundColor: frontTint || (theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
+          borderColor: frontBorder || (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+          height: '68px',
         }}
-        className="w-full aspect-[3/4] rounded-md border flex flex-col items-center justify-center gap-0.5 transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer"
+        className="w-full rounded-lg border flex items-center justify-center transition-all duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
       >
-        {occupied ? (
-          <>
-            <span className="text-[8px] font-semibold truncate max-w-full px-0.5" style={{ color: colors.text }}>
-              {slot.specNo.length > 8 ? `…${slot.specNo.slice(-7)}` : slot.specNo}
-            </span>
-            {slot.serialNo && (
-              <span className="text-[7px] truncate max-w-full px-0.5" style={{ color: colors.textSecondary }}>
-                {slot.serialNo}
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="text-[8px]" style={{ color: colors.textTertiary }}>+</span>
-        )}
+        <span className="text-[12px]" style={{ color: isFrontRow ? 'rgba(0,113,227,0.5)' : colors.textTertiary }}>
+          {isFrontRow ? '▸' : '+'}
+        </span>
       </button>
     );
   };
@@ -248,20 +303,27 @@ export default function FridgeShelfPage() {
             {shelfSlotCount}/{ROWS * COLS}
           </span>
         </div>
-        {/* Shelf grid — 3 rows × 4 cols */}
+        {/* Shelf grid — transposed: COLS deep (rows) × ROWS wide (cols) */}
         <div
           className="grid gap-[2px] p-1 rounded-lg"
           style={{
-            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+            gridTemplateColumns: `repeat(${ROWS}, 1fr)`,
             backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
             border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
           }}
         >
-          {Array.from({ length: ROWS }, (_, r) =>
-            Array.from({ length: COLS }, (_, c) =>
-              renderSlotCell(shelfNo, r + 1, c + 1)
+          {Array.from({ length: COLS }, (_, c) =>
+            Array.from({ length: ROWS }, (_, r) =>
+              renderSlotCell(shelfNo, r + 1, c + 1, c === COLS - 1)
             )
           ).flat()}
+        </div>
+        {/* Front row indicator */}
+        <div className="flex items-center gap-1 mt-0.5 px-1">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'rgba(0,113,227,0.4)' }} />
+          <span className="text-[7px]" style={{ color: colors.textTertiary }}>
+            ← {t('p_valve.fridgeShelf.frontRow')}
+          </span>
         </div>
       </div>
     );

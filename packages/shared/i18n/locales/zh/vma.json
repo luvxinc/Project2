@@ -294,7 +294,8 @@
       "placedBy": "操作人",
       "cancel": "取消",
       "confirm": "确认",
-      "close": "关闭"
+      "close": "关闭",
+      "frontRow": "前排（靠门侧）"
     },
     "overview": {
       "title": "交易台账",
