@@ -23,10 +23,12 @@
 |------|-----|
 | 库 | `next-intl` |
 | 主要语言 | English + 中文 |
+| 越南语 (VI) | **只在 VMA 模块维护**, 其他模块自动 fallback 到 EN (铁律 R5) |
 | 命名空间 | 按模块划分 (`users`, `products`, `vma`, ...) |
 | 公共命名空间 | `common` (按钮/状态/确认等通用文本) |
 | 注入规则 | 子组件必须通过 props 接收 `t()` 或独立 `useTranslations` |
 | 文件位置 | `packages/shared/i18n/locales/{lang}/{namespace}.json` |
+| 新建模块 | 只需创建 `en/` + `zh/`, **不需要** `vi/` (VI 自动走 EN) |
 
 ---
 
@@ -78,7 +80,8 @@
 | R2 | **最小修改**: 只修用户要求的, 超出范围先问 | 🔴 |
 | R3 | **身份保护**: 不允许更改项目品牌/Logo/名称 | 🔴 |
 | R4 | **日志优先**: 所有写操作必须有审计日志 | 🟡 |
-| R5 | **Agent 行为**: 遵循 `core/skills/agent-mastery.md` 验证循环 | 🟡 |
+| R5 | **越南语 Fallback**: VI 只在 VMA 模块维护, 其他 VI→EN | 🔴 |
+| R6 | **Agent 行为**: 遵循 `core/skills/agent-mastery.md` 验证循环 | 🟡 |
 
 ---
 
