@@ -27,17 +27,7 @@ import enLogs from '../../../packages/shared/i18n/locales/en/logs.json';
 import enProducts from '../../../packages/shared/i18n/locales/en/products.json';
 import enVma from '../../../packages/shared/i18n/locales/en/vma.json';
 
-// Vietnamese
-import viCommon from '../../../packages/shared/i18n/locales/vi/common.json';
-import viAuth from '../../../packages/shared/i18n/locales/vi/auth.json';
-import viHome from '../../../packages/shared/i18n/locales/vi/home.json';
-import viModules from '../../../packages/shared/i18n/locales/vi/modules.json';
-import viUsers from '../../../packages/shared/i18n/locales/vi/users.json';
-import viLanding from '../../../packages/shared/i18n/locales/vi/landing.json';
-import viChangelog from '../../../packages/shared/i18n/locales/vi/changelog.json';
-import viNav from '../../../packages/shared/i18n/locales/vi/nav.json';
-import viLogs from '../../../packages/shared/i18n/locales/vi/logs.json';
-import viProducts from '../../../packages/shared/i18n/locales/vi/products.json';
+// Vietnamese (Only VMA — others fallback to EN per Iron Law R6)
 import viVma from '../../../packages/shared/i18n/locales/vi/vma.json';
 
 export const locales = ['zh', 'en', 'vi'] as const;
@@ -71,18 +61,20 @@ const messages = {
     products: enProducts,
     vma: enVma,
   },
+  // Vietnamese: Only VMA has real VI translations.
+  // All other namespaces fallback to EN (Iron Law R6).
   vi: {
-    common: viCommon,
-    auth: viAuth,
-    home: viHome,
-    modules: viModules,
-    users: viUsers,
-    landing: viLanding,
-    changelog: viChangelog,
-    nav: viNav,
-    logs: viLogs,
-    products: viProducts,
-    vma: viVma,
+    common: enCommon,
+    auth: enAuth,
+    home: enHome,
+    modules: enModules,
+    users: enUsers,
+    landing: enLanding,
+    changelog: enChangelog,
+    nav: enNav,
+    logs: enLogs,
+    products: enProducts,
+    vma: viVma, // ← Only VMA uses real Vietnamese
   },
 };
 
