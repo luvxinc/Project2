@@ -21,6 +21,18 @@
       "title": "综合管理",
       "description": "员工、职责、培训计划、记录与认证",
       "cta": "进入管理"
+    },
+    "employees": {
+      "title": "员工",
+      "description": "员工档案与岗位管理"
+    },
+    "duties": {
+      "title": "职责",
+      "description": "部门与岗位职责管理"
+    },
+    "training": {
+      "title": "培训",
+      "description": "培训计划、SOP 与记录管理"
     }
   },
   "truvalve": {

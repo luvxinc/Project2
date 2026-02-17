@@ -21,6 +21,18 @@
       "title": "Quản lý",
       "description": "Nhân viên, nhiệm vụ, kế hoạch đào tạo, hồ sơ và chứng chỉ",
       "cta": "Vào quản lý"
+    },
+    "employees": {
+      "title": "Nhân viên",
+      "description": "Hồ sơ nhân viên và quản lý vị trí"
+    },
+    "duties": {
+      "title": "Nhiệm vụ",
+      "description": "Quản lý phòng ban và nhiệm vụ"
+    },
+    "training": {
+      "title": "Đào tạo",
+      "description": "Kế hoạch đào tạo, SOP và quản lý hồ sơ"
     }
   },
   "truvalve": {

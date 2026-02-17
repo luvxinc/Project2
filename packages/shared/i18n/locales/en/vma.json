@@ -21,6 +21,18 @@
       "title": "Management",
       "description": "Employees, duties, training plans, records and certifications",
       "cta": "Enter Management"
+    },
+    "employees": {
+      "title": "Employees",
+      "description": "Employee profiles and position management"
+    },
+    "duties": {
+      "title": "Duties",
+      "description": "Department and duty management"
+    },
+    "training": {
+      "title": "Training",
+      "description": "Training plans, SOPs and record management"
     }
   },
   "truvalve": {
