@@ -130,7 +130,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             {t(`status.${user.status.toLowerCase()}`)}
           </span>
           <span style={{ color: colors.textSecondary }} className="text-[14px]">
-            {t(`roles.${user.roles[0]}`)}
+            {t(`roleNames.${user.roles[0]}`)}
           </span>
         </div>
       </section>
@@ -204,7 +204,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                   style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
                   className="px-3 py-1 text-[13px] rounded-lg"
                 >
-                  {t(`roles.${role}`)}
+                  {t(`roleNames.${role}`)}
                 </span>
               ))}
             </div>
