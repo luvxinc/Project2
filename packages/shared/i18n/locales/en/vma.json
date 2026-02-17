@@ -294,7 +294,8 @@
       "placedBy": "Placed By",
       "cancel": "Cancel",
       "confirm": "Confirm",
-      "close": "Close"
+      "close": "Close",
+      "frontRow": "Front (Door side)"
     },
     "overview": {
       "title": "Transaction Ledger",

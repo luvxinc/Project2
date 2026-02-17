@@ -282,6 +282,8 @@ data class FridgeSlotResponse(
     val productType: String,
     val specNo: String,
     val serialNo: String?,
+    val batchNo: String?,
+    val expDate: String?,
     val placedAt: Instant,
     val placedBy: String?,
 )

@@ -556,17 +556,25 @@ class VmaInventoryTransactionService(
         }
     }
 
-    private fun toFridgeSlotResponse(slot: VmaFridgeSlot) = FridgeSlotResponse(
-        id = slot.id,
-        shelfNo = slot.shelfNo,
-        rowNo = slot.rowNo,
-        colNo = slot.colNo,
-        productType = slot.productType.name,
-        specNo = slot.specNo,
-        serialNo = slot.serialNo,
-        placedAt = slot.placedAt,
-        placedBy = slot.placedBy,
-    )
+    private fun toFridgeSlotResponse(slot: VmaFridgeSlot): FridgeSlotResponse {
+        // Look up batch/exp from the latest inventory transaction with matching serialNo
+        val inv = slot.serialNo?.let {
+            txnRepo.findFirstBySerialNoAndDeletedAtIsNullOrderByDateDesc(it)
+        }
+        return FridgeSlotResponse(
+            id = slot.id,
+            shelfNo = slot.shelfNo,
+            rowNo = slot.rowNo,
+            colNo = slot.colNo,
+            productType = slot.productType.name,
+            specNo = slot.specNo,
+            serialNo = slot.serialNo,
+            batchNo = inv?.batchNo,
+            expDate = inv?.expDate?.toString(),
+            placedAt = slot.placedAt,
+            placedBy = slot.placedBy,
+        )
+    }
 
     /**
      * Returns all P-Valve products eligible for fridge placement.

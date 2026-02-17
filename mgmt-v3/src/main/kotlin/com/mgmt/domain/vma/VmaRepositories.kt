@@ -212,6 +212,8 @@ interface VmaInventoryTransactionRepository : JpaRepository<VmaInventoryTransact
 
     @Query("SELECT DISTINCT t.specNo FROM VmaInventoryTransaction t WHERE t.productType = :pt AND t.deletedAt IS NULL ORDER BY t.specNo")
     fun findDistinctSpecNos(pt: VmaProductType): List<String>
+
+    fun findFirstBySerialNoAndDeletedAtIsNullOrderByDateDesc(serialNo: String): VmaInventoryTransaction?
 }
 
 // ─── Clinical Case ──────────────────────────────────────
