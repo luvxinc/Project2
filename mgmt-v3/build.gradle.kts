@@ -57,8 +57,13 @@ dependencies {
     // === Email ===
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
-    // === PDF (barcode & training certificates) ===
+    // === PDF & Barcode ===
+    // iText: VMA module PDF form filling (training certificates, receiving docs)
     implementation("com.itextpdf:itext-core:9.1.0")
+    // ZXing + PDFBox: Products barcode generation (V3 architecture §3.10)
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.zxing:javase:3.5.3")
+    implementation("org.apache.pdfbox:pdfbox:3.0.4")
 
     // === Dev Tools ===
     developmentOnly("org.springframework.boot:spring-boot-devtools")

@@ -55,3 +55,13 @@ PM 领悟+翻译+分诊后, 判断需要哪个工作流:
 
 > **铁律: 不理解 = 不动手。猜测 = 失败。**
 > **完整 PM SOP: `core/skills/project-manager.md`**
+
+## 🔴 V3 架构真相源 (Architecture Source of Truth)
+
+> **PM 在分诊和路由时, 必须确认需求符合 V3 架构设定:**
+> - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md`
+> - 📚 24 个参考规范: `.agent/projects/mgmt/reference/*.md`
+> - 📋 审计+质量: `.agent/projects/mgmt/data/audits/v3-*.md`
+>
+> **任何新需求必须在 V3 架构框架内实现。偏离架构 = 需要用户确认。**
+

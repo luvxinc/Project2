@@ -36,17 +36,27 @@
       "sku": "SKU",
       "name": "Product Name",
       "category": "Category",
+      "subcategory": "Subcategory",
+      "type": "Type",
+      "cost": "Cost",
+      "freight": "Freight",
       "cogs": "COGS",
+      "weight": "Weight",
       "upc": "UPC",
       "status": "Status",
       "createdAt": "Created At",
       "updatedAt": "Updated At",
+      "createdBy": "Created By",
+      "updatedBy": "Updated By",
       "actions": "Actions"
     }
   },
   "cogs": {
     "title": "COGS Management",
     "description": "Batch update cost of goods sold for products",
+    "step1": "Review Data",
+    "step2": "Edit Fields",
+    "step3": "Confirm Changes",
     "batchUpdate": "Batch Update",
     "batchUpdateSuccess": "Successfully updated {count} products",
     "batchUpdateFailed": "Failed to update some products",
@@ -55,43 +65,59 @@
     "discardChanges": "Discard",
     "unsavedChanges": "You have unsaved changes",
     "modifiedRows": "{count} modified",
+    "diffTable": {
+      "title": "Review Changes",
+      "field": "Field",
+      "before": "Before",
+      "after": "After",
+      "noChanges": "No changes detected"
+    },
     "instructions": {
       "title": "Editing Instructions",
-      "editCostFreight": "Edit Cost and Freight values in the table below",
-      "autoCalculate": "COG is automatically calculated as Cost + Freight",
-      "saveChanges": "Click \"Save Changes\" to submit your edits"
+      "editAllFields": "Edit Category, Subcategory, Type, Cost, Freight, and Weight",
+      "autoCalculate": "COGS is automatically calculated as Cost + Freight",
+      "saveChanges": "Review changes in the diff table before confirming"
     }
   },
-
   "create": {
     "title": "Create Product",
     "description": "Add a new product to the catalog",
     "step1": "Basic Information",
-    "step2": "Pricing",
+    "step2": "Pricing & Details",
     "step3": "Confirmation",
     "batchCreate": "Batch Create",
     "batchTitle": "Batch Create Products",
-    "batchDescription": "Create multiple products at once"
+    "batchDescription": "Create multiple products at once",
+    "addRow": "Add Row",
+    "removeRow": "Remove Row",
+    "skuDuplicate": "This SKU already exists in the system",
+    "zeroQtyConfirm": "Initial quantity is 0. Are you sure?",
+    "initialQty": "Initial Quantity"
   },
   "barcode": {
     "title": "Barcode Generator",
     "description": "Generate barcode labels for products",
+    "step1": "Select Products",
+    "step2": "Configure Labels",
+    "step3": "Preview",
+    "step4": "Generate & Download",
     "selectProducts": "Select Products",
-    "format": "Barcode Format",
-    "copies": "Copies per SKU",
-    "generate": "Generate",
+    "searchSku": "Search SKU...",
+    "qtyPerBox": "QTY/BOX",
+    "boxPerCtn": "BOX/CTN",
+    "addItem": "Add Item",
+    "removeItem": "Remove",
+    "generate": "Generate PDF",
     "download": "Download PDF",
-    "formats": {
-      "CODE128": "Code 128 (Recommended)",
-      "EAN13": "EAN-13",
-      "UPC": "UPC-A"
-    }
+    "generating": "Generating...",
+    "noItemsSelected": "No items selected",
+    "labelFormat": "4\" x 6\" Label"
   },
   "form": {
     "sku": {
       "label": "SKU",
       "placeholder": "Enter SKU code",
-      "hint": "3-50 characters, uppercase letters, numbers, and hyphens only"
+      "hint": "Uppercase letters, numbers, hyphens, underscores, and forward slashes"
     },
     "name": {
       "label": "Product Name",
@@ -101,10 +127,33 @@
       "label": "Category",
       "placeholder": "Select or enter category"
     },
+    "subcategory": {
+      "label": "Subcategory",
+      "placeholder": "Select or enter subcategory"
+    },
+    "type": {
+      "label": "Type",
+      "placeholder": "Select or enter type"
+    },
+    "cost": {
+      "label": "Cost",
+      "placeholder": "0.00",
+      "hint": "Product unit cost"
+    },
+    "freight": {
+      "label": "Freight",
+      "placeholder": "0.00",
+      "hint": "Shipping cost per unit"
+    },
     "cogs": {
       "label": "COGS",
       "placeholder": "0.00",
-      "hint": "Cost of goods sold"
+      "hint": "Auto-calculated: Cost + Freight"
+    },
+    "weight": {
+      "label": "Weight (oz)",
+      "placeholder": "0",
+      "hint": "Product weight in ounces"
     },
     "upc": {
       "label": "UPC",
@@ -134,20 +183,24 @@
     "batchCreateSuccess": "Batch create completed: {success}/{total} products",
     "batchUpdateSuccess": "Batch update completed: {success}/{total} products",
     "confirmDelete": "Are you sure you want to delete this product? This action cannot be undone.",
-    "skuCopied": "SKU copied to clipboard"
+    "skuCopied": "SKU copied to clipboard",
+    "barcodeGenerated": "Barcode PDF generated and downloading"
   },
   "errors": {
     "notFound": "Product not found",
     "skuExists": "SKU already exists",
-    "invalidSku": "Invalid SKU format",
+    "invalidSku": "Invalid SKU format. Use uppercase letters, numbers, hyphens, underscores, and forward slashes.",
     "invalidCogs": "COGS must be a positive number",
     "loadFailed": "Failed to load products",
-    "saveFailed": "Failed to save changes"
+    "saveFailed": "Failed to save changes",
+    "barcodeGenerateFailed": "Failed to generate barcode PDF"
   },
   "security": {
     "requiresL1": "This action requires L1 security verification",
     "requiresL2": "This action requires L2 security verification",
-    "requiresL3": "This action requires L3 security verification"
+    "requiresL3": "This action requires L3 security verification",
+    "codeRequired": "Please enter your security code to proceed",
+    "codeInvalid": "Invalid security code"
   },
   "pagination": {
     "total": "{count} products total",
