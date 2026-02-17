@@ -17,28 +17,26 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
 
 /**
  * ProductController — Products module REST API.
  *
  * V3 DDD: api layer.
- * All responses wrapped in unified format: {success, data} per §7.2
- * All CUD operations protected by @RequirePermission + @SecurityLevel + @AuditLog.
+ * V1 functional parity — all endpoints behave identically to V1.
+ * V3 architecture — unified response format, security annotations, audit logging.
  *
  * Endpoints (11):
- *   GET    /products                   - Product list (paginated, unified response)
+ *   GET    /products                   - Product list (paginated)
  *   GET    /products/categories        - Category list
  *   GET    /products/sku-list          - SKU dropdown list
- *   GET    /products/metadata          - Dropdown options + existing SKUs (V1 parity)
  *   GET    /products/{id}              - Single product
  *   GET    /products/sku/{sku}         - By SKU
- *   POST   /products                   - Create product (9 fields)
+ *   POST   /products                   - Create product
  *   POST   /products/batch             - Batch create
  *   PATCH  /products/{id}              - Update product
- *   POST   /products/cogs/batch        - Batch update COGS (6 fields, fixes V2 bug)
+ *   POST   /products/cogs/batch        - Batch update COGS
  *   DELETE /products/{id}              - Soft delete
- *   POST   /products/barcode/generate  - Generate barcode PDF (stateless)
+ *   POST   /products/barcode/generate  - Generate barcode PDF
  */
 @RestController
 @RequestMapping("/products")
@@ -84,11 +82,6 @@ class ProductController(
         }
         return ResponseEntity.ok(ApiResponse.ok(skuList))
     }
-
-    @GetMapping("/metadata")
-    @RequirePermission("module.products.catalog.view")
-    fun getMetadata(): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(queryUseCase.getMetadata()))
 
     @GetMapping("/{id}")
     @RequirePermission("module.products.catalog.view")
@@ -142,16 +135,22 @@ class ProductController(
     fun delete(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(mapOf("success" to deleteUseCase.delete(id, currentUsername()))))
 
-    // ═══════════ Barcode (stateless — A6) ═══════════
+    // ═══════════ Barcode (V1 parity) ═══════════
 
     @PostMapping("/barcode/generate")
     @RequirePermission("module.products.catalog.view")
     @AuditLog(module = "PRODUCTS", action = "GENERATE_BARCODE", riskLevel = "LOW")
     fun generateBarcode(@RequestBody dto: GenerateBarcodeRequest): ResponseEntity<ByteArray> {
-        // Build SKU name map for label text
-        val skuNames = queryUseCase.getActiveSkuList().associate { it.sku to (it.name ?: "") }
+        // V1: fetch all active SKU names for label text
+        val products = queryUseCase.getActiveSkuList()
+        val names = products.associate { it.sku to (it.name ?: "") }
 
-        val result = barcodeService.generate(dto.items, skuNames)
+        val result = barcodeService.generateBarcodePdf(
+            skus = dto.skus,
+            names = names,
+            copiesPerSku = dto.copiesPerSku,
+            format = dto.format,
+        )
 
         if (!result.success || result.pdfBytes == null) {
             return ResponseEntity.badRequest().body(null)
@@ -172,7 +171,6 @@ class ProductController(
         cogs = p.cogs.toDouble(), weight = p.weight, upc = p.upc,
         status = p.status.name,
         createdAt = p.createdAt, updatedAt = p.updatedAt,
-        createdBy = p.createdBy, updatedBy = p.updatedBy,
     )
 
     private fun currentUsername(): String {
@@ -181,3 +179,4 @@ class ProductController(
         return claims?.username ?: "system"
     }
 }
+

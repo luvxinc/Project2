@@ -15,12 +15,6 @@ const productFeatures = [
     accent: '#0071e3', // Apple Blue
   },
   {
-    key: 'create',
-    href: '/products/create',
-    icon: 'plus',
-    accent: '#30d158', // Apple Green
-  },
-  {
     key: 'barcode',
     href: '/products/barcode',
     icon: 'barcode',

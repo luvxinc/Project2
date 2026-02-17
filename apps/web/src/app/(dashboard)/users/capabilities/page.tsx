@@ -450,25 +450,17 @@ export default function CapabilitiesPage() {
         if (!securityCode) {
           throw new Error(tc('securityCode.required'));
         }
-
-        try {
-          await rolesApi.create({ ...data, sec_code_l3: securityCode });
-          setModalOpen(false);
-          await loadRoles();
-          showSuccess({
-            title: tc('success'),
-            message: t('roles.messages.added'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        } catch (err: any) {
-          showError({
-            title: tc('error'),
-            message: err.message || tc('operationFailed'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        }
+        // Let errors propagate to modal's inline error display
+        await rolesApi.create({ ...data, sec_code_l3: securityCode });
+        setModalOpen(false);
+        await loadRoles();
+        // Success feedback after modal auto-hides
+        setTimeout(() => showSuccess({
+          title: tc('success'),
+          message: t('roles.messages.added'),
+          showCancel: false,
+          confirmText: tc('ok'),
+        }), 250);
       },
     });
   };
@@ -486,26 +478,18 @@ export default function CapabilitiesPage() {
         if (!securityCode) {
           throw new Error(tc('securityCode.required'));
         }
-
-        try {
-          await rolesApi.update(editingRole.id, { ...data, sec_code_l3: securityCode });
-          setModalOpen(false);
-          setEditingRole(null);
-          await loadRoles();
-          showSuccess({
-            title: tc('success'),
-            message: t('roles.messages.updated'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        } catch (err: any) {
-          showError({
-            title: tc('error'),
-            message: err.message || tc('operationFailed'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        }
+        // Let errors propagate to modal's inline error display
+        await rolesApi.update(editingRole.id, { ...data, sec_code_l3: securityCode });
+        setModalOpen(false);
+        setEditingRole(null);
+        await loadRoles();
+        // Success feedback after modal auto-hides
+        setTimeout(() => showSuccess({
+          title: tc('success'),
+          message: t('roles.messages.updated'),
+          showCancel: false,
+          confirmText: tc('ok'),
+        }), 250);
       },
     });
   };
@@ -532,24 +516,16 @@ export default function CapabilitiesPage() {
         if (!securityCode) {
           throw new Error(tc('securityCode.required'));
         }
-
-        try {
-          await rolesApi.delete(role.id, { sec_code_l4: securityCode });
-          await loadRoles();
-          showSuccess({
-            title: tc('success'),
-            message: t('roles.messages.deleted'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        } catch (err: any) {
-          showError({
-            title: tc('error'),
-            message: err.message || tc('operationFailed'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        }
+        // Let errors propagate to modal's inline error display
+        await rolesApi.delete(role.id, { sec_code_l4: securityCode });
+        await loadRoles();
+        // Success feedback after modal auto-hides
+        setTimeout(() => showSuccess({
+          title: tc('success'),
+          message: t('roles.messages.deleted'),
+          showCancel: false,
+          confirmText: tc('ok'),
+        }), 250);
       },
     });
   };
@@ -566,9 +542,9 @@ export default function CapabilitiesPage() {
         if (!codeL1 || !codeL4) {
           throw new Error(tc('securityCode.required'));
         }
-
+        // Let errors propagate to modal's inline error display
+        setSaving(true);
         try {
-          setSaving(true);
           for (const role of roles) {
             if (role.name === 'superuser') continue;
             const caps = roleCapabilities[role.name] || {};
@@ -578,22 +554,16 @@ export default function CapabilitiesPage() {
             }));
             await rolesApi.setBoundaries(role.id, boundaries, { sec_code_l1: codeL1, sec_code_l4: codeL4 });
           }
-          showSuccess({
-            title: tc('success'),
-            message: t('roles.messages.configSaved'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
-        } catch (err: any) {
-          showError({
-            title: tc('error'),
-            message: err.message || tc('operationFailed'),
-            showCancel: false,
-            confirmText: tc('ok'),
-          });
         } finally {
           setSaving(false);
         }
+        // Success feedback after modal auto-hides
+        setTimeout(() => showSuccess({
+          title: tc('success'),
+          message: t('roles.messages.configSaved'),
+          showCancel: false,
+          confirmText: tc('ok'),
+        }), 250);
       },
     });
   };

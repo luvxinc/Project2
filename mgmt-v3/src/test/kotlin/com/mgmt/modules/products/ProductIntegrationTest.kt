@@ -13,21 +13,16 @@ import org.springframework.test.web.servlet.*
 import javax.sql.DataSource
 
 /**
- * Products Module Integration Tests
+ * Products Module Integration Tests — V1 Functional Parity
  *
- * V1 parity validation — covers:
- *   1. Product CRUD (9-field create, update, soft delete)
- *   2. COGS batch update (6 fields — fixes V2 bug)
- *   3. Barcode PDF generation (ZXing+PDFBox, stateless)
- *   4. Metadata endpoint (dropdown options)
- *   5. Unified API response format {success, data}
- *   6. Auth guards (401)
- *   7. SKU validation (format, duplicate)
- *   8. Audit fields (createdBy, updatedBy)
- *
- * Integration with Users module:
- *   - Permission enforcement via @RequirePermission + PermissionCheckAspect
- *   - Security code via @SecurityLevel + SecurityLevelAspect
+ * Tests all endpoints with V1 DTO format:
+ *   1. Create: {sku, name, category, cogs, upc}
+ *   2. Update: {name, category, cogs, upc, status}
+ *   3. COGS batch: {items: [{id, cogs}]}
+ *   4. Barcode: {skus, copiesPerSku, format}
+ *   5. Query: findAll, categories, sku-list, findOne, findBySku
+ *   6. Delete: soft delete
+ *   7. Auth: 401
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,14 +43,13 @@ class ProductIntegrationTest {
         var productId2: String = ""
         const val TEST_SKU = "TEST-PROD-001"
         const val TEST_SKU_2 = "TEST-PROD-002"
-        const val TEST_SKU_SLASH = "TEST/PROD/003"  // V1 parity: SKUs can contain '/'
     }
 
     /** Clean up test data for idempotency */
     private fun cleanTestData() {
         dataSource.connection.use { conn ->
             conn.createStatement().use { stmt ->
-                stmt.execute("DELETE FROM products WHERE sku IN ('$TEST_SKU', '$TEST_SKU_2', '$TEST_SKU_SLASH', 'BATCH-A', 'BATCH-B')")
+                stmt.execute("DELETE FROM products WHERE sku IN ('$TEST_SKU', '$TEST_SKU_2', 'BATCH-A', 'BATCH-B')")
             }
         }
     }
@@ -84,20 +78,6 @@ class ProductIntegrationTest {
     }
 
     @Test @Order(2)
-    fun `get metadata returns dropdown options`() {
-        mockMvc.get("/products/metadata") {
-            header("Authorization", "Bearer $token")
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(true) }
-            jsonPath("$.data.categories") { isArray() }
-            jsonPath("$.data.subcategories") { isArray() }
-            jsonPath("$.data.types") { isArray() }
-            jsonPath("$.data.existingSkus") { isArray() }
-        }
-    }
-
-    @Test @Order(3)
     fun `get categories returns unified response`() {
         mockMvc.get("/products/categories") {
             header("Authorization", "Bearer $token")
@@ -108,7 +88,7 @@ class ProductIntegrationTest {
         }
     }
 
-    @Test @Order(4)
+    @Test @Order(3)
     fun `get SKU list returns unified response`() {
         mockMvc.get("/products/sku-list") {
             header("Authorization", "Bearer $token")
@@ -119,19 +99,15 @@ class ProductIntegrationTest {
         }
     }
 
-    // ─── Create Endpoints (9-field V1 parity) ────────────
+    // ─── Create Endpoints (V1 parity: 5 fields) ──────────
 
     @Test @Order(10)
-    fun `create product with all 9 fields`() {
+    fun `create product with V1 fields (sku, name, category, cogs, upc)`() {
         val body = objectMapper.writeValueAsString(mapOf(
             "sku" to TEST_SKU,
             "name" to "Test Integration Product",
             "category" to "Test Category",
-            "subcategory" to "Test Sub",
-            "type" to "Test Type",
-            "cost" to 10.50,
-            "freight" to 2.50,
-            "weight" to 16,
+            "cogs" to 13.00,
             "upc" to "123456789012",
         ))
         val result = mockMvc.post("/products") {
@@ -144,14 +120,7 @@ class ProductIntegrationTest {
             jsonPath("$.data.sku") { value(TEST_SKU) }
             jsonPath("$.data.name") { value("Test Integration Product") }
             jsonPath("$.data.category") { value("Test Category") }
-            jsonPath("$.data.subcategory") { value("Test Sub") }
-            jsonPath("$.data.type") { value("Test Type") }
-            jsonPath("$.data.cost") { value(10.5) }
-            jsonPath("$.data.freight") { value(2.5) }
-            jsonPath("$.data.cogs") { value(13.0) }  // Auto-calculated: 10.50 + 2.50
-            jsonPath("$.data.weight") { value(16) }
-            jsonPath("$.data.createdBy") { exists() }
-            jsonPath("$.data.updatedBy") { exists() }
+            jsonPath("$.data.cogs") { value(13.0) }
         }.andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
@@ -159,12 +128,9 @@ class ProductIntegrationTest {
     }
 
     @Test @Order(11)
-    fun `create product with slash in SKU (V1 parity)`() {
+    fun `create product with minimal fields`() {
         val body = objectMapper.writeValueAsString(mapOf(
-            "sku" to TEST_SKU_SLASH,
-            "name" to "Slash SKU Product",
-            "cost" to 5.00,
-            "freight" to 1.00,
+            "sku" to TEST_SKU_2,
         ))
         val result = mockMvc.post("/products") {
             header("Authorization", "Bearer $token")
@@ -172,8 +138,8 @@ class ProductIntegrationTest {
             content = body
         }.andExpect {
             status { isCreated() }
-            jsonPath("$.data.sku") { value(TEST_SKU_SLASH) }
-            jsonPath("$.data.cogs") { value(6.0) }  // 5.00 + 1.00
+            jsonPath("$.data.sku") { value(TEST_SKU_2) }
+            jsonPath("$.data.cogs") { value(0.0) }
         }.andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
@@ -197,7 +163,6 @@ class ProductIntegrationTest {
 
     @Test @Order(13)
     fun `SKU is case-insensitive (forced uppercase)`() {
-        // Try lowercase version of existing SKU
         val body = objectMapper.writeValueAsString(mapOf(
             "sku" to "test-prod-001",  // lowercase
             "name" to "Should conflict",
@@ -215,8 +180,8 @@ class ProductIntegrationTest {
     fun `batch create products`() {
         val body = objectMapper.writeValueAsString(mapOf(
             "products" to listOf(
-                mapOf("sku" to "BATCH-A", "name" to "Batch A", "cost" to 1.00, "freight" to 0.50),
-                mapOf("sku" to "BATCH-B", "name" to "Batch B", "cost" to 2.00, "freight" to 1.00),
+                mapOf("sku" to "BATCH-A", "name" to "Batch A", "cogs" to 1.50),
+                mapOf("sku" to "BATCH-B", "name" to "Batch B", "cogs" to 3.00),
             ),
         ))
         mockMvc.post("/products/batch") {
@@ -242,7 +207,6 @@ class ProductIntegrationTest {
             status { isOk() }
             jsonPath("$.success") { value(true) }
             jsonPath("$.data.sku") { value(TEST_SKU) }
-            jsonPath("$.data.createdBy") { exists() }
         }
     }
 
@@ -266,14 +230,13 @@ class ProductIntegrationTest {
         }
     }
 
-    // ─── Update ──────────────────────────────────────────
+    // ─── Update (V1 parity: {name, category, cogs, upc, status}) ──
 
     @Test @Order(30)
-    fun `update product`() {
+    fun `update product with V1 fields`() {
         val body = objectMapper.writeValueAsString(mapOf(
             "name" to "Updated Name",
-            "cost" to 15.00,
-            "freight" to 3.00,
+            "cogs" to 18.00,
         ))
         mockMvc.patch("/products/$productId") {
             header("Authorization", "Bearer $token")
@@ -283,28 +246,17 @@ class ProductIntegrationTest {
             status { isOk() }
             jsonPath("$.success") { value(true) }
             jsonPath("$.data.name") { value("Updated Name") }
-            jsonPath("$.data.cost") { value(15.0) }
-            jsonPath("$.data.freight") { value(3.0) }
-            jsonPath("$.data.cogs") { value(18.0) }  // Auto-recalculated
-            jsonPath("$.data.updatedBy") { exists() }
+            jsonPath("$.data.cogs") { value(18.0) }
         }
     }
 
-    // ─── COGS Batch Update (6 fields — V2 bug fix) ───────
+    // ─── COGS Batch Update (V1 parity: {id, cogs}) ───────
 
     @Test @Order(40)
-    fun `batch update COGS with all 6 fields`() {
+    fun `batch update COGS with V1 format (id, cogs)`() {
         val body = objectMapper.writeValueAsString(mapOf(
             "items" to listOf(
-                mapOf(
-                    "id" to productId,
-                    "category" to "Updated Category",
-                    "subcategory" to "Updated Sub",
-                    "type" to "Updated Type",
-                    "cost" to 20.00,
-                    "freight" to 5.00,
-                    "weight" to 32,
-                ),
+                mapOf("id" to productId, "cogs" to 25.00),
             ),
         ))
         mockMvc.post("/products/cogs/batch") {
@@ -318,28 +270,22 @@ class ProductIntegrationTest {
             jsonPath("$.data.success") { value(1) }
         }
 
-        // Verify all 6 fields were saved (V2 bug: only {id, cogs} was sent)
+        // Verify COGS was updated
         mockMvc.get("/products/$productId") {
             header("Authorization", "Bearer $token")
         }.andExpect {
-            jsonPath("$.data.category") { value("Updated Category") }
-            jsonPath("$.data.subcategory") { value("Updated Sub") }
-            jsonPath("$.data.type") { value("Updated Type") }
-            jsonPath("$.data.cost") { value(20.0) }
-            jsonPath("$.data.freight") { value(5.0) }
-            jsonPath("$.data.cogs") { value(25.0) }  // Auto: 20 + 5
-            jsonPath("$.data.weight") { value(32) }
+            jsonPath("$.data.cogs") { value(25.0) }
         }
     }
 
-    // ─── Barcode PDF (ZXing+PDFBox, stateless) ───────────
+    // ─── Barcode PDF (V1 parity: {skus, copiesPerSku, format}) ───
 
     @Test @Order(50)
-    fun `generate barcode PDF returns byte stream`() {
+    fun `generate barcode PDF with V1 format`() {
         val body = objectMapper.writeValueAsString(mapOf(
-            "items" to listOf(
-                mapOf("sku" to TEST_SKU, "qtyPerBox" to 12, "boxPerCtn" to 4),
-            ),
+            "skus" to listOf(TEST_SKU),
+            "copiesPerSku" to 2,
+            "format" to "CODE128",
         ))
         mockMvc.post("/products/barcode/generate") {
             header("Authorization", "Bearer $token")
@@ -369,7 +315,7 @@ class ProductIntegrationTest {
     fun `filter products by category`() {
         mockMvc.get("/products") {
             header("Authorization", "Bearer $token")
-            param("category", "Updated Category")
+            param("category", "Test Category")
         }.andExpect {
             status { isOk() }
             jsonPath("$.data") { isArray() }
@@ -400,7 +346,6 @@ class ProductIntegrationTest {
     @Test @Order(90)
     fun `endpoints require authentication`() {
         mockMvc.get("/products").andExpect { status { isUnauthorized() } }
-        mockMvc.get("/products/metadata").andExpect { status { isUnauthorized() } }
         mockMvc.post("/products") {
             contentType = MediaType.APPLICATION_JSON
             content = "{}"

@@ -13,64 +13,46 @@ data class ProductQueryParams(
     val status: String? = null,
 )
 
-// ═══════════ Create DTOs (V1: 9 fields) ═══════════
+// ═══════════ Create DTOs (V1 parity: 5 fields) ═══════════
 
 data class CreateProductRequest(
     val sku: String,
     val name: String? = null,
     val category: String? = null,
-    val subcategory: String? = null,
-    val type: String? = null,
-    val cost: BigDecimal? = null,
-    val freight: BigDecimal? = null,
-    val weight: Int? = null,
+    val cogs: BigDecimal? = null,
     val upc: String? = null,
-    val initialQty: Int? = null,   // V1: Initial_Qty → triggers Inventory module event
 )
 
 data class BatchCreateProductRequest(
     val products: List<CreateProductRequest>,
 )
 
-// ═══════════ Update DTOs ═══════════
+// ═══════════ Update DTOs (V1 parity) ═══════════
 
 data class UpdateProductRequest(
     val name: String? = null,
     val category: String? = null,
-    val subcategory: String? = null,
-    val type: String? = null,
-    val cost: BigDecimal? = null,
-    val freight: BigDecimal? = null,
-    val weight: Int? = null,
+    val cogs: BigDecimal? = null,
     val upc: String? = null,
     val status: String? = null,
 )
 
-// V1: COGS batch update sends ALL 6 editable fields
-data class CogsUpdateItem(
+// V1 parity: COGS batch update sends {id, cogs}
+data class CogsItem(
     val id: String,
-    val category: String? = null,
-    val subcategory: String? = null,
-    val type: String? = null,
-    val cost: BigDecimal,
-    val freight: BigDecimal,
-    val weight: Int? = null,
+    val cogs: BigDecimal,
 )
 
 data class BatchUpdateCogsRequest(
-    val items: List<CogsUpdateItem>,
+    val items: List<CogsItem>,
 )
 
-// ═══════════ Barcode DTOs (V1: sku + qtyPerBox + boxPerCtn) ═══════════
-
-data class BarcodeItem(
-    val sku: String,
-    val qtyPerBox: Int,
-    val boxPerCtn: Int,
-)
+// ═══════════ Barcode DTOs (V1 parity) ═══════════
 
 data class GenerateBarcodeRequest(
-    val items: List<BarcodeItem>,
+    val skus: List<String>,
+    val copiesPerSku: Int = 1,
+    val format: String = "CODE128",
 )
 
 // ═══════════ Metadata DTO (dropdown options for Create/COGS forms) ═══════════
@@ -82,7 +64,7 @@ data class ProductMetadataResponse(
     val existingSkus: List<String>,
 )
 
-// ═══════════ Response DTOs ═══════════
+// ═══════════ Response DTOs (V1 parity) ═══════════
 
 data class ProductResponse(
     val id: String,
@@ -97,10 +79,8 @@ data class ProductResponse(
     val weight: Int,
     val upc: String?,
     val status: String,
-    val createdAt: Instant,
-    val updatedAt: Instant,
-    val createdBy: String?,
-    val updatedBy: String?,
+    val createdAt: Any,
+    val updatedAt: Any,
 )
 
 data class BatchResult(

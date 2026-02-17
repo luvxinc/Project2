@@ -144,9 +144,10 @@ class RoleService(
     fun setBoundaries(roleId: String, boundaries: List<BoundaryRequest>) {
         val role = findEntity(roleId)
 
-        // Delete existing
-        val existing = boundaryRepo.findByRoleId(roleId)
-        boundaryRepo.deleteAll(existing)
+        // Delete existing — must flush before inserting new ones
+        // to avoid unique constraint violations in JPA's write-behind cache
+        boundaryRepo.deleteAllByRoleId(roleId)
+        boundaryRepo.flush()
 
         // Create new
         val newBoundaries = boundaries.map { req ->
