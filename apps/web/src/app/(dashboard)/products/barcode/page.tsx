@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
@@ -8,6 +8,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
 import { api } from '@/lib/api/client';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { animate, stagger } from 'animejs';
 
 interface CurrentUser {
   id: string;
@@ -48,6 +49,11 @@ export default function BarcodePage() {
   // V1 wizard: input rows
   const [rows, setRows] = useState<BarcodeRow[]>(() => [createEmptyRow()]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Animation refs
+  const tableRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -60,6 +66,19 @@ export default function BarcodePage() {
       }
     }
   }, []);
+
+  // Entry animation
+  useEffect(() => {
+    if (isClient && headerRef.current) {
+      animate(headerRef.current.querySelectorAll('.anim-item'), {
+        opacity: [0, 1],
+        translateY: [20, 0],
+        delay: stagger(80, { start: 100 }),
+        duration: 500,
+        ease: 'out(3)',
+      });
+    }
+  }, [isClient]);
 
   // V1: SKU dropdown list
   const { data: skuList = [] } = useQuery({
@@ -98,15 +117,34 @@ export default function BarcodePage() {
     return `sec_code_${level.toLowerCase()}`;
   };
 
-  // === Row management (V1 parity: addBarcodeRow, addMultipleBarcodeRows) ===
-  const addRow = () => setRows(prev => [...prev, createEmptyRow()]);
-  const addRows = (n: number) => setRows(prev => [...prev, ...Array.from({ length: n }, () => createEmptyRow())]);
+  // === Row management ===
+  const addRow = () => {
+    setRows(prev => [...prev, createEmptyRow()]);
+    // Animate the new row in
+    setTimeout(() => {
+      if (tableRef.current) {
+        const rows = tableRef.current.querySelectorAll('tr.data-row');
+        const last = rows[rows.length - 1];
+        if (last) {
+          animate(last, {
+            opacity: [0, 1],
+            translateX: [-12, 0],
+            duration: 300,
+            ease: 'out(2)',
+          });
+        }
+      }
+    }, 10);
+  };
+  const addRows = (n: number) => {
+    setRows(prev => [...prev, ...Array.from({ length: n }, () => createEmptyRow())]);
+  };
   const removeRow = (id: number) => setRows(prev => prev.filter(r => r.id !== id));
   const updateRow = (id: number, field: keyof BarcodeRow, value: string) => {
     setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   };
 
-  // === Validation (V1 parity: Step 1 → Step 2) ===
+  // === Validation ===
   const validateRows = (): boolean => {
     const errors: string[] = [];
     const validRows = rows.filter(r => r.sku.trim());
@@ -119,15 +157,14 @@ export default function BarcodePage() {
       const qty = parseInt(r.qtyPerBox);
       const ctn = parseInt(r.boxPerCtn);
       if (!r.sku.trim()) errors.push(`第 ${i + 1} 行: SKU 不能为空`);
-      if (isNaN(qty) || qty < 1) errors.push(`第 ${i + 1} 行: 每盒个数必须是大于 0 的正整数`);
-      if (isNaN(ctn) || ctn < 1) errors.push(`第 ${i + 1} 行: 每箱盒数必须是大于 0 的正整数`);
+      if (isNaN(qty) || qty < 1) errors.push(`第 ${i + 1} 行: 每盒个数必须大于 0`);
+      if (isNaN(ctn) || ctn < 1) errors.push(`第 ${i + 1} 行: 每箱盒数必须大于 0`);
     });
 
     setValidationErrors(errors);
     return errors.length === 0;
   };
 
-  // Get valid rows for submission
   const getValidItems = () => rows
     .filter(r => r.sku.trim() && parseInt(r.qtyPerBox) > 0 && parseInt(r.boxPerCtn) > 0)
     .map(r => ({
@@ -136,14 +173,13 @@ export default function BarcodePage() {
       boxPerCtn: parseInt(r.boxPerCtn),
     }));
 
-  // === Mutation (V1 parity: batch generate) ===
+  // === Mutation ===
   const generateMutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const blob = await productsApi.generateBarcodePdf(data as any);
       if (!blob || blob.size === 0) {
         throw new Error('Empty PDF response from server');
       }
-      // V1 parity: trigger download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -157,6 +193,8 @@ export default function BarcodePage() {
     onSuccess: () => {
       setShowSecurityDialog(false);
       setSecurityError(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     },
     onError: (error: any) => {
       console.error('[Barcode] Generation failed:', error);
@@ -219,103 +257,160 @@ export default function BarcodePage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen">
-      {/* Header */}
-      <section className="max-w-[1000px] mx-auto px-6 pt-12 pb-6">
-        <div className="flex items-center gap-2 text-sm mb-6">
-          <Link href="/products" style={{ color: colors.blue }}>
+      {/* Header Section */}
+      <section ref={headerRef} className="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
+        {/* Breadcrumb */}
+        <div className="anim-item opacity-0 flex items-center gap-2 text-sm mb-4">
+          <Link href="/products" style={{ color: colors.blue }} className="hover:opacity-70 transition-opacity">
             {t('module.title')}
           </Link>
           <span style={{ color: colors.textTertiary }}>/</span>
           <span style={{ color: colors.textSecondary }}>{t('barcode.title')}</span>
         </div>
 
-        <h1
-          style={{ color: colors.text }}
-          className="text-[32px] font-semibold tracking-tight mb-2"
-        >
-          {t('barcode.title')}
-        </h1>
-        <p style={{ color: colors.textSecondary }} className="text-[17px]">
-          外包装条形码 PDF 生成向导 — 4&quot;×6&quot; 热敏标签
-        </p>
+        {/* Title Row */}
+        <div className="anim-item opacity-0 flex items-end justify-between mb-1">
+          <div>
+            <h1
+              style={{ color: colors.text }}
+              className="text-2xl font-semibold tracking-tight mb-1"
+            >
+              {t('barcode.title')}
+            </h1>
+            <p style={{ color: colors.textSecondary }} className="text-sm">
+              外包装条形码 PDF — 4&quot;×6&quot; 热敏标签
+            </p>
+          </div>
+
+          {/* Row count badge */}
+          <div className="flex items-center gap-3">
+            {validItemCount > 0 && (
+              <span
+                style={{ backgroundColor: `${colors.orange}15`, color: colors.orange }}
+                className="px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5z" />
+                </svg>
+                {validItemCount} 个标签
+              </span>
+            )}
+          </div>
+        </div>
       </section>
 
-      {/* Main Content */}
-      <section className="max-w-[1000px] mx-auto px-6 pb-20">
+      {/* Instruction Card */}
+      <section className="max-w-[1400px] mx-auto px-6 pb-4">
         <div
+          style={{
+            backgroundColor: `${colors.blue}08`,
+            borderColor: `${colors.blue}30`,
+          }}
+          className="rounded-xl border p-4"
+        >
+          <div className="flex items-start gap-3">
+            <svg
+              className="w-5 h-5 mt-0.5 flex-shrink-0"
+              style={{ color: colors.blue }}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <p style={{ color: colors.blue }} className="text-sm font-medium mb-1">
+                操作说明
+              </p>
+              <ul style={{ color: colors.textSecondary }} className="text-sm space-y-0.5">
+                <li>• 每行选择一个 SKU 及其包装规格（每盒个数、每箱盒数）。</li>
+                <li>• 每行生成一个 4&quot;×6&quot; 标签页，包含 SKU 条码、数量条码和 DataMatrix。</li>
+                <li>• 每盒个数和每箱盒数必须是大于 0 的正整数。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Data Table */}
+      <section className="max-w-[1400px] mx-auto px-6 pb-20">
+        <div
+          ref={tableRef}
           style={{
             backgroundColor: colors.bgSecondary,
             borderColor: colors.border,
           }}
-          className="rounded-2xl border overflow-hidden"
+          className="rounded-xl border overflow-hidden shadow-sm"
         >
-          {/* Wizard Header */}
-          <div
-            style={{ borderColor: colors.border }}
-            className="p-6 border-b"
-          >
-            <div className="flex items-center gap-3 mb-1">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: `${colors.blue}20` }}
-              >
-                <svg className="w-5 h-5" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
-                </svg>
-              </div>
-              <div>
-                <h2 style={{ color: colors.text }} className="text-lg font-semibold">
-                  Packaging Barcode 生成向导
-                </h2>
-                <p style={{ color: colors.textSecondary }} className="text-sm">
-                  按步骤填写数据、验证并生成条形码 PDF。
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* macOS-style table */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead>
+                <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
+                  <th
+                    style={{ color: colors.textSecondary }}
+                    className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide"
+                  >
+                    #
+                  </th>
+                  <th
+                    style={{ color: colors.textSecondary }}
+                    className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide"
+                  >
+                    SKU
+                  </th>
+                  <th
+                    style={{ color: colors.blue }}
+                    className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide w-[160px]"
+                  >
+                    Qty/Box
+                  </th>
+                  <th
+                    style={{ color: colors.orange }}
+                    className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide w-[160px]"
+                  >
+                    Box/Ctn
+                  </th>
+                  <th
+                    style={{ color: colors.textTertiary }}
+                    className="text-center py-3 px-5 text-[11px] font-semibold uppercase tracking-wide w-[80px]"
+                  >
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => {
+                  const isComplete = row.sku.trim() && parseInt(row.qtyPerBox) > 0 && parseInt(row.boxPerCtn) > 0;
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`data-row transition-colors ${index !== rows.length - 1 ? 'border-b' : ''}`}
+                      style={{
+                        borderColor: colors.borderLight || colors.border,
+                        backgroundColor: isComplete ? `${colors.green}06` : 'transparent',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isComplete) e.currentTarget.style.backgroundColor = colors.hover || `${colors.bgTertiary}40`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = isComplete ? `${colors.green}06` : 'transparent';
+                      }}
+                    >
+                      {/* Row Number */}
+                      <td className="py-2.5 px-5">
+                        <span
+                          style={{ color: colors.textTertiary }}
+                          className="text-[12px] font-mono"
+                        >
+                          {index + 1}
+                        </span>
+                      </td>
 
-          {/* Instructions Card */}
-          <div className="px-6 pt-6">
-            <div
-              style={{
-                backgroundColor: `${colors.blue}08`,
-                borderColor: `${colors.blue}30`,
-              }}
-              className="rounded-xl border p-4"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                </svg>
-                <span style={{ color: colors.blue }} className="text-sm font-medium">操作说明</span>
-              </div>
-              <ul style={{ color: colors.textSecondary }} className="text-sm space-y-1 ml-6 list-disc">
-                <li>每行填写一个 SKU 及其包装规格（每盒个数、每箱盒数）。</li>
-                <li>多行用于生成不同规格的条形码 PDF，每行生成一个独立标签页。</li>
-                <li>每盒个数和每箱盒数必须是大于 0 的正整数。</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Data Input Table (V1 parity) */}
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ color: colors.textSecondary, width: '40%' }} className="text-left text-sm font-medium pb-2 px-2">SKU</th>
-                    <th style={{ color: colors.textSecondary, width: '20%' }} className="text-left text-sm font-medium pb-2 px-2">每盒个数 (QTY/BOX)</th>
-                    <th style={{ color: colors.textSecondary, width: '20%' }} className="text-left text-sm font-medium pb-2 px-2">每箱盒数 (BOX/CTN)</th>
-                    <th style={{ color: colors.textSecondary, width: '10%' }} className="text-center text-sm font-medium pb-2 px-2">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id}>
-                      {/* SKU Select (V1: dropdown from DB) */}
-                      <td className="px-2 py-1">
+                      {/* SKU Select */}
+                      <td className="py-2.5 px-5">
                         <select
                           value={row.sku}
                           onChange={(e) => updateRow(row.id, 'sku', e.target.value)}
@@ -324,7 +419,7 @@ export default function BarcodePage() {
                             borderColor: colors.border,
                             color: row.sku ? colors.text : colors.textTertiary,
                           }}
-                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                          className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
                         >
                           <option value="">— 选择 SKU —</option>
                           {skuList.map((s: SkuItem) => (
@@ -336,108 +431,94 @@ export default function BarcodePage() {
                       </td>
 
                       {/* Qty/Box */}
-                      <td className="px-2 py-1">
+                      <td className="py-2.5 px-5">
                         <input
                           type="number"
                           min={1}
                           value={row.qtyPerBox}
                           onChange={(e) => updateRow(row.id, 'qtyPerBox', e.target.value)}
-                          placeholder="例: 10"
+                          placeholder="0"
                           style={{
                             backgroundColor: colors.bgTertiary,
                             borderColor: colors.border,
-                            color: colors.text,
+                            color: colors.blue,
                           }}
-                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 text-center"
+                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
                         />
                       </td>
 
                       {/* Box/Ctn */}
-                      <td className="px-2 py-1">
+                      <td className="py-2.5 px-5">
                         <input
                           type="number"
                           min={1}
                           value={row.boxPerCtn}
                           onChange={(e) => updateRow(row.id, 'boxPerCtn', e.target.value)}
-                          placeholder="例: 5"
+                          placeholder="0"
                           style={{
                             backgroundColor: colors.bgTertiary,
                             borderColor: colors.border,
-                            color: colors.text,
+                            color: colors.orange,
                           }}
-                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 text-center"
+                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
                         />
                       </td>
 
-                      {/* Remove button */}
-                      <td className="px-2 py-1 text-center">
+                      {/* Remove */}
+                      <td className="py-2.5 px-5 text-center">
                         <button
                           onClick={() => removeRow(row.id)}
                           disabled={rows.length <= 1}
-                          style={{ color: rows.length <= 1 ? colors.textTertiary : '#ef4444' }}
-                          className="p-2 rounded-lg transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed"
+                          style={{ color: rows.length <= 1 ? colors.textTertiary : colors.red }}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:opacity-70 transition-colors disabled:cursor-not-allowed mx-auto"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
                           </svg>
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Add Row Buttons (V1 parity) */}
-            <div className="flex gap-3 mt-2">
+          {/* Action Footer */}
+          <div
+            style={{ borderColor: colors.border }}
+            className="px-5 py-3.5 border-t flex items-center justify-between"
+          >
+            {/* Left: Add row buttons */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={addRow}
-                style={{ color: colors.blue, borderColor: `${colors.blue}40` }}
-                className="px-4 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-blue-500/10"
+                style={{
+                  backgroundColor: colors.bgTertiary,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+                className="flex items-center gap-1.5 px-3 h-8 border rounded-lg text-[13px] font-medium hover:opacity-80 transition-all active:scale-95"
               >
-                + 添加一行
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                添加行
               </button>
               <button
                 onClick={() => addRows(5)}
-                style={{ color: colors.textSecondary, borderColor: colors.border }}
-                className="px-4 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-white/5"
+                style={{
+                  backgroundColor: colors.bgTertiary,
+                  borderColor: colors.border,
+                  color: colors.textSecondary,
+                }}
+                className="flex items-center gap-1.5 px-3 h-8 border rounded-lg text-[13px] font-medium hover:opacity-80 transition-all active:scale-95"
               >
-                批量添加 (5行)
+                +5 行
               </button>
             </div>
 
-            {/* Validation Errors */}
-            {validationErrors.length > 0 && (
-              <div
-                className="mt-4 p-4 rounded-xl border"
-                style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                  borderColor: 'rgba(239, 68, 68, 0.3)',
-                }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
-                  <span className="text-red-400 text-sm font-medium">验证失败</span>
-                </div>
-                <ul className="text-sm text-red-300 space-y-1 ml-6 list-disc">
-                  {validationErrors.map((err, i) => (
-                    <li key={i}>{err}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Footer Actions (V1 parity) */}
-          <div
-            style={{ borderColor: colors.border }}
-            className="px-6 py-4 border-t flex items-center justify-between"
-          >
-            <span style={{ color: colors.textSecondary }} className="text-sm">
-              待生成: <strong style={{ color: colors.text }}>{validItemCount}</strong> 个标签
-            </span>
+            {/* Right: Generate button */}
             <button
               onClick={handleGenerateClick}
               disabled={generateMutation.isPending || validItemCount === 0}
@@ -445,12 +526,89 @@ export default function BarcodePage() {
                 backgroundColor: colors.blue,
                 color: '#ffffff',
               }}
-              className="px-6 py-2.5 rounded-full font-medium text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 h-9 hover:opacity-90 text-[14px] font-medium rounded-lg transition-all active:scale-95 disabled:opacity-50"
             >
-              {generateMutation.isPending ? '正在生成...' : '生成条形码'}
+              {generateMutation.isPending ? (
+                <>
+                  <div
+                    className="w-4 h-4 border-2 rounded-full animate-spin"
+                    style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#ffffff' }}
+                  />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                  </svg>
+                  生成 PDF
+                </>
+              )}
             </button>
           </div>
         </div>
+
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <div
+            className="mt-4 rounded-xl border p-4"
+            style={{
+              backgroundColor: `${colors.red}08`,
+              borderColor: `${colors.red}30`,
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <svg
+                className="w-5 h-5 mt-0.5 flex-shrink-0"
+                style={{ color: colors.red }}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <p style={{ color: colors.red }} className="text-sm font-medium mb-1">
+                  验证失败
+                </p>
+                <ul style={{ color: colors.textSecondary }} className="text-sm space-y-0.5">
+                  {validationErrors.map((err, i) => (
+                    <li key={i}>• {err}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Banner */}
+        {showSuccess && (
+          <div
+            className="mt-4 rounded-xl border p-4 flex items-center gap-3"
+            style={{
+              backgroundColor: `${colors.green}10`,
+              borderColor: `${colors.green}30`,
+            }}
+          >
+            <div
+              style={{ backgroundColor: `${colors.green}20` }}
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+            >
+              <svg className="w-4 h-4" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p style={{ color: colors.green }} className="text-sm font-medium">PDF 生成成功</p>
+              <p style={{ color: colors.textSecondary }} className="text-[12px]">文件已自动下载到本地。</p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Security Code Dialog */}
