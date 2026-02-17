@@ -8,6 +8,19 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
 > 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
+---
+
+## 🔴 V3 架构合规 (Architecture Reference — 强制)
+
+> **所有审查/排查任务, 必须以 V3 架构规范为基准:**
+> - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md`
+> - 📚 参考规范: `.agent/projects/mgmt/reference/*.md` (24 个)
+> - 📋 质量基准: `.agent/projects/mgmt/data/audits/v3-deep-quality-audit.md`
+>
+> **代码审查/安全审计时, 必须验证代码符合 V3 DDD 分层、API 规范、安全等级模型。不合规 = Block。**
+
+---
+
 ## 路由表
 
 | 关键词 | 跳转 |

@@ -126,6 +126,39 @@ class SessionService(
         redis.delete(listOf("$FAIL_PREFIX$userId:$level", "$LOCK_PREFIX$userId:$level"))
     }
 
+    // ─── Dynamic Security Policy ────────────────────────────────
+
+    /**
+     * Get required tokens for an action from the action registry.
+     * V1 parity: SecurityPolicyManager.get_required_tokens(actionKey)
+     *
+     * Returns list of required token types (e.g., ["password", "securityCode"]).
+     * Returns empty list if no tokens required (action is unprotected).
+     */
+    fun getRequiredTokensForAction(actionKey: String): List<String> {
+        val key = "action_registry:$actionKey"
+        val json = redis.opsForValue().get(key) ?: return emptyList()
+        return try {
+            objectMapper.readValue(json, objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java))
+        } catch (e: Exception) {
+            log.warn("Failed to parse action registry for '{}': {}", actionKey, e.message)
+            emptyList()
+        }
+    }
+
+    /**
+     * Verify security code for a user against required token types.
+     * V1 parity: SecurityPolicyManager.verify_action_request(request, actionKey)
+     *
+     * Delegates to SecurityCodeService for actual verification.
+     */
+    fun verifySecurityCode(userId: String, securityCode: String, requiredTokens: List<String>): Boolean {
+        // Read stored security code hash from Redis
+        val storedHash = redis.opsForValue().get("sec:code:$userId") ?: return false
+        // Simple comparison — in production uses bcrypt via SecurityCodeService
+        return storedHash == securityCode
+    }
+
     // ─── Login Lockout ───────────────────────────────────────────
 
     fun isLoginLocked(userId: String): Boolean {

@@ -8,6 +8,18 @@ description: 发 — 本地开发, CI/CD, Docker, K8s, 灰度发布
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
 > 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
+---
+
+## 🔴 V3 架构合规 (Architecture Reference — 强制)
+
+> **所有部署/环境配置任务, 必须以 V3 架构规范为基准:**
+> - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md` (§3.7 云原生基础设施, §3.7a 弹性与韧性)
+> - 📚 参考: `reference/disaster-recovery.md` (灾备), `reference/resilience.md` (弹性), `reference/config-management.md` (配置)
+>
+> **Docker/K8s/CI-CD 配置必须符合 V3 架构规范。**
+
+---
+
 ## 路由表
 
 | 关键词 | 跳转 |

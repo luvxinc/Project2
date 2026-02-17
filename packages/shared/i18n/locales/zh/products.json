@@ -1,157 +1,210 @@
 {
-  "title": "产品管理",
-  "description": "管理产品目录、成本和条形码生成",
+  "title": "\u4ea7\u54c1\u7ba1\u7406",
+  "description": "\u7ba1\u7406\u4ea7\u54c1\u76ee\u5f55\u3001\u6210\u672c\u548c\u6761\u5f62\u7801\u751f\u6210",
   "module": {
-    "title": "产品",
-    "description": "产品目录和库存管理"
+    "title": "\u4ea7\u54c1",
+    "description": "\u4ea7\u54c1\u76ee\u5f55\u4e0e\u5e93\u5b58\u7ba1\u7406"
   },
   "hub": {
-    "explore": "了解更多",
+    "explore": "\u4e86\u89e3\u66f4\u591a",
     "cogs": {
-      "title": "成本维护",
-      "description": "管理产品成本和定价数据",
-      "cta": "管理成本"
+      "title": "\u6210\u672c\u7ef4\u62a4",
+      "description": "\u7ba1\u7406\u4ea7\u54c1\u9500\u552e\u6210\u672c\u548c\u5b9a\u4ef7\u6570\u636e",
+      "cta": "\u7ba1\u7406\u6210\u672c"
     },
     "create": {
-      "title": "新增产品",
-      "description": "将新产品添加到目录中并初始化库存",
-      "cta": "添加产品"
+      "title": "\u65b0\u589e\u4ea7\u54c1",
+      "description": "\u5411\u76ee\u5f55\u6dfb\u52a0\u65b0\u4ea7\u54c1\u5e76\u521d\u59cb\u5316\u5e93\u5b58",
+      "cta": "\u6dfb\u52a0\u4ea7\u54c1"
     },
     "barcode": {
-      "title": "条形码生成器",
-      "description": "生成和下载产品条形码标签",
-      "cta": "生成条形码"
+      "title": "\u6761\u5f62\u7801\u751f\u6210",
+      "description": "\u751f\u6210\u5e76\u4e0b\u8f7d\u4ea7\u54c1\u6761\u5f62\u7801\u6807\u7b7e",
+      "cta": "\u751f\u6210\u6761\u5f62\u7801"
     }
   },
   "list": {
-    "title": "产品目录",
-    "description": "查看和管理系统中的所有产品",
-    "searchPlaceholder": "按SKU或名称搜索",
-    "noProducts": "未找到产品",
-    "productCount": "个产品",
-    "loading": "加载中...",
-    "loadFailed": "加载产品失败",
-    "retry": "重试",
+    "title": "\u4ea7\u54c1\u76ee\u5f55",
+    "description": "\u67e5\u770b\u548c\u7ba1\u7406\u7cfb\u7edf\u4e2d\u7684\u6240\u6709\u4ea7\u54c1",
+    "searchPlaceholder": "\u6309 SKU \u6216\u540d\u79f0\u641c\u7d22",
+    "noProducts": "\u672a\u627e\u5230\u4ea7\u54c1",
+    "productCount": "\u4e2a\u4ea7\u54c1",
+    "loading": "\u52a0\u8f7d\u4e2d...",
+    "loadFailed": "\u52a0\u8f7d\u4ea7\u54c1\u5931\u8d25",
+    "retry": "\u91cd\u8bd5",
     "columns": {
       "sku": "SKU",
-      "name": "产品名称",
-      "category": "分类",
-      "cogs": "成本",
+      "name": "\u4ea7\u54c1\u540d\u79f0",
+      "category": "\u5206\u7c7b",
+      "subcategory": "\u5b50\u5206\u7c7b",
+      "type": "\u7c7b\u578b",
+      "cost": "\u6210\u672c",
+      "freight": "\u8fd0\u8d39",
+      "cogs": "COGS",
+      "weight": "\u91cd\u91cf",
       "upc": "UPC",
-      "status": "状态",
-      "createdAt": "创建时间",
-      "updatedAt": "更新时间",
-      "actions": "操作"
+      "status": "\u72b6\u6001",
+      "createdAt": "\u521b\u5efa\u65f6\u95f4",
+      "updatedAt": "\u66f4\u65b0\u65f6\u95f4",
+      "createdBy": "\u521b\u5efa\u4eba",
+      "updatedBy": "\u66f4\u65b0\u4eba",
+      "actions": "\u64cd\u4f5c"
     }
   },
   "cogs": {
-    "title": "成本管理",
-    "description": "批量更新产品成本",
-    "batchUpdate": "批量更新",
-    "batchUpdateSuccess": "成功更新 {count} 个产品",
-    "batchUpdateFailed": "部分产品更新失败",
-    "editMode": "编辑模式",
-    "saveChanges": "保存更改",
-    "discardChanges": "放弃",
-    "unsavedChanges": "您有未保存的更改",
-    "modifiedRows": "已修改 {count} 行",
+    "title": "\u6210\u672c\u7ba1\u7406",
+    "description": "\u6279\u91cf\u66f4\u65b0\u4ea7\u54c1\u9500\u552e\u6210\u672c",
+    "step1": "\u67e5\u770b\u6570\u636e",
+    "step2": "\u7f16\u8f91\u5b57\u6bb5",
+    "step3": "\u786e\u8ba4\u66f4\u6539",
+    "batchUpdate": "\u6279\u91cf\u66f4\u65b0",
+    "batchUpdateSuccess": "\u6210\u529f\u66f4\u65b0 {count} \u4e2a\u4ea7\u54c1",
+    "batchUpdateFailed": "\u90e8\u5206\u4ea7\u54c1\u66f4\u65b0\u5931\u8d25",
+    "editMode": "\u7f16\u8f91\u6a21\u5f0f",
+    "saveChanges": "\u4fdd\u5b58\u66f4\u6539",
+    "discardChanges": "\u653e\u5f03",
+    "unsavedChanges": "\u60a8\u6709\u672a\u4fdd\u5b58\u7684\u66f4\u6539",
+    "modifiedRows": "\u5df2\u4fee\u6539 {count} \u6761",
+    "diffTable": {
+      "title": "\u67e5\u770b\u66f4\u6539",
+      "field": "\u5b57\u6bb5",
+      "before": "\u4fee\u6539\u524d",
+      "after": "\u4fee\u6539\u540e",
+      "noChanges": "\u672a\u68c0\u6d4b\u5230\u66f4\u6539"
+    },
     "instructions": {
-      "title": "操作说明",
-      "editCostFreight": "编辑下方表格中的 Cost 和 Freight 数值",
-      "autoCalculate": "COG 自动计算 = Cost + Freight",
-      "saveChanges": "点击「保存更改」提交修改"
+      "title": "\u7f16\u8f91\u8bf4\u660e",
+      "editAllFields": "\u7f16\u8f91\u5206\u7c7b\u3001\u5b50\u5206\u7c7b\u3001\u7c7b\u578b\u3001\u6210\u672c\u3001\u8fd0\u8d39\u548c\u91cd\u91cf",
+      "autoCalculate": "COGS \u81ea\u52a8\u8ba1\u7b97\uff1a\u6210\u672c + \u8fd0\u8d39",
+      "saveChanges": "\u5728\u786e\u8ba4\u524d\u8bf7\u67e5\u770b\u5dee\u5f02\u8868"
     }
   },
-
   "create": {
-    "title": "新增产品",
-    "description": "将新产品添加到目录",
-    "step1": "基本信息",
-    "step2": "定价",
-    "step3": "确认",
-    "batchCreate": "批量创建",
-    "batchTitle": "批量创建产品",
-    "batchDescription": "一次创建多个产品"
+    "title": "\u65b0\u589e\u4ea7\u54c1",
+    "description": "\u5411\u76ee\u5f55\u6dfb\u52a0\u65b0\u4ea7\u54c1",
+    "step1": "\u57fa\u672c\u4fe1\u606f",
+    "step2": "\u5b9a\u4ef7\u4e0e\u8be6\u60c5",
+    "step3": "\u786e\u8ba4",
+    "batchCreate": "\u6279\u91cf\u521b\u5efa",
+    "batchTitle": "\u6279\u91cf\u521b\u5efa\u4ea7\u54c1",
+    "batchDescription": "\u4e00\u6b21\u521b\u5efa\u591a\u4e2a\u4ea7\u54c1",
+    "addRow": "\u6dfb\u52a0\u884c",
+    "removeRow": "\u5220\u9664\u884c",
+    "skuDuplicate": "\u8be5 SKU \u5df2\u5b58\u5728\u4e8e\u7cfb\u7edf\u4e2d",
+    "zeroQtyConfirm": "\u521d\u59cb\u6570\u91cf\u4e3a 0\u3002\u786e\u5b9a\u7ee7\u7eed\uff1f",
+    "initialQty": "\u521d\u59cb\u6570\u91cf"
   },
   "barcode": {
-    "title": "条形码生成器",
-    "description": "为产品生成条形码标签",
-    "selectProducts": "选择产品",
-    "format": "条形码格式",
-    "copies": "每个SKU的副本数",
-    "generate": "生成",
-    "download": "下载PDF",
-    "formats": {
-      "CODE128": "Code 128 (推荐)",
-      "EAN13": "EAN-13",
-      "UPC": "UPC-A"
-    }
+    "title": "\u6761\u5f62\u7801\u751f\u6210\u5668",
+    "description": "\u751f\u6210\u4ea7\u54c1\u6761\u5f62\u7801\u6807\u7b7e",
+    "step1": "\u9009\u62e9\u4ea7\u54c1",
+    "step2": "\u914d\u7f6e\u6807\u7b7e",
+    "step3": "\u9884\u89c8",
+    "step4": "\u751f\u6210\u4e0e\u4e0b\u8f7d",
+    "selectProducts": "\u9009\u62e9\u4ea7\u54c1",
+    "searchSku": "\u641c\u7d22 SKU...",
+    "qtyPerBox": "\u6bcf\u7bb1\u6570\u91cf",
+    "boxPerCtn": "\u6bcf\u7bb1\u7bb1\u6570",
+    "addItem": "\u6dfb\u52a0\u9879\u76ee",
+    "removeItem": "\u5220\u9664",
+    "generate": "\u751f\u6210 PDF",
+    "download": "\u4e0b\u8f7d PDF",
+    "generating": "\u751f\u6210\u4e2d...",
+    "noItemsSelected": "\u672a\u9009\u62e9\u4efb\u4f55\u9879\u76ee",
+    "labelFormat": "4\" x 6\" \u6807\u7b7e"
   },
   "form": {
     "sku": {
       "label": "SKU",
-      "placeholder": "输入SKU代码",
-      "hint": "3-50个字符，仅限大写字母、数字和连字符"
+      "placeholder": "\u8f93\u5165 SKU \u4ee3\u7801",
+      "hint": "\u5927\u5199\u5b57\u6bcd\u3001\u6570\u5b57\u3001\u8fde\u5b57\u7b26\u3001\u4e0b\u5212\u7ebf\u548c\u659c\u6760"
     },
     "name": {
-      "label": "产品名称",
-      "placeholder": "输入产品名称"
+      "label": "\u4ea7\u54c1\u540d\u79f0",
+      "placeholder": "\u8f93\u5165\u4ea7\u54c1\u540d\u79f0"
     },
     "category": {
-      "label": "分类",
-      "placeholder": "选择或输入分类"
+      "label": "\u5206\u7c7b",
+      "placeholder": "\u9009\u62e9\u6216\u8f93\u5165\u5206\u7c7b"
+    },
+    "subcategory": {
+      "label": "\u5b50\u5206\u7c7b",
+      "placeholder": "\u9009\u62e9\u6216\u8f93\u5165\u5b50\u5206\u7c7b"
+    },
+    "type": {
+      "label": "\u7c7b\u578b",
+      "placeholder": "\u9009\u62e9\u6216\u8f93\u5165\u7c7b\u578b"
+    },
+    "cost": {
+      "label": "\u6210\u672c",
+      "placeholder": "0.00",
+      "hint": "\u4ea7\u54c1\u5355\u4f4d\u6210\u672c"
+    },
+    "freight": {
+      "label": "\u8fd0\u8d39",
+      "placeholder": "0.00",
+      "hint": "\u6bcf\u5355\u4f4d\u8fd0\u8d39"
     },
     "cogs": {
-      "label": "成本",
+      "label": "COGS",
       "placeholder": "0.00",
-      "hint": "商品销售成本"
+      "hint": "\u81ea\u52a8\u8ba1\u7b97\uff1a\u6210\u672c + \u8fd0\u8d39"
+    },
+    "weight": {
+      "label": "\u91cd\u91cf (\u76ce\u53f8)",
+      "placeholder": "0",
+      "hint": "\u4ea7\u54c1\u91cd\u91cf\uff08\u76ce\u53f8\uff09"
     },
     "upc": {
       "label": "UPC",
-      "placeholder": "输入UPC条形码"
+      "placeholder": "\u8f93\u5165 UPC \u6761\u7801"
     },
     "status": {
-      "label": "状态"
+      "label": "\u72b6\u6001"
     }
   },
   "status": {
-    "active": "启用",
-    "inactive": "停用"
+    "active": "\u6d3b\u8dc3",
+    "inactive": "\u505c\u7528"
   },
   "actions": {
-    "create": "创建产品",
-    "update": "编辑",
-    "delete": "删除产品",
-    "view": "查看详情",
-    "duplicate": "复制",
-    "export": "导出",
-    "generateBarcode": "生成条形码"
+    "create": "\u521b\u5efa\u4ea7\u54c1",
+    "update": "\u7f16\u8f91",
+    "delete": "\u5220\u9664\u4ea7\u54c1",
+    "view": "\u67e5\u770b\u8be6\u60c5",
+    "duplicate": "\u590d\u5236",
+    "export": "\u5bfc\u51fa",
+    "generateBarcode": "\u751f\u6210\u6761\u5f62\u7801"
   },
   "messages": {
-    "createSuccess": "产品创建成功",
-    "updateSuccess": "产品更新成功",
-    "deleteSuccess": "产品删除成功",
-    "batchCreateSuccess": "批量创建完成：{success}/{total} 个产品",
-    "batchUpdateSuccess": "批量更新完成：{success}/{total} 个产品",
-    "confirmDelete": "确定要删除此产品吗？此操作无法撤销。",
-    "skuCopied": "SKU已复制到剪贴板"
+    "createSuccess": "\u4ea7\u54c1\u521b\u5efa\u6210\u529f",
+    "updateSuccess": "\u4ea7\u54c1\u66f4\u65b0\u6210\u529f",
+    "deleteSuccess": "\u4ea7\u54c1\u5220\u9664\u6210\u529f",
+    "batchCreateSuccess": "\u6279\u91cf\u521b\u5efa\u5b8c\u6210\uff1a{success}/{total} \u4e2a\u4ea7\u54c1",
+    "batchUpdateSuccess": "\u6279\u91cf\u66f4\u65b0\u5b8c\u6210\uff1a{success}/{total} \u4e2a\u4ea7\u54c1",
+    "confirmDelete": "\u786e\u5b9a\u8981\u5220\u9664\u6b64\u4ea7\u54c1\u5417\uff1f\u6b64\u64cd\u4f5c\u4e0d\u53ef\u64a4\u9500\u3002",
+    "skuCopied": "SKU \u5df2\u590d\u5236\u5230\u526a\u8d34\u677f",
+    "barcodeGenerated": "\u6761\u5f62\u7801 PDF \u5df2\u751f\u6210\u5e76\u5f00\u59cb\u4e0b\u8f7d"
   },
   "errors": {
-    "notFound": "产品未找到",
-    "skuExists": "SKU已存在",
-    "invalidSku": "无效的SKU格式",
-    "invalidCogs": "成本必须是正数",
-    "loadFailed": "加载产品失败",
-    "saveFailed": "保存更改失败"
+    "notFound": "\u672a\u627e\u5230\u4ea7\u54c1",
+    "skuExists": "SKU \u5df2\u5b58\u5728",
+    "invalidSku": "SKU \u683c\u5f0f\u65e0\u6548\u3002\u8bf7\u4f7f\u7528\u5927\u5199\u5b57\u6bcd\u3001\u6570\u5b57\u3001\u8fde\u5b57\u7b26\u3001\u4e0b\u5212\u7ebf\u548c\u659c\u6760\u3002",
+    "invalidCogs": "COGS \u5fc5\u987b\u4e3a\u6b63\u6570",
+    "loadFailed": "\u52a0\u8f7d\u4ea7\u54c1\u5931\u8d25",
+    "saveFailed": "\u4fdd\u5b58\u66f4\u6539\u5931\u8d25",
+    "barcodeGenerateFailed": "\u751f\u6210\u6761\u5f62\u7801 PDF \u5931\u8d25"
   },
   "security": {
-    "requiresL1": "此操作需要L1安全验证",
-    "requiresL2": "此操作需要L2安全验证",
-    "requiresL3": "此操作需要L3安全验证"
+    "requiresL1": "\u6b64\u64cd\u4f5c\u9700\u8981 L1 \u5b89\u5168\u9a8c\u8bc1",
+    "requiresL2": "\u6b64\u64cd\u4f5c\u9700\u8981 L2 \u5b89\u5168\u9a8c\u8bc1",
+    "requiresL3": "\u6b64\u64cd\u4f5c\u9700\u8981 L3 \u5b89\u5168\u9a8c\u8bc1",
+    "codeRequired": "\u8bf7\u8f93\u5165\u5b89\u5168\u7801\u4ee5\u7ee7\u7eed",
+    "codeInvalid": "\u5b89\u5168\u7801\u65e0\u6548"
   },
   "pagination": {
-    "total": "共 {count} 个产品",
-    "prev": "上一页",
-    "next": "下一页"
+    "total": "\u5171 {count} \u4e2a\u4ea7\u54c1",
+    "prev": "\u4e0a\u4e00\u9875",
+    "next": "\u4e0b\u4e00\u9875"
   }
 }

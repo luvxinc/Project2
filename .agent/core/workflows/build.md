@@ -8,6 +8,46 @@ description: 造 — 新建模块, 新建页面, API 契约, 数据库迁移, �
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
 > 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
+---
+
+## 🔴 V3 架构合规 (Architecture Gate — 强制)
+
+> **任何 Build 任务开启前, 必须加载以下架构文件并确保代码完全合规:**
+
+```
+🏛️ 架构真相源 (Architecture Source of Truth):
+├── 📐 主文件: .agent/projects/mgmt/reference/v3-architecture.md
+│   → 技术栈, DDD 分层, API 规范, 数据库建模, 性能 SLA
+├── 📋 审计标准: .agent/projects/mgmt/data/audits/v3-architecture-audit.md
+│   → 19 GAP 审计报告, 覆盖率评级
+├── 🔬 质量基准: .agent/projects/mgmt/data/audits/v3-deep-quality-audit.md
+│   → Schema 审计, 索引策略, 算法效率分析
+├── 📑 分阶段计划: .agent/projects/mgmt/data/specs/v3-phase-plan.md
+│   → Phase 0-5 执行循环 (AUDIT→DESIGN→BUILD→VERIFY→GATE)
+└── 📚 24 个参考规范: .agent/projects/mgmt/reference/*.md
+    → resilience, cdc, disaster-recovery, kafka-design, testing-strategy,
+      notification, conventions, business-rules, etc.
+```
+
+### 架构合规铁律
+
+| 规则 | 不合规后果 |
+|------|----------|
+| **后端必须 Kotlin + Spring Boot 3.x** | Block |
+| **DDD 分层: domain → application → infrastructure → api** | Block |
+| **Controller 禁止写业务逻辑** (只做入参校验 + 调用 UseCase) | Block |
+| **Domain 层禁止 import Spring/JPA** | Block |
+| **数据库禁止 Type Erasure** (TEXT 存日期/金额/ID) | Block |
+| **所有写操作必须审计日志** (traceId + userId + IP) | Block |
+| **安全等级 L1-L4 四级模型** | Block |
+| **统一响应格式** ({ success, data, pagination/error }) | Warning |
+| **i18n 从第一行代码开始** | Warning |
+| **API 命名: RESTful 资源式** (禁止 /getX, /createY) | Warning |
+
+> **按需加载参考规范:** 涉及后端弹性 → 读 `resilience.md`; 涉及 Kafka → 读 `kafka-design.md`; 涉及数据库 → 读 `v3-deep-quality-audit.md`; 涉及测试 → 读 `testing-strategy.md`。
+
+---
+
 ## 路由表
 
 | 关键词 | 跳转 |
@@ -166,6 +206,7 @@ CTO 审查交接包 → 按 PM 标注的域加载域索引 (domains/*.md)
 | 🔴 ≥3 文件 = 强制规划 | 变更涉及 ≥3 个文件时, **必须先写详细计划** (`memory.md` §4), 按计划逐步执行。无计划 = 不允许动手 |
 | 🔴 集成测试门禁 | 每次代码修改完成后, **必须跑集成测试** (`common.md` §5), 全部通过才能提交完工报告; 失败 = 发回工程师重做, 不继续流转 |
 | 🔴 代码拆分+复用 | 单文件禁止超 300 行, 按功能拆分; 新建文件前必须查现有代码是否可复用 (`common.md` §9); 修改共享模块时追溯所有消费者 (`common.md` §6) |
+| 🔴 **V3 架构合规** | **所有后端代码必须严格遵守 `reference/v3-architecture.md` 中的 DDD 分层、API 规范、数据库建模、安全等级铁律。违反 = Block。详见本文件顶部 Architecture Gate** |
 | 🔴 **问题复盘铁律** | **修复任何问题后, 必须执行两步:** ① 记录到 `ERROR-BOOK.md` (`memory.md` §3.2 格式) ② 执行交叉检查 (`memory.md` §3.5): 抽象错误模式 → grep 搜索同类 → 批量修复 → 记录。**跳过 = Block** |
 | 🔴 **Token 节约铁律** | **全程遵守切片加载:** ① SOP 先读路由表, 只加载命中 section ② 域索引先读, 禁止跳过直接全读工程师 SOP ③ L3 工具先读 INDEX, 再读切片 ④ 大文件 (>10KB) 用完立即释放 ⑤ 单次加载上限 ≤30KB (~7.5K tok)。参见 `SKILL.md` 加载规则 |
 
