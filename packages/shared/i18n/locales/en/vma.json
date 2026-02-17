@@ -33,6 +33,14 @@
     "training": {
       "title": "Training",
       "description": "Training plans, SOPs and record management"
+    },
+    "training_sop": {
+      "title": "Training SOP",
+      "description": "Training standard operating procedures"
+    },
+    "training_records": {
+      "title": "Records",
+      "description": "Training session records and compliance roadmap"
     }
   },
   "truvalve": {

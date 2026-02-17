@@ -33,6 +33,14 @@
     "training": {
       "title": "Đào tạo",
       "description": "Kế hoạch đào tạo, SOP và quản lý hồ sơ"
+    },
+    "training_sop": {
+      "title": "SOP Đào tạo",
+      "description": "Quy trình vận hành chuẩn đào tạo"
+    },
+    "training_records": {
+      "title": "Hồ sơ",
+      "description": "Hồ sơ phiên đào tạo và lộ trình tuân thủ"
     }
   },
   "truvalve": {

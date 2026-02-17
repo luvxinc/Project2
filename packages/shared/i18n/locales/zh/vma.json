@@ -33,6 +33,14 @@
     "training": {
       "title": "培训",
       "description": "培训计划、SOP 与记录管理"
+    },
+    "training_sop": {
+      "title": "培训SOP",
+      "description": "培训标准操作规程管理"
+    },
+    "training_records": {
+      "title": "培训记录",
+      "description": "培训会话记录与合规路线图"
     }
   },
   "truvalve": {
