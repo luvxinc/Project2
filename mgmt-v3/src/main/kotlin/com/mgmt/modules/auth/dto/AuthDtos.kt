@@ -152,5 +152,9 @@ data class BoundaryResponse(
 
 data class SecurityPolicyRequest(
     val policies: Map<String, List<String>>,
+    @com.fasterxml.jackson.annotation.JsonProperty("sec_code_l0")
+    val secCodeL0: String? = null,
+    @com.fasterxml.jackson.annotation.JsonProperty("sec_code_l4")
+    val secCodeL4: String? = null,
 )
 

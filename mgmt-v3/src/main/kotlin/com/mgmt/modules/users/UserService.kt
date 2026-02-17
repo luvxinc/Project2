@@ -41,6 +41,56 @@ class UserService(
             "viewer" to 4,
         )
         val SYSTEM_USERS = setOf("superuser")
+
+        /**
+         * V1 parity: SecurityInventory.WHITELIST_PERMISSIONS
+         * Default permission keys — used as fallback when Redis has no whitelist.
+         * At runtime, the active whitelist is loaded from Redis via SessionService.
+         */
+        val DEFAULT_WHITELIST_PERMISSIONS = setOf(
+            // Sales (7 keys)
+            "module.sales", "module.sales.transactions", "module.sales.transactions.upload",
+            "module.sales.reports", "module.sales.reports.generate", "module.sales.reports.center",
+            "module.sales.visuals", "module.sales.visuals.dashboard",
+            // Purchase (13 keys)
+            "module.purchase", "module.purchase.supplier", "module.purchase.supplier.add",
+            "module.purchase.supplier.strategy", "module.purchase.po", "module.purchase.po.add",
+            "module.purchase.po.mgmt", "module.purchase.send", "module.purchase.send.add",
+            "module.purchase.send.mgmt", "module.purchase.receive", "module.purchase.receive.mgmt",
+            "module.purchase.abnormal", "module.purchase.abnormal.manage",
+            // Inventory (7 keys)
+            "module.inventory", "module.inventory.stocktake", "module.inventory.stocktake.upload",
+            "module.inventory.stocktake.modify", "module.inventory.dynamic",
+            "module.inventory.dynamic.view", "module.inventory.shelf", "module.inventory.shelf.manage",
+            // Finance (10 keys)
+            "module.finance", "module.finance.flow", "module.finance.flow.view",
+            "module.finance.logistic", "module.finance.logistic.manage",
+            "module.finance.prepay", "module.finance.prepay.manage",
+            "module.finance.deposit", "module.finance.deposit.manage",
+            "module.finance.po", "module.finance.po.manage",
+            // Products (5 keys)
+            "module.products", "module.products.catalog", "module.products.catalog.cogs",
+            "module.products.catalog.create", "module.products.barcode", "module.products.barcode.generate",
+            // DB Admin (6 keys)
+            "module.db_admin", "module.db_admin.backup", "module.db_admin.backup.create",
+            "module.db_admin.backup.restore", "module.db_admin.backup.manage",
+            "module.db_admin.cleanup", "module.db_admin.cleanup.delete",
+            // User Admin (4 keys)
+            "module.user_admin", "module.user_admin.users", "module.user_admin.register",
+            "module.user_admin.password_policy", "module.user_admin.role_switches",
+            // Audit (2 keys)
+            "module.audit", "module.audit.logs",
+            // VMA (5 keys)
+            "module.vma", "module.vma.employees.manage", "module.vma.departments.manage",
+            "module.vma.training_sop.manage", "module.vma.training.manage",
+        )
+    }
+    /**
+     * Get the active permission whitelist.
+     * Priority: Redis (dynamic) → DEFAULT_WHITELIST_PERMISSIONS (hardcoded fallback).
+     */
+    private fun getActiveWhitelist(): Set<String> {
+        return sessionService.getPermissionWhitelist() ?: DEFAULT_WHITELIST_PERMISSIONS
     }
 
     // ─── Queries ─────────────────────────────────────────────────
@@ -167,9 +217,33 @@ class UserService(
 
     // ─── Permissions ─────────────────────────────────────────────
 
+    /**
+     * V1 parity: user_update_permissions() in user_admin/views/actions.py
+     *
+     * V1 had 5 guards:
+     *   ① SecurityPolicyManager.verify_action_request → now @SecurityLevel on Controller
+     *   ② _check_admin_capability("can_manage_perms") → now RoleBoundary in DB
+     *   ③ _check_hierarchy → checkHierarchy() below
+     *   ④ Whitelist validation → WHITELIST_PERMISSIONS below
+     *   ⑤ Inheritance: admin cannot grant perms they don't have → validateInheritance() below
+     */
     @Transactional
     fun updatePermissions(id: String, permissions: Map<String, Any>, actorId: String, actorRoles: List<String>) {
+        // Guard ③: Hierarchy check
         checkHierarchy(actorRoles, id, "updatePermissions")
+
+        // Guard ④: Whitelist — reject non-whitelisted permission keys
+        val whitelist = getActiveWhitelist()
+        val invalidKeys = permissions.keys.filter { it !in whitelist }
+        if (invalidKeys.isNotEmpty()) {
+            throw ForbiddenException("非法权限键: ${invalidKeys.joinToString(", ")}")
+        }
+
+        // Guard ⑤: Inheritance — non-superuser cannot grant permissions they don't have
+        if (!actorRoles.contains("superuser")) {
+            validateInheritance(actorId, permissions)
+        }
+
         val user = findEntity(id)
 
         val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
@@ -179,6 +253,39 @@ class UserService(
 
         // Clear cached permissions so next request re-fetches
         sessionService.clearPermissions(id)
+    }
+
+    /**
+     * V1 parity: admin cannot grant permissions they don't have themselves.
+     * SecurityPolicyManager: forbidden_perms = req_perms - op_perms
+     */
+    private fun validateInheritance(actorId: String, requestedPermissions: Map<String, Any>) {
+        val actor = findEntity(actorId)
+        val actorPermsJson = actor.permissions
+        if (actorPermsJson.isNullOrBlank()) {
+            // Actor has no permissions → cannot grant any
+            val grantedKeys = requestedPermissions.filter { it.value == true }.keys
+            if (grantedKeys.isNotEmpty()) {
+                throw ForbiddenException("不能授予自己没有的权限: ${grantedKeys.joinToString(", ")}")
+            }
+            return
+        }
+
+        val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
+        @Suppress("UNCHECKED_CAST")
+        val actorPerms = try {
+            objectMapper.readValue(actorPermsJson, Map::class.java) as Map<String, Any>
+        } catch (e: Exception) {
+            emptyMap()
+        }
+
+        val forbidden = requestedPermissions.filter { (key, value) ->
+            value == true && actorPerms[key] != true
+        }.keys
+
+        if (forbidden.isNotEmpty()) {
+            throw ForbiddenException("不能授予自己没有的权限: ${forbidden.joinToString(", ")}")
+        }
     }
 
     // ─── Reset Password (admin action) ───────────────────────────

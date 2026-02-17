@@ -1,6 +1,7 @@
 package com.mgmt.modules.users
 
 import com.mgmt.common.response.ApiResponse
+import com.mgmt.common.security.SecurityLevel
 import com.mgmt.modules.auth.JwtTokenProvider
 import com.mgmt.modules.auth.dto.*
 import jakarta.servlet.http.HttpServletRequest
@@ -39,6 +40,7 @@ class UserController(
     }
 
     @PostMapping
+    @SecurityLevel(level = "L2", actionKey = "btn_create_user")
     fun create(
         @Valid @RequestBody request: CreateUserRequest,
         httpRequest: HttpServletRequest,
@@ -60,6 +62,7 @@ class UserController(
     }
 
     @DeleteMapping("/{id}")
+    @SecurityLevel(level = "L4", actionKey = "btn_delete_user")
     fun delete(
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?,
@@ -71,6 +74,7 @@ class UserController(
     }
 
     @PostMapping("/{id}/lock")
+    @SecurityLevel(level = "L2", actionKey = "btn_toggle_user_lock")
     fun lock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.lock(id, claims.userId, claims.roles)
@@ -78,6 +82,7 @@ class UserController(
     }
 
     @PostMapping("/{id}/unlock")
+    @SecurityLevel(level = "L2", actionKey = "btn_toggle_user_lock")
     fun unlock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.unlock(id, claims.userId, claims.roles)
@@ -85,6 +90,7 @@ class UserController(
     }
 
     @PutMapping("/{id}/permissions")
+    @SecurityLevel(level = "L2", actionKey = "btn_update_perms")
     fun updatePermissions(
         @PathVariable id: String,
         @RequestBody request: UpdatePermissionsRequest,
@@ -96,6 +102,7 @@ class UserController(
     }
 
     @PostMapping("/{id}/reset-password")
+    @SecurityLevel(level = "L3", actionKey = "btn_reset_pwd")
     fun resetPassword(
         @PathVariable id: String,
         @Valid @RequestBody request: ResetPasswordRequest,
