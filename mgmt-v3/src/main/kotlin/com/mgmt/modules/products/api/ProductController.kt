@@ -142,16 +142,16 @@ class ProductController(
     @SecurityLevel(level = "L3", actionKey = "btn_generate_barcode")
     @AuditLog(module = "PRODUCTS", action = "GENERATE_BARCODE", riskLevel = "LOW")
     fun generateBarcode(@RequestBody dto: GenerateBarcodeRequest): ResponseEntity<ByteArray> {
-        // V1: fetch all active SKU names for label text
-        val products = queryUseCase.getActiveSkuList()
-        val names = products.associate { it.sku to (it.name ?: "") }
+        // V1 parity: convert DTO items to service items
+        val serviceItems = dto.items.map { item ->
+            BarcodeGeneratorService.BarcodeItem(
+                sku = item.sku.trim().uppercase(),
+                qtyPerBox = item.qtyPerBox,
+                boxPerCtn = item.boxPerCtn,
+            )
+        }
 
-        val result = barcodeService.generateBarcodePdf(
-            skus = dto.skus,
-            names = names,
-            copiesPerSku = dto.copiesPerSku,
-            format = dto.format,
-        )
+        val result = barcodeService.generateBatch(serviceItems)
 
         if (!result.success || result.pdfBytes == null) {
             return ResponseEntity.badRequest().body(null)

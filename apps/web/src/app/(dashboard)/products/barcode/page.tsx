@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
@@ -15,11 +15,23 @@ interface CurrentUser {
   roles: string[];
 }
 
-// 产品类型
 interface SkuItem {
   id: string;
   sku: string;
   name: string | null;
+}
+
+/** V1 parity: each row = { sku, qtyPerBox, boxPerCtn } */
+interface BarcodeRow {
+  id: number;
+  sku: string;
+  qtyPerBox: string;
+  boxPerCtn: string;
+}
+
+let rowIdCounter = 0;
+function createEmptyRow(): BarcodeRow {
+  return { id: ++rowIdCounter, sku: '', qtyPerBox: '', boxPerCtn: '' };
 }
 
 export default function BarcodePage() {
@@ -30,11 +42,12 @@ export default function BarcodePage() {
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
-  const [copies, setCopies] = useState(1);
-  const [search, setSearch] = useState('');
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
+
+  // V1 wizard: input rows
+  const [rows, setRows] = useState<BarcodeRow[]>(() => [createEmptyRow()]);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -48,23 +61,23 @@ export default function BarcodePage() {
     }
   }, []);
 
-  const { data: products = [], isLoading } = useQuery({
+  // V1: SKU dropdown list
+  const { data: skuList = [] } = useQuery({
     queryKey: ['products-sku-list'],
     queryFn: () => productsApi.getSkuList(),
     enabled: isClient && !!currentUser,
   });
 
-  // V1 parity: dynamic security policy check — {% security_inputs "btn_generate_barcode" %}
+  // V1 parity: dynamic security policy check
   const { data: actionPolicy } = useQuery({
     queryKey: ['action-policy', 'btn_generate_barcode'],
     queryFn: () => api.get<{ actionKey: string; requiredTokens: string[]; requiresSecurityCode: boolean }>(
       '/auth/security-policies/action/btn_generate_barcode'
     ),
     enabled: isClient && !!currentUser,
-    staleTime: 30_000, // 30s cache — policy changes propagate within 30s
+    staleTime: 30_000,
   });
 
-  // Determine the highest security level needed from the dynamic policy
   const getSecurityLevel = (): 'L0' | 'L1' | 'L2' | 'L3' | 'L4' => {
     const tokens = actionPolicy?.requiredTokens || [];
     const levelMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
@@ -73,28 +86,64 @@ export default function BarcodePage() {
     const secCodeKeyMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
       sec_code_l0: 'L0', sec_code_l1: 'L1', sec_code_l2: 'L2', sec_code_l3: 'L3', sec_code_l4: 'L4',
     };
-    // Check both token type names and sec_code keys
     for (const t of tokens) {
       if (levelMap[t]) return levelMap[t];
       if (secCodeKeyMap[t]) return secCodeKeyMap[t];
     }
-    return 'L3'; // default fallback
+    return 'L3';
   };
 
-  // Build the security code key for the API request
   const getSecCodeKey = (): string => {
     const level = getSecurityLevel();
     return `sec_code_${level.toLowerCase()}`;
   };
 
+  // === Row management (V1 parity: addBarcodeRow, addMultipleBarcodeRows) ===
+  const addRow = () => setRows(prev => [...prev, createEmptyRow()]);
+  const addRows = (n: number) => setRows(prev => [...prev, ...Array.from({ length: n }, () => createEmptyRow())]);
+  const removeRow = (id: number) => setRows(prev => prev.filter(r => r.id !== id));
+  const updateRow = (id: number, field: keyof BarcodeRow, value: string) => {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
+  // === Validation (V1 parity: Step 1 → Step 2) ===
+  const validateRows = (): boolean => {
+    const errors: string[] = [];
+    const validRows = rows.filter(r => r.sku.trim());
+
+    if (validRows.length === 0) {
+      errors.push('请至少填写一行有效的条形码数据');
+    }
+
+    validRows.forEach((r, i) => {
+      const qty = parseInt(r.qtyPerBox);
+      const ctn = parseInt(r.boxPerCtn);
+      if (!r.sku.trim()) errors.push(`第 ${i + 1} 行: SKU 不能为空`);
+      if (isNaN(qty) || qty < 1) errors.push(`第 ${i + 1} 行: 每盒个数必须是大于 0 的正整数`);
+      if (isNaN(ctn) || ctn < 1) errors.push(`第 ${i + 1} 行: 每箱盒数必须是大于 0 的正整数`);
+    });
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  // Get valid rows for submission
+  const getValidItems = () => rows
+    .filter(r => r.sku.trim() && parseInt(r.qtyPerBox) > 0 && parseInt(r.boxPerCtn) > 0)
+    .map(r => ({
+      sku: r.sku.trim(),
+      qtyPerBox: parseInt(r.qtyPerBox),
+      boxPerCtn: parseInt(r.boxPerCtn),
+    }));
+
+  // === Mutation (V1 parity: batch generate) ===
   const generateMutation = useMutation({
-    mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128'; [key: string]: unknown }) => {
-      const blob = await productsApi.generateBarcodePdf(data);
-      // Validate that we got actual PDF content
+    mutationFn: async (data: Record<string, unknown>) => {
+      const blob = await productsApi.generateBarcodePdf(data as any);
       if (!blob || blob.size === 0) {
         throw new Error('Empty PDF response from server');
       }
-      // 触发下载
+      // V1 parity: trigger download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -112,67 +161,37 @@ export default function BarcodePage() {
     onError: (error: any) => {
       console.error('[Barcode] Generation failed:', error);
       const message = error?.message || tCommon('securityCode.invalid');
-      // If security dialog is open, show error there
       if (showSecurityDialog) {
         setSecurityError(message);
       } else {
-        // Show error via alert if no dialog is open (policy says no security needed)
-        alert(`${t('barcode.generate')} — ${message}`);
+        alert(`生成条形码 — ${message}`);
       }
     },
   });
 
-  // 切换选择
-  const toggleSku = (sku: string) => {
-    setSelectedSkus((prev) =>
-      prev.includes(sku) ? prev.filter((s) => s !== sku) : [...prev, sku]
-    );
-  };
-
-  // 过滤产品
-  const filteredProducts = products.filter(
-    (p: SkuItem) =>
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      p.name?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // 全选/取消全选
-  const toggleAll = () => {
-    if (selectedSkus.length === filteredProducts.length) {
-      setSelectedSkus([]);
-    } else {
-      setSelectedSkus(filteredProducts.map((p: SkuItem) => p.sku));
-    }
-  };
-
-  // 生成条形码 — V1 parity: CODE128 only, dynamic security policy
   const handleGenerate = (secCode?: string) => {
     const payload: Record<string, unknown> = {
-      skus: selectedSkus,
-      copiesPerSku: copies,
-      format: 'CODE128' as const,
+      items: getValidItems(),
     };
-    // Only include security code if one was provided
     if (secCode) {
       payload[getSecCodeKey()] = secCode;
     }
-    generateMutation.mutate(payload as any);
+    generateMutation.mutate(payload);
   };
 
-  // Handle generate button click — check dynamic policy first
   const handleGenerateClick = () => {
-    const requiresSecurity = actionPolicy?.requiresSecurityCode ?? true; // default: require
+    if (!validateRows()) return;
+
+    const requiresSecurity = actionPolicy?.requiresSecurityCode ?? true;
     if (requiresSecurity) {
       setShowSecurityDialog(true);
     } else {
-      // No security code required — call API directly
       handleGenerate();
     }
   };
 
-  if (!isClient) {
-    return null;
-  }
+  // === Render ===
+  if (!isClient) return null;
 
   if (!currentUser) {
     return (
@@ -196,11 +215,12 @@ export default function BarcodePage() {
     );
   }
 
+  const validItemCount = getValidItems().length;
+
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen">
       {/* Header */}
-      <section className="max-w-[1200px] mx-auto px-6 pt-12 pb-6">
-        {/* Breadcrumb */}
+      <section className="max-w-[1000px] mx-auto px-6 pt-12 pb-6">
         <div className="flex items-center gap-2 text-sm mb-6">
           <Link href="/products" style={{ color: colors.blue }}>
             {t('module.title')}
@@ -209,7 +229,6 @@ export default function BarcodePage() {
           <span style={{ color: colors.textSecondary }}>{t('barcode.title')}</span>
         </div>
 
-        {/* Title & Description */}
         <h1
           style={{ color: colors.text }}
           className="text-[32px] font-semibold tracking-tight mb-2"
@@ -217,211 +236,224 @@ export default function BarcodePage() {
           {t('barcode.title')}
         </h1>
         <p style={{ color: colors.textSecondary }} className="text-[17px]">
-          {t('barcode.description')}
+          外包装条形码 PDF 生成向导 — 4&quot;×6&quot; 热敏标签
         </p>
       </section>
 
       {/* Main Content */}
-      <section className="max-w-[1200px] mx-auto px-6 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Product Selection */}
-          <div className="lg:col-span-2">
-            <div
-              style={{
-                backgroundColor: colors.bgSecondary,
-                borderColor: colors.border,
-              }}
-              className="rounded-2xl border overflow-hidden"
-            >
-              {/* Search & Select All */}
+      <section className="max-w-[1000px] mx-auto px-6 pb-20">
+        <div
+          style={{
+            backgroundColor: colors.bgSecondary,
+            borderColor: colors.border,
+          }}
+          className="rounded-2xl border overflow-hidden"
+        >
+          {/* Wizard Header */}
+          <div
+            style={{ borderColor: colors.border }}
+            className="p-6 border-b"
+          >
+            <div className="flex items-center gap-3 mb-1">
               <div
-                style={{ borderColor: colors.border }}
-                className="p-4 border-b flex items-center gap-4"
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${colors.blue}20` }}
               >
-                <div className="relative flex-1">
-                  <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
-                    style={{ color: colors.textTertiary }}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                    />
-                  </svg>
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={t('list.searchPlaceholder')}
-                    style={{
-                      backgroundColor: colors.bgTertiary,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    }}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 text-sm"
-                  />
-                </div>
-                <button
-                  onClick={toggleAll}
-                  style={{
-                    backgroundColor: colors.bgTertiary,
-                    color: colors.text,
-                  }}
-                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-                >
-                  {selectedSkus.length === filteredProducts.length
-                    ? tCommon('deselectAll')
-                    : tCommon('selectAll')}
-                </button>
+                <svg className="w-5 h-5" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
+                </svg>
               </div>
-
-              {/* Product List */}
-              <div className="max-h-[500px] overflow-y-auto">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div
-                      className="w-8 h-8 border-2 rounded-full animate-spin"
-                      style={{ borderColor: colors.border, borderTopColor: colors.blue }}
-                    />
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="flex items-center justify-center py-20">
-                    <p style={{ color: colors.textSecondary }}>{t('list.noProducts')}</p>
-                  </div>
-                ) : (
-                  <div className="divide-y" style={{ borderColor: colors.border }}>
-                    {filteredProducts.map((product: SkuItem) => (
-                      <label
-                        key={product.id}
-                        className="flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-opacity-50"
-                        style={{
-                          backgroundColor: selectedSkus.includes(product.sku)
-                            ? `${colors.blue}10`
-                            : 'transparent',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedSkus.includes(product.sku)}
-                          onChange={() => toggleSku(product.sku)}
-                          className="w-5 h-5 rounded border-2 cursor-pointer"
-                          style={{ accentColor: colors.blue }}
-                        />
-                        <div className="flex-1">
-                          <p style={{ color: colors.text }} className="font-mono text-sm">
-                            {product.sku}
-                          </p>
-                          {product.name && (
-                            <p style={{ color: colors.textSecondary }} className="text-sm">
-                              {product.name}
-                            </p>
-                          )}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
+              <div>
+                <h2 style={{ color: colors.text }} className="text-lg font-semibold">
+                  Packaging Barcode 生成向导
+                </h2>
+                <p style={{ color: colors.textSecondary }} className="text-sm">
+                  按步骤填写数据、验证并生成条形码 PDF。
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Right: Options */}
-          <div>
+          {/* Instructions Card */}
+          <div className="px-6 pt-6">
             <div
               style={{
-                backgroundColor: colors.bgSecondary,
-                borderColor: colors.border,
+                backgroundColor: `${colors.blue}08`,
+                borderColor: `${colors.blue}30`,
               }}
-              className="rounded-2xl border p-6 sticky top-6"
+              className="rounded-xl border p-4"
             >
-              <h3
-                style={{ color: colors.text }}
-                className="text-lg font-semibold mb-6"
-              >
-                {t('barcode.selectProducts')}
-              </h3>
-
-              {/* Selected Count */}
-              <div
-                style={{
-                  backgroundColor: `${colors.blue}15`,
-                  color: colors.blue,
-                }}
-                className="rounded-xl p-4 mb-6 text-center"
-              >
-                <span className="text-2xl font-semibold">{selectedSkus.length}</span>
-                <span className="ml-2 text-sm">{t('list.productCount')}</span>
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-4 h-4" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <span style={{ color: colors.blue }} className="text-sm font-medium">操作说明</span>
               </div>
+              <ul style={{ color: colors.textSecondary }} className="text-sm space-y-1 ml-6 list-disc">
+                <li>每行填写一个 SKU 及其包装规格（每盒个数、每箱盒数）。</li>
+                <li>多行用于生成不同规格的条形码 PDF，每行生成一个独立标签页。</li>
+                <li>每盒个数和每箱盒数必须是大于 0 的正整数。</li>
+              </ul>
+            </div>
+          </div>
 
-              {/* Format — V1 parity: CODE128 fixed, no user selection */}
-              <div className="mb-6">
-                <label
-                  style={{ color: colors.text }}
-                  className="block text-sm font-medium mb-3"
-                >
-                  {t('barcode.format')}
-                </label>
-                <div
-                  className="flex items-center gap-3 p-3 rounded-lg"
-                  style={{
-                    backgroundColor: `${colors.blue}15`,
-                    borderColor: colors.blue,
-                    borderWidth: 1,
-                  }}
-                >
-                  <svg className="w-5 h-5" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span style={{ color: colors.text }} className="text-sm font-medium">CODE128</span>
-                </div>
-              </div>
+          {/* Data Input Table (V1 parity) */}
+          <div className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+                <thead>
+                  <tr>
+                    <th style={{ color: colors.textSecondary, width: '40%' }} className="text-left text-sm font-medium pb-2 px-2">SKU</th>
+                    <th style={{ color: colors.textSecondary, width: '20%' }} className="text-left text-sm font-medium pb-2 px-2">每盒个数 (QTY/BOX)</th>
+                    <th style={{ color: colors.textSecondary, width: '20%' }} className="text-left text-sm font-medium pb-2 px-2">每箱盒数 (BOX/CTN)</th>
+                    <th style={{ color: colors.textSecondary, width: '10%' }} className="text-center text-sm font-medium pb-2 px-2">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      {/* SKU Select (V1: dropdown from DB) */}
+                      <td className="px-2 py-1">
+                        <select
+                          value={row.sku}
+                          onChange={(e) => updateRow(row.id, 'sku', e.target.value)}
+                          style={{
+                            backgroundColor: colors.bgTertiary,
+                            borderColor: colors.border,
+                            color: row.sku ? colors.text : colors.textTertiary,
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                        >
+                          <option value="">— 选择 SKU —</option>
+                          {skuList.map((s: SkuItem) => (
+                            <option key={s.id} value={s.sku}>
+                              {s.sku}{s.name ? ` — ${s.name}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
 
-              {/* Copies */}
-              <div className="mb-8">
-                <label
-                  style={{ color: colors.text }}
-                  className="block text-sm font-medium mb-3"
-                >
-                  {t('barcode.copies')}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={copies}
-                  onChange={(e) => setCopies(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                  style={{
-                    backgroundColor: colors.bgTertiary,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 text-center text-lg font-medium"
-                />
-              </div>
+                      {/* Qty/Box */}
+                      <td className="px-2 py-1">
+                        <input
+                          type="number"
+                          min={1}
+                          value={row.qtyPerBox}
+                          onChange={(e) => updateRow(row.id, 'qtyPerBox', e.target.value)}
+                          placeholder="例: 10"
+                          style={{
+                            backgroundColor: colors.bgTertiary,
+                            borderColor: colors.border,
+                            color: colors.text,
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 text-center"
+                        />
+                      </td>
 
-              {/* Generate Button */}
+                      {/* Box/Ctn */}
+                      <td className="px-2 py-1">
+                        <input
+                          type="number"
+                          min={1}
+                          value={row.boxPerCtn}
+                          onChange={(e) => updateRow(row.id, 'boxPerCtn', e.target.value)}
+                          placeholder="例: 5"
+                          style={{
+                            backgroundColor: colors.bgTertiary,
+                            borderColor: colors.border,
+                            color: colors.text,
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 text-center"
+                        />
+                      </td>
+
+                      {/* Remove button */}
+                      <td className="px-2 py-1 text-center">
+                        <button
+                          onClick={() => removeRow(row.id)}
+                          disabled={rows.length <= 1}
+                          style={{ color: rows.length <= 1 ? colors.textTertiary : '#ef4444' }}
+                          className="p-2 rounded-lg transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Add Row Buttons (V1 parity) */}
+            <div className="flex gap-3 mt-2">
               <button
-                onClick={handleGenerateClick}
-                disabled={generateMutation.isPending || selectedSkus.length === 0}
-                style={{
-                  backgroundColor: colors.blue,
-                  color: '#ffffff',
-                }}
-                className="w-full py-3 rounded-xl font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                onClick={addRow}
+                style={{ color: colors.blue, borderColor: `${colors.blue}40` }}
+                className="px-4 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-blue-500/10"
               >
-                {generateMutation.isPending ? tCommon('loading') : t('barcode.generate')}
+                + 添加一行
+              </button>
+              <button
+                onClick={() => addRows(5)}
+                style={{ color: colors.textSecondary, borderColor: colors.border }}
+                className="px-4 py-2 rounded-full border text-sm font-medium transition-colors hover:bg-white/5"
+              >
+                批量添加 (5行)
               </button>
             </div>
+
+            {/* Validation Errors */}
+            {validationErrors.length > 0 && (
+              <div
+                className="mt-4 p-4 rounded-xl border"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  borderColor: 'rgba(239, 68, 68, 0.3)',
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <span className="text-red-400 text-sm font-medium">验证失败</span>
+                </div>
+                <ul className="text-sm text-red-300 space-y-1 ml-6 list-disc">
+                  {validationErrors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Footer Actions (V1 parity) */}
+          <div
+            style={{ borderColor: colors.border }}
+            className="px-6 py-4 border-t flex items-center justify-between"
+          >
+            <span style={{ color: colors.textSecondary }} className="text-sm">
+              待生成: <strong style={{ color: colors.text }}>{validItemCount}</strong> 个标签
+            </span>
+            <button
+              onClick={handleGenerateClick}
+              disabled={generateMutation.isPending || validItemCount === 0}
+              style={{
+                backgroundColor: colors.blue,
+                color: '#ffffff',
+              }}
+              className="px-6 py-2.5 rounded-full font-medium text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {generateMutation.isPending ? '正在生成...' : '生成条形码'}
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Security Code Dialog — V1 parity: dynamic policy from action registry */}
+      {/* Security Code Dialog */}
       <SecurityCodeDialog
         isOpen={showSecurityDialog}
         level={getSecurityLevel()}
