@@ -122,7 +122,11 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve Management"
+      "manage": "P-Valve Management",
+      "inventory": "Inventory",
+      "clinical_case": "Clinical Cases",
+      "fridge_shelf": "Fridge Shelf",
+      "site_management": "Site Management"
     },
     "employees": {
       "title": "Employees",
@@ -134,7 +138,15 @@
     },
     "training": {
       "title": "Training",
-      "manage": "Training Management"
+      "manage": "Training Hub"
+    },
+    "training_sop": {
+      "title": "Training SOP",
+      "manage": "SOP Management"
+    },
+    "training_records": {
+      "title": "Training Records",
+      "manage": "Record Management"
     }
   },
   

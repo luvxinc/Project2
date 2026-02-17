@@ -17,20 +17,10 @@
       "description": "Theo dõi và quản lý hàng tồn kho nhà cung cấp P-Valve",
       "cta": "Quản lý"
     },
-    "employees": {
-      "title": "Nhân viên",
-      "description": "Hồ sơ nhân viên, tiếp nhận và quản lý thông tin",
-      "cta": "Quản lý"
-    },
-    "duties": {
-      "title": "Nhiệm vụ",
-      "description": "Định nghĩa, phân công và theo dõi nhiệm vụ công việc",
-      "cta": "Quản lý"
-    },
-    "training": {
-      "title": "Đào tạo",
-      "description": "Kế hoạch đào tạo, hồ sơ, chứng chỉ và theo dõi kỹ năng",
-      "cta": "Đi đến Đào tạo"
+    "management": {
+      "title": "Quản lý",
+      "description": "Nhân viên, nhiệm vụ, kế hoạch đào tạo, hồ sơ và chứng chỉ",
+      "cta": "Vào quản lý"
     }
   },
   "truvalve": {

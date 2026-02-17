@@ -66,10 +66,12 @@ const modules = [
     href: '/vma',
     groups: [
       { key: 'truvalve', items: ['manage'] },
-      { key: 'p_valve', items: ['manage'] },
+      { key: 'p_valve', items: ['inventory', 'clinical_case', 'fridge_shelf', 'site_management'] },
       { key: 'employees', items: ['manage'] },
       { key: 'duties', items: ['manage'] },
-      { key: 'training', items: ['manage'] }
+      { key: 'training', items: ['manage'] },
+      { key: 'training_sop', items: ['manage'] },
+      { key: 'training_records', items: ['manage'] },
     ]
   },
   {
@@ -104,6 +106,21 @@ const modules = [
     ]
   }
 ];
+
+// VMA dropdown href overrides (group.key → href, or group.key/item → href)
+const NAV_HREF_OVERRIDES: Record<string, string> = {
+  'vma.truvalve':                '/vma/truvalve',
+  'vma.p_valve.inventory':       '/vma/p-valve/inventory',
+  'vma.p_valve.clinical_case':   '/vma/p-valve/clinical-case',
+  'vma.p_valve.fridge_shelf':    '/vma/p-valve/fridge-shelf',
+  'vma.p_valve.site_management': '/vma/p-valve/site-management',
+  'vma.employees':               '/vma/employees',
+  'vma.duties':                  '/vma/duties',
+  'vma.training':                '/vma/training',
+  'vma.training_sop':            '/vma/training-sop',
+  'vma.training_records':        '/vma/training-records',
+};
+
 
 interface User {
   id: string;
@@ -519,7 +536,9 @@ export function AppleNav({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
                           </h3>
                           <ul className="space-y-2">
                             {group.items.map((item) => {
-                              const subHref = mod.href ? `${mod.href}/${group.key}` : '#';
+                              const subHref = NAV_HREF_OVERRIDES[`${mod.key}.${group.key}.${item}`]
+                                || NAV_HREF_OVERRIDES[`${mod.key}.${group.key}`]
+                                || (mod.href ? `${mod.href}/${group.key}` : '#');
                               
                               return (
                                 <li key={item}>

@@ -122,7 +122,11 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve 管理"
+      "manage": "P-Valve 管理",
+      "inventory": "库存管理",
+      "clinical_case": "临床案例",
+      "fridge_shelf": "冰箱管理",
+      "site_management": "站点管理"
     },
     "employees": {
       "title": "员工",
@@ -134,7 +138,15 @@
     },
     "training": {
       "title": "培训",
-      "manage": "培训管理"
+      "manage": "培训中心"
+    },
+    "training_sop": {
+      "title": "培训SOP",
+      "manage": "SOP管理"
+    },
+    "training_records": {
+      "title": "培训记录",
+      "manage": "记录管理"
     }
   },
   
