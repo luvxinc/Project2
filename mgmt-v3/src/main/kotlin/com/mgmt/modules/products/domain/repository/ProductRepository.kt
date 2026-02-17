@@ -22,6 +22,8 @@ interface ProductRepository : JpaRepository<Product, String>, JpaSpecificationEx
 
     fun findAllByDeletedAtIsNullOrderBySkuAsc(): List<Product>
 
+    fun findAllByDeletedAtIsNull(): List<Product>
+
     fun findAllByStatusAndDeletedAtIsNullOrderBySkuAsc(status: ProductStatus): List<Product>
 
     @Query("SELECT DISTINCT p.category FROM Product p WHERE p.deletedAt IS NULL AND p.category IS NOT NULL ORDER BY p.category")

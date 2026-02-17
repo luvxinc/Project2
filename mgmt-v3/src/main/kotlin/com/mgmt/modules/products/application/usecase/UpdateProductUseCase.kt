@@ -29,11 +29,24 @@ class UpdateProductUseCase(
 
         dto.name?.let { product.name = it }
         dto.category?.let { product.category = it }
-        dto.cogs?.let { product.cogs = it }
+        dto.subcategory?.let { product.subcategory = it }
+        dto.type?.let { product.type = it }
+        dto.cost?.let { product.cost = it }
+        dto.freight?.let { product.freight = it }
+        dto.weight?.let { product.weight = it }
         dto.upc?.let { product.upc = it }
         dto.status?.let { product.status = com.mgmt.modules.products.domain.model.ProductStatus.valueOf(it) }
-        product.updatedAt = Instant.now()
 
+        // Auto-calculate COGS = cost + freight when either changes
+        if (dto.cost != null || dto.freight != null) {
+            product.cogs = product.cost.add(product.freight)
+        }
+        // Allow direct cogs override only if no cost/freight was sent
+        if (dto.cost == null && dto.freight == null) {
+            dto.cogs?.let { product.cogs = it }
+        }
+
+        product.updatedAt = Instant.now()
         return repo.save(product)
     }
 
