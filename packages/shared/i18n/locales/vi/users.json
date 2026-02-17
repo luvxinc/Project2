@@ -247,6 +247,12 @@
     "roles": {
       "label": "Roles",
       "placeholder": "Select roles"
+    },
+    "deleteReason": {
+      "label": "Deletion Reason",
+      "placeholder": "Enter reason for deleting this user...",
+      "hint": "This information will be recorded in the audit log",
+      "required": "Please enter a deletion reason"
     }
   },
   "status": {

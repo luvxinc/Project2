@@ -156,6 +156,7 @@ function RoleModal({
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const t = useTranslations('users');
+  const tc = useTranslations('common');
   
   const [name, setName] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -307,14 +308,14 @@ function RoleModal({
             className="flex-1 h-10 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
             style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
           >
-            {t('common.cancel')}
+            {tc('cancel')}
           </button>
           <button
             onClick={handleSubmit}
             className="flex-1 h-10 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-80"
             style={{ backgroundColor: '#0071e3' }}
           >
-            {editingRole ? t('common.save') : t('roles.addRole')}
+            {editingRole ? tc('save') : t('roles.addRole')}
           </button>
         </div>
       </div>
