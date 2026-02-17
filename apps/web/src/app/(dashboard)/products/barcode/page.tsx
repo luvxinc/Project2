@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 
 interface CurrentUser {
@@ -53,8 +54,41 @@ export default function BarcodePage() {
     enabled: isClient && !!currentUser,
   });
 
+  // V1 parity: dynamic security policy check — {% security_inputs "btn_generate_barcode" %}
+  const { data: actionPolicy } = useQuery({
+    queryKey: ['action-policy', 'btn_generate_barcode'],
+    queryFn: () => api.get<{ actionKey: string; requiredTokens: string[]; requiresSecurityCode: boolean }>(
+      '/auth/security-policies/action/btn_generate_barcode'
+    ),
+    enabled: isClient && !!currentUser,
+    staleTime: 30_000, // 30s cache — policy changes propagate within 30s
+  });
+
+  // Determine the highest security level needed from the dynamic policy
+  const getSecurityLevel = (): 'L0' | 'L1' | 'L2' | 'L3' | 'L4' => {
+    const tokens = actionPolicy?.requiredTokens || [];
+    const levelMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
+      user: 'L0', query: 'L1', modify: 'L2', db: 'L3', system: 'L4',
+    };
+    const secCodeKeyMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
+      sec_code_l0: 'L0', sec_code_l1: 'L1', sec_code_l2: 'L2', sec_code_l3: 'L3', sec_code_l4: 'L4',
+    };
+    // Check both token type names and sec_code keys
+    for (const t of tokens) {
+      if (levelMap[t]) return levelMap[t];
+      if (secCodeKeyMap[t]) return secCodeKeyMap[t];
+    }
+    return 'L3'; // default fallback
+  };
+
+  // Build the security code key for the API request
+  const getSecCodeKey = (): string => {
+    const level = getSecurityLevel();
+    return `sec_code_${level.toLowerCase()}`;
+  };
+
   const generateMutation = useMutation({
-    mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128'; sec_code_l3: string }) => {
+    mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128'; [key: string]: unknown }) => {
       const blob = await productsApi.generateBarcodePdf(data);
       // 触发下载
       const url = window.URL.createObjectURL(blob);
@@ -99,14 +133,29 @@ export default function BarcodePage() {
     }
   };
 
-  // 生成条形码 — V1 parity: CODE128 only, L3 security code
-  const handleGenerate = (secCode: string) => {
-    generateMutation.mutate({
+  // 生成条形码 — V1 parity: CODE128 only, dynamic security policy
+  const handleGenerate = (secCode?: string) => {
+    const payload: Record<string, unknown> = {
       skus: selectedSkus,
       copiesPerSku: copies,
       format: 'CODE128' as const,
-      sec_code_l3: secCode,
-    });
+    };
+    // Only include security code if one was provided
+    if (secCode) {
+      payload[getSecCodeKey()] = secCode;
+    }
+    generateMutation.mutate(payload as any);
+  };
+
+  // Handle generate button click — check dynamic policy first
+  const handleGenerateClick = () => {
+    const requiresSecurity = actionPolicy?.requiresSecurityCode ?? true; // default: require
+    if (requiresSecurity) {
+      setShowSecurityDialog(true);
+    } else {
+      // No security code required — call API directly
+      handleGenerate();
+    }
   };
 
   if (!isClient) {
@@ -345,7 +394,7 @@ export default function BarcodePage() {
 
               {/* Generate Button */}
               <button
-                onClick={() => setShowSecurityDialog(true)}
+                onClick={handleGenerateClick}
                 disabled={generateMutation.isPending || selectedSkus.length === 0}
                 style={{
                   backgroundColor: colors.blue,
@@ -360,10 +409,10 @@ export default function BarcodePage() {
         </div>
       </section>
 
-      {/* Security Code Dialog — V1 parity: btn_generate_barcode requires L3 */}
+      {/* Security Code Dialog — V1 parity: dynamic policy from action registry */}
       <SecurityCodeDialog
         isOpen={showSecurityDialog}
-        level="L3"
+        level={getSecurityLevel()}
         title={t('barcode.generate')}
         description={t('security.requiresL3')}
         onConfirm={handleGenerate}
