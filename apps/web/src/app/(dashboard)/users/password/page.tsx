@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { useModal } from '@/components/modal/GlobalModal';
+import api from '@/lib/api/client';
 
 /**
  * 安全等级定义 (L0-L4)
@@ -273,10 +275,12 @@ function MiniSwitch({
 
 export default function PasswordPolicyPage() {
   const t = useTranslations('users');
+  const tc = useTranslations('common');
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const { showPassword, showSuccess, showError } = useModal();
   
-  // 初始化 action tokens
+  // State
   const [actionTokens, setActionTokens] = useState<ActionTokens>(() => {
     const initial: ActionTokens = {};
     actionRegistry.modules.forEach(mod => {
@@ -288,6 +292,51 @@ export default function PasswordPolicyPage() {
     });
     return initial;
   });
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const savedSnapshotRef = useRef<ActionTokens>({});
+
+  // Load existing policies from backend on mount
+  useEffect(() => {
+    const loadPolicies = async () => {
+      try {
+        const policies = await api.get<Record<string, string[]>>('/auth/security-policies');
+        if (policies && Object.keys(policies).length > 0) {
+          setActionTokens(prev => {
+            const merged = { ...prev };
+            Object.entries(policies).forEach(([key, tokens]) => {
+              if (key in merged) {
+                merged[key] = tokens;
+              }
+            });
+            savedSnapshotRef.current = { ...merged };
+            return merged;
+          });
+        } else {
+          // No saved policies yet — use defaults as snapshot
+          savedSnapshotRef.current = { ...actionTokens };
+        }
+      } catch {
+        // On error (e.g. 401), just use defaults
+        savedSnapshotRef.current = { ...actionTokens };
+      }
+    };
+    loadPolicies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Track changes
+  const checkChanges = useCallback((current: ActionTokens) => {
+    const saved = savedSnapshotRef.current;
+    for (const key of Object.keys(current)) {
+      const a = [...(current[key] || [])].sort();
+      const b = [...(saved[key] || [])].sort();
+      if (a.length !== b.length || a.some((v, i) => v !== b[i])) {
+        return true;
+      }
+    }
+    return false;
+  }, []);
 
   // 统计操作点数
   const totalActions = useMemo(() => {
@@ -302,7 +351,45 @@ export default function PasswordPolicyPage() {
       const newTokens = current.includes(tokenType)
         ? current.filter(tk => tk !== tokenType)
         : [...current, tokenType];
-      return { ...prev, [actionKey]: newTokens };
+      const updated = { ...prev, [actionKey]: newTokens };
+      setHasChanges(checkChanges(updated));
+      return updated;
+    });
+  };
+
+  // Save handler
+  const handleSave = () => {
+    showPassword({
+      title: t('password.saveAll'),
+      message: t('capabilities.notice.l3Required'),
+      requiredCodes: ['l1', 'l4'],
+      onPasswordSubmit: async (passwords) => {
+        const codeL1 = passwords.l1;
+        const codeL4 = passwords.l4;
+        if (!codeL1 || !codeL4) {
+          throw new Error(tc('securityCode.required'));
+        }
+        setSaving(true);
+        try {
+          await api.put('/auth/security-policies', {
+            policies: actionTokens,
+            sec_code_l1: codeL1,
+            sec_code_l4: codeL4,
+          });
+        } finally {
+          setSaving(false);
+        }
+        // Update saved snapshot
+        savedSnapshotRef.current = { ...actionTokens };
+        setHasChanges(false);
+        // Success feedback after modal auto-hides
+        setTimeout(() => showSuccess({
+          title: tc('success'),
+          message: t('password.saveAll') + ' ✓',
+          showCancel: false,
+          confirmText: tc('ok'),
+        }), 250);
+      },
     });
   };
 
@@ -477,14 +564,31 @@ export default function PasswordPolicyPage() {
           <div className="w-[280px] flex-shrink-0">
             {/* 保存全部按钮 */}
             <button 
-              style={{ backgroundColor: colors.blue }}
-              className="w-full h-[44px] mb-4 hover:opacity-90 text-white text-[15px] font-medium rounded-lg transition-opacity flex items-center justify-center gap-2"
+              onClick={handleSave}
+              disabled={saving}
+              style={{ 
+                backgroundColor: saving ? colors.textTertiary : colors.blue,
+                opacity: saving ? 0.6 : 1,
+              }}
+              className="w-full h-[44px] mb-4 hover:opacity-90 text-white text-[15px] font-medium rounded-lg transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              {t('password.saveAll')}
+              {saving ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+              {saving ? tc('saving') : t('password.saveAll')}
             </button>
+            {hasChanges && (
+              <div style={{ color: '#ff9f0a' }} className="text-[12px] text-center mb-3 font-medium">
+                ● 有未保存的更改
+              </div>
+            )}
             
             <div 
               style={{ 

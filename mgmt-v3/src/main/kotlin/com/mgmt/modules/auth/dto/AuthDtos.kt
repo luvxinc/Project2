@@ -147,3 +147,10 @@ data class BoundaryResponse(
     val boundaryType: String,
     val description: String?,
 )
+
+// ─── Security Policy DTOs ───────────────────────────────────
+
+data class SecurityPolicyRequest(
+    val policies: Map<String, List<String>>,
+)
+

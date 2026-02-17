@@ -147,6 +147,54 @@ class SessionService(
     }
 
     /**
+     * Get all action policies from Redis.
+     * Scans action_registry:* keys and returns a map of actionKey → tokenTypes.
+     */
+    fun getAllActionPolicies(): Map<String, List<String>> {
+        val result = mutableMapOf<String, List<String>>()
+        val keys = redis.keys("action_registry:*")
+        if (keys.isNullOrEmpty()) return result
+
+        val values = redis.opsForValue().multiGet(keys.toList()) ?: return result
+        keys.toList().zip(values).forEach { (key, json) ->
+            if (json != null) {
+                val actionKey = key.removePrefix("action_registry:")
+                try {
+                    val tokens: List<String> = objectMapper.readValue(
+                        json, objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java)
+                    )
+                    result[actionKey] = tokens
+                } catch (e: Exception) {
+                    log.warn("Failed to parse action registry for '{}': {}", key, e.message)
+                }
+            }
+        }
+        return result
+    }
+
+    /**
+     * Batch-save all action policies to Redis.
+     * V1 parity: UserAdminService.update_all_policies()
+     * Returns the count of policies saved.
+     */
+    fun saveAllActionPolicies(policies: Map<String, List<String>>): Int {
+        // Delete existing action_registry keys first
+        val existingKeys = redis.keys("action_registry:*")
+        if (!existingKeys.isNullOrEmpty()) {
+            redis.delete(existingKeys)
+        }
+
+        // Save new policies
+        policies.forEach { (actionKey, tokens) ->
+            val json = objectMapper.writeValueAsString(tokens)
+            redis.opsForValue().set("action_registry:$actionKey", json)
+        }
+
+        log.info("Security policies saved: {} action keys", policies.size)
+        return policies.size
+    }
+
+    /**
      * Verify security code for a user against required token types.
      * V1 parity: SecurityPolicyManager.verify_action_request(request, actionKey)
      *
