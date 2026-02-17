@@ -362,18 +362,18 @@ export default function PasswordPolicyPage() {
     showPassword({
       title: t('password.saveAll'),
       message: t('capabilities.notice.l3Required'),
-      requiredCodes: ['l1', 'l4'],
+      requiredCodes: ['l0', 'l4'],
       onPasswordSubmit: async (passwords) => {
-        const codeL1 = passwords.l1;
+        const codeL0 = passwords.l0;
         const codeL4 = passwords.l4;
-        if (!codeL1 || !codeL4) {
+        if (!codeL0 || !codeL4) {
           throw new Error(tc('securityCode.required'));
         }
         setSaving(true);
         try {
           await api.put('/auth/security-policies', {
             policies: actionTokens,
-            sec_code_l1: codeL1,
+            sec_code_l0: codeL0,
             sec_code_l4: codeL4,
           });
         } finally {
