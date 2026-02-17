@@ -138,7 +138,8 @@ class ProductController(
     // ═══════════ Barcode (V1 parity) ═══════════
 
     @PostMapping("/barcode/generate")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.barcode.generate")
+    @SecurityLevel(level = "L3", actionKey = "btn_generate_barcode")
     @AuditLog(module = "PRODUCTS", action = "GENERATE_BARCODE", riskLevel = "LOW")
     fun generateBarcode(@RequestBody dto: GenerateBarcodeRequest): ResponseEntity<ByteArray> {
         // V1: fetch all active SKU names for label text

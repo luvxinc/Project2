@@ -30,7 +30,6 @@ export default function BarcodePage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
-  const [format, setFormat] = useState<'CODE128' | 'EAN13' | 'UPC'>('CODE128');
   const [copies, setCopies] = useState(1);
   const [search, setSearch] = useState('');
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
@@ -55,7 +54,7 @@ export default function BarcodePage() {
   });
 
   const generateMutation = useMutation({
-    mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128' | 'EAN13' | 'UPC'; sec_code_l1: string }) => {
+    mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128'; sec_code_l3: string }) => {
       const blob = await productsApi.generateBarcodePdf(data);
       // 触发下载
       const url = window.URL.createObjectURL(blob);
@@ -100,13 +99,13 @@ export default function BarcodePage() {
     }
   };
 
-  // 生成条形码
+  // 生成条形码 — V1 parity: CODE128 only, L3 security code
   const handleGenerate = (secCode: string) => {
     generateMutation.mutate({
       skus: selectedSkus,
       copiesPerSku: copies,
-      format,
-      sec_code_l1: secCode,
+      format: 'CODE128' as const,
+      sec_code_l3: secCode,
     });
   };
 
@@ -298,7 +297,7 @@ export default function BarcodePage() {
                 <span className="ml-2 text-sm">{t('list.productCount')}</span>
               </div>
 
-              {/* Format Selection */}
+              {/* Format — V1 parity: CODE128 fixed, no user selection */}
               <div className="mb-6">
                 <label
                   style={{ color: colors.text }}
@@ -306,32 +305,18 @@ export default function BarcodePage() {
                 >
                   {t('barcode.format')}
                 </label>
-                <div className="space-y-2">
-                  {(['CODE128', 'EAN13', 'UPC'] as const).map((fmt) => (
-                    <label
-                      key={fmt}
-                      className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-                      style={{
-                        backgroundColor:
-                          format === fmt ? `${colors.blue}15` : colors.bgTertiary,
-                        borderColor: format === fmt ? colors.blue : 'transparent',
-                        borderWidth: 1,
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="format"
-                        value={fmt}
-                        checked={format === fmt}
-                        onChange={() => setFormat(fmt)}
-                        className="w-4 h-4"
-                        style={{ accentColor: colors.blue }}
-                      />
-                      <span style={{ color: colors.text }} className="text-sm">
-                        {t(`barcode.formats.${fmt}`)}
-                      </span>
-                    </label>
-                  ))}
+                <div
+                  className="flex items-center gap-3 p-3 rounded-lg"
+                  style={{
+                    backgroundColor: `${colors.blue}15`,
+                    borderColor: colors.blue,
+                    borderWidth: 1,
+                  }}
+                >
+                  <svg className="w-5 h-5" style={{ color: colors.blue }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span style={{ color: colors.text }} className="text-sm font-medium">CODE128</span>
                 </div>
               </div>
 
@@ -375,12 +360,12 @@ export default function BarcodePage() {
         </div>
       </section>
 
-      {/* Security Code Dialog */}
+      {/* Security Code Dialog — V1 parity: btn_generate_barcode requires L3 */}
       <SecurityCodeDialog
         isOpen={showSecurityDialog}
-        level="L1"
+        level="L3"
         title={t('barcode.generate')}
-        description={t('security.requiresL1')}
+        description={t('security.requiresL3')}
         onConfirm={handleGenerate}
         onCancel={() => {
           setShowSecurityDialog(false);
