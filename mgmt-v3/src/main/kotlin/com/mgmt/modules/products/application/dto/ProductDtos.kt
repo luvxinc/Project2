@@ -50,10 +50,14 @@ data class BatchUpdateCogsRequest(
 // ═══════════ Barcode DTOs (V1 parity) ═══════════
 
 data class GenerateBarcodeRequest(
-    val skus: List<String>,
-    val copiesPerSku: Int = 1,
-    val format: String = "CODE128",
-)
+    val items: List<BarcodeItem>,
+) {
+    data class BarcodeItem(
+        val sku: String,
+        val qtyPerBox: Int,
+        val boxPerCtn: Int,
+    )
+}
 
 // ═══════════ Metadata DTO (dropdown options for Create/COGS forms) ═══════════
 
