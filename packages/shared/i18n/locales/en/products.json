@@ -28,6 +28,7 @@
     "description": "View and manage all products in the system",
     "searchPlaceholder": "Search by SKU or name",
     "noProducts": "No products found",
+    "loginRequired": "Please sign in to view products",
     "productCount": "products",
     "loading": "Loading...",
     "loadFailed": "Failed to load products",
@@ -75,8 +76,9 @@
     "instructions": {
       "title": "Editing Instructions",
       "editAllFields": "Edit Category, Subcategory, Type, Cost, Freight, and Weight",
-      "autoCalculate": "COGS is automatically calculated as Cost + Freight",
-      "saveChanges": "Review changes in the diff table before confirming"
+      "editCostFreight": "Edit Cost and Freight values in the table below",
+      "autoCalculate": "COG is automatically calculated as Cost + Freight",
+      "saveChanges": "Click \"Save Changes\" to submit your edits"
     }
   },
   "create": {
@@ -103,6 +105,13 @@
     "step4": "Generate & Download",
     "selectProducts": "Select Products",
     "searchSku": "Search SKU...",
+    "format": "Barcode Format",
+    "copies": "Copies per SKU",
+    "formats": {
+      "CODE128": "Code 128 (Recommended)",
+      "EAN13": "EAN-13",
+      "UPC": "UPC-A"
+    },
     "qtyPerBox": "QTY/BOX",
     "boxPerCtn": "BOX/CTN",
     "addItem": "Add Item",
