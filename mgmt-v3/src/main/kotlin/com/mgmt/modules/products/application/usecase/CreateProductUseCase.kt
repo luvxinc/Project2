@@ -16,8 +16,7 @@ import java.util.UUID
  * CreateProductUseCase — product creation.
  *
  * V3 DDD: application/usecase layer.
- * V1 parity: cogs_create_skus (batch create, 9 fields, existingSkusSet check).
- * SKU regex: /^[A-Z0-9/_-]+$/ (supports '/' per V1 hierarchical SKUs).
+ * V1 parity: create({sku, name, category, cogs, upc}).
  */
 @Service
 @Transactional
@@ -26,44 +25,24 @@ class CreateProductUseCase(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    companion object {
-        // V1 parity: supports '/' for hierarchical SKUs (e.g. SOCK/BLK-M)
-        val SKU_REGEX = Regex("^[A-Z0-9/_-]+$")
-    }
-
     fun create(dto: CreateProductRequest, username: String): Product {
         val sku = dto.sku.trim().uppercase()
 
-        // Validate SKU format
-        require(SKU_REGEX.matches(sku)) { "products.errors.invalidSku" }
-
-        // Duplicate check
-        if (repo.existsBySkuAndDeletedAtIsNull(sku)) {
+        // V1: duplicate check (case-insensitive via uppercase)
+        repo.findBySkuAndDeletedAtIsNull(sku)?.let {
             throw ConflictException("products.errors.skuExists")
         }
-
-        // V1 parity: cogs = cost + freight (auto-calculated)
-        val cost = dto.cost ?: BigDecimal.ZERO
-        val freight = dto.freight ?: BigDecimal.ZERO
-        val cogs = cost.add(freight)
 
         val product = repo.save(Product(
             id = UUID.randomUUID().toString(),
             sku = sku,
             name = dto.name,
             category = dto.category,
-            subcategory = dto.subcategory,
-            type = dto.type,
-            cost = cost,
-            freight = freight,
-            cogs = cogs,
-            weight = dto.weight ?: 0,
+            cogs = dto.cogs ?: BigDecimal.ZERO,
             upc = dto.upc,
-            createdBy = username,
-            updatedBy = username,
         ))
 
-        log.info("Product created: {} by {}", sku, username)
+        log.info("Product created: {}", sku)
         return product
     }
 
@@ -72,15 +51,15 @@ class CreateProductUseCase(
 
         for (item in dto.products) {
             try {
-                val product = create(item, username)
-                results.add(BatchResultItem(id = product.id, sku = product.sku, success = true))
+                create(item, username)
+                results.add(BatchResultItem(sku = item.sku.uppercase(), success = true))
             } catch (e: Exception) {
                 results.add(BatchResultItem(sku = item.sku.uppercase(), success = false, error = e.message))
             }
         }
 
         val success = results.count { it.success }
-        log.info("Batch create: {} success, {} failed by {}", success, results.size - success, username)
+        log.info("Batch create: {} success, {} failed", success, results.size - success)
 
         return BatchResult(
             total = dto.products.size,

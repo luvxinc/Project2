@@ -20,4 +20,6 @@ interface RolePermissionBoundaryRepository : JpaRepository<RolePermissionBoundar
     fun findByRoleIdIn(roleIds: Collection<String>): List<RolePermissionBoundary>
 
     fun deleteByRoleIdAndPermissionKey(roleId: String, permissionKey: String): Int
+
+    fun deleteAllByRoleId(roleId: String): Int
 }

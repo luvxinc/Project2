@@ -44,6 +44,14 @@ export default function CogsPage() {
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
 
+  // Create modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateSecurityDialog, setShowCreateSecurityDialog] = useState(false);
+  const [createSecurityError, setCreateSecurityError] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({ sku: '', name: '', category: '', cogs: '', upc: '' });
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
+  const [createSuccess, setCreateSuccess] = useState(false);
+
   // 下拉选项 (从数据中动态获取)
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [subcategoryOptions, setSubcategoryOptions] = useState<string[]>([]);
@@ -97,6 +105,46 @@ export default function CogsPage() {
       setSecurityError(tCommon('securityCode.invalid'));
     },
   });
+
+  const createMutation = useMutation({
+    mutationFn: (data: { sku: string; name?: string; category?: string; cogs?: number; upc?: string; sec_code_l2: string }) =>
+      productsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setShowCreateSecurityDialog(false);
+      setCreateSecurityError(null);
+      setCreateSuccess(true);
+      setTimeout(() => {
+        setCreateSuccess(false);
+        setShowCreateModal(false);
+        setCreateForm({ sku: '', name: '', category: '', cogs: '', upc: '' });
+        setCreateErrors({});
+      }, 1500);
+    },
+    onError: () => {
+      setCreateSecurityError(tCommon('securityCode.invalid'));
+    },
+  });
+
+  const handleCreateSubmit = () => {
+    const errs: Record<string, string> = {};
+    if (!createForm.sku.trim()) errs.sku = t('form.sku.required');
+    if (createForm.cogs && (isNaN(Number(createForm.cogs)) || Number(createForm.cogs) < 0)) errs.cogs = t('form.cogs.invalid');
+    setCreateErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    setShowCreateSecurityDialog(true);
+  };
+
+  const handleCreateConfirm = (secCode: string) => {
+    createMutation.mutate({
+      sku: createForm.sku.toUpperCase(),
+      name: createForm.name || undefined,
+      category: createForm.category || undefined,
+      cogs: createForm.cogs ? parseFloat(createForm.cogs) : 0,
+      upc: createForm.upc || undefined,
+      sec_code_l2: secCode,
+    });
+  };
 
   // 处理字段变更
   const handleFieldChange = useCallback((productId: string, field: EditableField, value: string | number) => {
@@ -293,7 +341,7 @@ export default function CogsPage() {
         </section>
       )}
 
-      {/* Search Bar */}
+      {/* Search Bar + New SKU Button */}
       <section className="max-w-[1400px] mx-auto px-6 pb-4">
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
@@ -330,6 +378,21 @@ export default function CogsPage() {
           <span style={{ color: colors.textTertiary }} className="text-sm">
             {t('pagination.total', { count: total })}
           </span>
+          <button
+            onClick={() => {
+              setShowCreateModal(true);
+              setCreateSuccess(false);
+              setCreateForm({ sku: '', name: '', category: '', cogs: '', upc: '' });
+              setCreateErrors({});
+            }}
+            style={{ backgroundColor: '#30d158', color: '#ffffff' }}
+            className="ml-auto px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 flex items-center gap-1.5"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t('actions.create')}
+          </button>
         </div>
       </section>
 
@@ -634,7 +697,7 @@ export default function CogsPage() {
         )}
       </section>
 
-      {/* Security Code Dialog */}
+      {/* Security Code Dialog (COGS batch) */}
       <SecurityCodeDialog
         isOpen={showSecurityDialog}
         level="L2"
@@ -648,6 +711,163 @@ export default function CogsPage() {
         isLoading={batchUpdateMutation.isPending}
         error={securityError || undefined}
       />
+
+      {/* Security Code Dialog (Create) */}
+      <SecurityCodeDialog
+        isOpen={showCreateSecurityDialog}
+        level="L2"
+        title={t('actions.create')}
+        description={t('security.requiresL2')}
+        onConfirm={handleCreateConfirm}
+        onCancel={() => {
+          setShowCreateSecurityDialog(false);
+          setCreateSecurityError(null);
+        }}
+        isLoading={createMutation.isPending}
+        error={createSecurityError || undefined}
+      />
+
+      {/* Create Product Modal */}
+      {showCreateModal && (
+        <div
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowCreateModal(false); }}
+        >
+          <div
+            style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
+            className="w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
+              <h2 style={{ color: colors.text }} className="text-lg font-semibold">{t('create.title')}</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={{ color: colors.textTertiary }}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            {createSuccess ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div
+                  style={{ backgroundColor: `${colors.green}20` }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                >
+                  <svg className="w-8 h-8" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p style={{ color: colors.text }} className="font-medium">{t('messages.createSuccess')}</p>
+                <p style={{ color: colors.textSecondary }} className="text-sm mt-1">SKU: {createForm.sku}</p>
+              </div>
+            ) : (
+              <div className="px-6 py-5 space-y-4">
+                {/* SKU */}
+                <div>
+                  <label style={{ color: colors.text }} className="block text-sm font-medium mb-1.5">
+                    {t('form.sku.label')} <span style={{ color: colors.red }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.sku}
+                    onChange={(e) => setCreateForm(f => ({ ...f, sku: e.target.value.toUpperCase() }))}
+                    placeholder={t('form.sku.placeholder')}
+                    style={{ backgroundColor: colors.bgTertiary, borderColor: createErrors.sku ? colors.red : colors.border, color: colors.text }}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 font-mono uppercase"
+                  />
+                  {createErrors.sku && <p style={{ color: colors.red }} className="mt-1 text-xs">{createErrors.sku}</p>}
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label style={{ color: colors.text }} className="block text-sm font-medium mb-1.5">{t('form.name.label')}</label>
+                  <input
+                    type="text"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder={t('form.name.placeholder')}
+                    style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label style={{ color: colors.text }} className="block text-sm font-medium mb-1.5">{t('form.category.label')}</label>
+                  <input
+                    type="text"
+                    value={createForm.category}
+                    onChange={(e) => setCreateForm(f => ({ ...f, category: e.target.value }))}
+                    placeholder={t('form.category.placeholder')}
+                    style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+
+                {/* COGS */}
+                <div>
+                  <label style={{ color: colors.text }} className="block text-sm font-medium mb-1.5">{t('form.cogs.label')}</label>
+                  <div className="relative">
+                    <span style={{ color: colors.textSecondary }} className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={createForm.cogs}
+                      onChange={(e) => setCreateForm(f => ({ ...f, cogs: e.target.value }))}
+                      placeholder={t('form.cogs.placeholder')}
+                      style={{ backgroundColor: colors.bgTertiary, borderColor: createErrors.cogs ? colors.red : colors.border, color: colors.text }}
+                      className="w-full pl-7 pr-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                    />
+                  </div>
+                  {createErrors.cogs && <p style={{ color: colors.red }} className="mt-1 text-xs">{createErrors.cogs}</p>}
+                </div>
+
+                {/* UPC */}
+                <div>
+                  <label style={{ color: colors.text }} className="block text-sm font-medium mb-1.5">{t('form.upc.label')}</label>
+                  <input
+                    type="text"
+                    value={createForm.upc}
+                    onChange={(e) => setCreateForm(f => ({ ...f, upc: e.target.value }))}
+                    placeholder={t('form.upc.placeholder')}
+                    style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            {!createSuccess && (
+              <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: `1px solid ${colors.border}` }}>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+                >
+                  {tCommon('cancel')}
+                </button>
+                <button
+                  onClick={handleCreateSubmit}
+                  disabled={createMutation.isPending}
+                  style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {createMutation.isPending ? tCommon('saving') : t('actions.create')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
