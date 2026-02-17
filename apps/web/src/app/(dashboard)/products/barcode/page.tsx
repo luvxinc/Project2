@@ -150,15 +150,15 @@ export default function BarcodePage() {
     const validRows = rows.filter(r => r.sku.trim());
 
     if (validRows.length === 0) {
-      errors.push('请至少填写一行有效的条形码数据');
+      errors.push(t('barcode.validation.atLeastOneRow'));
     }
 
     validRows.forEach((r, i) => {
       const qty = parseInt(r.qtyPerBox);
       const ctn = parseInt(r.boxPerCtn);
-      if (!r.sku.trim()) errors.push(`第 ${i + 1} 行: SKU 不能为空`);
-      if (isNaN(qty) || qty < 1) errors.push(`第 ${i + 1} 行: 每盒个数必须大于 0`);
-      if (isNaN(ctn) || ctn < 1) errors.push(`第 ${i + 1} 行: 每箱盒数必须大于 0`);
+      if (!r.sku.trim()) errors.push(t('barcode.validation.skuRequired', { row: i + 1 }));
+      if (isNaN(qty) || qty < 1) errors.push(t('barcode.validation.qtyRequired', { row: i + 1 }));
+      if (isNaN(ctn) || ctn < 1) errors.push(t('barcode.validation.ctnRequired', { row: i + 1 }));
     });
 
     setValidationErrors(errors);
@@ -202,7 +202,7 @@ export default function BarcodePage() {
       if (showSecurityDialog) {
         setSecurityError(message);
       } else {
-        alert(`生成条形码 — ${message}`);
+        alert(`${t('barcode.generateError')} — ${message}`);
       }
     },
   });
@@ -278,7 +278,7 @@ export default function BarcodePage() {
               {t('barcode.title')}
             </h1>
             <p style={{ color: colors.textSecondary }} className="text-sm">
-              外包装条形码 PDF — 4&quot;×6&quot; 热敏标签
+              {t('barcode.description')}
             </p>
           </div>
 
@@ -292,7 +292,7 @@ export default function BarcodePage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5z" />
                 </svg>
-                {validItemCount} 个标签
+                {t('barcode.labelCount', { count: validItemCount })}
               </span>
             )}
           </div>
@@ -323,12 +323,12 @@ export default function BarcodePage() {
             </svg>
             <div>
               <p style={{ color: colors.blue }} className="text-sm font-medium mb-1">
-                操作说明
+                {t('barcode.instructions.title')}
               </p>
               <ul style={{ color: colors.textSecondary }} className="text-sm space-y-0.5">
-                <li>• 每行选择一个 SKU 及其包装规格（每盒个数、每箱盒数）。</li>
-                <li>• 每行生成一个 4&quot;×6&quot; 标签页，包含 SKU 条码、数量条码和 DataMatrix。</li>
-                <li>• 每盒个数和每箱盒数必须是大于 0 的正整数。</li>
+                <li>• {t('barcode.instructions.step1')}</li>
+                <li>• {t('barcode.instructions.step2')}</li>
+                <li>• {t('barcode.instructions.step3')}</li>
               </ul>
             </div>
           </div>
@@ -421,7 +421,7 @@ export default function BarcodePage() {
                           }}
                           className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
                         >
-                          <option value="">— 选择 SKU —</option>
+                          <option value="">{t('barcode.selectSku')}</option>
                           {skuList.map((s: SkuItem) => (
                             <option key={s.id} value={s.sku}>
                               {s.sku}{s.name ? ` — ${s.name}` : ''}
@@ -503,7 +503,7 @@ export default function BarcodePage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                添加行
+                {t('barcode.addRow')}
               </button>
               <button
                 onClick={() => addRows(5)}
@@ -514,7 +514,7 @@ export default function BarcodePage() {
                 }}
                 className="flex items-center gap-1.5 px-3 h-8 border rounded-lg text-[13px] font-medium hover:opacity-80 transition-all active:scale-95"
               >
-                +5 行
+                {t('barcode.addFiveRows')}
               </button>
             </div>
 
@@ -534,7 +534,7 @@ export default function BarcodePage() {
                     className="w-4 h-4 border-2 rounded-full animate-spin"
                     style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#ffffff' }}
                   />
-                  生成中...
+                  {t('barcode.generating')}
                 </>
               ) : (
                 <>
@@ -543,7 +543,7 @@ export default function BarcodePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
                   </svg>
-                  生成 PDF
+                  {t('barcode.generate')}
                 </>
               )}
             </button>
@@ -574,7 +574,7 @@ export default function BarcodePage() {
               </svg>
               <div>
                 <p style={{ color: colors.red }} className="text-sm font-medium mb-1">
-                  验证失败
+                  {t('barcode.validation.failed')}
                 </p>
                 <ul style={{ color: colors.textSecondary }} className="text-sm space-y-0.5">
                   {validationErrors.map((err, i) => (
@@ -604,8 +604,8 @@ export default function BarcodePage() {
               </svg>
             </div>
             <div>
-              <p style={{ color: colors.green }} className="text-sm font-medium">PDF 生成成功</p>
-              <p style={{ color: colors.textSecondary }} className="text-[12px]">文件已自动下载到本地。</p>
+              <p style={{ color: colors.green }} className="text-sm font-medium">{t('barcode.generateSuccess')}</p>
+              <p style={{ color: colors.textSecondary }} className="text-[12px]">{t('barcode.downloadComplete')}</p>
             </div>
           </div>
         )}

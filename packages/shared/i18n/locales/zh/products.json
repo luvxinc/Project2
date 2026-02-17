@@ -120,7 +120,27 @@
     "download": "\u4e0b\u8f7d PDF",
     "generating": "\u751f\u6210\u4e2d...",
     "noItemsSelected": "\u672a\u9009\u62e9\u4efb\u4f55\u9879\u76ee",
-    "labelFormat": "4\" x 6\" \u6807\u7b7e"
+    "labelFormat": "4\" x 6\" \u6807\u7b7e",
+    "selectSku": "\u2014 \u9009\u62e9 SKU \u2014",
+    "addRow": "\u6dfb\u52a0\u884c",
+    "addFiveRows": "+5 \u884c",
+    "labelCount": "{count} \u4e2a\u6807\u7b7e",
+    "generateSuccess": "PDF \u751f\u6210\u6210\u529f",
+    "downloadComplete": "\u6587\u4ef6\u5df2\u81ea\u52a8\u4e0b\u8f7d\u5230\u672c\u5730\u3002",
+    "generateError": "\u751f\u6210\u6761\u5f62\u7801\u5931\u8d25",
+    "validation": {
+      "failed": "\u9a8c\u8bc1\u5931\u8d25",
+      "atLeastOneRow": "\u8bf7\u81f3\u5c11\u586b\u5199\u4e00\u884c\u6709\u6548\u7684\u6761\u5f62\u7801\u6570\u636e",
+      "skuRequired": "\u7b2c {row} \u884c: SKU \u4e0d\u80fd\u4e3a\u7a7a",
+      "qtyRequired": "\u7b2c {row} \u884c: \u6bcf\u76d2\u4e2a\u6570\u5fc5\u987b\u5927\u4e8e 0",
+      "ctnRequired": "\u7b2c {row} \u884c: \u6bcf\u7bb1\u76d2\u6570\u5fc5\u987b\u5927\u4e8e 0"
+    },
+    "instructions": {
+      "title": "\u64cd\u4f5c\u8bf4\u660e",
+      "step1": "\u6bcf\u884c\u9009\u62e9\u4e00\u4e2a SKU \u53ca\u5176\u5305\u88c5\u89c4\u683c\uff08\u6bcf\u76d2\u4e2a\u6570\u3001\u6bcf\u7bb1\u76d2\u6570\uff09\u3002",
+      "step2": "\u6bcf\u884c\u751f\u6210\u4e00\u4e2a 4\"\u00d76\" \u6807\u7b7e\u9875\uff0c\u5305\u542b SKU \u6761\u7801\u3001\u6570\u91cf\u6761\u7801\u548c DataMatrix\u3002",
+      "step3": "\u6bcf\u76d2\u4e2a\u6570\u548c\u6bcf\u7bb1\u76d2\u6570\u5fc5\u987b\u662f\u5927\u4e8e 0 \u7684\u6b63\u6574\u6570\u3002"
+    }
   },
   "form": {
     "sku": {
