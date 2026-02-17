@@ -17,20 +17,10 @@
       "description": "P-Valve vendor inventory tracking and management",
       "cta": "Manage"
     },
-    "employees": {
-      "title": "Employees",
-      "description": "Employee profiles, onboarding, and information management",
-      "cta": "Manage"
-    },
-    "duties": {
-      "title": "Duties",
-      "description": "Job duty definition, assignment, and tracking",
-      "cta": "Manage"
-    },
-    "training": {
-      "title": "Training",
-      "description": "Training plans, records, certifications, and skill tracking",
-      "cta": "Go to Training"
+    "management": {
+      "title": "Management",
+      "description": "Employees, duties, training plans, records and certifications",
+      "cta": "Enter Management"
     }
   },
   "truvalve": {

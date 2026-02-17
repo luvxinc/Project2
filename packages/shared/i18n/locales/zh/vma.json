@@ -17,20 +17,10 @@
       "description": "P-Valve 供应商库存追踪与管理",
       "cta": "进入管理"
     },
-    "employees": {
-      "title": "员工管理",
-      "description": "员工档案、入职离职与信息维护",
+    "management": {
+      "title": "综合管理",
+      "description": "员工、职责、培训计划、记录与认证",
       "cta": "进入管理"
-    },
-    "duties": {
-      "title": "职责管理",
-      "description": "岗位职责定义、分配与追踪",
-      "cta": "进入管理"
-    },
-    "training": {
-      "title": "培训管理",
-      "description": "培训计划、记录、认证与技能追踪",
-      "cta": "进入培训"
     }
   },
   "truvalve": {

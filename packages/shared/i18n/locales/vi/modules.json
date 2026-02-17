@@ -122,7 +122,11 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve Management"
+      "manage": "P-Valve Management",
+      "inventory": "Kho hàng",
+      "clinical_case": "Ca lâm sàng",
+      "fridge_shelf": "Tủ lạnh",
+      "site_management": "Quản lý địa điểm"
     },
     "employees": {
       "title": "Employees",
@@ -134,7 +138,15 @@
     },
     "training": {
       "title": "Training",
-      "manage": "Training Management"
+      "manage": "Trung tâm đào tạo"
+    },
+    "training_sop": {
+      "title": "Training SOP",
+      "manage": "Quản lý SOP"
+    },
+    "training_records": {
+      "title": "Hồ sơ đào tạo",
+      "manage": "Quản lý hồ sơ"
     }
   },
   
