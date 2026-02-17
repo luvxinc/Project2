@@ -90,6 +90,10 @@ export default function BarcodePage() {
   const generateMutation = useMutation({
     mutationFn: async (data: { skus: string[]; copiesPerSku: number; format: 'CODE128'; [key: string]: unknown }) => {
       const blob = await productsApi.generateBarcodePdf(data);
+      // Validate that we got actual PDF content
+      if (!blob || blob.size === 0) {
+        throw new Error('Empty PDF response from server');
+      }
       // 触发下载
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -105,8 +109,16 @@ export default function BarcodePage() {
       setShowSecurityDialog(false);
       setSecurityError(null);
     },
-    onError: () => {
-      setSecurityError(tCommon('securityCode.invalid'));
+    onError: (error: any) => {
+      console.error('[Barcode] Generation failed:', error);
+      const message = error?.message || tCommon('securityCode.invalid');
+      // If security dialog is open, show error there
+      if (showSecurityDialog) {
+        setSecurityError(message);
+      } else {
+        // Show error via alert if no dialog is open (policy says no security needed)
+        alert(`${t('barcode.generate')} — ${message}`);
+      }
     },
   });
 
