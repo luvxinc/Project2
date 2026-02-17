@@ -8,8 +8,11 @@
 ## 1. 项目一句话
 
 MGMT ERP 是一个医疗器械企业级管理系统, 经历三代架构演进:
-V1 (Django+MySQL) → V2 (NestJS+PostgreSQL, **当前生产**) → V3 (Kotlin/Spring Boot, **目标**)。
+V1 (Django+MySQL) → V2 (NestJS+PostgreSQL) → V3 (Kotlin/Spring Boot)。
 前端 Next.js 16 + React 19 横跨 V2/V3, 保持不变。
+
+**当前状态**: V2 和 V3 双栈并行运行。核心模块 (Auth/Users/Products/VMA/Logs) 已迁移到 V3。
+辅助模块 (Purchase/Sales/Inventory/Finance) 仍在 V2。
 
 ---
 
@@ -19,9 +22,10 @@ V1 (Django+MySQL) → V2 (NestJS+PostgreSQL, **当前生产**) → V3 (Kotlin/Sp
 
 | 指标 | 值 |
 |------|-----|
-| **当前阶段** | Phase 6.9 — VMA 多岗位数据模型重构 |
-| **运行栈** | V2 (NestJS + Prisma + PostgreSQL) |
-| **下一步** | 完成 VMA → Phase 7 (V2→V3 迁移启动) |
+| **活跃阶段 1** | Phase 6.9 — VMA 多岗位数据模型重构 |
+| **活跃阶段 2** | Phase 7 — V2→V3 迁移 (7/9 子阶段已完成) |
+| **运行栈** | V2 (NestJS) + V3 (Spring Boot) 双栈并行 |
+| **下一步** | 完成 VMA 6.9 → API Gateway 流量切换 (7.8) |
 
 ---
 
@@ -70,19 +74,36 @@ Agent 根据当前任务类型, 加载对应实施方案:
 
 需要深入了解时, 查阅 `reference/`:
 
+### 核心参考 (当前在用)
+
 | 文件 | 内容 | 何时需要 |
 |------|------|----------|
-| `reference/iron-laws.md` | 🔴 铁律 + 生产凭据 (~3KB) | **每次都要记住** |
-| `reference/v2-architecture.md` | V2 NestJS 架构规范 (~11KB) | V2 开发/维护时 |
-| `reference/v3-architecture.md` | V3 完整技术栈 + 架构原则 (~24KB) | 规划 V3 模块时 |
-| `reference/v1-deep-dive.md` | V1 MySQL 30+ 表全景 (~23KB) | V1→V3 数据迁移时 |
-| `reference/migration.md` | 迁移五阶段路线图 (~11KB) | 规划迁移节奏时 |
-| `reference/migration-v1.md` | V1 数据迁移工作流 (~8KB) | 执行 V1 迁移时 |
-| `reference/migration-v2.md` | V2→V3 迁移工作流 (~7KB) | 执行 V2 迁移时 |
-| `reference/business-rules.md` | FIFO/安全等级/VMA/采购状态 (~2KB) | 实现业务逻辑时 |
-| `reference/conventions.md` | 日志/i18n/主题/密码/代码约定 (~3KB) | 编码规范参考 |
-| `reference/kafka-design.md` | Kafka topic 设计 (~4KB) | 实现事件驱动时 |
-| `reference/search-analytics.md` | OpenSearch + ClickHouse (~3KB) | 实现搜索/报表时 |
+| `reference/iron-laws.md` | 🔴 铁律 + 生产凭据 | **每次都要记住** |
+| `reference/v3-architecture.md` | V3 完整技术栈 + 架构原则 | 规划/开发 V3 模块时 |
+| `reference/migration.md` | 迁移路线图 + V1/V2 迁移附录 | 规划/执行迁移时 |
+| `reference/v1-deep-dive.md` | V1 MySQL 30+ 表全景 | V1→V3 数据迁移时 |
+| `reference/business-rules.md` | FIFO/安全等级/VMA/采购状态 | 实现业务逻辑时 |
+| `reference/conventions.md` | 日志/i18n/主题/密码/代码约定 | 编码规范参考 |
+| `reference/testing-strategy.md` | 测试分层策略 | 编写测试时 |
+
+### 未来规划参考 (暂未实施, 保留备用)
+
+| 文件 | 内容 | 何时需要 |
+|------|------|----------|
+| `reference/kafka-design.md` | Kafka topic 设计 | Phase 8 事件驱动 |
+| `reference/search-analytics.md` | OpenSearch + ClickHouse | Phase 8 搜索/报表 |
+| `reference/cdc.md` | Debezium CDC | Phase 8 数据同步 |
+| `reference/resilience.md` | Resilience4j 弹性模式 | 生产稳定性加固 |
+| `reference/config-management.md` | Vault 配置中心 | 生产密钥管理 |
+| `reference/feature-flags.md` | 功能开关 / 灰度发布 | V2→V3 流量切换 |
+| `reference/notification.md` | 多通道通知系统 | 通知功能开发 |
+| `reference/disaster-recovery.md` | 灾备与恢复 | 生产 DR 规划 |
+| `reference/workflow-engine.md` | Temporal 审批引擎 | 审批流程开发 |
+| `reference/document-engine.md` | 文档/报表生成 | PDF/Excel 功能 |
+| `reference/ai-ml.md` | AI/ML 智能层 | Phase 8+ 智能化 |
+| `reference/data-governance.md` | 数据治理 / GDPR | 合规需求 |
+| `reference/accessibility.md` | 无障碍 / WCAG 2.2 | 合规需求 |
+| `reference/developer-experience.md` | Storybook / CLI | 团队扩展时 |
 
 ---
 
@@ -102,4 +123,4 @@ Agent 根据当前任务类型, 加载对应实施方案:
 
 ---
 
-*MGMT Project Context v2.1 — 2026-02-15 (审计校准, +L3工具入口)*
+*MGMT Project Context v3.0 — 2026-02-16 (清理过期引用, 反映 V3 双栈现实)*

@@ -292,5 +292,95 @@ val cost = landedPrice ?: fifoLayer.unitCost
 
 ---
 
-*Version: 3.0.0*
-*Created: 2026-02-11*
+## Appendix A: V1 Django → V3 迁移细节
+
+> **核心原则**: V1 Django 持续运行, 逐模块切到 V3, 数据从 MySQL 迁移到 PG。
+> **V1 深度分析**: `reference/v1-deep-dive.md`
+
+### A.1 V1 模块清单 (`backend/apps/`)
+
+| 模块 | 文件数 | 核心功能 | 优先级 |
+|------|--------|----------|--------|
+| **purchase** | 64 | 供应商管理, PO 创建/跟踪/收货, 发货管理 | P1 |
+| **finance** | 21 | 付款管理, 预付款, 汇率处理 | P1 |
+| **inventory** | 8 | FIFO 层管理, 库存动态, 低库存告警 | P1 |
+| **sales** | 3 | 销售交易查询 (轻量) | P2 |
+| **etl** | 8 | eBay 订单 ETL (49KB views.py), FIFO 成本分配 | P2 |
+| **ebay** | 8 | eBay API 集成 (OAuth, 订单查询) | P2 |
+| **reports** | 8 | 报表生成 | P3 |
+| **db_admin** | 3 | 数据库备份, 表清理 | P3 |
+| **audit** | 23 | 审计日志 | 跳过(V2已有) |
+| **products** | 6 | 产品管理 | 跳过(V2已有) |
+| **user_admin** | 12 | 用户管理 | 跳过(V2已有) |
+
+### A.2 关键迁移陷阱 (MySQL → PG)
+
+| V1 字段 | Django 类型 | 陷阱 | V3 PG 类型 |
+|---------|------------|------|------------|
+| `deposit_par` | `FloatField` | **精度丢失**! | `DECIMAL(5,2)` |
+| `float_threshold` | `FloatField` | **精度丢失** | `DECIMAL(5,2)` |
+| `category` | `CharField(1)` | 单字母不可读 | `VARCHAR(20)` + CHECK |
+| `contract_file` | `FileField` | 文件路径在 MySQL | MinIO/S3 |
+| `status` | `BooleanField` | True/False 语义模糊 | `VARCHAR(20)` ACTIVE/INACTIVE |
+
+### A.3 数据迁移步骤
+
+```
+1. mysqldump → v1_data.sql
+2. Python 类型转换脚本 (Float → Decimal, 单字母 → 可读 enum)
+3. 导入 PG (Flyway + COPY)
+4. 逐条校验值 (diff < 0.01)
+```
+
+### A.4 禁止事项
+
+- ❌ 禁止一次性迁移所有模块
+- ❌ 禁止直接用 MySQL FLOAT 写入 PG DECIMAL (必须 str → Decimal)
+- ❌ 禁止在数据验证通过前关停 V1 模块
+- ❌ 禁止删除 V1 Django 代码 (冷却期结束前)
+
+---
+
+## Appendix B: V2 NestJS → V3 迁移细节
+
+> **核心原则**: V2 NestJS 持续运行, 逐模块切换, 前端零感知。
+
+### B.1 V2 后端模块 (`apps/api/src/modules/`)
+
+| V2 模块 | 核心功能 | 复杂度 | V3 迁移状态 |
+|---------|----------|--------|------------|
+| **auth** | JWT, bcrypt, L0-L4 安全码 | ★★★★★ | ✅ 已迁移 |
+| **users** | CRUD, 角色, 权限(JSONB) | ★★★ | ✅ 已迁移 |
+| **roles** | 角色 CRUD, 权限模板 | ★★ | ✅ 已迁移 |
+| **products** | SKU, COGS, BarcodeService | ★★★ | ✅ 已迁移 |
+| **logs** | 4 表日志, 异步写入, AlertService | ★★★★ | ✅ 已迁移 |
+| **vma** | 5 子模块 (员工/培训/库存/临床/站点) | ★★★★★ | ✅ 已迁移 |
+
+### B.2 安全层迁移对照
+
+| V2 NestJS | V3 Spring Boot |
+|-----------|----------------|
+| `@UseGuards(JwtAuthGuard)` | `SecurityFilterChain` 全局 JWT |
+| `@UseGuards(RolesGuard)` + `@Roles('admin')` | `@PreAuthorize("hasRole('ADMIN')")` |
+| `@RequireSecurityLevel('L2')` | `@SecurityLevel(level="L2")` AOP |
+| `@UseGuards(PermissionsGuard)` | `@PreAuthorize("hasAuthority(...)")` |
+| SecurityPolicyService (L0-L4) | SecurityLevelAspect + SessionService |
+
+### B.3 Token 兼容
+
+V3 Spring Security JWT Decoder 必须能验证 V2 发出的 Token:
+- 相同的 `JWT_SECRET`
+- 相同的 claims 解析方式
+- 迁移期双向兼容
+
+### B.4 禁止事项
+
+- ❌ 禁止删除 V2 代码, 直到 V3 验证通过 + 14 天冷却
+- ❌ 禁止修改现有 PG 表结构 (Flyway 新增可以, 删改不行)
+- ❌ 禁止在 V3 中使用不同的 JWT Secret
+- ❌ 禁止在 V3 中使用不同的 API 路径前缀
+
+---
+
+*Version: 4.0.0 — 合并 migration-v1.md + migration-v2.md*
+*Updated: 2026-02-16*
