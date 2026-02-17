@@ -26,6 +26,7 @@ class SessionService(
         private const val SESS_PREFIX = "sess:"
         private const val LOCK_PREFIX = "sec:lock:"
         private const val FAIL_PREFIX = "sec:fail:"
+        private const val WHITELIST_KEY = "perm:whitelist"
         private val PERM_TTL = Duration.ofMinutes(30)
         private val LOCK_TTL = Duration.ofMinutes(30)
         private const val MAX_SECURITY_FAILURES = 3
@@ -194,18 +195,9 @@ class SessionService(
         return policies.size
     }
 
-    /**
-     * Verify security code for a user against required token types.
-     * V1 parity: SecurityPolicyManager.verify_action_request(request, actionKey)
-     *
-     * Delegates to SecurityCodeService for actual verification.
-     */
-    fun verifySecurityCode(userId: String, securityCode: String, requiredTokens: List<String>): Boolean {
-        // Read stored security code hash from Redis
-        val storedHash = redis.opsForValue().get("sec:code:$userId") ?: return false
-        // Simple comparison — in production uses bcrypt via SecurityCodeService
-        return storedHash == securityCode
-    }
+    // Note: Security code verification for @SecurityLevel is handled by
+    // SecurityLevelAspect.validateSingleToken() which validates L0 (user password)
+    // and L1-L4 (security_codes table, bcrypt) directly.
 
     // ─── Login Lockout ───────────────────────────────────────────
 
@@ -234,4 +226,30 @@ class SessionService(
 
     data class SecurityFailureResult(val remainingAttempts: Int, val blocked: Boolean)
     data class LoginFailureResult(val remainingAttempts: Int, val locked: Boolean)
+
+    // ─── Permission Whitelist Cache ──────────────────────────────
+
+    /**
+     * Get the permission whitelist from Redis.
+     * Returns null if not initialized (caller should use default).
+     */
+    fun getPermissionWhitelist(): Set<String>? {
+        val json = redis.opsForValue().get(WHITELIST_KEY) ?: return null
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            objectMapper.readValue(json, List::class.java).map { it.toString() }.toSet()
+        } catch (e: Exception) {
+            log.warn("Failed to parse permission whitelist from Redis: {}", e.message)
+            null
+        }
+    }
+
+    /**
+     * Save the permission whitelist to Redis (no TTL — permanent).
+     */
+    fun savePermissionWhitelist(keys: Set<String>) {
+        val json = objectMapper.writeValueAsString(keys.sorted())
+        redis.opsForValue().set(WHITELIST_KEY, json)
+        log.info("Permission whitelist saved to Redis: {} keys", keys.size)
+    }
 }
