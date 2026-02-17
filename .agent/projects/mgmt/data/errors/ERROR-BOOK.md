@@ -9,6 +9,7 @@
 |--------|------|--------|
 | `SecurityCodeDialog`, `密码策略`, `动态策略`, `action_registry` | ERR-001 | 🔴 |
 | `generateBarcodePdf`, `fetch`, `API Client` | ERR-002 | 🟡 |
+| `PDFBox`, `NoClassDefFoundError`, `后端重启`, `bootRun` | ERR-003 | 🔴 |
 
 ---
 
@@ -76,6 +77,41 @@ V1 使用 `{% security_inputs "btn_generate_barcode" %}` 模板标签, 该标签
 ### 交叉检查 ⚠️
 > 其他模块是否有类似绕过?
 > - 待检查 (grep_search "fetch(" in lib/api/)
+
+---
+
+## ERR-003: PDFBox NoClassDefFoundError — 后端需要重启
+
+- **触发关键词**: `PDFBox`, `NoClassDefFoundError`, `后端重启`, `bootRun`, `ClassNotFoundException`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-17
+- **发生次数**: 1
+- **影响范围**: 所有使用 PDFBox/ZXing 的功能 (条形码生成)
+
+### 错误描述
+```
+java.lang.NoClassDefFoundError: org/apache/pdfbox/pdmodel/PDDocument
+```
+前端报 `HTTP 500`, 后端 `Handler dispatch failed`。PDFBox 在 `build.gradle.kts` 中已正确声明为 `implementation`, 但运行中的 JVM 进程是用**旧 classpath** 启动的 (PDFBox 依赖在之后才添加)。
+
+### 根因
+Java/Spring Boot 后端不会**热加载新依赖**。`build.gradle.kts` 添加新依赖后必须:
+1. 停止旧进程
+2. `./gradlew bootRun` 重新构建并启动
+
+### 正确做法
+```bash
+# 1. 添加新依赖到 build.gradle.kts 后:
+kill $(lsof -i :8080 -t) 2>/dev/null
+cd mgmt-v3 && ./gradlew bootRun
+# 2. 等待 "Started MgmtV3ApplicationKt" 日志出现
+```
+
+### 交叉检查 ⚠️
+> 类似问题:
+> - Flyway 迁移也需要重启后端 → 同理
+> - 修改 Kotlin 源码, Spring DevTools 会自动热重载, 但**新依赖不行**
+> - 前端 (Turbopack) 热更新对此无影响, 仅后端需要重启
 
 ---
 
