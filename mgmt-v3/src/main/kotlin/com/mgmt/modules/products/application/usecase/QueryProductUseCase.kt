@@ -52,6 +52,29 @@ class QueryProductUseCase(
         existingSkus = repo.findAllByDeletedAtIsNullOrderBySkuAsc().map { it.sku },
     )
 
+    /**
+     * Build category hierarchy tree: { category: { subcategory: [type] } }
+     * Used by frontend cascading dropdowns for COGS edit modal.
+     */
+    fun getCategoryHierarchy(): Map<String, Map<String, List<String>>> {
+        val products = repo.findAllByDeletedAtIsNull()
+        val hierarchy = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
+
+        for (p in products) {
+            val cat = p.category ?: continue
+            val subMap = hierarchy.getOrPut(cat) { mutableMapOf() }
+            val sub = p.subcategory ?: continue
+            val typeSet = subMap.getOrPut(sub) { mutableSetOf() }
+            val type = p.type ?: continue
+            typeSet.add(type)
+        }
+
+        return hierarchy.mapValues { (_, subs) ->
+            subs.mapValues { (_, types) -> types.sorted() }
+                .toSortedMap()
+        }.toSortedMap()
+    }
+
     private fun buildSpec(search: String?, category: String?, status: String?): Specification<Product> {
         @Suppress("DEPRECATION")
         return Specification.where<Product> { root, _, cb ->

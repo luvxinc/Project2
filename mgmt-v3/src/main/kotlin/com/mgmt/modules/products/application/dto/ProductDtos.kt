@@ -19,6 +19,11 @@ data class CreateProductRequest(
     val sku: String,
     val name: String? = null,
     val category: String? = null,
+    val subcategory: String? = null,
+    val type: String? = null,
+    val cost: BigDecimal? = null,
+    val freight: BigDecimal? = null,
+    val weight: Int? = null,
     val cogs: BigDecimal? = null,
     val upc: String? = null,
 )
@@ -32,6 +37,11 @@ data class BatchCreateProductRequest(
 data class UpdateProductRequest(
     val name: String? = null,
     val category: String? = null,
+    val subcategory: String? = null,
+    val type: String? = null,
+    val cost: BigDecimal? = null,
+    val freight: BigDecimal? = null,
+    val weight: Int? = null,
     val cogs: BigDecimal? = null,
     val upc: String? = null,
     val status: String? = null,

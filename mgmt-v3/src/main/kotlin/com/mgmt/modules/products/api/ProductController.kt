@@ -74,6 +74,10 @@ class ProductController(
     fun getCategories(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(queryUseCase.getMetadata().categories))
 
+    @GetMapping("/hierarchy")
+    @RequirePermission("module.products.catalog.view")
+    fun getHierarchy(): ResponseEntity<Any> =
+        ResponseEntity.ok(ApiResponse.ok(queryUseCase.getCategoryHierarchy()))
     @GetMapping("/sku-list")
     @RequirePermission("module.products.catalog.view")
     fun getSkuList(): ResponseEntity<Any> {

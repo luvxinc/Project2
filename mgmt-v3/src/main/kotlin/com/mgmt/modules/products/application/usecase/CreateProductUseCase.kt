@@ -33,12 +33,22 @@ class CreateProductUseCase(
             throw ConflictException("products.errors.skuExists")
         }
 
+        val cost = dto.cost ?: BigDecimal.ZERO
+        val freight = dto.freight ?: BigDecimal.ZERO
+        // Auto-calculate COGS from cost + freight; fallback to direct cogs if provided
+        val cogs = if (dto.cost != null || dto.freight != null) cost.add(freight) else (dto.cogs ?: BigDecimal.ZERO)
+
         val product = repo.save(Product(
             id = UUID.randomUUID().toString(),
             sku = sku,
             name = dto.name,
             category = dto.category,
-            cogs = dto.cogs ?: BigDecimal.ZERO,
+            subcategory = dto.subcategory,
+            type = dto.type,
+            cost = cost,
+            freight = freight,
+            cogs = cogs,
+            weight = dto.weight ?: 0,
             upc = dto.upc,
         ))
 

@@ -79,6 +79,29 @@
       "editCostFreight": "Edit Cost and Freight values in the table below",
       "autoCalculate": "COG is automatically calculated as Cost + Freight",
       "saveChanges": "Click \"Save Changes\" to submit your edits"
+    },
+    "modal": {
+      "title": "Edit Product",
+      "readOnly": "Read-only",
+      "autoCalculated": "Auto-calculated (Cost + Freight)",
+      "cost": "Cost ($)",
+      "freight": "Freight ($)",
+      "weight": "Weight (g)",
+      "category": "Category",
+      "subcategory": "SubCategory",
+      "type": "Type",
+      "selectCategory": "Select Category",
+      "selectSubcategory": "Select SubCategory",
+      "selectType": "Select Type",
+      "addNew": "+ Add New",
+      "enterNew": "Enter new value",
+      "costHint": "Two decimal places, ≥ 0",
+      "freightHint": "Two decimal places, ≥ 0",
+      "weightHint": "Integer, ≥ 0",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Product updated successfully",
+      "validationError": "Please fix validation errors before saving"
     }
   },
   "create": {
