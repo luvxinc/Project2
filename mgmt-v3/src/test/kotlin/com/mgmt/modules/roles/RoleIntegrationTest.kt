@@ -178,7 +178,48 @@ class RoleIntegrationTest {
             .andExpect(status().isOk)
     }
 
-    // ─── Delete Role ─────────────────────────────────────────────
+    @Test
+    @Order(44)
+    fun `setBoundaries is idempotent — calling twice with same keys does not 500`() {
+        // First call: set 3 boundaries
+        val request1 = SetBoundariesRequest(
+            boundaries = listOf(
+                BoundaryRequest("can_create_user", "ALLOWED"),
+                BoundaryRequest("can_lock_user", "DENIED"),
+                BoundaryRequest("can_delete_user", "DENIED"),
+            )
+        )
+        mockMvc.perform(
+            put("/roles/$testRoleId/boundaries")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request1))
+        )
+            .andExpect(status().isOk)
+
+        // Second call: same keys with different values — must NOT 500
+        val request2 = SetBoundariesRequest(
+            boundaries = listOf(
+                BoundaryRequest("can_create_user", "DENIED"),
+                BoundaryRequest("can_lock_user", "ALLOWED"),
+            )
+        )
+        mockMvc.perform(
+            put("/roles/$testRoleId/boundaries")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request2))
+        )
+            .andExpect(status().isOk)
+
+        // Verify: exactly 2 boundaries remain (from second call)
+        mockMvc.perform(
+            get("/roles/$testRoleId/boundaries")
+                .header("Authorization", "Bearer $adminToken")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.length()").value(2))
+    }
 
     @Test
     @Order(90)
