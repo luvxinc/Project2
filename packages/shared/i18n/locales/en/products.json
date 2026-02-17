@@ -120,7 +120,27 @@
     "download": "Download PDF",
     "generating": "Generating...",
     "noItemsSelected": "No items selected",
-    "labelFormat": "4\" x 6\" Label"
+    "labelFormat": "4\" x 6\" Label",
+    "selectSku": "— Select SKU —",
+    "addRow": "Add Row",
+    "addFiveRows": "+5 Rows",
+    "labelCount": "{count} labels",
+    "generateSuccess": "PDF generated successfully",
+    "downloadComplete": "File has been downloaded automatically.",
+    "generateError": "Failed to generate barcode",
+    "validation": {
+      "failed": "Validation Failed",
+      "atLeastOneRow": "Please fill in at least one valid barcode row",
+      "skuRequired": "Row {row}: SKU is required",
+      "qtyRequired": "Row {row}: QTY/BOX must be greater than 0",
+      "ctnRequired": "Row {row}: BOX/CTN must be greater than 0"
+    },
+    "instructions": {
+      "title": "Instructions",
+      "step1": "Select a SKU and its packaging specs (QTY/BOX, BOX/CTN) for each row.",
+      "step2": "Each row generates one 4\"×6\" label page with SKU barcode, quantity barcode, and DataMatrix.",
+      "step3": "QTY/BOX and BOX/CTN must be positive integers greater than 0."
+    }
   },
   "form": {
     "sku": {
