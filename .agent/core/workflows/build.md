@@ -326,7 +326,7 @@ PM 交付物完整性检查 (§5.3)
 
 ### 🔴 交付前自检清单 (Delivery Gate Checklist)
 
-> 输出给用户时，必须复用固定模板：`core/templates/delivery-gate-output-template.md`（不得改样式，不得省略“功能验证”项）。
+> 输出给用户时，必须复用固定模板：`core/templates/delivery-gate-output-template.md`（不得改样式，不得省略“行为等价确认/功能验证”项）。
 
 > 若“功能验证”为 ❌，必须显式写明“未完成真实运行验证，不可宣称已交付完成”。
 

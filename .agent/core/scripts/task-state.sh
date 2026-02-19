@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Task State Machine v1
 # Usage:
-#   task-state.sh init <project-root> <task-id>
+#   task-state.sh init <project-root> <task-id> [base-ref]
 #   task-state.sh set <project-root> <task-id> <STATE> [note]
 #   task-state.sh get <project-root> <task-id>
 #   task-state.sh recover <project-root> <task-id>
@@ -14,6 +14,7 @@ PROOT="${2:-}"
 TASK_ID="${3:-}"
 STATE="${4:-}"
 NOTE="${5:-}"
+INIT_BASE_REF="${4:-HEAD~1}"
 
 [ -n "$MODE" ] || { echo "mode required"; exit 2; }
 [ -n "$PROOT" ] || { echo "project-root required"; exit 2; }
@@ -55,6 +56,17 @@ PY
 case "$MODE" in
   init)
     write_state INIT "created"
+
+    # auto-create scope contract skeleton for governance gate
+    SCOPE_INIT="/Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-contract-init.sh"
+    if [ -x "$SCOPE_INIT" ]; then
+      "$SCOPE_INIT" "$PROOT" "$TASK_ID" "$INIT_BASE_REF" \
+        '^\.agent/core/scripts/.*' \
+        '^\.agent/core/reference/.*' \
+        '^\.agent/projects/.*/data/(plans|audits|tmp)/.*' >/dev/null || true
+      echo "🧭 scope contract initialized: $PROOT/data/tmp/$TASK_ID/scope-contract.txt"
+    fi
+
     echo "✅ task initialized: $TASK_ID"
     ;;
   set)
@@ -94,7 +106,7 @@ print(json.dumps({
 PY
     ;;
   *)
-    echo "Usage: $0 init|get|set|recover <project-root> <task-id> [state] [note]"
+    echo "Usage: $0 init <project-root> <task-id> [base-ref] | set/get/recover <project-root> <task-id> ..."
     exit 2
     ;;
 esac
