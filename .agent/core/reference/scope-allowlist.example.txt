@@ -1,0 +1,4 @@
+# one regex per line
+^\.agent/core/scripts/.*
+^\.agent/core/reference/.*
+^\.agent/projects/mgmt/data/(plans|audits)/.*
