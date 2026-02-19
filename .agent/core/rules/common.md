@@ -18,6 +18,17 @@
 | `死循环`, `卡死`, `timeout`, `重试` | → §10 反死循环与终端安全执行 |
 | `重构`, `迁移`, `等价`, `像素级审计` | → §11 重构保真门禁 |
 
+## 0. 变更边界铁律（scope-discipline）
+
+### CRITICAL — 违反即驳回
+
+| 规则 | 标准 |
+|------|------|
+| Strict Scope Rule | 仅修改用户明确提出范围；未提及内容禁止改动 |
+| Minimal Change Rule | 仅做满足需求的最小变更；禁止顺手优化/重构 |
+| Ask-First Rule | 若必须扩范围，先说明原因与文件清单并获批 |
+| Unauthorized Extra Changes | 未获批超范围修改 = Block |
+
 ## 1. 代码风格 (coding-style)
 
 ### CRITICAL — 违反即驳回

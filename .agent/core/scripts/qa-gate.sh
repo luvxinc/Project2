@@ -191,7 +191,11 @@ if [ -n "${QA_SCOPE_CONTRACT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.
 elif [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-audit.sh" ]; then
   run_governance "Scope audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-audit.sh "$QA_SCOPE_ALLOWLIST_FILE" "${QA_SCOPE_BASE_REF:-HEAD~1}"
 else
-  warn "Skip scope audit: script missing"
+  if [ "$QA_GOVERNANCE_MODE" = "enforce" ]; then
+    fail "Scope audit missing: provide QA_SCOPE_CONTRACT_FILE or scope audit script"
+  else
+    warn "Skip scope audit: script/contract missing"
+  fi
 fi
 
 if [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/acceptance-audit.sh" ]; then
