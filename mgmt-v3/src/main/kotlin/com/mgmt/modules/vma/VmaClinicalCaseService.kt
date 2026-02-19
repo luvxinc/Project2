@@ -31,6 +31,7 @@ class VmaClinicalCaseService(
     private val dsRepo: VmaDeliverySystemProductRepository,
     private val packingListPdfService: VmaPackingListPdfService,
     private val invService: VmaInventoryTransactionService,
+    private val tripRepo: VmaClinicalTripRepository,
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -58,6 +59,7 @@ class VmaClinicalCaseService(
                 "caseId" to c.caseId, "caseNo" to c.caseNo,
                 "siteId" to c.siteId, "siteName" to (siteMap[c.siteId]?.siteName),
                 "patientId" to c.patientId, "caseDate" to c.caseDate.toString(),
+                "operator" to c.operator, "tripId" to c.tripId,
                 "status" to c.status.name, "createdAt" to c.createdAt, "updatedAt" to c.updatedAt,
             )
         }
@@ -67,17 +69,71 @@ class VmaClinicalCaseService(
         val c = caseRepo.findByCaseId(caseId)
             ?: throw NotFoundException("Case \"$caseId\" not found")
         val site = siteRepo.findBySiteId(c.siteId)
-        val txns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
-            .filter { it.action == VmaInventoryAction.OUT_CASE }
-            .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
-        return mapOf(
+
+        val result = mutableMapOf<String, Any?>(
             "caseId" to c.caseId, "caseNo" to c.caseNo,
             "siteId" to c.siteId, "site" to site,
             "patientId" to c.patientId, "caseDate" to c.caseDate.toString(),
+            "operator" to c.operator,
             "status" to c.status.name,
-            "transactions" to txns,
+            "tripId" to c.tripId,
             "createdAt" to c.createdAt, "updatedAt" to c.updatedAt,
         )
+
+        if (c.tripId != null) {
+            // Trip-linked case — show shared product pool
+            val tripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+            result["transactions"] = tripTxns
+
+            // Sibling cases
+            val siblings = caseRepo.findAllByTripId(c.tripId!!)
+            val siteMap = siteRepo.findAll().associateBy { it.siteId }
+            result["relatedCases"] = siblings.map { s ->
+                mapOf(
+                    "caseId" to s.caseId, "caseNo" to s.caseNo,
+                    "siteId" to s.siteId, "siteName" to siteMap[s.siteId]?.siteName,
+                    "patientId" to s.patientId, "caseDate" to s.caseDate.toString(),
+                    "status" to s.status.name,
+                )
+            }
+        } else {
+            // Standalone case
+            val allTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+            val outCaseTxns = allTxns
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+            result["transactions"] = outCaseTxns
+        }
+
+        // For completed cases, include the completion summary
+        val allTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+        if (c.status == VmaClinicalCaseStatus.COMPLETED) {
+            val completionTxns = allTxns.filter { it.notes?.startsWith("COMPLETION_AUTO") == true }
+
+            fun toSummaryItem(txn: VmaInventoryTransaction) = mapOf(
+                "productType" to txn.productType.name,
+                "specNo" to txn.specNo,
+                "serialNo" to txn.serialNo,
+                "qty" to txn.qty,
+                "expDate" to txn.expDate?.toString(),
+                "batchNo" to txn.batchNo,
+            )
+
+            result["completionSummary"] = mapOf(
+                "used" to completionTxns
+                    .filter { it.action == VmaInventoryAction.USED_CASE }
+                    .map { toSummaryItem(it) },
+                "returnedOk" to completionTxns
+                    .filter { it.action == VmaInventoryAction.REC_CASE && it.inspection == VmaInspectionResult.ACCEPT }
+                    .map { toSummaryItem(it) },
+                "returnedDamaged" to completionTxns
+                    .filter { it.action == VmaInventoryAction.REC_CASE && it.inspection == VmaInspectionResult.REJECT }
+                    .map { toSummaryItem(it) },
+            )
+        }
+
+        return result
     }
 
     // ═══════════ Case Info Update ═══════════
@@ -101,6 +157,7 @@ class VmaClinicalCaseService(
         dto.siteId?.let { c.siteId = it }
         dto.patientId?.let { c.patientId = it }
         dto.caseDate?.let { c.caseDate = LocalDate.parse(it) }
+        dto.operator?.let { c.operator = it }
         c.updatedAt = Instant.now()
         caseRepo.save(c)
 
@@ -109,6 +166,7 @@ class VmaClinicalCaseService(
             "caseId" to c.caseId, "caseNo" to c.caseNo,
             "siteId" to c.siteId, "siteName" to site?.siteName,
             "patientId" to c.patientId, "caseDate" to c.caseDate.toString(),
+            "operator" to c.operator,
             "status" to c.status.name,
         )
     }
@@ -221,30 +279,76 @@ class VmaClinicalCaseService(
         require(dto.items.isNotEmpty()) { "At least one product item is required" }
 
         val caseDate = LocalDate.parse(dto.caseDate)
+        val isMultiCase = dto.additionalCases.isNotEmpty()
 
-        // Create clinical case
+        // If multi-case, create a Trip to group them
+        var tripId: String? = null
+        if (isMultiCase) {
+            tripId = "TRIP-${dto.siteId}-${caseDate.toString().replace("-", "")}-${System.currentTimeMillis() % 10000}"
+            tripRepo.save(VmaClinicalTrip(
+                tripId = tripId,
+                tripDate = caseDate,
+                siteId = dto.siteId,
+                status = VmaClinicalTripStatus.OUT,
+            ))
+        }
+
+        // Create primary clinical case
         val clinicalCase = caseRepo.save(VmaClinicalCase(
             caseId = caseId,
             caseNo = dto.caseNo?.ifBlank { null },
             siteId = dto.siteId,
             patientId = dto.patientId,
             caseDate = caseDate,
+            operator = dto.operator ?: "",
+            tripId = tripId,
             status = VmaClinicalCaseStatus.IN_PROGRESS,
         ))
 
-        // Create OUT_CASE transactions for each item
+        // Create additional cases
+        val allCaseIds = mutableListOf(caseId)
+        for (extra in dto.additionalCases) {
+            val extraCaseId = "UVP-${extra.siteId}-${extra.patientId}"
+            caseRepo.findByCaseId(extraCaseId)?.let {
+                throw ConflictException("Case \"$extraCaseId\" already exists")
+            }
+            if (!extra.caseNo.isNullOrBlank()) {
+                caseRepo.findByCaseNo(extra.caseNo)?.let {
+                    throw ConflictException("Case # \"${extra.caseNo}\" already exists")
+                }
+            }
+            // Validate site
+            siteRepo.findBySiteId(extra.siteId)
+                ?: throw NotFoundException("Site \"${extra.siteId}\" not found")
+
+            caseRepo.save(VmaClinicalCase(
+                caseId = extraCaseId,
+                caseNo = extra.caseNo?.ifBlank { null },
+                siteId = extra.siteId,
+                patientId = extra.patientId,
+                caseDate = LocalDate.parse(extra.caseDate),
+                operator = dto.operator ?: "",
+                tripId = tripId,
+                status = VmaClinicalCaseStatus.IN_PROGRESS,
+            ))
+            allCaseIds.add(extraCaseId)
+        }
+
+        // Create transactions for each item
+        val action = if (isMultiCase) VmaInventoryAction.OUT_TRIP else VmaInventoryAction.OUT_CASE
         for (item in dto.items) {
             txnRepo.save(VmaInventoryTransaction(
                 id = UUID.randomUUID().toString(),
                 date = caseDate,
-                action = VmaInventoryAction.OUT_CASE,
+                action = action,
                 productType = VmaProductType.valueOf(item.productType),
                 specNo = item.specNo,
                 serialNo = item.serialNo,
                 qty = item.qty,
                 expDate = item.expDate?.let { LocalDate.parse(it) },
                 batchNo = item.batchNo,
-                caseId = caseId,
+                caseId = if (isMultiCase) null else caseId,
+                tripId = tripId,
             ))
             // Auto-remove from fridge when going to WIP
             invService.clearFridgeSlotBySerial(item.specNo, item.serialNo)
@@ -254,7 +358,10 @@ class VmaClinicalCaseService(
             "caseId" to clinicalCase.caseId, "caseNo" to clinicalCase.caseNo,
             "siteId" to clinicalCase.siteId, "site" to site,
             "patientId" to clinicalCase.patientId, "caseDate" to clinicalCase.caseDate.toString(),
+            "operator" to clinicalCase.operator,
             "status" to clinicalCase.status.name,
+            "tripId" to tripId,
+            "allCaseIds" to allCaseIds,
         )
     }
 
@@ -285,7 +392,7 @@ class VmaClinicalCaseService(
         val site = siteRepo.findBySiteId(c.siteId)
             ?: throw NotFoundException("Site \"${c.siteId}\" not found")
         val txns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
-            .filter { it.action == VmaInventoryAction.OUT_CASE }
+            .filter { it.action == VmaInventoryAction.OUT_CASE || it.action == VmaInventoryAction.OUT_TRIP }
             .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
 
         // Build product spec name lookup
@@ -298,17 +405,26 @@ class VmaClinicalCaseService(
 
         val packingItems = txns.mapIndexed { idx, txn ->
             val deviceName = when (txn.productType) {
-                VmaProductType.PVALVE -> "P-Valve ${pvMap[txn.specNo]?.model ?: txn.specNo}"
-                VmaProductType.DELIVERY_SYSTEM -> "DS ${dsMap[txn.specNo]?.model ?: txn.specNo}"
+                VmaProductType.PVALVE -> "Transcatheter\nPulmonary Valve"
+                VmaProductType.DELIVERY_SYSTEM -> "Delivery System"
+            }
+            // For DS specs like "DS26-P29", format as "26Fr/DS26-P29"
+            val modelSpec = when (txn.productType) {
+                VmaProductType.DELIVERY_SYSTEM -> {
+                    val frMatch = Regex("^DS(\\d+)").find(txn.specNo)
+                    val frSize = frMatch?.groupValues?.get(1) ?: ""
+                    if (frSize.isNotEmpty()) "${frSize}Fr/${txn.specNo}" else txn.specNo
+                }
+                else -> txn.specNo
             }
             val expFormatted = txn.expDate?.let {
                 val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-                "${months[it.monthValue - 1]} ${it.year}"
+                "${months[it.monthValue - 1]} ${String.format("%02d", it.dayOfMonth)}, ${it.year}"
             } ?: ""
 
             VmaPackingListPdfService.PackingItem(
                 itemNo = idx + 1,
-                specNo = txn.specNo,
+                specNo = modelSpec,
                 serialNo = txn.serialNo ?: "-",
                 expDate = txn.expDate?.toString() ?: "",
                 expDateFormatted = expFormatted,
@@ -376,6 +492,169 @@ class VmaClinicalCaseService(
         return mapOf("success" to true, "deleted" to txnId)
     }
 
+    fun deleteCase(caseId: String): Map<String, Any> {
+        val c = caseRepo.findByCaseId(caseId)
+            ?: throw NotFoundException("Case \"$caseId\" not found")
+        if (c.status == VmaClinicalCaseStatus.COMPLETED)
+            throw IllegalStateException("Cannot delete a completed case. Reverse completion first.")
+
+        val now = Instant.now()
+
+        if (c.tripId != null) {
+            // Trip-linked case — remove from trip
+            val siblings = caseRepo.findAllByTripId(c.tripId!!).filter { it.caseId != caseId }
+
+            // Un-assign any trip products assigned to this case
+            val tripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+            for (txn in tripTxns.filter { it.caseId == caseId }) {
+                txn.caseId = null
+                txn.action = VmaInventoryAction.OUT_TRIP
+                txn.updatedAt = now
+                txnRepo.save(txn)
+            }
+
+            if (siblings.size == 1) {
+                // Only 1 sibling left → convert to standalone (no trip)
+                val remaining = siblings[0]
+                remaining.tripId = null
+                remaining.updatedAt = now
+                caseRepo.save(remaining)
+                // Convert trip transactions to OUT_CASE for the remaining case
+                for (txn in tripTxns.filter { it.caseId == null }) {
+                    txn.caseId = remaining.caseId
+                    txn.action = VmaInventoryAction.OUT_CASE
+                    txn.tripId = null
+                    txn.updatedAt = now
+                    txnRepo.save(txn)
+                }
+                // Also convert already-assigned transactions
+                for (txn in tripTxns.filter { it.caseId == remaining.caseId }) {
+                    txn.tripId = null
+                    txn.updatedAt = now
+                    txnRepo.save(txn)
+                }
+                // Delete the trip
+                tripRepo.findByTripId(c.tripId!!)?.let { tripRepo.delete(it) }
+            }
+
+            // Hard-delete the case
+            caseRepo.delete(c)
+            log.info("Deleted trip-linked case {} from trip {}", caseId, c.tripId)
+        } else {
+            // Standalone case — soft-delete transactions
+            val txns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+            txns.forEach { it.deletedAt = now }
+            txnRepo.saveAll(txns)
+            log.info("Soft-deleted {} transactions for case {}", txns.size, caseId)
+
+            caseRepo.delete(c)
+            log.info("Deleted clinical case {} (case_no={})", caseId, c.caseNo)
+        }
+
+        return mapOf("success" to true, "deleted" to caseId)
+    }
+
+    /**
+     * Delete ALL cases in a trip group + the trip itself.
+     * Products return to inventory.
+     */
+    fun deleteAllRelatedCases(caseId: String): Map<String, Any> {
+        val c = caseRepo.findByCaseId(caseId)
+            ?: throw NotFoundException("Case \"$caseId\" not found")
+        val tripId = c.tripId
+            ?: throw IllegalStateException("Case \"$caseId\" has no related cases")
+
+        val allCases = caseRepo.findAllByTripId(tripId)
+        val completedCount = allCases.count { it.status == VmaClinicalCaseStatus.COMPLETED }
+        if (completedCount > 0)
+            throw IllegalStateException("Cannot delete: $completedCount case(s) are completed. Reverse first.")
+
+        val now = Instant.now()
+        // Soft-delete all trip transactions
+        val txns = txnRepo.findAllByTripIdAndDeletedAtIsNull(tripId)
+        txns.forEach { it.deletedAt = now }
+        txnRepo.saveAll(txns)
+
+        // Hard-delete all cases
+        allCases.forEach { caseRepo.delete(it) }
+
+        // Delete the trip
+        tripRepo.findByTripId(tripId)?.let { tripRepo.delete(it) }
+
+        log.info("Deleted all {} cases in trip {} ({} txns soft-deleted)", allCases.size, tripId, txns.size)
+        return mapOf("success" to true, "deletedCases" to allCases.size, "tripDeleted" to tripId)
+    }
+
+    /**
+     * Add a new related case (sibling) to an existing trip.
+     * If the source case has no trip yet, create one first.
+     */
+    fun addRelatedCase(sourceCaseId: String, dto: AddRelatedCaseRequest): Map<String, Any?> {
+        val source = caseRepo.findByCaseId(sourceCaseId)
+            ?: throw NotFoundException("Case \"$sourceCaseId\" not found")
+
+        val newCaseId = "UVP-${dto.siteId}-${dto.patientId}"
+        caseRepo.findByCaseId(newCaseId)?.let {
+            throw ConflictException("Case \"$newCaseId\" already exists")
+        }
+        if (!dto.caseNo.isNullOrBlank()) {
+            caseRepo.findByCaseNo(dto.caseNo)?.let {
+                throw ConflictException("Case # \"${dto.caseNo}\" already exists")
+            }
+        }
+        siteRepo.findBySiteId(dto.siteId)
+            ?: throw NotFoundException("Site \"${dto.siteId}\" not found")
+
+        val now = Instant.now()
+
+        // Ensure source has a trip
+        var tripId = source.tripId
+        if (tripId == null) {
+            // Promote standalone case to trip
+            tripId = "TRIP-${source.siteId}-${source.caseDate.toString().replace("-", "")}-${System.currentTimeMillis() % 10000}"
+            tripRepo.save(VmaClinicalTrip(
+                tripId = tripId,
+                tripDate = source.caseDate,
+                siteId = source.siteId,
+                status = VmaClinicalTripStatus.OUT,
+            ))
+            source.tripId = tripId
+            source.updatedAt = now
+            caseRepo.save(source)
+
+            // Convert existing OUT_CASE transactions to OUT_TRIP
+            val existingTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(sourceCaseId)
+            for (txn in existingTxns) {
+                if (txn.action == VmaInventoryAction.OUT_CASE) {
+                    txn.action = VmaInventoryAction.OUT_TRIP
+                    txn.tripId = tripId
+                    txn.caseId = null
+                    txn.updatedAt = now
+                    txnRepo.save(txn)
+                }
+            }
+        }
+
+        // Create new case linked to the trip
+        val newCase = caseRepo.save(VmaClinicalCase(
+            caseId = newCaseId,
+            caseNo = dto.caseNo?.ifBlank { null },
+            siteId = dto.siteId,
+            patientId = dto.patientId,
+            caseDate = LocalDate.parse(dto.caseDate),
+            operator = source.operator,
+            tripId = tripId,
+            status = VmaClinicalCaseStatus.IN_PROGRESS,
+        ))
+
+        log.info("Added related case {} to trip {} (source: {})", newCaseId, tripId, sourceCaseId)
+        return mapOf(
+            "caseId" to newCase.caseId,
+            "tripId" to tripId,
+            "siblings" to caseRepo.findAllByTripId(tripId).map { it.caseId },
+        )
+    }
+
     fun addCaseItem(caseId: String, dto: AddCaseItemRequest): VmaInventoryTransaction {
         val c = caseRepo.findByCaseId(caseId)
             ?: throw NotFoundException("Case \"$caseId\" not found")
@@ -410,10 +689,24 @@ class VmaClinicalCaseService(
         val caseTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
         val txnMap = caseTxns.associateBy { it.id }
 
+        // All OUT_CASE transactions for this case
+        val outCaseIds = caseTxns
+            .filter { it.action == VmaInventoryAction.OUT_CASE }
+            .map { it.id }
+            .toSet()
+        val submittedIds = dto.items.map { it.txnId }.toSet()
+
+        // Validate: every submitted txnId belongs to this case
         for (item in dto.items) {
             require(txnMap.containsKey(item.txnId)) {
                 "Transaction \"${item.txnId}\" does not belong to this case"
             }
+        }
+
+        // Validate: every OUT_CASE product must be accounted for
+        val missing = outCaseIds - submittedIds
+        require(missing.isEmpty()) {
+            "All products must be accounted for. Missing: ${missing.joinToString()}"
         }
 
         val now = LocalDate.now()
@@ -475,10 +768,11 @@ class VmaClinicalCaseService(
         if (c.status != VmaClinicalCaseStatus.COMPLETED)
             throw IllegalStateException("Case is not completed")
 
-        // Delete all COMPLETION_AUTO transactions
-        val autoTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
-            .filter { it.notes?.startsWith("COMPLETION_AUTO") == true }
-        txnRepo.deleteAll(autoTxns)
+        // Delete ALL non-OUT_CASE transactions (completion artifacts)
+        // Previously only deleted COMPLETION_AUTO notes, leaving stale data
+        val completionTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+            .filter { it.action != VmaInventoryAction.OUT_CASE }
+        txnRepo.deleteAll(completionTxns)
 
         // Revert status
         c.status = VmaClinicalCaseStatus.IN_PROGRESS

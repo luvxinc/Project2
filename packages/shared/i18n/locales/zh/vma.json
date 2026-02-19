@@ -91,6 +91,7 @@
         "wip": "WIP",
         "nearExp": "即将过期",
         "expired": "已过期",
+        "used": "已使用",
         "returned": "已退回"
       },
       "empty": "暂无库存数据",
@@ -393,7 +394,8 @@
         "caseId": "Case ID",
         "site": "站点",
         "date": "日期",
-        "status": "状态"
+        "status": "状态",
+        "trip": "Trip"
       },
       "status": {
         "completed": "已完成",
@@ -432,7 +434,28 @@
         "addRow": "+ 行",
         "dsHint": "先添加 P-Valve 规格以查看兼容 DS",
         "adding": "添加中...",
-        "addToCase": "添加到病例"
+        "addToCase": "添加到病例",
+        "completionSummary": "完成摘要",
+        "summaryUsed": "已使用",
+        "summaryReturnedOk": "完好退回",
+        "summaryReturnedDamaged": "损坏退回",
+        "operator": "操作员",
+        "operatorPlaceholder": "操作员姓名",
+        "deleteCase": "删除病例",
+        "deleteCaseMessage": "删除病例 {caseId}？所有相关产品将退回可用库存。",
+        "delete": "删除",
+        "edit": "编辑",
+        "relatedCases": "关联病例（Trip）",
+        "deleteAllRelated": "删除所有关联病例？",
+        "deleteAllRelatedMessage": "这将删除此 Trip 中的所有病例并将产品退回库存。",
+        "deleteAll": "全部删除",
+        "current": "当前",
+        "pvalveLabel": "P-Valve",
+        "dsLabel": "DS",
+        "pvShort": "PV",
+        "dsShort": "DS",
+        "deliverySystem": "Delivery System",
+        "addRelatedCase": "+ 添加关联病例"
       },
       "newCaseModal": {
         "title": "新建临床病例",
@@ -449,7 +472,16 @@
         "addRow": "+ 添加行",
         "selectPvFirst": "请先选择 P-Valve 规格",
         "creating": "创建中...",
-        "createAndDownload": "创建病例并下载装箱单"
+        "createAndDownload": "创建病例并下载装箱单",
+        "caseIdPreview": "Case ID: UVP-{siteId}-{patientId}",
+        "additionalCaseTitle": "病例 {number}",
+        "remove": "移除",
+        "site": "站点",
+        "select": "选择",
+        "optional": "可选",
+        "threeDigits": "3位数字",
+        "date": "日期",
+        "addAnotherCase": "+ 添加其他病例（共享产品）"
       },
       "editModal": {
         "title": "编辑病例项目",
@@ -467,7 +499,9 @@
         "pick": "选取",
         "serialNo": "Serial No.",
         "expDate": "过期日期",
-        "qty": "数量"
+        "qty": "数量",
+        "swap": "更换",
+        "swapTitle": "选择替换产品"
       },
       "completion": {
         "backToCase": "返回病例",

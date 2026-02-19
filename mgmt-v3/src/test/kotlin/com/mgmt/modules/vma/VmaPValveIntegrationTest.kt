@@ -55,6 +55,9 @@ class VmaPValveIntegrationTest {
         var txnId: String = ""
         var batchNo: String = "TEST-BATCH-001"
         var outCaseTxnId: String = ""
+        var tripCaseId1: String = ""
+        var tripCaseId2: String = ""
+        var standaloneCaseId: String = ""
 
         // Test specifications
         const val PV_SPEC = "PV-TEST-2626A"
@@ -70,6 +73,7 @@ class VmaPValveIntegrationTest {
                 // Order matters: FKs first
                 stmt.execute("DELETE FROM vma_inventory_transactions WHERE spec_no LIKE 'PV-TEST-%' OR spec_no LIKE 'DS-TEST-%' OR batch_no = '$batchNo'")
                 stmt.execute("DELETE FROM vma_clinical_cases WHERE case_id LIKE 'UVP-TEST-%'")
+                stmt.execute("DELETE FROM vma_clinical_trips WHERE trip_id LIKE 'TRIP-TEST-%'")
                 stmt.execute("DELETE FROM vma_delivery_system_fits WHERE delivery_system_id IN (SELECT id FROM vma_delivery_system_products WHERE specification LIKE 'DS-TEST-%')")
                 stmt.execute("DELETE FROM vma_delivery_system_products WHERE specification LIKE 'DS-TEST-%'")
                 stmt.execute("DELETE FROM vma_pvalve_products WHERE specification LIKE 'PV-TEST-%'")
@@ -913,6 +917,279 @@ class VmaPValveIntegrationTest {
         }.andExpect {
             status { isOk() }
             jsonPath("$.status") { value("IN_PROGRESS") }
+        }
+    }
+
+    @Test @Order(7311)
+    fun `verify completion summary contains ALL case items`() {
+        // Re-complete the case after reverse (simulates user's workflow)
+        val caseResult = mockMvc.get("/vma/clinical-cases/$caseId") {
+            header("Authorization", "Bearer $token")
+        }.andReturn()
+
+        val caseJson = objectMapper.readTree(caseResult.response.contentAsString)
+
+        // Verify case is currently IN_PROGRESS (after reverse)
+        assert(caseJson["status"]?.asText() == "IN_PROGRESS") {
+            "Expected IN_PROGRESS after reverse, got: ${caseJson["status"]}"
+        }
+
+        val txns = caseJson["transactions"]
+
+        // Complete again with a mix: first item returned+accepted, rest used
+        val completionItems = mutableListOf<Map<String, Any>>()
+        txns.forEachIndexed { idx, txn ->
+            completionItems.add(mapOf(
+                "txnId" to txn["id"].asText(),
+                "returned" to (idx == 0),  // first item returned, rest used
+                "accepted" to true,
+            ))
+        }
+
+        val body = objectMapper.writeValueAsString(mapOf("items" to completionItems))
+        mockMvc.post("/vma/clinical-cases/$caseId/complete") {
+            header("Authorization", "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.status") { value("COMPLETED") }
+        }
+
+        // Now GET the case and verify completionSummary
+        val verifyResult = mockMvc.get("/vma/clinical-cases/$caseId") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+        }.andReturn()
+
+        val verifyJson = objectMapper.readTree(verifyResult.response.contentAsString)
+        val outCaseTxns = verifyJson["transactions"]
+        val summary = verifyJson["completionSummary"]
+
+        // CRITICAL: completionSummary MUST exist
+        assert(summary != null && !summary.isNull) {
+            "completionSummary is MISSING! Response keys: ${verifyJson.fieldNames().asSequence().toList()}"
+        }
+
+        val outCaseCount = outCaseTxns.size()
+        val usedCount = summary["used"]?.size() ?: 0
+        val returnedOkCount = summary["returnedOk"]?.size() ?: 0
+        val returnedDamagedCount = summary["returnedDamaged"]?.size() ?: 0
+        val totalSummaryCount = usedCount + returnedOkCount + returnedDamagedCount
+
+        // CRITICAL: summary must account for ALL products
+        assert(totalSummaryCount == outCaseCount) {
+            "Summary has $totalSummaryCount items but case has $outCaseCount products. " +
+            "Used=$usedCount, ReturnedOk=$returnedOkCount, ReturnedDamaged=$returnedDamagedCount"
+        }
+
+        // First item should be returnedOk, rest should be used
+        assert(returnedOkCount == 1) { "Expected 1 returnedOk item but got $returnedOkCount" }
+        assert(usedCount == outCaseCount - 1) { "Expected ${outCaseCount - 1} used items but got $usedCount" }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // §7B Clinical Trip (Multi-Case) Lifecycle
+    // ═══════════════════════════════════════════════════════════
+
+    @Test @Order(850)
+    fun `create multi-case with additionalCases creates trip`() {
+        tripCaseId1 = "UVP-${siteId}-T01"
+        val body = objectMapper.writeValueAsString(mapOf(
+            "siteId" to siteId,
+            "patientId" to "T01",
+            "caseDate" to "2026-02-18",
+            "items" to listOf(
+                mapOf(
+                    "productType" to "PVALVE", "specNo" to PV_SPEC,
+                    "serialNo" to "SN-TEST-TRIP-001", "qty" to 1,
+                    "expDate" to "2027-12-31", "batchNo" to batchNo,
+                ),
+            ),
+            "additionalCases" to listOf(
+                mapOf(
+                    "siteId" to siteId2,
+                    "patientId" to "T02",
+                    "caseDate" to "2026-02-18",
+                ),
+            ),
+        ))
+        mockMvc.post("/vma/clinical-cases") {
+            header("Authorization", "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }.andExpect {
+            match(ResultMatcher { result ->
+                val s = result.response.status
+                assert(s == 200 || s == 201) { "Expected 200 or 201 but got $s" }
+            })
+        }
+    }
+
+    @Test @Order(851)
+    fun `list cases returns tripId for multi-case`() {
+        val result = mockMvc.get("/vma/clinical-cases") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$") { isArray() }
+        }.andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        // Find the primary trip case
+        val tripCase = json.find { it["caseId"].asText() == tripCaseId1 }
+        Assertions.assertNotNull(tripCase, "Primary trip case should exist in list")
+        Assertions.assertNotNull(tripCase!!["tripId"], "tripId should be present")
+        Assertions.assertFalse(tripCase["tripId"].isNull, "tripId should not be null")
+
+        // Find the secondary case (UVP-TEST-002-T02)
+        tripCaseId2 = json.find {
+            it["patientId"]?.asText() == "T02" && it["tripId"]?.asText() == tripCase["tripId"].asText()
+        }?.get("caseId")?.asText() ?: ""
+        Assertions.assertTrue(tripCaseId2.isNotEmpty(), "Secondary trip case should exist")
+    }
+
+    @Test @Order(852)
+    fun `get trip case detail returns relatedCases`() {
+        mockMvc.get("/vma/clinical-cases/$tripCaseId1") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.caseId") { value(tripCaseId1) }
+            jsonPath("$.tripId") { exists() }
+            jsonPath("$.relatedCases") { isArray() }
+            jsonPath("$.relatedCases.length()") { value(2) }
+        }
+    }
+
+    @Test @Order(853)
+    fun `add related case to standalone case promotes to trip`() {
+        // First create a standalone case
+        standaloneCaseId = "UVP-${siteId}-S01"
+        val createBody = objectMapper.writeValueAsString(mapOf(
+            "siteId" to siteId,
+            "patientId" to "S01",
+            "caseDate" to "2026-02-18",
+            "items" to listOf(
+                mapOf(
+                    "productType" to "PVALVE", "specNo" to PV_SPEC,
+                    "serialNo" to "SN-TEST-STANDALONE-001", "qty" to 1,
+                    "expDate" to "2027-12-31", "batchNo" to batchNo,
+                ),
+            ),
+        ))
+        mockMvc.post("/vma/clinical-cases") {
+            header("Authorization", "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = createBody
+        }.andExpect {
+            match(ResultMatcher { result ->
+                val s = result.response.status
+                assert(s == 200 || s == 201) { "Expected 200 or 201 but got $s" }
+            })
+        }
+
+        // Verify it's standalone (no tripId)
+        val detailResult = mockMvc.get("/vma/clinical-cases/$standaloneCaseId") {
+            header("Authorization", "Bearer $token")
+        }.andReturn()
+        val detailJson = objectMapper.readTree(detailResult.response.contentAsString)
+        Assertions.assertTrue(
+            detailJson["tripId"] == null || detailJson["tripId"].isNull,
+            "Standalone case should not have tripId"
+        )
+
+        // Now add a related case
+        val relatedBody = objectMapper.writeValueAsString(mapOf(
+            "siteId" to siteId2,
+            "patientId" to "S02",
+            "caseDate" to "2026-02-18",
+        ))
+        mockMvc.post("/vma/clinical-cases/$standaloneCaseId/related-case") {
+            header("Authorization", "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = relatedBody
+        }.andExpect {
+            status { isCreated() }
+        }
+
+        // Verify it's now a trip with 2 related cases
+        val afterResult = mockMvc.get("/vma/clinical-cases/$standaloneCaseId") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.tripId") { exists() }
+            jsonPath("$.relatedCases") { isArray() }
+            jsonPath("$.relatedCases.length()") { value(2) }
+        }
+    }
+
+    @Test @Order(854)
+    fun `delete single case from trip keeps sibling`() {
+        // Delete the secondary case from the multi-case trip
+        mockMvc.delete("/vma/clinical-cases/$tripCaseId2") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+        }
+
+        // The primary case should now be standalone (trip removed when only 1 remains)
+        val result = mockMvc.get("/vma/clinical-cases/$tripCaseId1") {
+            header("Authorization", "Bearer $token")
+        }.andReturn()
+        val json = objectMapper.readTree(result.response.contentAsString)
+        // After removing sibling, should revert to standalone (no tripId or empty relatedCases)
+        Assertions.assertTrue(
+            json["tripId"] == null || json["tripId"].isNull ||
+            (json["relatedCases"]?.size() ?: 0) <= 1,
+            "After removing sibling, case should effectively be standalone"
+        )
+    }
+
+    @Test @Order(855)
+    fun `delete all related cases removes trip and all cases`() {
+        // Delete all related cases from the standalone-promoted trip
+        mockMvc.delete("/vma/clinical-cases/$standaloneCaseId/related-cases") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+        }
+
+        // Verify the case no longer exists
+        mockMvc.get("/vma/clinical-cases/$standaloneCaseId") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isNotFound() }
+        }
+    }
+
+    @Test @Order(856)
+    fun `add related case to nonexistent case returns 404`() {
+        val body = objectMapper.writeValueAsString(mapOf(
+            "siteId" to siteId, "patientId" to "X99", "caseDate" to "2026-02-18",
+        ))
+        mockMvc.post("/vma/clinical-cases/NONEXISTENT-CASE/related-case") {
+            header("Authorization", "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }.andExpect {
+            status { isNotFound() }
+        }
+    }
+
+    @Test @Order(857)
+    fun `delete all related from standalone case returns error`() {
+        // tripCaseId1 should now be standalone (sibling was deleted in 854)
+        mockMvc.delete("/vma/clinical-cases/$tripCaseId1/related-cases") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            // Should error since it's not part of a trip (400, 409, or 500)
+            match(ResultMatcher { result ->
+                val s = result.response.status
+                assert(s == 400 || s == 409 || s == 500) { "Expected 400, 409, or 500 but got $s" }
+            })
         }
     }
 

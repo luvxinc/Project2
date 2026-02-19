@@ -91,6 +91,7 @@
         "wip": "WIP",
         "nearExp": "Near Exp.",
         "expired": "Expired",
+        "used": "Used",
         "returned": "Returned"
       },
       "empty": "No inventory data",
@@ -393,7 +394,8 @@
         "caseId": "Case ID",
         "site": "Site",
         "date": "Date",
-        "status": "Status"
+        "status": "Status",
+        "trip": "Trip"
       },
       "status": {
         "completed": "Completed",
@@ -432,7 +434,28 @@
         "addRow": "+ Row",
         "dsHint": "Add P-Valve specs to see compatible DS",
         "adding": "Adding...",
-        "addToCase": "Add to Case"
+        "addToCase": "Add to Case",
+        "completionSummary": "Completion Summary",
+        "summaryUsed": "Used",
+        "summaryReturnedOk": "Returned OK",
+        "summaryReturnedDamaged": "Returned Damaged",
+        "operator": "Operator",
+        "operatorPlaceholder": "Operator name",
+        "deleteCase": "Delete Case",
+        "deleteCaseMessage": "Delete case {caseId}? All associated products will be returned to available inventory.",
+        "delete": "Delete",
+        "edit": "Edit",
+        "relatedCases": "Related Cases (Trip)",
+        "deleteAllRelated": "Delete All Related Cases?",
+        "deleteAllRelatedMessage": "This will remove all cases in this trip group and return products to inventory.",
+        "deleteAll": "Delete All",
+        "current": "Current",
+        "pvalveLabel": "P-Valve",
+        "dsLabel": "DS",
+        "pvShort": "PV",
+        "dsShort": "DS",
+        "deliverySystem": "Delivery System",
+        "addRelatedCase": "+ Add Related Case"
       },
       "newCaseModal": {
         "title": "New Clinical Case",
@@ -449,7 +472,16 @@
         "addRow": "+ Add Row",
         "selectPvFirst": "Select P-Valve specs first",
         "creating": "Creating...",
-        "createAndDownload": "Create Case & Download Packing List"
+        "createAndDownload": "Create Case & Download Packing List",
+        "caseIdPreview": "Case ID: UVP-{siteId}-{patientId}",
+        "additionalCaseTitle": "Case {number}",
+        "remove": "Remove",
+        "site": "Site",
+        "select": "Select",
+        "optional": "Optional",
+        "threeDigits": "3 digits",
+        "date": "Date",
+        "addAnotherCase": "+ Add Another Case (Shared Products)"
       },
       "editModal": {
         "title": "Edit Case Item",
@@ -467,7 +499,9 @@
         "pick": "Pick",
         "serialNo": "Serial No.",
         "expDate": "Exp Date",
-        "qty": "Qty"
+        "qty": "Qty",
+        "swap": "Swap",
+        "swapTitle": "Select replacement product"
       },
       "completion": {
         "backToCase": "Back to Case",
