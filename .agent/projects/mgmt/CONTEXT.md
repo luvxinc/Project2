@@ -30,28 +30,38 @@ V1 (Django+MySQL) → ~~V2 (NestJS+PostgreSQL)~~ → V3 (Kotlin/Spring Boot)。
 
 ---
 
-## 3. 实施方案目录
+## 3. 技术栈
 
-Agent 根据当前任务类型, 加载对应实施方案:
+> **L1 通用 SOP 读此章节确认当前运行栈，禁止假设。**
 
-| 你在做什么 | 加载实施方案 | 引用的 L1 通用 SOP |
-|------------|----------|----------------|
-| VMA 模块开发 (员工/培训/库存/临床) | [`playbooks/vma.md`](playbooks/vma.md) | backend, frontend, data |
-| V1→V3 迁移 / 历史迁移复盘 | [`playbooks/migration.md`](playbooks/migration.md) | backend, data, infrastructure |
-| 安全等级 / 权限 / 审计 | [`playbooks/security.md`](playbooks/security.md) | security, backend |
-| UI/Hub 页面 / 主题 | 直接用 L1: `core/workflows/ui.md` | frontend |
-| 数据库 / FIFO / 成本计算 | 直接用 L1: `core/skills/data.md` | data |
+### 3.1 当前运行栈
 
-### L3 工具库快速入口
+| 层级 | 技术 | 版本 | 备注 |
+|------|------|------|------|
+| **后端语言** | Kotlin | 2.0.x | JVM 21 |
+| **后端框架** | Spring Boot | 3.3.x | DDD 分层: domain→application→infrastructure→api |
+| **ORM** | Spring Data JPA / Hibernate | — | `@Transactional` 声明式事务 |
+| **数据库** | PostgreSQL | 16.x | 唯一数据库，禁止 MySQL |
+| **迁移工具** | Flyway | — | `V{N}__description.sql` 命名 |
+| **构建工具** | Gradle | 8.x | Kotlin DSL (`build.gradle.kts`) |
+| **前端框架** | Next.js (App Router) | 16.x | SSR/ISR + 中间件 |
+| **前端 UI** | React | 19.x | Server/Client Components |
+| **样式** | TailwindCSS | 4.x | 禁止行内 style |
+| **组件库** | shadcn/ui + Radix UI | latest | 二次封装 |
+| **数据获取** | @tanstack/react-query | 5.x | 服务端状态管理 |
+| **包管理** | pnpm | 9.x | monorepo |
+| **国际化** | next-intl | 4.x | EN/ZH/VI (VI 仅 VMA) |
+| **缓存** | Redis | — | 通过 Spring Data Redis |
+| **消息队列** | Kafka | — | 未来 Phase 8，暂未接入 |
 
-| 场景 | L3 工具 |
-|------|--------|
-| Agent 架构/审查清单 | `warehouse/tools/everything-claude-code/` (ECC v1.5.0) |
-| UI 设计系统生成 | `warehouse/tools/ui-ux-pro-max/` (67 风格 + 96 配色) |
-| 动画开发 | `warehouse/tools/animejs/` (v4.0.0 API) |
-| 记忆架构参考 | `warehouse/tools/claude-mem/` (v10.0.7 上下文工程) |
-| 文档→Skill 生成 | `warehouse/tools/skill-seekers/` (v3.0.0 RAG+AI) |
-| Skill/插件规范 | `warehouse/tools/anthropic-skills/` + `knowledge-work-plugins/` |
+### 3.2 已废弃技术栈（禁止引用）
+
+| 技术 | 废弃原因 | 废弃时间 |
+|------|---------|---------|
+| 🔴 **NestJS / V2** | 已彻底移除，项目中不存在 | Phase 6 完成后 |
+| 🔴 **Prisma** | 随 V2 移除 | Phase 6 完成后 |
+| 🔴 **MySQL** | 已迁移至 PostgreSQL | Phase 6 完成后 |
+| 🟡 **Django / V1** | 仍在运行，但正迁移到 V3，禁止新增功能 | Phase 8 结束后归档 |
 
 ---
 
@@ -71,21 +81,116 @@ Agent 根据当前任务类型, 加载对应实施方案:
 | R7 | 🔴 **V1 忠实迁移**: V1→V3 必须先逐行读懂 V1 Django 源码, 完全理解后才可写 V3。**禁止猜测、臆造、创造性发挥。** 架构变, 内容不变。先读后写, 不明白不动手。 | 🔴 |
 
 > **详细铁律 + 生产凭据**: [`reference/iron-laws.md`](reference/iron-laws.md)
+> **架构合规门禁**: [`reference/architecture-gate.md`](reference/architecture-gate.md)
 
 ---
 
-## 5. 参考资料索引
+## 5. 工具命令速查
+
+> **L1 Harness 工具（environment-check.md、agent-tool-capability-matrix.md）读此章节获取具体命令。**
+
+### 5.1 本地开发启动顺序
+
+```bash
+# Step 1: 启动基础设施 (PostgreSQL + Redis)
+./dev.sh up
+
+# Step 2: 后端启动 (Kotlin / Spring Boot)
+./gradlew bootRun
+# 验证: curl http://localhost:3001/api/health
+
+# Step 3: 前端启动 (Next.js)
+cd apps/web && pnpm dev
+# 验证: open http://localhost:3000
+```
+
+### 5.2 验证循环命令（对应 common.md §5 的 6 个阶段）
+
+| 阶段 | 命令 | 通过标准 |
+|------|------|---------|
+| 1. 后端编译 | `./gradlew build -x test` | BUILD SUCCESSFUL |
+| 1. 前端编译 | `pnpm build` | ✓ Compiled |
+| 2. 前端类型 | `pnpm tsc --noEmit` | 零错误 |
+| 3. 前端 Lint | `pnpm lint` | 零错误 |
+| 4. 后端测试 | `./gradlew test` | BUILD SUCCESSFUL (X tests) |
+| 4. 前端测试 | `pnpm test` | All tests passed |
+| 5. 前端覆盖率 | `pnpm test --coverage` | ≥80% |
+| 6. 安全审计 | `npm audit` | 无 high/critical |
+
+### 5.3 数据库命令
+
+```bash
+# 应用迁移
+./gradlew flywayMigrate
+
+# 查看迁移状态
+./gradlew flywayInfo
+
+# 数据库连接 (开发)
+psql -h localhost -U postgres -d mgmt_dev
+```
+
+### 5.4 部署相关
+
+```bash
+# 镜像 registry
+# harbor.company.com/mgmt/{service}:{version}
+# 详见 reference/iron-laws.md §5 生产凭据
+```
+
+---
+
+## 6. 实施方案目录
+
+Agent 根据当前任务类型, 加载对应实施方案:
+
+| 你在做什么 | 加载实施方案 | 引用的 L1 通用 SOP |
+|------------|----------|----------------|
+| VMA 模块开发 (员工/培训/库存/临床) | [`playbooks/vma.md`](playbooks/vma.md) | backend, frontend, data |
+| V1→V3 迁移 (Phase 8) / 忠实重构 | [`playbooks/migration.md`](playbooks/migration.md) | backend, data, infrastructure |
+| 安全等级 / 权限 / 审计 | [`playbooks/security.md`](playbooks/security.md) | security, backend |
+| UI/Hub 页面 / 主题 | 直接用 L1: `core/workflows/ui.md` | frontend |
+| 数据库 / FIFO / 成本计算 | 直接用 L1: `core/skills/data.md` | data |
+
+### L3 工具库快速入口
+
+| 场景 | L3 工具 |
+|------|--------|
+| Agent 架构/审查清单 | `warehouse/tools/everything-claude-code/` (ECC v1.5.0) |
+| UI 设计系统生成 | `warehouse/tools/ui-ux-pro-max/` (67 风格 + 96 配色) |
+| 动画开发 | `warehouse/tools/animejs/` (v4.0.0 API) |
+| 记忆架构参考 | `warehouse/tools/claude-mem/` (v10.0.7 上下文工程) |
+| 文档→Skill 生成 | `warehouse/tools/skill-seekers/` (v3.0.0 RAG+AI) |
+| Skill/插件规范 | `warehouse/tools/anthropic-skills/` + `knowledge-work-plugins/` |
+
+---
+
+## 7. 参考资料索引
 
 需要深入了解时, 查阅 `reference/`:
+
+### L4 实现模式（L1 SOP 指向此处）
+
+> **何时加载**: L1 通用 SOP 说"见 CONTEXT.md §3"时，按需加载下列文件获取 MGMT 具体实现代码。
+
+| 文件 | 内容 | 对应 L1 SOP |
+|------|------|------------|
+| `reference/impl-patterns-backend.md` | Spring Security / SecurityLevelAspect / Vault / AES / OpenAPI | security.md, backend.md, integration.md |
+| `reference/impl-patterns-data.md` | HikariCP / Flyway / Redis / Kafka / OpenSearch / ClickHouse | data.md |
+| `reference/impl-patterns-observability.md` | OTel Java Agent / Micrometer / Logback JSON / Prometheus | observability.md |
 
 ### 核心参考 (当前在用)
 
 | 文件 | 内容 | 何时需要 |
 |------|------|----------|
 | `reference/iron-laws.md` | 🔴 铁律 + 生产凭据 | **每次都要记住** |
+| `reference/architecture-gate.md` | 架构合规门禁 + 铁律规则 | 代码审查/Build 任务 |
 | `reference/v3-architecture.md` | V3 完整技术栈 + 架构原则 | 规划/开发 V3 模块时 |
 | `reference/migration.md` | 迁移路线图 + V1/V2 迁移附录 | 规划/执行迁移时 |
 | `reference/v1-deep-dive.md` | V1 MySQL 30+ 表全景 | V1→V3 数据迁移时 |
+| `data/audits/BASELINE-v1-database-deep-audit.md` | **V1 全表深度审计** (29表→18表映射、冗余分析、字段语义 — 零猜测) | **Phase 8 迁移必读** |
+| `data/audits/BASELINE-v3-column-traceability-matrix.md` | V3 字段追踪矩阵 (已迁移模块的字段来源) | 验证字段迁移完整性 |
+| `data/audits/BASELINE-v3-inventory-schema-mapping.md` | V3 库存 Schema 映射 | Inventory 模块迁移 |
 | `reference/business-rules.md` | FIFO/安全等级/VMA/采购状态 | 实现业务逻辑时 |
 | `reference/conventions.md` | 日志/i18n/主题/密码/代码约定 | 编码规范参考 |
 | `reference/testing-strategy.md` | 测试分层策略 | 编写测试时 |
@@ -111,7 +216,7 @@ Agent 根据当前任务类型, 加载对应实施方案:
 
 ---
 
-## 6. 项目数据
+## 8. 项目数据
 
 过程数据存储在 `data/`:
 
@@ -124,7 +229,8 @@ Agent 根据当前任务类型, 加载对应实施方案:
 | `data/checkpoints/` | 会话检查点 | 跨会话交接时 |
 | `data/errors/` | 错误归档 | QA 发现缺陷后 |
 | `data/training/` | 培训记录 | QA 培训工程师后 |
+| `data/tmp/` | 临时工作文件 | 任务执行中，完成后清理 |
 
 ---
 
-*MGMT Project Context v3.1 — 2026-02-17 (统一语义: V2 已彻底弃用, V3 单栈现实)*
+*MGMT Project Context v4.0 — 2026-02-19 (新增 §3 技术栈 + §5 工具命令速查，满足 L1 Harness 抓取要求)*

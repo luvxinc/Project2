@@ -11,6 +11,8 @@
 | `generateBarcodePdf`, `fetch`, `API Client` | ERR-002 | 🟡 |
 | `PDFBox`, `NoClassDefFoundError`, `后端重启`, `bootRun` | ERR-003 | 🔴 |
 | `overflow`, `dropdown`, `absolute`, `z-index`, `裁剪`, `filter` | ERR-004 | 🔴 |
+| `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion` | ERR-005 | 🔴 |
+| `猜测`, `creativity`, `UVP规则`, `不懂就问` | ERR-006 | 🔴 |
 
 ---
 
@@ -155,8 +157,6 @@ CSS `overflow: hidden` 会裁剪所有超出边界的子元素, 包括绝对定�
 > - 所有 overflow-hidden 容器内的 dropdown/popover → 待检查
 > - `SecurityCodeDialog` — 用的是 fixed 定位 (安全)
 > - Modal 弹窗 — 用的是 fixed 定位 (安全)
-| `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion` | ERR-005 | 🔴 |
-| `猜测`, `creativity`, `UVP规则`, `不懂就问` | ERR-006 | 🔴 |
 
 ---
 

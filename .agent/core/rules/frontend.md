@@ -60,17 +60,16 @@
 ## 4. 验证命令
 
 ```bash
+# 命令见 CONTEXT.md §5 工具命令速查
+
 # 1. 类型检查
-pnpm tsc --noEmit
-# 标准: 零错误
+{typecheck_cmd}      # 标准: 零错误
 
 # 2. Lint
-pnpm lint
-# 标准: 零错误
+{lint_cmd}           # 标准: 零错误
 
 # 3. 构建
-pnpm build
-# 标准: ✓ Compiled successfully
+{build_cmd}          # 标准: ✓ Compiled successfully
 
 # 4. 三态检查 (手动)
 # 对每个新增/修改的数据页面:

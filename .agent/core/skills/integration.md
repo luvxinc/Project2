@@ -9,7 +9,6 @@ description: 集成与接口工程 SOP。Use when 需要 API 契约治理、第�
 > **系统的边界就是接口。内部 API、第三方集成、Webhook — 都在这个 Skill。**
 
 
-> **⚠️ 本文件 ~9KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
 
 ## 路由表
 
@@ -90,56 +89,33 @@ POST   /api/v1/orders/{id}/cancel
 
 ### 2.1 流程
 
-```
-Spring Boot (后端)
-    ↓ springdoc-openapi 自动生成
-OpenAPI 3.0 Spec (openapi.json)
-    ↓ openapi-typescript 转换
-TypeScript Client (前端)
-    ↓ 前端 import
-React Query Hooks
-```
+后端 API 定义 → `openapi.json` → 客户端代码生成 → 前端 HTTP Client。见 `CONTEXT.md §3` 获取当前 OpenAPI 工具链（springdoc-openapi / swagger-jsdoc / fastapi 等）。
 
-### 2.2 Springdoc 配置
+### 2.2 OpenAPI 全局配置模式
 
-```kotlin
-@OpenAPIDefinition(
-    info = Info(
-        title = "MGMT ERP API",
-        version = "3.0.0"
-    ),
-    security = [SecurityRequirement(name = "bearerAuth")]
-)
-@Configuration
-class OpenApiConfig {
-    @Bean
-    fun customOpenAPI(): OpenAPI = OpenAPI()
-        .components(Components()
-            .addSecuritySchemes("bearerAuth",
-                SecurityScheme()
-                    .type(SecurityScheme.Type.HTTP)
-                    .scheme("bearer")
-                    .bearerFormat("JWT")
-            ))
-}
+> **OpenAPI 库**: 见 `CONTEXT.md §3 后端技术栈`，按当前框架使用对应 OpenAPI 库。
+
+```
+核心配置:
+  API 元信息: title, version, description
+  安全方案: Bearer Auth (JWT) — bearerAuth scheme
+  全局安全要求: 所有端点默认需要 bearerAuth
+  例外路径: /auth/**, /health → 无需认证
 ```
 
-### 2.3 DTO 文档化
+### 2.3 DTO 文档化模式
 
-```kotlin
-@Schema(description = "创建产品请求")
-data class CreateProductCmd(
-    @field:NotBlank
-    @Schema(description = "产品名称", example = "P-Valve Model A")
-    val name: String,
+> **Schema 注解**: 见 `CONTEXT.md §3`（@Schema / @OpenApiModel / Pydantic Field 等）。
 
-    @field:NotBlank
-    @Schema(description = "SKU", example = "PV-001-A")
-    val sku: String,
-
-    @Schema(description = "单价", example = "1500.00")
-    val unitPrice: BigDecimal? = null
-)
+```
+DTO 文档化规范:
+  请求 DTO:
+    - @Description("操作说明")
+    - 每个字段: description + example + 校验规则
+  响应 DTO:
+    - 每个字段: description（可选 example）
+  枚举类型:
+    - 列出所有可能值及含义
 ```
 
 ---
@@ -179,27 +155,23 @@ SDK 封装: 第三方 SDK → 我方 Adapter → 业务代码
 
 ### 4.2 第三方调用规范
 
-```kotlin
-// ✅ 标准封装: 超时 + 重试 + 熔断 + 日志
-@Component
-class ExternalPaymentClient(
-    private val restTemplate: RestTemplate
-) {
-    @Retryable(maxAttempts = 3, backoff = Backoff(delay = 1000))
-    @CircuitBreaker(name = "payment", fallbackMethod = "paymentFallback")
-    fun processPayment(request: PaymentRequest): PaymentResponse {
-        log.info("Calling payment API: {}", request.orderId)
-        return restTemplate.postForObject(
-            "${config.paymentUrl}/api/charge",
-            request,
-            PaymentResponse::class.java
-        )!!
-    }
+```
+// ✅ 标准封装模式（伪代码）: 超时 + 重试 + 熔断 + 日志
+// 具体框架实现见 CONTEXT.md §3（Resilience4j / Polly / retry 库等）
 
-    fun paymentFallback(request: PaymentRequest, ex: Exception): PaymentResponse {
-        log.error("Payment API unavailable, queuing for retry", ex)
-        return PaymentResponse(status = "PENDING")
-    }
+class ExternalApiClient {
+  @RetryPolicy(maxAttempts=3, backoff=exponential(1s))
+  @CircuitBreaker(name="{service}", fallback="serviceUnavailableFallback")
+  fun callExternalApi(request) {
+    log.info("Calling {service} API: {request.key_id}")
+    response = httpClient.post("{config.serviceUrl}/endpoint", request, timeout=30s)
+    return parseResponse(response)
+  }
+
+  fun serviceUnavailableFallback(request, exception) {
+    log.error("External API unavailable", exception)
+    return FallbackResponse(status = "PENDING")
+  }
 }
 ```
 
@@ -222,26 +194,20 @@ class ExternalPaymentClient(
 
 ### 5.1 接收 Webhook
 
-```kotlin
-@PostMapping("/webhooks/{provider}")
-fun receiveWebhook(
-    @PathVariable provider: String,
-    @RequestHeader("X-Signature") signature: String,
-    @RequestBody payload: String
-): ResponseEntity<Void> {
-    // 1. 验签
-    if (!webhookVerifier.verify(provider, payload, signature)) {
-        return ResponseEntity.status(401).build()
-    }
-    // 2. 幂等检查
-    val eventId = extractEventId(payload)
-    if (webhookEventRepo.existsById(eventId)) {
-        return ResponseEntity.ok().build()  // 已处理
-    }
-    // 3. 异步处理 (快速返回 200)
-    webhookProcessor.processAsync(provider, payload)
-    return ResponseEntity.ok().build()
-}
+```
+// Webhook 接收处理模式（伪代码）
+// 见 CONTEXT.md §3 后端框架实现
+
+POST /webhooks/{provider}
+  1. 验签: webhookVerifier.verify(provider, payload, signature)
+     失败 → 返回 401
+
+  2. 幂等检查: eventRepo.exists(extractEventId(payload))
+     已存在 → 返回 200 (已处理，直接忽略)
+
+  3. 异步处理: taskQueue.enqueue(provider, payload)
+     → 立即返回 200（不等待处理完成）
+     → 后台处理失败 → 重试 + 告警
 ```
 
 ### 5.2 Webhook 铁律
@@ -257,14 +223,7 @@ fun receiveWebhook(
 
 ## 6. 契约测试 (Contract Testing)
 
-### 6.1 目的
-
-```
-前端改了不告诉后端 → 上线炸
-后端改了不告诉前端 → 上线炸
-
-契约测试: 双方共同维护一份"合同", 任何一方违反合同 → CI 挂
-```
+双方共同维护 API 契约，任何一方违反 → CI 挂。
 
 ### 6.2 实现方式
 
@@ -288,27 +247,11 @@ npx openapi-diff old-spec.json new-spec.json --check
 
 ## 7. API 网关
 
-```
-客户端 → API Gateway → 后端服务
-           │
-           ├── 路由: 历史旧路由（已退役，禁止新增依赖）
-           ├── 路由: /api/v3/* → V3 Spring Boot
-           ├── 认证: JWT 验证
-           ├── 限流: 100 req/s per client
-           ├── 日志: 请求/响应日志
-           └── 灰度: 10% → V3, 90% → V2
-```
+`客户端 → API Gateway → 后端服务`，网关职责：路由（`/api/v*/...` → 当前版本服务，见 `CONTEXT.md §3`）、JWT 验证、限流（100 req/s per client）、请求/响应日志、灰度发布（Canary / Blue-Green）。
 
 ---
 
-## 8. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| API 设计审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | API 反模式检查 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 接口设计强制规则 |
-| API 文档模板 | Anthropic Spec | `warehouse/tools/anthropic-skills/01-spec-template.md` | Spec 文档格式参考 |
-
 ---
 
-*Version: 1.1.0 — 含路由表 + L3 工具引用*
+*Version: 2.1.0 — L1 泛化：移除 Springdoc/Kotlin 特定代码，改为伪代码模式 + CONTEXT.md §3 引用*
+*Updated: 2026-02-19*

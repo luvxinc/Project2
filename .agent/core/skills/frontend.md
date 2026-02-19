@@ -3,10 +3,10 @@ name: frontend
 description: 前端架构师 SOP（Next.js/React/TypeScript）。Use when 需要页面、组件、API Client、主题、i18n 或前端质量治理。
 ---
 
-# 前端规范 — Next.js + React (保留 & 增强)
+# 前端规范（企业级 SPA/SSR 架构）
 
 > **你是前端架构师。你的职责是: 设计+实现前端页面、组件体系、API 对接、主题系统、国际化。**
-> **⚠️ 本文件 ~12KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> **技术栈版本: 读 `CONTEXT.md §3` 确认当前前端框架版本。以下表格为通用参考，实际版本以 CONTEXT.md 为准。**
 
 ## 路由表
 
@@ -55,60 +55,18 @@ description: 前端架构师 SOP（Next.js/React/TypeScript）。Use when 需要
 ## 2. 目录结构
 
 ```
-apps/web/
-├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── (auth)/                   # 认证相关页面 (登录/SSO)
-│   │   ├── (dashboard)/              # 主应用 (需要认证)
-│   │   │   ├── layout.tsx            # Dashboard 布局 (Sidebar + Header)
-│   │   │   ├── page.tsx              # 首页 Hub
-│   │   │   ├── users/                # 用户管理
-│   │   │   ├── products/             # 产品管理
-│   │   │   ├── {module}/                  # 业务模块
-│   │   │   │   ├── employees/
-│   │   │   │   ├── training/
-│   │   │   │   ├── {sub-module}/
-│   │   │   │   │   ├── inventory/
-│   │   │   │   │   ├── clinical-case/
-│   │   │   │   │   ├── overview/
-│   │   │   │   │   └── demo-inventory/
-│   │   │   │   └── layout.tsx
-│   │   │   ├── purchase/             # 采购
-│   │   │   ├── sales/                # 销售
-│   │   │   ├── inventory/            # 库存
-│   │   │   ├── finance/              # 财务
-│   │   │   ├── logs/                 # 日志
-│   │   │   └── admin/                # 系统管理
-│   │   ├── layout.tsx                # Root Layout
-│   │   └── globals.css               # 全局样式
-│   │
-│   ├── components/                   # 封装组件
-│   │   ├── ui/                       # shadcn 二次封装
-│   │   ├── data-table/               # DataTable 组件 (TanStack)
-│   │   ├── ag-grid/                  # AG Grid 主题化封装
-│   │   ├── charts/                   # ECharts 封装
-│   │   ├── modal/                    # 统一弹窗
-│   │   ├── form/                     # 表单封装 (RHF + Zod)
-│   │   └── layout/                   # 布局组件 (Sidebar, Header, Hub)
-│   │
-│   ├── contexts/                     # React Context
-│   │   ├── ThemeContext.tsx           # iOS/macOS 双主题
-│   │   ├── AuthContext.tsx            # 认证状态
-│   │   └── PermissionContext.tsx      # 权限状态
-│   │
-│   ├── lib/                          # 工具库
-│   │   ├── api/                      # API Client (OpenAPI 生成)
-│   │   ├── hooks/                    # 自定义 Hooks
-│   │   └── utils/                    # 工具函数
-│   │
-│   └── styles/                       # 样式
-│       └── ag-grid-theme.css         # AG Grid 主题适配
-│
-├── public/                           # 静态资源
-├── package.json
-├── next.config.ts
-├── tailwind.config.ts
-└── tsconfig.json
+apps/web/src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/             # 认证页 (登录/SSO)
+│   ├── (dashboard)/        # 主应用 (认证保护)
+│   │   ├── layout.tsx      # Sidebar + Header
+│   │   ├── page.tsx        # 首页 Hub
+│   │   └── {module}/       # 业务模块 (users/products/purchase/sales/inventory/finance/logs/admin/...)
+│   └── globals.css
+├── components/             # ui/ | data-table/ | ag-grid/ | charts/ | modal/ | form/ | layout/
+├── contexts/               # ThemeContext | AuthContext | PermissionContext
+├── lib/                    # api/ (OpenAPI 生成) | hooks/ | utils/
+└── styles/                 # ag-grid-theme.css
 ```
 
 ---
@@ -173,15 +131,7 @@ export default function SalesReportPage() {
 
 ### 4.1 工作流
 
-```
-Spring Boot (后端)
-    ↓ springdoc 自动生成
-OpenAPI 3.0 Spec (openapi.json)
-    ↓ openapi-typescript 生成
-TypeScript Client (packages/api-client/)
-    ↓ 前端 import
-React Query Hooks
-```
+`{后端框架}（见 CONTEXT.md §3）` → `openapi.json` → openapi-typescript → `packages/api-client/` → `{前端数据层}`（见 CONTEXT.md §3）。
 
 ### 4.2 使用方式
 
@@ -262,19 +212,7 @@ Apple Design System 规范 (保留)：
 
 ## 6. 前端与后端的解耦点
 
-```
-┌──────────────────┐         ┌──────────────────┐
-│    Next.js Web   │         │  Spring Boot API  │
-│                  │         │                   │
-│  React Query  ───┼── HTTP ─┼──→ Controller     │
-│  OpenAPI Client  │ REST    │    UseCase        │
-│                  │         │    Domain          │
-│  零后端代码依赖   │         │    JPA            │
-└──────────────────┘         └──────────────────┘
-```
-
-> **前端只依赖 OpenAPI Spec，不依赖具体语言。**
-> **前端只依赖 OpenAPI Spec, 后端框架可自由替换, 前端完全无感。**
+**前端只依赖 OpenAPI Spec，不依赖任何后端代码。** `{前端框架（见 CONTEXT.md §3）}（OpenAPI Client）` ← REST → `{后端框架（见 CONTEXT.md §3）}`（Controller → UseCase → Domain → 持久化层）。后端框架可自由替换，前端零感知。
 
 ---
 
@@ -328,52 +266,20 @@ return <span>{t('items', { count: items.length })}</span>;
 
 ```tsx
 // sentry.client.config.ts
-import * as Sentry from '@sentry/nextjs';
-
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1,      // 10% 性能追踪
-  replaysSessionSampleRate: 0.01,  // 1% 会话回放
-  replaysOnErrorSampleRate: 1.0,   // 100% 错误时回放
+  tracesSampleRate: 0.1,          // 10% 性能追踪
+  replaysOnErrorSampleRate: 1.0,  // 100% 错误时回放
 });
 ```
 
-### 8.2 Error Boundary
+### 8.2 Error Boundary + API 错误上报
 
 ```tsx
-// components/ErrorBoundary.tsx
-'use client';
+// components/ErrorBoundary.tsx — 用 <Sentry.ErrorBoundary fallback={<ErrorFallback/>}>包裹页面
 
-export function ErrorBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <Sentry.ErrorBoundary
-      fallback={<ErrorFallback />}
-      beforeCapture={(scope) => {
-        scope.setTag('component', 'page');
-      }}
-    >
-      {children}
-    </Sentry.ErrorBoundary>
-  );
-}
-```
-
-### 8.3 API 错误自动上报
-
-```tsx
-// queryClient 全局错误处理
-const queryClient = new QueryClient({
-  defaultOptions: {
-    mutations: {
-      onError: (error) => {
-        Sentry.captureException(error, {
-          tags: { source: 'react-query-mutation' }
-        });
-      }
-    }
-  }
-});
+// QueryClient 全局 mutations.onError → Sentry.captureException(error, { tags: { source: 'react-query-mutation' } })
 ```
 
 ---
@@ -382,22 +288,8 @@ const queryClient = new QueryClient({
 
 ### 9.1 事件层
 
-```tsx
-// lib/analytics.ts
-export function trackEvent(event: string, properties?: Record<string, unknown>) {
-  // 发送到分析平台 (Mixpanel/Amplitude/自建)
-  analytics.track(event, {
-    ...properties,
-    timestamp: new Date().toISOString(),
-    userId: getCurrentUserId(),
-    page: window.location.pathname,
-  });
-}
-
-// 使用
-trackEvent('product.viewed', { productId: '123', source: 'search' });
-trackEvent('order.created', { total: 1500, items: 3 });
-```
+`trackEvent(event, properties)` → 分析平台（Mixpanel/Amplitude/自建），自动附加 `timestamp/userId/page`。
+用法：`trackEvent('order.created', { total: 1500, items: 3 })`
 
 ### 9.2 事件分类
 
@@ -418,17 +310,7 @@ trackEvent('order.created', { total: 1500, items: 3 });
 
 ---
 
-## 10. L3 工具库引用 (按需加载)
-
-| 场景 | 推荐加载 | 文件路径 | 作用 |
-|------|---------|---------|------|
-| UI 设计决策 | UI UX Pro: Design System | `warehouse/tools/ui-ux-pro-max/01-design-system.md` | v2.0 设计系统生成器 + 67 风格 + 96 配色 |
-| UX 交付检查 | UI UX Pro: UX 准则 | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 99 条 UX 准则 + 反模式 + 交付检查 |
-| React 代码审查 | ECC: React 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | React/Next.js 反模式检查 |
-| 动画开发 | Anime.js API | `warehouse/tools/animejs/INDEX.md` | Anime.js 4.0 核心 + 高级模式 (2 切片) |
-| 🔴 提交前自检 | Rules: 前端 | `core/rules/frontend.md` | **必查** — 10 反模式 (F1-F10) + CRITICAL/HIGH Checklist |
-
 ---
 
-*Version: 2.1.0 — Generic Core (expanded: i18n + monitoring + analytics + 工具引用)*
-*Based on: battle-tested enterprise patterns*
+*Version: 2.1.0 — L1 泛化：移除 §4 和 §6 中的 Spring Boot 引用，改为 CONTEXT.md §3 占位符*
+*Updated: 2026-02-19*

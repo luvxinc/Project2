@@ -9,7 +9,6 @@ description: 平台工程 SOP。Use when 需要脚手架、代码生成、CLI、
 > **大厂的核心竞争力不在语言, 在于内部平台效率。本 Skill 覆盖提升全员效率的工具和体系。**
 
 
-> **⚠️ 本文件 ~7KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
 
 ## 路由表
 
@@ -100,12 +99,12 @@ npx openapi-typescript http://localhost:8080/v3/api-docs -o src/lib/api/schema.d
 ### 2.2 数据库 → Entity
 
 ```bash
-# 从现有数据库反向生成 JPA Entity (迁移用)
-./gradlew jpaModelGen
+# 从现有数据库反向生成 ORM Entity（迁移用）
+# 命令见 CONTEXT.md §5 工具命令速查（不同框架命令不同）
 
 # 反向生成:
-# - Entity 类
-# - Repository 接口
+# - Entity 类 / Model 类
+# - Repository 接口 / DAO 层
 # - 基础的 DTO
 ```
 
@@ -123,29 +122,21 @@ npx openapi-typescript http://localhost:8080/v3/api-docs -o src/lib/api/schema.d
 
 ### 3.1 基础实现
 
-```kotlin
-// 功能开关配置
-@ConfigurationProperties(prefix = "features")
-data class FeatureFlags(
-    val newInventoryUI: Boolean = false,
-    val kafkaEnabled: Boolean = false,
-    val v3AuthEnabled: Boolean = false,
-)
+> **技术栈**: 见 `CONTEXT.md §3 后端技术栈`，按框架选用对应 Feature Flag 实现。
 
-// 使用
-@RestController
-class ProductController(
-    private val features: FeatureFlags
-) {
-    @GetMapping("/products")
-    fun list(): ApiResponse<List<Product>> {
-        return if (features.newInventoryUI) {
-            newProductService.listV2()
-        } else {
-            productService.listV1()
-        }
-    }
+```
+// 后端 Feature Flag 模式（伪代码，具体实现见 projects/{project}/reference/impl-patterns-*.md）
+FeatureFlags {
+  newInventoryUI: Boolean = false
+  kafkaEnabled: Boolean = false
+  v3AuthEnabled: Boolean = false
 }
+
+// 在 Controller / Handler 中使用
+if features.newInventoryUI:
+  return newProductService.listV2()
+else:
+  return productService.listV1()
 ```
 
 ### 3.2 前端 Feature Flag
@@ -191,26 +182,7 @@ function FeatureGate({ flag, children, fallback }: Props) {
 
 ### 4.2 技术债登记
 
-```markdown
-## 🔧 技术债: {ID}
-
-类型: {安全/架构/代码/测试/文档/依赖}
-优先级: {🔴/🟡/🟢}
-发现日期: {YYYY-MM-DD}
-位置: `path/to/file.kt`
-
-### 描述
-{什么是技术债, 为什么是债}
-
-### 影响
-{不修会怎样}
-
-### 修复方案
-{怎么修}
-
-### 预计工作量
-{S/M/L}
-```
+格式 → `core/templates/tech-debt-template.md`。字段：ID、类型、优先级、发现日期、位置、描述、影响、修复方案、工作量(S/M/L)。
 
 ### 4.3 技术债治理节奏
 
@@ -227,27 +199,28 @@ function FeatureGate({ flag, children, fallback }: Props) {
 ### 5.1 统一开发脚本
 
 ```bash
-# dev.sh — 一键启动所有服务
+# dev.sh — 一键启动所有服务（命令见 CONTEXT.md §5 工具命令速查）
 #!/bin/bash
 case "$1" in
-  start)    docker-compose up -d && ./gradlew bootRun ;;
+  start)    docker-compose up -d && {后端启动命令} ;;
   stop)     docker-compose down ;;
-  reset)    docker-compose down -v && ./gradlew flywayClean flywayMigrate ;;
-  test)     ./gradlew test ;;
-  lint)     ./gradlew ktlintCheck ;;
-  gen-api)  npx openapi-typescript ... ;;
+  reset)    docker-compose down -v && {DB迁移命令} ;;
+  test)     {测试命令} ;;
+  lint)     {后端Lint命令} ;;
+  gen-api)  {OpenAPI生成命令} ;;
   scaffold) ./scripts/scaffold.sh "$@" ;;
   *)        echo "Usage: ./dev.sh {start|stop|reset|test|lint|gen-api|scaffold}" ;;
 esac
+# 所有 {占位符} 在 CONTEXT.md §5 中定义，与项目技术栈对应
 ```
 
 ### 5.2 Git Hooks
 
 ```bash
-# .husky/pre-commit
+# .husky/pre-commit（命令见 CONTEXT.md §5）
 #!/bin/sh
-./gradlew ktlintCheck     # 后端 lint
-npx lint-staged            # 前端 lint
+{后端Lint命令}   # 后端 lint（如 ./gradlew ktlintCheck / pylint / cargo fmt）
+npx lint-staged  # 前端 lint（通用）
 ```
 
 ### 5.3 开发环境一致性
@@ -295,17 +268,8 @@ npx lint-staged            # 前端 lint
 
 ---
 
-## 8. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| 创建新 Skill | Anthropic Skills | `warehouse/tools/anthropic-skills/01-spec-template.md` | Skill 文件规范 |
-| Skill 自动生成 | Skill Seekers | `warehouse/tools/skill-seekers/01-commands-modules.md` | 文档→Skill 转换 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 文件组织/命名规范 |
-| 记忆架构 | Claude-Mem | `warehouse/tools/claude-mem/01-architecture.md` | 上下文管理参考 |
-| 插件架构 | Knowledge Work Plugins | `warehouse/tools/knowledge-work-plugins/01-architecture-examples.md` | Cowork 插件架构 + 示例 |
-
 ---
 
-*Version: 1.2.0 — 含路由表 + L3 工具引用*
+*Version: 2.1.0 — L1 泛化：移除 Kotlin Feature Flag 代码、./gradlew 命令，改为伪代码 + CONTEXT.md §5 引用*
+*Updated: 2026-02-19*
 

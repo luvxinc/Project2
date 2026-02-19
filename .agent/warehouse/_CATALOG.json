@@ -1,19 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "categories": [
     "engineering",
-    "data",
-    "security",
+    "cognition",
     "ux",
-    "platform",
-    "cognition"
+    "platform"
   ],
   "libraries": [
     {
-      "slug": "anthropic-skills",
-      "category": "cognition",
-      "keywords": ["skill", "规范", "frontmatter", "description"],
-      "index": "tools/anthropic-skills/INDEX.md"
+      "slug": "agent-research-2025",
+      "category": "engineering",
+      "keywords": ["agent", "context engineering", "multi-agent", "orchestration"],
+      "index": "tools/agent-research-2025/INDEX.md"
     },
     {
       "slug": "everything-claude-code",
@@ -22,10 +20,40 @@
       "index": "tools/everything-claude-code/INDEX.md"
     },
     {
+      "slug": "animejs",
+      "category": "engineering",
+      "keywords": ["animation", "JavaScript", "timeline", "SVG"],
+      "index": "tools/animejs/INDEX.md"
+    },
+    {
+      "slug": "anthropic-skills",
+      "category": "cognition",
+      "keywords": ["skill", "规范", "frontmatter", "description"],
+      "index": "tools/anthropic-skills/INDEX.md"
+    },
+    {
       "slug": "claude-mem",
       "category": "cognition",
       "keywords": ["memory", "context", "token"],
       "index": "tools/claude-mem/INDEX.md"
+    },
+    {
+      "slug": "knowledge-work-plugins",
+      "category": "cognition",
+      "keywords": ["plugin", "skills", "commands", "domain"],
+      "index": "tools/knowledge-work-plugins/INDEX.md"
+    },
+    {
+      "slug": "ui-ux-pro-max",
+      "category": "ux",
+      "keywords": ["design system", "UI/UX", "style", "color", "UX rules"],
+      "index": "tools/ui-ux-pro-max/INDEX.md"
+    },
+    {
+      "slug": "skill-seekers",
+      "category": "platform",
+      "keywords": ["RAG", "documentation", "AI format", "pipeline"],
+      "index": "tools/skill-seekers/INDEX.md"
     }
   ]
 }

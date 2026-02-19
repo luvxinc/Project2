@@ -6,17 +6,16 @@ description: /main_ui 工作流。Use when 需要页面模板、主题系统、�
 
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
-> 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
 ---
 
-## 🔴 V3 架构合规 (Architecture Reference — 强制)
+## 🔴 架构合规 (Architecture Reference — 强制)
 
-> **所有 UI 开发任务, 必须以 V3 架构规范为基准:**
-> - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md` (§3.2 前端技术栈, §9 i18n 规范)
-> - 📚 参考: `.agent/projects/mgmt/reference/conventions.md` (主题/i18n 约定), `.agent/projects/mgmt/reference/accessibility.md` (WCAG 2.2)
+> **所有 UI 开发任务, 必须以项目架构规范为基准:**
+> - 📐 主文件: `{project}/reference/architecture.md` (前端技术栈, i18n 规范) — 见 `CONTEXT.md §7 参考资料索引`
+> - 📚 参考: `{project}/reference/conventions.md` (主题/i18n 约定), `{project}/reference/accessibility.md` (WCAG 2.2)
 >
-> **前端技术栈: Next.js 16 + React 19 + TailwindCSS 4 + shadcn + React Query。不合规 = Block。**
+> **前端技术栈: 见 `{project}/CONTEXT.md §3`。不合规 = Block。**
 
 ---
 

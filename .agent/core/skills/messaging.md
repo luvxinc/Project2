@@ -9,7 +9,6 @@ description: 消息与异步工程 SOP。Use when 需要 Kafka/队列/Saga/幂�
 > **事件驱动是分布式系统的神经系统。本 Skill 覆盖消息队列、异步模式、事件溯源。**
 
 
-> **⚠️ 本文件 ~8KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
 
 ## 路由表
 
@@ -61,40 +60,28 @@ description: 消息与异步工程 SOP。Use when 需要 Kafka/队列/Saga/幂�
 
 ### 2.2 Producer 规范
 
-```kotlin
-@Component
-class OrderEventProducer(
-    private val kafkaTemplate: KafkaTemplate<String, OrderEvent>
-) {
-    fun publish(event: OrderEvent) {
-        kafkaTemplate.send(
-            "order.${event.type.lowercase()}",
-            event.orderId.toString(),  // key = 保序
-            event
-        ).whenComplete { result, ex ->
-            if (ex != null) log.error("Kafka publish failed", ex)
-        }
-    }
-}
+```
+// Producer 模式（伪代码，框架语法见 CONTEXT.md §3 消息中间件）
+Producer OrderEventProducer:
+  publish(event):
+    topic = "order.{event.type}"
+    key = event.orderId    // key = 保序
+    send(topic, key, event)
+    on_error → log.error("publish failed")
 ```
 
 ### 2.3 Consumer 规范
 
-```kotlin
-@KafkaListener(
-    topics = ["order.payment.completed"],
-    groupId = "inventory-service",
-    concurrency = "3"
-)
-fun onPaymentCompleted(event: PaymentCompletedEvent, ack: Acknowledgment) {
-    try {
-        inventoryService.reserve(event.orderId, event.items)
-        ack.acknowledge()  // 手动确认
-    } catch (e: Exception) {
-        log.error("Processing failed, will retry", e)
-        // 不确认 → Kafka 自动重试
-    }
-}
+```
+// Consumer 模式（伪代码，框架语法见 CONTEXT.md §3 消息中间件）
+@Subscribe(topic = "order.payment.completed", group = "inventory-service", concurrency = 3)
+onPaymentCompleted(event):
+  try:
+    inventoryService.reserve(event.orderId, event.items)
+    ack()    // 手动确认
+  catch error:
+    log.error("Processing failed, will retry")
+    // 不确认 → 自动重试
 ```
 
 ---
@@ -126,18 +113,16 @@ OrderService          PaymentService        InventoryService
 
 ### 3.2 幂等性 (Idempotency)
 
-```kotlin
-// ❌ 非幂等: 重复消费会重复扣款
-fun processPayment(event: PaymentEvent) {
+```
+// ❌ 非幂等: 重复消费会重复扣款（伪代码）
+processPayment(event):
     accountService.debit(event.amount)
-}
 
 // ✅ 幂等: 用 eventId 去重
-fun processPayment(event: PaymentEvent) {
-    if (processedEventRepo.existsById(event.eventId)) return  // 已处理
+processPayment(event):
+    if processedEventRepo.exists(event.eventId): return  // 已处理
     accountService.debit(event.amount)
-    processedEventRepo.save(ProcessedEvent(event.eventId))
-}
+    processedEventRepo.save(event.eventId)
 ```
 
 | 幂等策略 | 适用 |
@@ -215,7 +200,7 @@ spring:
 | **Fire-and-Forget** | 通知, 日志 | Kafka 无回调 |
 | **请求-回复** | 异步 RPC | Kafka + Reply Topic |
 | **延迟消息** | 定时任务, 超时取消 | RabbitMQ TTL / Redis Sorted Set |
-| **批量处理** | ETL, 报表生成 | Spring Batch + Kafka |
+| **批量处理** | ETL, 报表生成 | 批处理框架 + 消息队列（见 CONTEXT.md §3）|
 | **CQRS** | 读写分离 | 写→主库 → 事件 → 读→ES/ClickHouse |
 
 ---
@@ -232,13 +217,7 @@ spring:
 
 ---
 
-## 7. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| 后端代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 异步模式反模式检查 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 错误处理/幂等规范 |
-
 ---
 
-*Version: 1.1.0 — 含路由表 + L3 工具引用*
+*Version: 2.0.0 — L1 泛化：Kotlin Producer/Consumer/幂等代码改为伪代码*
+*Updated: 2026-02-19*

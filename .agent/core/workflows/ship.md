@@ -7,17 +7,16 @@ description: /main_ship 工作流。Use when 需要本地开发、CI/CD、部署
 > 发布结论必须使用：`core/templates/ship-readiness-report-template.md`（固定结构：构建制品/部署前检查/风险窗口/结论/证据）
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
-> 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
 ---
 
-## 🔴 V3 架构合规 (Architecture Reference — 强制)
+## 🔴 架构合规 (Architecture Reference — 强制)
 
-> **所有部署/环境配置任务, 必须以 V3 架构规范为基准:**
-> - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md` (§3.7 云原生基础设施, §3.7a 弹性与韧性)
-> - 📚 参考: `.agent/projects/mgmt/reference/disaster-recovery.md` (灾备), `.agent/projects/mgmt/reference/resilience.md` (弹性), `.agent/projects/mgmt/reference/config-management.md` (配置)
+> **所有部署/环境配置任务, 必须以项目架构规范为基准:**
+> - 📐 主文件: `{project}/reference/architecture.md` (云原生基础设施, 弹性与韧性) — 见 `CONTEXT.md §7 参考资料索引`
+> - 📚 参考: `{project}/reference/disaster-recovery.md` (灾备), `{project}/reference/resilience.md` (弹性), `{project}/reference/config-management.md` (配置)
 >
-> **Docker/K8s/CI-CD 配置必须符合 V3 架构规范。**
+> **Docker/K8s/CI-CD 配置必须符合项目架构规范（见 `{project}/reference/architecture-gate.md`）。**
 
 ---
 
@@ -41,19 +40,20 @@ description: /main_ship 工作流。Use when 需要本地开发、CI/CD、部署
 ### 启动清单
 
 ```bash
-# 1. 环境准备
-./dev.sh up              # 启动 PostgreSQL + Redis
+# 启动命令见 CONTEXT.md §5 工具命令速查
 
-# 2. 后端启动 (V3 Kotlin / Spring Boot)
-cd apps/api && pnpm dev  # V2
-./gradlew bootRun        # V3
+# 1. 环境准备（数据库/缓存/消息队列）
+{infra_start_cmd}        # 见 CONTEXT.md §5.1
+
+# 2. 后端启动
+{backend_start_cmd}      # 见 CONTEXT.md §5.1
 
 # 3. 前端启动
-cd apps/web && pnpm dev  # Next.js
+{frontend_start_cmd}     # 见 CONTEXT.md §5.1
 
 # 4. 验证
-curl http://localhost:3001/api/health  # 后端健康检查
-open http://localhost:3000             # 前端
+curl {health_check_url}  # 后端健康检查（见 CONTEXT.md §3）
+open {frontend_url}      # 前端
 ```
 
 ### 环境变量
@@ -74,35 +74,13 @@ open http://localhost:3000             # 前端
 | DB 连接失败 | Docker 未启动 | `./dev.sh up` |
 | 热加载失效 | 文件监听上限 | `ulimit -n 4096` |
 
-> 🔴 **问题复盘铁律:** 修复任何本地开发环境问题后, 必须:
-> 1. 记录到 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
-> 2. 交叉检查同类问题 (`core/skills/memory.md` §3.5): 抽象模式 → 搜索 → 一并修复
+> 🔴 **问题复盘铁律:** 修复后 → `memory.md §3.2` 记录 + `memory.md §3.5` 交叉检查。
 
 ---
 
 ## §2 容器化
 
-> **加载:** `skills/infrastructure.md` §4 (Docker)
-
-### 多阶段 Dockerfile (标准)
-
-```dockerfile
-# 阶段 1: 构建
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm build
-
-# 阶段 2: 运行
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-EXPOSE 3001
-CMD ["node", "dist/main.js"]
-```
+> **加载:** `skills/infrastructure.md` §4 (Docker) — 完整 Dockerfile 模板（API: 见 CONTEXT.md §3 后端镜像; Web: 见 CONTEXT.md §3 前端镜像）
 
 ### 镜像规范
 
@@ -146,57 +124,7 @@ stages:
 
 ## §4 K8s 部署
 
-> **加载:** `skills/infrastructure.md` §2 (K8s)
-
-### 基础资源
-
-```yaml
-# Deployment (基础)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
-spec:
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1           # 最多多 1 个 Pod
-      maxUnavailable: 0     # 不允许不可用
-  template:
-    spec:
-      containers:
-        - name: api
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 3001
-            initialDelaySeconds: 5
-```
-
-### HPA (自动扩缩)
-
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-spec:
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-```
+> **加载:** `skills/infrastructure.md` §2 (K8s) — 完整 Deployment/HPA 配置（RollingUpdate maxSurge:1 maxUnavailable:0，resources requests/limits，readinessProbe，HPA min:3 max:10 cpu:70%）
 
 ---
 
@@ -237,9 +165,7 @@ spec:
 4. 验证: 健康检查 + 冒烟测试
 5. 通知: 通知 PM → 通知用户
 6. 复盘: 根因分析 → 事故报告
-7. 🔴 问题复盘铁律:
-   a. 记录错题本: 写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
-   b. 交叉检查: 抽象回滚原因模式 → 搜索同类风险点 → 一并修复 → 记录 (`core/skills/memory.md` §3.5)
+7. 🔴 问题复盘铁律 → `memory.md §3.2` 记录 + `memory.md §3.5` 交叉检查
 ```
 
 ### 回滚命令速查
@@ -257,18 +183,7 @@ docker service update --rollback api-server
 
 ---
 
-## §7 L3 工具库引用
-
-| 环节 | 推荐工具 | 路径 | 何时加载 |
-|------|---------|------|---------| 
-| §2 Docker 审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 配置反模式检查 |
-| §3 CI/CD 规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 验证循环 + 自动化规则 |
-| §3 Hook 自动化 | ECC: Hooks | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §2 | PreToolUse/PostToolUse |
-| 发布前 | 🔴 Rules 层 | `core/rules/common.md` §5 验证循环 | **必查** — 6 阶段全过 |
-
----
-
-## §8 交接闭环
+## §7 交接闭环
 
 每次发布必须以下列之一结束:
 
@@ -289,5 +204,4 @@ docker service update --rollback api-server
 
 ---
 
-*Version: 2.1.0 — +§8 交接闭环*
-*Created: 2026-02-14 | Updated: 2026-02-15*
+*Version: 2.2.0 — Phase 1 精简*
