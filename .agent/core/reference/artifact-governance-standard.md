@@ -10,7 +10,7 @@
 - `data/plans/`：任务级（完成即删）
 - `data/progress/`：持久（ACCEPTED/PROJECT-MEMORY/requirements/risk等）
 - `data/checkpoints/`：临时（恢复后删）
-- `data/audits/`：半临时（问题全修复后删）
+- `data/audits/`：临时（问题修复后必须删除，不得长期保留）
 - `data/errors/`：持久（ERROR-BOOK，仅追加）
 - `reference/`：持久（技术真相源，禁止清理脚本误删）
 - `playbooks/`：持久（项目策略，禁止清理脚本误删）
@@ -36,7 +36,7 @@
 
 - `data/tmp/{task-id}/`：任务 CLOSED 后清理（两阶段：先移入 `_trash`，24h 后硬删）
 - specs/plans/TRACKER/checkpoints：任务 CLOSED 后删除
-- audits：问题全修复后删除
+- audits：问题修复后必须删除（若需长期保留，仅允许迁移到 `reference/audit-baselines/` 并去除任务噪音）
 - errors/progress/reference/playbooks：持久保留（`reference/` 与 `playbooks/` 永不被自动清理）
 
 ## 5) 切片与索引阈值
