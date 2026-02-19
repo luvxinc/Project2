@@ -65,7 +65,8 @@ description: 项目级数据管理 SOP。Use when 需要规范目录结构、命
 | **持久** 🟢 | 项目存续期间始终保留 | 根级 + reference + playbooks + errors + training | 项目归档时才清理 |
 | **累积持久** 🟢 | 只追加不删除, 越积越多 | progress/(ACCEPTED, req-list, risk, feedback) | 永不删 |
 | **任务级** 🟡 | 跟随某个任务, 任务 CLOSED 则删 | specs, plans, TRACKER, checkpoints | 任务 CLOSED |
-| **修复后删** 🟠 | 审计报告, 问题修复即删（默认不保留） | audits | 修复完成立即删除 |
+| **修复后删** 🟠 | 审计报告, 问题修复即删（默认） | audits | 修复完成立即删除 |
+| **重构基线保留** 🔵 | V1→V3/架构/traceability 基线审计 | audits | 长期保留（用于未来重构对照） |
 
 ### 2.2 全链路产出物映射
 
@@ -216,7 +217,7 @@ PM 交付:
 | **命名示例** | `2026-02-15_vma-employee-phone-field_audit.md` |
 | **生命周期** | 🟠 修复后删（默认临时，不得积压） |
 | **写入逻辑** | QA 完成审计后创建, 含 Severity Summary + Verdict |
-| **删除逻辑** | 问题修复完成后立即**删除**。未修复可短期保留；关闭任务时必须清空 |
+| **删除逻辑** | 问题修复完成后立即**删除**（默认）；`v1/v2/v3` 基线审计与 traceability 文件不删 |
 | **🔴 铁律** | **审计报告不是档案。修复完成必须删除，不得长期占用。** |
 | **检查方法** | 报告中有未关闭的 ❌ 项 → 保留; 全 ✅ → 删除 |
 

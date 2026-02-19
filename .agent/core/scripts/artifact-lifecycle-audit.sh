@@ -31,21 +31,24 @@ fi
 if [ "$MODE" = "--cleanup-audits" ]; then
   AD="$PROOT/data/audits"
   [ -d "$AD" ] || { echo "ℹ️ no audits dir"; exit 0; }
+  keep_pat='(v1-|v2-|v3-|traceability)'
   n_before=$(find "$AD" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-  find "$AD" -type f -name "*.md" -delete
+  (find "$AD" -type f -name "*.md" 2>/dev/null | rg -v "$keep_pat" || true) | while read -r f; do [ -n "$f" ] && rm -f "$f"; done
   n_after=$(find "$AD" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-  echo "🧹 audits cleanup: before=$n_before after=$n_after"
+  echo "🧹 audits cleanup (kept baselines): before=$n_before after=$n_after"
   exit 0
 fi
 
 if [ "$MODE" = "--enforce-no-audits" ]; then
-  n=$(find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+  # keep baseline audits for future refactor/migration explanation
+  keep_pat='(v1-|v2-|v3-|traceability)'
+  n=$( (find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | rg -v "$keep_pat" || true) | wc -l | tr -d ' ' )
   if [ "$n" -gt 0 ]; then
-    echo "❌ audits must be empty after fixes, found: $n"
-    find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | sed 's/^/  audit: /' | head -n 100
+    echo "❌ non-baseline audits must be empty after fixes, found: $n"
+    find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | rg -v "$keep_pat" | sed 's/^/  audit: /' | head -n 100
     exit 1
   fi
-  echo "✅ audits empty"
+  echo "✅ non-baseline audits empty (baseline audits retained)"
   exit 0
 fi
 
