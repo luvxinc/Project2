@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
  * VmaClinicalTripController — REST endpoints for Trip (出库单) lifecycle.
  */
 @RestController
-@RequestMapping("/api/v1/vma")
+@RequestMapping("/vma")
 class VmaClinicalTripController(
     private val tripService: VmaClinicalTripService,
 ) {

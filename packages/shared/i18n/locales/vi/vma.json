@@ -339,6 +339,17 @@
         "operator": "Người thao tác",
         "notes": "Ghi chú"
       },
+      "noteLabels": {
+        "receivingReject": "Nhận hàng — Đã từ chối",
+        "completionUsed": "Đã dùng trong Ca",
+        "completionRec": "Trả lại từ Ca",
+        "completionRecTripFinal": "Tự động trả (Kết thúc Trip)",
+        "completionDemo": "Chuyển sang Demo (Hỏng)",
+        "returnedFromTrip": "Trả lại từ Trip {tripId}",
+        "returnToChina": "Trả về Trung Quốc",
+        "manualMoveDemo": "Chuyển thủ công sang Demo",
+        "returnedFromDemo": "Trả lại từ Demo (ID: {id})"
+      },
       "loading": "Đang tải...",
       "noMatch": "Không có bản ghi phù hợp",
       "empty": "Chưa có giao dịch nào",
@@ -481,7 +492,8 @@
         "optional": "Tùy chọn",
         "threeDigits": "3 chữ số",
         "date": "Ngày",
-        "addAnotherCase": "+ Thêm ca bệnh khác (Sản phẩm chia sẻ)"
+        "addAnotherCase": "+ Thêm ca bệnh khác (Sản phẩm chia sẻ)",
+        "primaryCaseTitle": "Ca bệnh 1 — Chính"
       },
       "editModal": {
         "title": "Sửa mục ca",

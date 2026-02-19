@@ -31,6 +31,38 @@ function fmtDate(d: string | null): string {
   return d.split('T')[0];
 }
 
+/** Translate structured notes to i18n labels; pass-through user free-text. */
+function translateNotes(notes: string | null, t: (key: string, vars?: Record<string, string>) => string): string | null {
+  if (!notes) return null;
+
+  // Backend auto-generated structured tags
+  const NOTES_MAP: Record<string, string> = {
+    'RECEIVING_AUTO|REJECT':            'p_valve.overview.noteLabels.receivingReject',
+    'COMPLETION_AUTO|USED':             'p_valve.overview.noteLabels.completionUsed',
+    'COMPLETION_AUTO|REC':              'p_valve.overview.noteLabels.completionRec',
+    'COMPLETION_AUTO|REC|TRIP_FINAL':   'p_valve.overview.noteLabels.completionRecTripFinal',
+    'COMPLETION_AUTO|DEMO':             'p_valve.overview.noteLabels.completionDemo',
+  };
+
+  // Exact match for structured tags
+  if (NOTES_MAP[notes]) return t(NOTES_MAP[notes]);
+
+  // Pattern: "Returned from trip {tripId}"
+  const tripMatch = notes.match(/^Returned from trip (.+)$/);
+  if (tripMatch) return t('p_valve.overview.noteLabels.returnedFromTrip', { tripId: tripMatch[1] });
+
+  // Pattern: "Returned from Demo — original Demo ID: {id}"
+  const demoReturnMatch = notes.match(/^Returned from Demo.*Demo ID:\s*(.+)$/);
+  if (demoReturnMatch) return t('p_valve.overview.noteLabels.returnedFromDemo', { id: demoReturnMatch[1] });
+
+  // Frontend hardcoded strings
+  if (notes === 'Return to China') return t('p_valve.overview.noteLabels.returnToChina');
+  if (notes === 'Manual Move to Demo') return t('p_valve.overview.noteLabels.manualMoveDemo');
+
+  // User free-text — return as-is
+  return notes;
+}
+
 export default function InventoryOverviewPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
@@ -168,9 +200,10 @@ export default function InventoryOverviewPage() {
                     <td className="px-3 py-2 font-mono" style={{ color: colors.textSecondary }}>{tx.batchNo || '—'}</td>
                     <td className="px-3 py-2 tabular-nums" style={{ color: colors.textSecondary }}>{fmtDate(tx.expDate)}</td>
                     <td className="px-3 py-2" style={{ color: colors.textSecondary }}>{tx.operator || '—'}</td>
-                    <td className="px-3 py-2 max-w-[200px] truncate" style={{ color: colors.textTertiary }} title={tx.notes || ''}>
-                      {tx.notes || '—'}
+                    <td className="px-3 py-2 max-w-[200px] truncate" style={{ color: colors.textTertiary }} title={translateNotes(tx.notes, t) || ''}>
+                      {translateNotes(tx.notes, t) || '—'}
                     </td>
+
                   </tr>
                 ))}
               </tbody>

@@ -339,6 +339,17 @@
         "operator": "操作人",
         "notes": "备注"
       },
+      "noteLabels": {
+        "receivingReject": "收货 — 已拒收",
+        "completionUsed": "Case 使用",
+        "completionRec": "Case 退回",
+        "completionRecTripFinal": "自动退回（Trip 结束）",
+        "completionDemo": "移至演示品（损坏）",
+        "returnedFromTrip": "Trip 退回 {tripId}",
+        "returnToChina": "退回中国",
+        "manualMoveDemo": "手动移至演示品",
+        "returnedFromDemo": "从演示品退回（ID: {id}）"
+      },
       "loading": "加载中...",
       "noMatch": "没有匹配的记录",
       "empty": "暂无交易记录",
@@ -481,7 +492,8 @@
         "optional": "可选",
         "threeDigits": "3位数字",
         "date": "日期",
-        "addAnotherCase": "+ 添加其他病例（共享产品）"
+        "addAnotherCase": "+ 添加其他病例（共享产品）",
+        "primaryCaseTitle": "病例 1 — 主病例"
       },
       "editModal": {
         "title": "编辑病例项目",

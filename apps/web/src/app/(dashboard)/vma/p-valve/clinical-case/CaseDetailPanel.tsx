@@ -437,7 +437,14 @@ export default function CaseDetailPanel({
                               }}>
                               {item.productType === 'PVALVE' ? t('p_valve.clinicalCase.detail.pvShort') : t('p_valve.clinicalCase.detail.dsShort')}
                             </span>
-                            <span className="font-mono flex-1">{item.serialNo || item.specNo}</span>
+                            <span className="font-mono">{item.specNo}</span>
+                            <span className="font-mono flex-1" style={{ color: colors.textSecondary }}>{item.serialNo || '-'}</span>
+                            {selectedCase.tripId && item.caseId && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-medium"
+                                style={{ backgroundColor: `${colors.orange}1f`, color: colors.orange }}>
+                                {item.caseId}
+                              </span>
+                            )}
                             <span className="font-mono" style={{ color: colors.textSecondary }}>×{item.qty}</span>
                           </div>
                         ))}
@@ -468,7 +475,8 @@ export default function CaseDetailPanel({
                               }}>
                               {item.productType === 'PVALVE' ? t('p_valve.clinicalCase.detail.pvShort') : t('p_valve.clinicalCase.detail.dsShort')}
                             </span>
-                            <span className="font-mono flex-1">{item.serialNo || item.specNo}</span>
+                            <span className="font-mono">{item.specNo}</span>
+                            <span className="font-mono flex-1" style={{ color: colors.textSecondary }}>{item.serialNo || '-'}</span>
                             <span className="font-mono" style={{ color: colors.textSecondary }}>×{item.qty}</span>
                           </div>
                         ))}
@@ -499,7 +507,8 @@ export default function CaseDetailPanel({
                               }}>
                               {item.productType === 'PVALVE' ? t('p_valve.clinicalCase.detail.pvShort') : t('p_valve.clinicalCase.detail.dsShort')}
                             </span>
-                            <span className="font-mono flex-1">{item.serialNo || item.specNo}</span>
+                            <span className="font-mono">{item.specNo}</span>
+                            <span className="font-mono flex-1" style={{ color: colors.textSecondary }}>{item.serialNo || '-'}</span>
                             <span className="font-mono" style={{ color: colors.textSecondary }}>×{item.qty}</span>
                           </div>
                         ))}

@@ -124,6 +124,12 @@ class VmaClinicalCaseController(
     fun addCaseItem(@PathVariable caseId: String, @RequestBody dto: AddCaseItemRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(caseService.addCaseItem(caseId, dto))
 
+    @PostMapping("/clinical-cases/{caseId}/items/batch")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "ADD_CASE_ITEMS_BATCH")
+    fun addCaseItemsBatch(@PathVariable caseId: String, @RequestBody items: List<AddCaseItemRequest>): ResponseEntity<Any> =
+        ResponseEntity.status(HttpStatus.CREATED).body(caseService.addCaseItemsBatch(caseId, items))
+
     // ═══════════ Product Picking ═══════════
 
     @PostMapping("/case-pick-products")

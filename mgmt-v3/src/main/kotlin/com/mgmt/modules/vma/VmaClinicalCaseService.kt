@@ -81,10 +81,15 @@ class VmaClinicalCaseService(
         )
 
         if (c.tripId != null) {
-            // Trip-linked case — show shared product pool
+            // Trip-linked case — show shared product pool (OUT_CASE with tripId)
             val tripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
-                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
             result["transactions"] = tripTxns
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+            // Separately include USED items so frontend can filter completion modal
+            result["usedItems"] = tripTxns
+                .filter { it.action == VmaInventoryAction.USED_CASE }
+                .map { mapOf("specNo" to it.specNo, "serialNo" to it.serialNo, "caseId" to it.caseId) }
 
             // Sibling cases
             val siblings = caseRepo.findAllByTripId(c.tripId!!)
@@ -107,9 +112,14 @@ class VmaClinicalCaseService(
         }
 
         // For completed cases, include the completion summary
-        val allTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+        val completionTxns = if (c.tripId != null) {
+            txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+                .filter { it.notes?.startsWith("COMPLETION_AUTO") == true }
+        } else {
+            txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+                .filter { it.notes?.startsWith("COMPLETION_AUTO") == true }
+        }
         if (c.status == VmaClinicalCaseStatus.COMPLETED) {
-            val completionTxns = allTxns.filter { it.notes?.startsWith("COMPLETION_AUTO") == true }
 
             fun toSummaryItem(txn: VmaInventoryTransaction) = mapOf(
                 "productType" to txn.productType.name,
@@ -118,6 +128,7 @@ class VmaClinicalCaseService(
                 "qty" to txn.qty,
                 "expDate" to txn.expDate?.toString(),
                 "batchNo" to txn.batchNo,
+                "caseId" to txn.caseId,
             )
 
             result["completionSummary"] = mapOf(
@@ -334,13 +345,12 @@ class VmaClinicalCaseService(
             allCaseIds.add(extraCaseId)
         }
 
-        // Create transactions for each item
-        val action = if (isMultiCase) VmaInventoryAction.OUT_TRIP else VmaInventoryAction.OUT_CASE
+        // Create transactions for each item (always OUT_CASE; tripId distinguishes trip vs standalone)
         for (item in dto.items) {
             txnRepo.save(VmaInventoryTransaction(
                 id = UUID.randomUUID().toString(),
                 date = caseDate,
-                action = action,
+                action = VmaInventoryAction.OUT_CASE,
                 productType = VmaProductType.valueOf(item.productType),
                 specNo = item.specNo,
                 serialNo = item.serialNo,
@@ -391,9 +401,38 @@ class VmaClinicalCaseService(
             ?: throw NotFoundException("Case \"$caseId\" not found")
         val site = siteRepo.findBySiteId(c.siteId)
             ?: throw NotFoundException("Site \"${c.siteId}\" not found")
-        val txns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
-            .filter { it.action == VmaInventoryAction.OUT_CASE || it.action == VmaInventoryAction.OUT_TRIP }
-            .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+
+        // For trip cases: query transactions by tripId, reference = all case IDs
+        val isTrip = c.tripId != null
+        val txns = if (isTrip) {
+            txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+        } else {
+            txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
+        }
+
+        // Reference: compressed UVP format
+        // Same site: UVP-007-001, 002  |  Different site: UVP-007-002, 005-003
+        val reference = if (isTrip) {
+            val tripCases = caseRepo.findAllByTripId(c.tripId!!)
+                .sortedBy { it.caseId }
+            val first = tripCases.first()
+            val parts = mutableListOf(first.caseId) // Full: UVP-007-001
+            for (i in 1 until tripCases.size) {
+                val tc = tripCases[i]
+                if (tc.siteId == first.siteId) {
+                    parts.add(tc.patientId) // Same site → just patientId: 002
+                } else {
+                    parts.add("${tc.siteId}-${tc.patientId}") // Diff site → siteId-patientId: 005-003
+                }
+            }
+            parts.joinToString(", ")
+        } else {
+            caseId
+        }
 
         // Build product spec name lookup
         val pvSpecs = txns.filter { it.productType == VmaProductType.PVALVE }
@@ -433,7 +472,7 @@ class VmaClinicalCaseService(
         }
 
         val data = VmaPackingListPdfService.PackingListData(
-            caseId = caseId,
+            caseId = reference,
             caseDate = c.caseDate.toString(),
             site = VmaPackingListPdfService.SiteInfo(
                 siteName = site.siteName,
@@ -501,14 +540,17 @@ class VmaClinicalCaseService(
         val now = Instant.now()
 
         if (c.tripId != null) {
-            // Trip-linked case — remove from trip
+            // Trip-linked case — check if any sibling is completed
             val siblings = caseRepo.findAllByTripId(c.tripId!!).filter { it.caseId != caseId }
+            val completedSibling = siblings.any { it.status == VmaClinicalCaseStatus.COMPLETED }
+            if (completedSibling)
+                throw IllegalStateException("Cannot delete: a related case has been completed. Reverse all completions first.")
 
             // Un-assign any trip products assigned to this case
             val tripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
             for (txn in tripTxns.filter { it.caseId == caseId }) {
                 txn.caseId = null
-                txn.action = VmaInventoryAction.OUT_TRIP
+                txn.action = VmaInventoryAction.OUT_CASE
                 txn.updatedAt = now
                 txnRepo.save(txn)
             }
@@ -622,11 +664,10 @@ class VmaClinicalCaseService(
             source.updatedAt = now
             caseRepo.save(source)
 
-            // Convert existing OUT_CASE transactions to OUT_TRIP
+            // Set tripId on existing OUT_CASE transactions (action stays OUT_CASE)
             val existingTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(sourceCaseId)
             for (txn in existingTxns) {
                 if (txn.action == VmaInventoryAction.OUT_CASE) {
-                    txn.action = VmaInventoryAction.OUT_TRIP
                     txn.tripId = tripId
                     txn.caseId = null
                     txn.updatedAt = now
@@ -678,6 +719,34 @@ class VmaClinicalCaseService(
         }
     }
 
+    /**
+     * Add multiple items to a case in a single transactional call.
+     */
+    fun addCaseItemsBatch(caseId: String, items: List<AddCaseItemRequest>): List<VmaInventoryTransaction> {
+        val c = caseRepo.findByCaseId(caseId)
+            ?: throw NotFoundException("Case \"$caseId\" not found")
+        if (c.status == VmaClinicalCaseStatus.COMPLETED)
+            throw IllegalStateException("Cannot modify a completed case")
+        require(items.isNotEmpty()) { "At least one item is required" }
+
+        return items.map { dto ->
+            txnRepo.save(VmaInventoryTransaction(
+                id = UUID.randomUUID().toString(),
+                date = c.caseDate,
+                action = VmaInventoryAction.OUT_CASE,
+                productType = VmaProductType.valueOf(dto.productType),
+                specNo = dto.specNo,
+                serialNo = dto.serialNo,
+                qty = dto.qty,
+                expDate = dto.expDate?.let { LocalDate.parse(it) },
+                batchNo = dto.batchNo,
+                caseId = caseId,
+            )).also {
+                invService.clearFridgeSlotBySerial(dto.specNo, dto.serialNo)
+            }
+        }
+    }
+
     // ═══════════ Case Completion ═══════════
 
     fun completeCase(caseId: String, dto: CompleteCaseRequest): Map<String, Any> {
@@ -686,78 +755,169 @@ class VmaClinicalCaseService(
         if (c.status == VmaClinicalCaseStatus.COMPLETED)
             throw IllegalStateException("Case is already completed")
 
-        val caseTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+        // For trip cases, transactions are stored with tripId (caseId=null)
+        val isTrip = c.tripId != null
+        val caseTxns = if (isTrip) {
+            txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+        } else {
+            txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+        }
         val txnMap = caseTxns.associateBy { it.id }
-
-        // All OUT_CASE transactions for this case
-        val outCaseIds = caseTxns
-            .filter { it.action == VmaInventoryAction.OUT_CASE }
-            .map { it.id }
-            .toSet()
-        val submittedIds = dto.items.map { it.txnId }.toSet()
-
-        // Validate: every submitted txnId belongs to this case
-        for (item in dto.items) {
-            require(txnMap.containsKey(item.txnId)) {
-                "Transaction \"${item.txnId}\" does not belong to this case"
-            }
-        }
-
-        // Validate: every OUT_CASE product must be accounted for
-        val missing = outCaseIds - submittedIds
-        require(missing.isEmpty()) {
-            "All products must be accounted for. Missing: ${missing.joinToString()}"
-        }
 
         val now = LocalDate.now()
 
-        for (item in dto.items) {
-            val origTxn = txnMap[item.txnId] ?: continue
+        if (isTrip) {
+            // ── Trip completion: per-case ──
+            // Only the OUT_CASE items NOT already USED by other cases are available
+            // Count-based: for DS products, same serial can have multiple OUT_CASE records
+            val usedCounts = caseTxns
+                .filter { it.action == VmaInventoryAction.USED_CASE }
+                .groupBy { "${it.specNo}|${it.serialNo}" }
+                .mapValues { it.value.size }
+            val consumedCounts = mutableMapOf<String, Int>()
+            val availableOutTxns = caseTxns
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .filter { txn ->
+                    val key = "${txn.specNo}|${txn.serialNo}"
+                    val usedQty = usedCounts[key] ?: 0
+                    val consumed = consumedCounts[key] ?: 0
+                    if (consumed < usedQty) {
+                        consumedCounts[key] = consumed + 1
+                        false // this unit was consumed by a USED_CASE
+                    } else {
+                        true // available
+                    }
+                }
 
-            if (!item.returned) {
-                // USED_CASE — consumed
-                txnRepo.save(VmaInventoryTransaction(
-                    id = UUID.randomUUID().toString(),
-                    date = now, action = VmaInventoryAction.USED_CASE,
-                    productType = origTxn.productType, specNo = origTxn.specNo,
-                    serialNo = origTxn.serialNo, qty = origTxn.qty,
-                    expDate = origTxn.expDate, batchNo = origTxn.batchNo,
-                    caseId = caseId, notes = "COMPLETION_AUTO|USED",
-                ))
-            } else {
-                val accepted = item.accepted != false
-                val condArr = item.returnCondition?.toTypedArray() ?: arrayOf()
+            val availableIds = availableOutTxns.map { it.id }.toSet()
+            val submittedIds = dto.items.map { it.txnId }.toSet()
 
-                // REC_CASE — return to inventory
-                txnRepo.save(VmaInventoryTransaction(
-                    id = UUID.randomUUID().toString(),
-                    date = now, action = VmaInventoryAction.REC_CASE,
-                    productType = origTxn.productType, specNo = origTxn.specNo,
-                    serialNo = origTxn.serialNo, qty = origTxn.qty,
-                    expDate = origTxn.expDate, batchNo = origTxn.batchNo,
-                    caseId = caseId, inspection = if (accepted) VmaInspectionResult.ACCEPT else VmaInspectionResult.REJECT,
-                    condition = condArr, notes = "COMPLETION_AUTO|REC",
-                ))
+            // Validate: every submitted txnId is an available OUT_CASE
+            for (item in dto.items) {
+                require(availableIds.contains(item.txnId)) {
+                    "Transaction \"${item.txnId}\" is not available for this case"
+                }
+            }
 
-                if (!accepted) {
-                    // MOVE_DEMO — rejected, move to demo
+            // Process items: only write USED_CASE immediately; skip "returned" items
+            for (item in dto.items) {
+                if (!item.returned) {
+                    val origTxn = txnMap[item.txnId] ?: continue
                     txnRepo.save(VmaInventoryTransaction(
                         id = UUID.randomUUID().toString(),
-                        date = now, action = VmaInventoryAction.MOVE_DEMO,
+                        date = now, action = VmaInventoryAction.USED_CASE,
                         productType = origTxn.productType, specNo = origTxn.specNo,
                         serialNo = origTxn.serialNo, qty = origTxn.qty,
                         expDate = origTxn.expDate, batchNo = origTxn.batchNo,
-                        caseId = caseId, inspection = VmaInspectionResult.REJECT,
-                        condition = condArr, notes = "COMPLETION_AUTO|DEMO",
+                        caseId = caseId, tripId = c.tripId,
+                        notes = "COMPLETION_AUTO|USED",
+                    ))
+                }
+                // "returned" items: do nothing yet — they stay as OUT_CASE with tripId
+            }
+
+            // Mark this case COMPLETED
+            c.status = VmaClinicalCaseStatus.COMPLETED
+            c.updatedAt = Instant.now()
+            caseRepo.save(c)
+
+            // Check: are ALL trip cases now COMPLETED?
+            val tripCases = caseRepo.findAllByTripId(c.tripId!!)
+            val allDone = tripCases.all { it.status == VmaClinicalCaseStatus.COMPLETED }
+            if (allDone) {
+                // Auto-return remaining products (OUT_CASE with tripId, not matched by any USED_CASE)
+                // Count-based: DS products can have multiple OUT_CASE per serial
+                val allTripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+                val returnUsedCounts = allTripTxns
+                    .filter { it.action == VmaInventoryAction.USED_CASE }
+                    .groupBy { "${it.specNo}|${it.serialNo}" }
+                    .mapValues { it.value.size }
+                val returnConsumed = mutableMapOf<String, Int>()
+                val toReturn = caseTxns
+                    .filter { it.action == VmaInventoryAction.OUT_CASE }
+                    .filter { txn ->
+                        val key = "${txn.specNo}|${txn.serialNo}"
+                        val usedQty = returnUsedCounts[key] ?: 0
+                        val consumed = returnConsumed[key] ?: 0
+                        if (consumed < usedQty) {
+                            returnConsumed[key] = consumed + 1
+                            false // matched by USED_CASE — not returned
+                        } else {
+                            true // not used — should be returned
+                        }
+                    }
+
+                for (outTxn in toReturn) {
+                    txnRepo.save(VmaInventoryTransaction(
+                        id = UUID.randomUUID().toString(),
+                        date = now, action = VmaInventoryAction.REC_CASE,
+                        productType = outTxn.productType, specNo = outTxn.specNo,
+                        serialNo = outTxn.serialNo, qty = outTxn.qty,
+                        expDate = outTxn.expDate, batchNo = outTxn.batchNo,
+                        tripId = c.tripId, inspection = VmaInspectionResult.ACCEPT,
+                        condition = arrayOf(), notes = "COMPLETION_AUTO|REC|TRIP_FINAL",
                     ))
                 }
             }
-        }
+        } else {
+            // ── Standalone case: original behavior ──
+            val outCaseIds = caseTxns
+                .filter { it.action == VmaInventoryAction.OUT_CASE }
+                .map { it.id }
+                .toSet()
+            val submittedIds = dto.items.map { it.txnId }.toSet()
 
-        // Update case status
-        c.status = VmaClinicalCaseStatus.COMPLETED
-        c.updatedAt = Instant.now()
-        caseRepo.save(c)
+            for (item in dto.items) {
+                require(txnMap.containsKey(item.txnId)) {
+                    "Transaction \"${item.txnId}\" does not belong to this case"
+                }
+            }
+            val missing = outCaseIds - submittedIds
+            require(missing.isEmpty()) {
+                "All products must be accounted for. Missing: ${missing.joinToString()}"
+            }
+
+            for (item in dto.items) {
+                val origTxn = txnMap[item.txnId] ?: continue
+                if (!item.returned) {
+                    txnRepo.save(VmaInventoryTransaction(
+                        id = UUID.randomUUID().toString(),
+                        date = now, action = VmaInventoryAction.USED_CASE,
+                        productType = origTxn.productType, specNo = origTxn.specNo,
+                        serialNo = origTxn.serialNo, qty = origTxn.qty,
+                        expDate = origTxn.expDate, batchNo = origTxn.batchNo,
+                        caseId = caseId, notes = "COMPLETION_AUTO|USED",
+                    ))
+                } else {
+                    val accepted = item.accepted != false
+                    val condArr = item.returnCondition?.toTypedArray() ?: arrayOf()
+                    txnRepo.save(VmaInventoryTransaction(
+                        id = UUID.randomUUID().toString(),
+                        date = now, action = VmaInventoryAction.REC_CASE,
+                        productType = origTxn.productType, specNo = origTxn.specNo,
+                        serialNo = origTxn.serialNo, qty = origTxn.qty,
+                        expDate = origTxn.expDate, batchNo = origTxn.batchNo,
+                        caseId = caseId, inspection = if (accepted) VmaInspectionResult.ACCEPT else VmaInspectionResult.REJECT,
+                        condition = condArr, notes = "COMPLETION_AUTO|REC",
+                    ))
+                    if (!accepted) {
+                        txnRepo.save(VmaInventoryTransaction(
+                            id = UUID.randomUUID().toString(),
+                            date = now, action = VmaInventoryAction.MOVE_DEMO,
+                            productType = origTxn.productType, specNo = origTxn.specNo,
+                            serialNo = origTxn.serialNo, qty = origTxn.qty,
+                            expDate = origTxn.expDate, batchNo = origTxn.batchNo,
+                            caseId = caseId, inspection = VmaInspectionResult.REJECT,
+                            condition = condArr, notes = "COMPLETION_AUTO|DEMO",
+                        ))
+                    }
+                }
+            }
+
+            c.status = VmaClinicalCaseStatus.COMPLETED
+            c.updatedAt = Instant.now()
+            caseRepo.save(c)
+        }
 
         return mapOf("success" to true, "caseId" to caseId, "status" to "COMPLETED")
     }
@@ -768,16 +928,33 @@ class VmaClinicalCaseService(
         if (c.status != VmaClinicalCaseStatus.COMPLETED)
             throw IllegalStateException("Case is not completed")
 
-        // Delete ALL non-OUT_CASE transactions (completion artifacts)
-        // Previously only deleted COMPLETION_AUTO notes, leaving stale data
-        val completionTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
-            .filter { it.action != VmaInventoryAction.OUT_CASE }
-        txnRepo.deleteAll(completionTxns)
+        val isTrip = c.tripId != null
 
-        // Revert status
-        c.status = VmaClinicalCaseStatus.IN_PROGRESS
-        c.updatedAt = Instant.now()
-        caseRepo.save(c)
+        if (isTrip) {
+            // ── Trip reversal ──
+            // 1. Delete ALL REC_CASE for the trip (auto-return when all cases were done)
+            // 2. Delete USED_CASE for THIS case only (keep other cases' USED)
+            val allTripTxns = txnRepo.findAllByTripIdAndDeletedAtIsNull(c.tripId!!)
+            val toDelete = allTripTxns.filter { txn ->
+                txn.action == VmaInventoryAction.REC_CASE ||
+                (txn.action == VmaInventoryAction.USED_CASE && txn.caseId == caseId)
+            }
+            txnRepo.deleteAll(toDelete)
+
+            // Revert this case status
+            c.status = VmaClinicalCaseStatus.IN_PROGRESS
+            c.updatedAt = Instant.now()
+            caseRepo.save(c)
+        } else {
+            // ── Standalone case: delete all completion artifacts ──
+            val allTxns = txnRepo.findAllByCaseIdAndDeletedAtIsNull(caseId)
+            val completionTxns = allTxns.filter { it.action != VmaInventoryAction.OUT_CASE }
+            txnRepo.deleteAll(completionTxns)
+
+            c.status = VmaClinicalCaseStatus.IN_PROGRESS
+            c.updatedAt = Instant.now()
+            caseRepo.save(c)
+        }
 
         return mapOf("success" to true, "caseId" to caseId, "status" to "IN_PROGRESS")
     }

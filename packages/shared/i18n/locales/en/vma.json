@@ -339,6 +339,17 @@
         "operator": "Operator",
         "notes": "Notes"
       },
+      "noteLabels": {
+        "receivingReject": "Receiving — Rejected",
+        "completionUsed": "Used in Case",
+        "completionRec": "Returned from Case",
+        "completionRecTripFinal": "Auto-Return (Trip Final)",
+        "completionDemo": "Moved to Demo (Damaged)",
+        "returnedFromTrip": "Returned from Trip {tripId}",
+        "returnToChina": "Return to China",
+        "manualMoveDemo": "Manual Move to Demo",
+        "returnedFromDemo": "Returned from Demo (ID: {id})"
+      },
       "loading": "Loading...",
       "noMatch": "No matching records",
       "empty": "No transactions yet",
@@ -481,7 +492,8 @@
         "optional": "Optional",
         "threeDigits": "3 digits",
         "date": "Date",
-        "addAnotherCase": "+ Add Another Case (Shared Products)"
+        "addAnotherCase": "+ Add Another Case (Shared Products)",
+        "primaryCaseTitle": "Case 1 — Primary"
       },
       "editModal": {
         "title": "Edit Case Item",

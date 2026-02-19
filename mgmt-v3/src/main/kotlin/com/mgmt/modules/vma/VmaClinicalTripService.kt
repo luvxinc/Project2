@@ -12,7 +12,7 @@ import java.util.*
 
 /**
  * VmaClinicalTripService — handles Trip lifecycle:
- *   create (OUT_TRIP) → assign to cases → return unused → complete
+ *   create (OUT_CASE + tripId) → assign to cases → return unused → complete
  */
 @Service
 @Transactional
@@ -28,10 +28,20 @@ class VmaClinicalTripService(
 
     fun findAll(): List<Map<String, Any?>> {
         val trips = tripRepo.findAllByOrderByTripDateDesc()
+        if (trips.isEmpty()) return emptyList()
+
         val siteMap = siteRepo.findAll().associateBy { it.siteId }
+
+        // Batch-load all transactions and cases to avoid N+1 queries
+        val tripIds = trips.map { it.tripId }
+        val allTxns = txnRepo.findAllByTripIdInAndDeletedAtIsNull(tripIds)
+        val allCases = caseRepo.findAllByTripIdIn(tripIds)
+        val txnsByTrip = allTxns.groupBy { it.tripId }
+        val casesByTrip = allCases.groupBy { it.tripId }
+
         return trips.map { t ->
-            val txns = txnRepo.findAllByTripIdAndDeletedAtIsNull(t.tripId)
-            val cases = caseRepo.findAllByTripId(t.tripId)
+            val txns = txnsByTrip[t.tripId] ?: emptyList()
+            val cases = casesByTrip[t.tripId] ?: emptyList()
             mapOf(
                 "tripId" to t.tripId,
                 "tripDate" to t.tripDate.toString(),
@@ -50,7 +60,6 @@ class VmaClinicalTripService(
     fun findOne(tripId: String): Map<String, Any?> {
         val t = tripRepo.findByTripId(tripId)
             ?: throw NotFoundException("Trip \"$tripId\" not found")
-        val site = siteRepo.findBySiteId(t.siteId)
         val txns = txnRepo.findAllByTripIdAndDeletedAtIsNull(tripId)
             .sortedWith(compareBy({ it.productType }, { it.specNo }, { it.serialNo }))
         val cases = caseRepo.findAllByTripId(tripId)
@@ -60,7 +69,7 @@ class VmaClinicalTripService(
             "tripId" to t.tripId,
             "tripDate" to t.tripDate.toString(),
             "siteId" to t.siteId,
-            "siteName" to site?.siteName,
+            "siteName" to siteMap[t.siteId]?.siteName,
             "status" to t.status.name,
             "transactions" to txns,
             "cases" to cases.map { c ->
@@ -78,7 +87,7 @@ class VmaClinicalTripService(
         )
     }
 
-    // ═══════════ Create Trip (OUT_TRIP) ═══════════
+    // ═══════════ Create Trip (OUT_CASE + tripId) ═══════════
 
     fun createTrip(dto: CreateTripRequest): Map<String, Any?> {
         val tripDate = LocalDate.parse(dto.tripDate)
@@ -105,12 +114,12 @@ class VmaClinicalTripService(
             caseRepo.save(c)
         }
 
-        // Create OUT_TRIP transactions for each item
+        // Create OUT_CASE transactions for each item (tripId marks them as trip)
         for (item in dto.items) {
             txnRepo.save(VmaInventoryTransaction(
                 id = UUID.randomUUID().toString(),
                 date = tripDate,
-                action = VmaInventoryAction.OUT_TRIP,
+                action = VmaInventoryAction.OUT_CASE,
                 productType = VmaProductType.valueOf(item.productType),
                 specNo = item.specNo,
                 serialNo = item.serialNo,
@@ -171,7 +180,7 @@ class VmaClinicalTripService(
     // ═══════════ Return Unassigned Items ═══════════
 
     /**
-     * Return unassigned trip items back to inventory (soft-delete the OUT_TRIP txn,
+     * Return unassigned trip items back to inventory (soft-delete the OUT_CASE txn,
      * create a REC_CASE txn to bring them back).
      */
     fun returnItems(tripId: String, dto: ReturnTripItemsRequest): Map<String, Any> {
@@ -186,7 +195,7 @@ class VmaClinicalTripService(
         require(toReturn.isNotEmpty()) { "No valid unassigned transactions to return" }
 
         for (txn in toReturn) {
-            // Soft-delete the OUT_TRIP transaction
+            // Soft-delete the OUT_CASE transaction
             txn.deletedAt = Instant.now()
             txn.updatedAt = Instant.now()
             txnRepo.save(txn)
@@ -220,7 +229,7 @@ class VmaClinicalTripService(
 
         // Check all items are either assigned or returned
         val txns = txnRepo.findAllByTripIdAndDeletedAtIsNull(tripId)
-        val unassigned = txns.filter { it.caseId == null && it.action == VmaInventoryAction.OUT_TRIP }
+        val unassigned = txns.filter { it.caseId == null && it.action == VmaInventoryAction.OUT_CASE }
         if (unassigned.isNotEmpty()) {
             throw IllegalStateException("${unassigned.size} item(s) still unassigned. Assign to a case or return them first.")
         }
@@ -267,7 +276,7 @@ class VmaClinicalTripService(
         val txns = txnRepo.findAllByTripIdAndDeletedAtIsNull(tripId)
         for (txn in txns.filter { it.caseId == dto.caseId }) {
             txn.caseId = null
-            txn.action = VmaInventoryAction.OUT_TRIP
+            txn.action = VmaInventoryAction.OUT_CASE
             txn.updatedAt = Instant.now()
             txnRepo.save(txn)
         }

@@ -21,6 +21,7 @@ export interface CaseTransaction {
   expDate: string | null;
   productType: string;
   batchNo: string | null;
+  action?: string;
 }
 
 export interface Site {
@@ -86,6 +87,7 @@ export interface CompletionSummaryItem {
   qty: number;
   expDate: string | null;
   batchNo: string | null;
+  caseId?: string | null;
 }
 
 export interface CompletionSummary {

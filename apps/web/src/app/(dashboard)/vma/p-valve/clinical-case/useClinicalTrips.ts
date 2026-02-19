@@ -36,7 +36,7 @@ export function useClinicalTrips() {
     try {
       const res = await fetch(`${API}/vma/clinical-trips`, { headers: getAuthHeaders() });
       if (res.ok) setTrips(await res.json());
-    } catch { /* */ }
+    } catch (e) { console.error('fetchTrips', e); }
     setTripsLoading(false);
   }, []);
 
@@ -61,7 +61,7 @@ export function useClinicalTrips() {
           specification: d.specification, model: d.model,
         })));
       }
-    } catch { /* */ }
+    } catch { /* non-critical: spec options will be empty */ }
   }, []);
 
   // ====== Auto Pick ======
@@ -150,7 +150,7 @@ export function useClinicalTrips() {
     try {
       const res = await fetch(`${API}/vma/clinical-trips/${encodeURIComponent(tripId)}`, { headers: getAuthHeaders() });
       if (res.ok) setTripDetail(await res.json());
-    } catch { /* */ }
+    } catch (e) { console.error('fetchTripDetail', e); }
     setTripDetailLoading(false);
   }, []);
 
@@ -176,7 +176,7 @@ export function useClinicalTrips() {
         setTripDetail(null);
         fetchTrips();
       }
-    } catch { /* */ }
+    } catch (e) { console.error('deleteTrip', e); }
   }, [fetchTrips]);
 
   // ====== Assign Items to Case ======
