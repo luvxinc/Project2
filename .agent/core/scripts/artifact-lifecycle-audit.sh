@@ -6,6 +6,8 @@ set -euo pipefail
 #   artifact-lifecycle-audit.sh <project-root>
 #   artifact-lifecycle-audit.sh <project-root> --tmp-only
 #   artifact-lifecycle-audit.sh <project-root> --cleanup-task <task-id>
+#   artifact-lifecycle-audit.sh <project-root> --enforce-no-audits
+#   artifact-lifecycle-audit.sh <project-root> --cleanup-audits
 
 PROOT="${1:-/Users/aaron/Developer/MGMTV2/.agent/projects/mgmt}"
 MODE="${2:-all}"
@@ -23,6 +25,27 @@ if [ "$MODE" = "--cleanup-task" ]; then
   mv "$SRC" "$TRASH"
   echo "🗑 moved to trash: $TRASH"
   echo "ℹ️ hard-delete after 24h by policy"
+  exit 0
+fi
+
+if [ "$MODE" = "--cleanup-audits" ]; then
+  AD="$PROOT/data/audits"
+  [ -d "$AD" ] || { echo "ℹ️ no audits dir"; exit 0; }
+  n_before=$(find "$AD" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+  find "$AD" -type f -name "*.md" -delete
+  n_after=$(find "$AD" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+  echo "🧹 audits cleanup: before=$n_before after=$n_after"
+  exit 0
+fi
+
+if [ "$MODE" = "--enforce-no-audits" ]; then
+  n=$(find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$n" -gt 0 ]; then
+    echo "❌ audits must be empty after fixes, found: $n"
+    find "$PROOT/data/audits" -type f -name "*.md" 2>/dev/null | sed 's/^/  audit: /' | head -n 100
+    exit 1
+  fi
+  echo "✅ audits empty"
   exit 0
 fi
 

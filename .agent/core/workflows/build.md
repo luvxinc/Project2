@@ -357,6 +357,8 @@ PM 交付物完整性检查 (§5.3)
 - ✅ 执行 `core/skills/project-structure.md` §6.3 健康检查
 - ✅ 执行记忆去重审计：`core/scripts/memory-dedupe-audit.sh .agent/projects/{project}`
 - ✅ 执行产物生命周期审计：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project}`
+- ✅ 修复完成后清理审计报告：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --cleanup-audits`
+- ✅ 审计报告空目录强校验：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --enforce-no-audits`
 - ✅ 清理任务临时目录（两阶段删除）：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --cleanup-task {task-id}`
 - ✅ 清理过期临时回收站：`core/scripts/artifact-trash-purge.sh .agent/projects/{project} 24`
 - 🔴 **自动 Git 提交+推送:**
