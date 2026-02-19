@@ -16,6 +16,7 @@
 | `Spring`, `后端` | → §8 后端规则 |
 | `拆分`, `复用`, `300行`, `新建文件` | → §9 代码拆分与复用 |
 | `死循环`, `卡死`, `timeout`, `重试` | → §10 反死循环与终端安全执行 |
+| `hooks`, `PreToolUse`, `PostToolUse`, `Stop` | → §10.1 Hooks 执行拦截 |
 | `重构`, `迁移`, `等价`, `像素级审计` | → §11 重构保真门禁 |
 
 ## 0. 变更边界铁律（scope-discipline）
@@ -277,6 +278,13 @@ grep -r "{SharedModuleName}" --include="*.kt" --include="*.ts" --include="*.tsx"
 
 - 推荐统一包装器：`core/scripts/safe-exec.sh`
 - 所有高风险命令优先用包装器执行，确保 timeout 与输出边界生效。
+
+### 10.4 Hooks 执行拦截（新增）
+
+- PreToolUse：执行前必须过 `core/scripts/hook-pretool.sh`
+- PostToolUse：关键写操作后执行 `core/scripts/hook-posttool.sh`
+- Stop：任务收尾执行 `core/scripts/hook-stop.sh`
+- 任一 Hook 失败：不得宣称任务完成
 
 ---
 
