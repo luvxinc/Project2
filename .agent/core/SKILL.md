@@ -71,7 +71,7 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 | 规则 | 文件 | 内容 | 大小 |
 |------|------|------|------|
-| 通用规则 | [`rules/common.md`](rules/common.md) | 代码风格/Git/测试门禁(§5)/跨文件影响(§6)/代码拆分+复用(§9) | ~6KB |
+| 通用规则 | [`rules/common.md`](rules/common.md) | 代码风格/Git/测试门禁(§5)/跨文件影响(§6)/代码拆分+复用(§9)/Hooks拦截(§10.1) | ~6KB |
 | 前端自检 | [`rules/frontend.md`](rules/frontend.md) | 10 反模式 (F1-F10) + CRITICAL/HIGH Checklist | ~3KB |
 | 后端自检 | [`rules/backend.md`](rules/backend.md) | 10 反模式 (B1-B10) + CRITICAL/HIGH Checklist | ~4KB |
 
