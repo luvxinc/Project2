@@ -298,7 +298,7 @@ DEFAULT_USER_PASSWORD=6M130
 # ======================================================
 # [必需] Google Gemini (免费版 API)
 # 请去 https://aistudio.google.com/ 申请 Key
-GOOGLE_API_KEY=AIzaSyAbdHirMyFjNcbllLeLhu7Eh0nCWbLBOKg
+GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
 
 
 # ======================================================

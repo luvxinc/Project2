@@ -1,0 +1,47 @@
+{
+  "slug": "claude-mem",
+  "category": "cognition",
+  "keywords": [
+    "memory",
+    "context",
+    "token"
+  ],
+  "source": {
+    "repo": "unknown",
+    "ref": "unknown",
+    "commit": "unknown",
+    "extractedAt": "2026-02-18T03:35:30Z"
+  },
+  "slices": [
+    {
+      "file": "01-architecture.md",
+      "module": "architecture",
+      "keywords": [
+        "memory",
+        "context",
+        "token"
+      ],
+      "sourcePath": "unknown"
+    },
+    {
+      "file": "02-mcp-search.md",
+      "module": "mcp-search",
+      "keywords": [
+        "memory",
+        "context",
+        "token"
+      ],
+      "sourcePath": "unknown"
+    },
+    {
+      "file": "03-context-engineering.md",
+      "module": "context-engineering",
+      "keywords": [
+        "memory",
+        "context",
+        "token"
+      ],
+      "sourcePath": "unknown"
+    }
+  ]
+}

@@ -134,6 +134,38 @@ class GlobalExceptionHandler {
         )
     }
 
+    // === Illegal Argument (require() failures) ===
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException, request: HttpServletRequest): ResponseEntity<ProblemDetail> {
+        logger.warn("[{}] Illegal argument: {}", getTraceId(request), ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ProblemDetail(
+                type = "invalid_operation",
+                title = "Invalid Operation",
+                status = 400,
+                detail = ex.message ?: "Invalid argument",
+                traceId = getTraceId(request)
+            )
+        )
+    }
+
+    // === Illegal State (check() failures, business state violations) ===
+
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalState(ex: IllegalStateException, request: HttpServletRequest): ResponseEntity<ProblemDetail> {
+        logger.warn("[{}] Illegal state: {}", getTraceId(request), ex.message)
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ProblemDetail(
+                type = "invalid_state",
+                title = "Invalid State",
+                status = 409,
+                detail = ex.message ?: "Invalid state",
+                traceId = getTraceId(request)
+            )
+        )
+    }
+
     // === Catch-All ===
 
     @ExceptionHandler(Exception::class)

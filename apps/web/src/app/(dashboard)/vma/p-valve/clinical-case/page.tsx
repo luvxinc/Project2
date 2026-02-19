@@ -17,14 +17,51 @@ export default function ClinicalCasePage() {
   const colors = themeColors[theme];
   const t = useTranslations('vma');
 
-  const hook = useClinicalCases();
+  const {
+    toastError, setToastError,
+    cases, loading,
+    selectedCase, caseDetail, relatedCases, completionSummary, loadingDetail, isFlipped,
+    frontRef, backRef, completionRef,
+    handleCaseClick, handleBack,
+    showCompletion, completionItems, setCompletionItems,
+    confirmModalOpen, setConfirmModalOpen,
+    completing, reverseModalOpen, setReverseModalOpen, reversing,
+    openCompletionReview, closeCompletionReview,
+    handleConfirmCompletion, handleReverseCompletion,
+    modalOpen, setModalOpen, sites,
+    caseNo, setCaseNo, siteId, setSiteId,
+    patientId, setPatientId, caseDate, setCaseDate,
+    submitting, error, caseNoDup,
+    pvSpecOptions, pvLines, setPvLines,
+    dsOptions, dsLines, setDsLines,
+    handleSubmit, resetModal,
+    additionalCases, setAdditionalCases,
+    handleAddRelatedCase, handleDeleteAllRelated,
+    editInfoMode, setEditInfoMode,
+    infoForm, setInfoForm, infoSaving, infoError,
+    handleSaveInfo, handleDownloadPdf,
+    isCompleted,
+    addPvSpecOptions, setAddPvSpecOptions, addDsOptions,
+    addPvLines, setAddPvLines, addDsLines, setAddDsLines,
+    addingItems, showAddForm, setShowAddForm,
+    handleAddItems,
+    editTxn, setEditTxn, editForm,
+    editSaving, editError, editSpecOptions,
+    editAvailable, editLoadingAvail,
+    openEdit, handleEditSpecChange, handleEditSerialChange, saveEdit,
+    deletingId, setDeletingId, deleteLoading, confirmDelete,
+    handleDeleteCase,
+    autoPick, swapPicked,
+    API, getAuthHeaders,
+  } = useClinicalCases();
+
 
   // Auto-dismiss toast errors after 4 seconds
   useEffect(() => {
-    if (!hook.toastError) return;
-    const timer = setTimeout(() => hook.setToastError(null), 4000);
+    if (!toastError) return;
+    const timer = setTimeout(() => setToastError(null), 4000);
     return () => clearTimeout(timer);
-  }, [hook.toastError]);
+  }, [toastError, setToastError]);
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
@@ -38,10 +75,10 @@ export default function ClinicalCasePage() {
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
           <p style={{ color: colors.textSecondary }} className="text-sm">
-            {t('p_valve.clinicalCase.caseCount', { count: hook.cases.length })}
+            {t('p_valve.clinicalCase.caseCount', { count: cases.length })}
           </p>
           <button
-            onClick={() => { hook.resetModal(); hook.setModalOpen(true); }}
+            onClick={() => { resetModal(); setModalOpen(true); }}
             style={{ backgroundColor: colors.controlAccent }}
             className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
           >
@@ -50,161 +87,172 @@ export default function ClinicalCasePage() {
         </div>
 
         {/* Click-outside overlay — layer-aware */}
-        {hook.isFlipped && (
+        {isFlipped && (
           <div className="fixed inset-0 z-10" onClick={() => {
-            if (hook.showCompletion) {
-              hook.closeCompletionReview();
+            if (showCompletion) {
+              closeCompletionReview();
             } else {
-              hook.handleBack();
+              handleBack();
             }
           }} />
         )}
 
         <div className="relative z-20">
-          {/* === FRONT: Case List Table === */}
-          {!hook.isFlipped && (
-            <div ref={hook.frontRef}>
-              <CaseListTable
-                cases={hook.cases}
-                loading={hook.loading}
-                colors={colors}
-                onCaseClick={hook.handleCaseClick}
-              />
-            </div>
-          )}
+            <>
+              {/* === FRONT: Case List Table === */}
+              {!isFlipped && (
+                <div ref={frontRef}>
+                  <CaseListTable
+                    cases={cases}
+                    loading={loading}
+                    colors={colors}
+                    onCaseClick={handleCaseClick}
+                  />
+                </div>
+              )}
 
-          {/* === BACK: Case Detail Panel === */}
-          {hook.isFlipped && hook.selectedCase && !hook.showCompletion && (
-            <div ref={hook.backRef}>
-              <CaseDetailPanel
-                selectedCase={hook.selectedCase}
-                caseDetail={hook.caseDetail}
-                loadingDetail={hook.loadingDetail}
-                isCompleted={hook.isCompleted}
-                colors={colors}
-                sites={hook.sites}
-                editInfoMode={hook.editInfoMode}
-                setEditInfoMode={hook.setEditInfoMode}
-                infoForm={hook.infoForm}
-                setInfoForm={hook.setInfoForm}
-                infoSaving={hook.infoSaving}
-                infoError={hook.infoError}
-                handleSaveInfo={hook.handleSaveInfo}
-                handleBack={hook.handleBack}
-                handleDownloadPdf={hook.handleDownloadPdf}
-                openCompletionReview={hook.openCompletionReview}
-                setReverseModalOpen={hook.setReverseModalOpen}
-                openEdit={hook.openEdit}
-                deletingId={hook.deletingId}
-                setDeletingId={hook.setDeletingId}
-                deleteLoading={hook.deleteLoading}
-                confirmDelete={hook.confirmDelete}
-                showAddForm={hook.showAddForm}
-                setShowAddForm={hook.setShowAddForm}
-                addPvSpecOptions={hook.addPvSpecOptions}
-                setAddPvSpecOptions={hook.setAddPvSpecOptions}
-                addDsOptions={hook.addDsOptions}
-                addPvLines={hook.addPvLines}
-                setAddPvLines={hook.setAddPvLines}
-                addDsLines={hook.addDsLines}
-                setAddDsLines={hook.setAddDsLines}
-                addingItems={hook.addingItems}
-                handleAddItems={hook.handleAddItems}
-                autoPick={hook.autoPick}
-                API={hook.API}
-                getAuthHeaders={hook.getAuthHeaders}
-              />
-            </div>
-          )}
+              {/* === BACK: Case Detail Panel === */}
+              {isFlipped && selectedCase && !showCompletion && (
+                <div ref={backRef}>
+                  <CaseDetailPanel
+                    selectedCase={selectedCase}
+                    caseDetail={caseDetail}
+                    completionSummary={completionSummary}
+                    loadingDetail={loadingDetail}
+                    isCompleted={isCompleted}
+                    colors={colors}
+                    sites={sites}
+                    editInfoMode={editInfoMode}
+                    setEditInfoMode={setEditInfoMode}
+                    infoForm={infoForm}
+                    setInfoForm={setInfoForm}
+                    infoSaving={infoSaving}
+                    infoError={infoError}
+                    handleSaveInfo={handleSaveInfo}
+                    handleBack={handleBack}
+                    handleDownloadPdf={handleDownloadPdf}
+                    openCompletionReview={openCompletionReview}
+                    setReverseModalOpen={setReverseModalOpen}
+                    openEdit={openEdit}
+                    deletingId={deletingId}
+                    setDeletingId={setDeletingId}
+                    deleteLoading={deleteLoading}
+                    confirmDelete={confirmDelete}
+                    showAddForm={showAddForm}
+                    setShowAddForm={setShowAddForm}
+                    addPvSpecOptions={addPvSpecOptions}
+                    setAddPvSpecOptions={setAddPvSpecOptions}
+                    addDsOptions={addDsOptions}
+                    addPvLines={addPvLines}
+                    setAddPvLines={setAddPvLines}
+                    addDsLines={addDsLines}
+                    setAddDsLines={setAddDsLines}
+                    addingItems={addingItems}
+                    handleAddItems={handleAddItems}
+                    autoPick={autoPick}
+                    swapPicked={swapPicked}
+                    API={API}
+                    getAuthHeaders={getAuthHeaders}
+                    onDeleteCase={handleDeleteCase}
+                    onAddRelatedCase={handleAddRelatedCase}
+                    onDeleteAllRelated={handleDeleteAllRelated}
+                    relatedCases={relatedCases}
+                  />
+                </div>
+              )}
 
-          {/* === LAYER 2: Completion Review Panel === */}
-          {hook.showCompletion && hook.selectedCase && (
-            <div ref={hook.completionRef}>
-              <CompletionReviewPanel
-                selectedCase={hook.selectedCase}
-                caseDetail={hook.caseDetail}
-                completionItems={hook.completionItems}
-                setCompletionItems={hook.setCompletionItems}
-                colors={colors}
-                closeCompletionReview={hook.closeCompletionReview}
-                setConfirmModalOpen={hook.setConfirmModalOpen}
-              />
-            </div>
-          )}
+              {/* === LAYER 2: Completion Review Panel === */}
+              {showCompletion && selectedCase && (
+                <div ref={completionRef}>
+                  <CompletionReviewPanel
+                    selectedCase={selectedCase}
+                    caseDetail={caseDetail}
+                    completionItems={completionItems}
+                    setCompletionItems={setCompletionItems}
+                    colors={colors}
+                    closeCompletionReview={closeCompletionReview}
+                    setConfirmModalOpen={setConfirmModalOpen}
+                  />
+                </div>
+              )}
+            </>
         </div>
       </div>
 
       {/* ====== Confirm Completion Modal ====== */}
-      {hook.confirmModalOpen && (
+      {confirmModalOpen && (
         <ConfirmCompletionModal
-          selectedCase={hook.selectedCase}
-          completionItems={hook.completionItems}
-          completing={hook.completing}
+          selectedCase={selectedCase}
+          completionItems={completionItems}
+          completing={completing}
           colors={colors}
-          onClose={() => hook.setConfirmModalOpen(false)}
-          onConfirm={hook.handleConfirmCompletion}
+          onClose={() => setConfirmModalOpen(false)}
+          onConfirm={handleConfirmCompletion}
         />
       )}
 
       {/* ====== Reverse Completion Modal ====== */}
-      {hook.reverseModalOpen && (
+      {reverseModalOpen && (
         <ReverseCompletionModal
-          selectedCase={hook.selectedCase}
-          reversing={hook.reversing}
+          selectedCase={selectedCase}
+          reversing={reversing}
           colors={colors}
-          onClose={() => hook.setReverseModalOpen(false)}
-          onReverse={hook.handleReverseCompletion}
+          onClose={() => setReverseModalOpen(false)}
+          onReverse={handleReverseCompletion}
         />
       )}
 
       {/* ====== New Case Modal ====== */}
-      {hook.modalOpen && (
+      {modalOpen && (
         <NewCaseModal
           colors={colors}
-          sites={hook.sites}
-          caseNo={hook.caseNo}
-          setCaseNo={hook.setCaseNo}
-          siteId={hook.siteId}
-          setSiteId={hook.setSiteId}
-          patientId={hook.patientId}
-          setPatientId={hook.setPatientId}
-          caseDate={hook.caseDate}
-          setCaseDate={hook.setCaseDate}
-          caseNoDup={hook.caseNoDup}
-          error={hook.error}
-          submitting={hook.submitting}
-          pvSpecOptions={hook.pvSpecOptions}
-          pvLines={hook.pvLines}
-          setPvLines={hook.setPvLines}
-          dsOptions={hook.dsOptions}
-          dsLines={hook.dsLines}
-          setDsLines={hook.setDsLines}
-          autoPick={hook.autoPick}
-          onClose={() => hook.setModalOpen(false)}
-          onSubmit={hook.handleSubmit}
+          sites={sites}
+          caseNo={caseNo}
+          setCaseNo={setCaseNo}
+          siteId={siteId}
+          setSiteId={setSiteId}
+          patientId={patientId}
+          setPatientId={setPatientId}
+          caseDate={caseDate}
+          setCaseDate={setCaseDate}
+          caseNoDup={caseNoDup}
+          error={error}
+          submitting={submitting}
+          additionalCases={additionalCases}
+          setAdditionalCases={setAdditionalCases}
+          pvSpecOptions={pvSpecOptions}
+          pvLines={pvLines}
+          setPvLines={setPvLines}
+          dsOptions={dsOptions}
+          dsLines={dsLines}
+          setDsLines={setDsLines}
+          autoPick={autoPick}
+          onSwapPicked={swapPicked}
+          onClose={() => setModalOpen(false)}
+          onSubmit={handleSubmit}
         />
       )}
 
       {/* ====== Edit Item Modal ====== */}
-      {hook.editTxn && (
+      {editTxn && (
         <EditItemModal
-          editTxn={hook.editTxn}
-          editForm={hook.editForm}
-          editSaving={hook.editSaving}
-          editError={hook.editError}
-          editSpecOptions={hook.editSpecOptions}
-          editAvailable={hook.editAvailable}
-          editLoadingAvail={hook.editLoadingAvail}
+          editTxn={editTxn}
+          editForm={editForm}
+          editSaving={editSaving}
+          editError={editError}
+          editSpecOptions={editSpecOptions}
+          editAvailable={editAvailable}
+          editLoadingAvail={editLoadingAvail}
           colors={colors}
-          onClose={() => hook.setEditTxn(null)}
-          onSpecChange={hook.handleEditSpecChange}
-          onSerialChange={hook.handleEditSerialChange}
-          onSave={hook.saveEdit}
+          onClose={() => setEditTxn(null)}
+          onSpecChange={handleEditSpecChange}
+          onSerialChange={handleEditSerialChange}
+          onSave={saveEdit}
         />
       )}
 
       {/* Toast Error — replaces native alert() */}
-      {hook.toastError && (
+      {toastError && (
         <div
           style={{
             position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
@@ -216,9 +264,9 @@ export default function ClinicalCasePage() {
             animation: 'toastSlideUp 0.3s ease-out',
           }}
         >
-          <span style={{ flex: 1 }}>{hook.toastError}</span>
+          <span style={{ flex: 1 }}>{toastError}</span>
           <button
-            onClick={() => hook.setToastError(null)}
+            onClick={() => setToastError(null)}
             style={{
               background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 13,

@@ -1,0 +1,13 @@
+title = "MGMTV2 gitleaks policy"
+
+[allowlist]
+description = "Global allowlist for generated artifacts and explicit placeholders"
+paths = [
+  '''apps/web/\.next/.*''',
+  '''\.agent/projects/.*/data/audits/gitleaks-triage-.*\.md'''
+]
+regexes = [
+  '''YOUR_[A-Z0-9_]+_HERE''',
+  '''EXAMPLE_JWT_(ACCESS|REFRESH)_TOKEN''',
+  '''TEST_ONLY_SECRET_CHANGE_IN_REAL_ENV'''
+]

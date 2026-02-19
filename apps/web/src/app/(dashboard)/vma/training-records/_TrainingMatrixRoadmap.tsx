@@ -63,15 +63,15 @@ export default function TrainingMatrixRoadmap({
   t,
   onClose,
 }: {
-  colors: any;
-  theme: string;
-  t: any;
+  colors: Record<string, string>;
+  theme: 'dark' | 'light';
+  t: (key: string, params?: Record<string, string | number | Date>) => string;
   onClose?: () => void;
 }) {
   const [milestones, setMilestones] = useState<RoadmapMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [animated, setAnimated] = useState(false);
+  const animatedRef = useRef(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function TrainingMatrixRoadmap({
       try {
         const data = await api<{ milestones: RoadmapMilestone[] }>('/vma/training-records/roadmap');
         setMilestones(data.milestones || []);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Failed to load roadmap:', e);
       } finally {
         setLoading(false);
@@ -88,7 +88,7 @@ export default function TrainingMatrixRoadmap({
   }, []);
 
   useEffect(() => {
-    if (loading || milestones.length === 0 || animated) return;
+    if (loading || milestones.length === 0 || animatedRef.current) return;
     const el = containerRef.current;
     if (!el) return;
 
@@ -106,9 +106,9 @@ export default function TrainingMatrixRoadmap({
          }
       });
 
-      setAnimated(true);
+      animatedRef.current = true;
     } catch (e) { console.warn(e); }
-  }, [loading, milestones.length, animated]);
+  }, [loading, milestones.length]);
 
   // Drag Handlers
   const [isDragging, setIsDragging] = useState(false);

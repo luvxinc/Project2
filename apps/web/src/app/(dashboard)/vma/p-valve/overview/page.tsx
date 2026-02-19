@@ -1,6 +1,6 @@
 'use client';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInventoryTransactions, vmaKeys } from '@/lib/hooks/use-vma-queries';
 import PValveTabSelector from '../components/PValveTabSelector';
@@ -68,7 +68,7 @@ export default function InventoryOverviewPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const rows = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [fAction, fType, fSpec, fFrom, fTo]);
+  // page reset is handled in filter input onChange handlers
 
   const hasFilter = fAction || fType || fSpec || fFrom || fTo;
 
@@ -100,26 +100,26 @@ export default function InventoryOverviewPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <select value={fAction} onChange={e => setFAction(e.target.value)}
+          <select value={fAction} onChange={e => { setFAction(e.target.value); setPage(1); }}
             className="px-2.5 py-1.5 rounded-lg text-[12px] border" style={inputSx}>
             <option value="">{t('p_valve.overview.filters.allActions')}</option>
             {Object.entries(ACTION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <select value={fType} onChange={e => setFType(e.target.value)}
+          <select value={fType} onChange={e => { setFType(e.target.value); setPage(1); }}
             className="px-2.5 py-1.5 rounded-lg text-[12px] border" style={inputSx}>
             <option value="">{t('p_valve.overview.filters.allTypes')}</option>
             <option value="PVALVE">P-Valve</option>
             <option value="DELIVERY_SYSTEM">Delivery System</option>
           </select>
-          <input type="text" placeholder={t('p_valve.overview.filters.specPlaceholder')} value={fSpec} onChange={e => setFSpec(e.target.value)}
+          <input type="text" placeholder={t('p_valve.overview.filters.specPlaceholder')} value={fSpec} onChange={e => { setFSpec(e.target.value); setPage(1); }}
             className="px-2.5 py-1.5 rounded-lg text-[12px] border w-[100px]" style={inputSx} />
-          <input type="date" value={fFrom} onChange={e => setFFrom(e.target.value)}
+          <input type="date" value={fFrom} onChange={e => { setFFrom(e.target.value); setPage(1); }}
             className="px-2.5 py-1.5 rounded-lg text-[12px] border" style={inputSx} />
           <span className="text-[11px]" style={{ color: colors.textTertiary }}>{t('p_valve.overview.filters.to')}</span>
-          <input type="date" value={fTo} onChange={e => setFTo(e.target.value)}
+          <input type="date" value={fTo} onChange={e => { setFTo(e.target.value); setPage(1); }}
             className="px-2.5 py-1.5 rounded-lg text-[12px] border" style={inputSx} />
           {hasFilter && (
-            <button onClick={() => { setFAction(''); setFType(''); setFSpec(''); setFFrom(''); setFTo(''); }}
+            <button onClick={() => { setFAction(''); setFType(''); setFSpec(''); setFFrom(''); setFTo(''); setPage(1); }}
               className="text-[11px] font-medium ml-1 hover:opacity-70 transition" style={{ color: colors.textSecondary }}>
               {t('p_valve.overview.filters.clear')}
             </button>

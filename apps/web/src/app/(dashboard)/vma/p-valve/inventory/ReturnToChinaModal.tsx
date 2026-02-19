@@ -198,8 +198,21 @@ export default function ReturnToChinaModal({ open, onClose, onSuccess }: Props) 
 
     setSubmitting(true);
     try {
-      // Create one OUT_CN transaction per line
+      // ── Merge lines with the same serialNo before submitting ──
+      const mergedMap = new Map<string, typeof validLines[0]>();
       for (const line of validLines) {
+        const key = `${line.productType}::${line.specNo}::${line.serialNo}`;
+        const existing = mergedMap.get(key);
+        if (existing) {
+          existing.qty += line.qty;
+        } else {
+          mergedMap.set(key, { ...line });
+        }
+      }
+      const mergedLines = Array.from(mergedMap.values());
+
+      // Create one OUT_CN transaction per merged line
+      for (const line of mergedLines) {
         const body = {
           date: dateShipped,
           action: 'OUT_CN',
@@ -289,6 +302,37 @@ export default function ReturnToChinaModal({ open, onClose, onSuccess }: Props) 
                 {lines.map((line, idx) => {
                   const specs = line.productType === 'PVALVE' ? pvalveSpecs : dsSpecs;
                   const isPValve = line.productType === 'PVALVE';
+
+                  // ── Cross-row serial dedup ──
+                  // Calculate how many qty other rows have claimed for each serial
+                  const otherClaimedMap = new Map<string, number>();
+                  lines.forEach(other => {
+                    if (other.id === line.id || !other.serialNo || other.specNo !== line.specNo || other.productType !== line.productType) return;
+                    otherClaimedMap.set(other.serialNo, (otherClaimedMap.get(other.serialNo) ?? 0) + other.qty);
+                  });
+
+                  // Filter returnable rows for the serial dropdown
+                  const filteredRows = line._returnableRows.filter(r => {
+                    // Always show the currently selected serial
+                    if (r.serialNo === line.serialNo) return true;
+                    const claimed = otherClaimedMap.get(r.serialNo) ?? 0;
+                    if (isPValve) {
+                      // P-Valve: 1 unit per serial — hide if claimed
+                      return claimed === 0;
+                    } else {
+                      // DS: hide if all qty consumed by other rows
+                      return r.quantity - claimed > 0;
+                    }
+                  });
+
+                  // For DS: effective max qty = original qty - qty claimed by other rows
+                  const otherClaimedForThisSerial = otherClaimedMap.get(line.serialNo) ?? 0;
+                  const effectiveMaxQty = Math.max(0, line.maxQty - otherClaimedForThisSerial);
+                  // Auto-clamp qty if it exceeds the effective max
+                  if (line.serialNo && line.qty > effectiveMaxQty && effectiveMaxQty > 0) {
+                    updateLine(line.id, 'qty', effectiveMaxQty);
+                  }
+
                   return (
                     <tr key={line.id} style={{ borderTop: idx > 0 ? `1px solid ${colors.border}` : 'none' }}>
                       {/* Row # */}
@@ -317,16 +361,20 @@ export default function ReturnToChinaModal({ open, onClose, onSuccess }: Props) 
                       <td className="px-1 py-2">
                         {line._loadingRows ? (
                           <div className="px-2 py-1.5 rounded text-[11px] border" style={{ ...inputStyle, color: colors.textTertiary }}>{t('p_valve.returnToChina.loading')}</div>
-                        ) : line._returnableRows.length > 0 ? (
+                        ) : filteredRows.length > 0 ? (
                           <select value={line.serialNo}
                             onChange={e => handleSerialSelect(line.id, e.target.value)}
                             className="w-full px-1 py-1.5 rounded text-[11px] border" style={inputStyle}>
                             <option value="">{t('p_valve.returnToChina.select')}</option>
-                            {line._returnableRows.map((r, ri) => (
-                              <option key={ri} value={r.serialNo}>
-                                {r.serialNo || t('p_valve.returnToChina.noSerial')} — Exp: {r.expDate || '?'}, Qty: {r.quantity}
-                              </option>
-                            ))}
+                            {filteredRows.map((r, ri) => {
+                              const claimed = otherClaimedMap.get(r.serialNo) ?? 0;
+                              const remainQty = r.quantity - claimed;
+                              return (
+                                <option key={ri} value={r.serialNo}>
+                                  {r.serialNo || t('p_valve.returnToChina.noSerial')} — Exp: {r.expDate || '?'}, Qty: {remainQty}
+                                </option>
+                              );
+                            })}
                           </select>
                         ) : (
                           <div className="px-2 py-1.5 rounded text-[11px] border" style={{ ...inputStyle, color: colors.textTertiary }}>
@@ -347,11 +395,11 @@ export default function ReturnToChinaModal({ open, onClose, onSuccess }: Props) 
                         <input
                           type="number"
                           min="1"
-                          max={line.maxQty}
+                          max={effectiveMaxQty}
                           value={line.qty}
                           disabled={isPValve}
                           onChange={e => {
-                            const val = Math.max(1, Math.min(line.maxQty, parseInt(e.target.value) || 1));
+                            const val = Math.max(1, Math.min(effectiveMaxQty, parseInt(e.target.value) || 1));
                             updateLine(line.id, 'qty', val);
                           }}
                           className="w-16 px-2 py-1.5 rounded text-[11px] border text-center"

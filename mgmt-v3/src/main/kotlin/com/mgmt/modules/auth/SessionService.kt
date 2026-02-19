@@ -30,6 +30,8 @@ class SessionService(
         private val PERM_TTL = Duration.ofMinutes(30)
         private val LOCK_TTL = Duration.ofMinutes(30)
         private const val MAX_SECURITY_FAILURES = 3
+        /** Sliding session idle timeout — session expires after this duration of no interaction */
+        private val IDLE_TIMEOUT = Duration.ofHours(1)
     }
 
     // ─── Permission Cache ────────────────────────────────────────
@@ -55,7 +57,21 @@ class SessionService(
 
     /** Mark user session as active */
     fun createSession(userId: String, accessTokenExpirySec: Long) {
-        redis.opsForValue().set("$SESS_PREFIX$userId", "1", Duration.ofSeconds(accessTokenExpirySec))
+        // Use the idle timeout for session TTL (sliding window)
+        redis.opsForValue().set("$SESS_PREFIX$userId", "1", IDLE_TIMEOUT)
+    }
+
+    /**
+     * Sliding session: extend TTL on every successful API interaction.
+     * Enterprise standard (Salesforce, SAP, Workday pattern):
+     * - Every 200/2xx response = user is active → reset idle timer
+     * - Session expires only after IDLE_TIMEOUT of zero interaction
+     */
+    fun touchSession(userId: String) {
+        val key = "$SESS_PREFIX$userId"
+        if (redis.hasKey(key)) {
+            redis.expire(key, IDLE_TIMEOUT)
+        }
     }
 
     /** Clear session */

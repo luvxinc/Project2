@@ -1,6 +1,6 @@
 ---
 name: collaboration
-description: 跨团队协作 SOP — 工程师之间的交接标准/依赖管理/讨论协议/冲突升级。
+description: 跨团队协作 SOP。Use when 涉及多角色交接、依赖管理、冲突升级或跨团队协同。
 ---
 
 # 跨团队协作 (Cross-Team Collaboration)

@@ -7,8 +7,9 @@ import { animate, stagger } from 'animejs';
 import { useModal } from '@/components/modal/GlobalModal';
 import VmaTabSelector from '../components/VmaTabSelector';
 import { getAuthHeaders } from '@/lib/vma-api';
+import { getApiBaseUrlCached } from '@/lib/api-url';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1`;
+const API = getApiBaseUrlCached();
 
 // ================================
 // Types
@@ -739,14 +740,14 @@ function TrainingRoadmapModal({
 }: {
   milestones: RoadmapMilestone[];
   loading: boolean;
-  colors: any;
-  theme: string;
-  t: any;
+  colors: typeof themeColors.dark;
+  theme: 'dark' | 'light';
+  t: ReturnType<typeof useTranslations>;
   onClose: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const roadRef = useRef<HTMLDivElement>(null);
-  const [animated, setAnimated] = useState(false);
+  const animatedRef = useRef(false);
 
   const CARD_W = 220;
   const GAP = 50;
@@ -762,7 +763,7 @@ function TrainingRoadmapModal({
 
   // ===== Roadmap entrance animation =====
   useEffect(() => {
-    if (loading || milestones.length === 0 || animated) return;
+    if (loading || milestones.length === 0 || animatedRef.current) return;
     const container = scrollRef.current;
     if (!container) return;
     container.scrollLeft = 0;
@@ -792,7 +793,7 @@ function TrainingRoadmapModal({
     const cards = container.querySelectorAll('.rm-card');
     if (cards.length) {
       animate(cards, {
-        translateY: ((_el: any, i: number) => [i % 2 === 0 ? -30 : 30, 0]) as any,
+        translateY: (_el: unknown, i: number) => [i % 2 === 0 ? -30 : 30, 0],
         opacity: [0, 1],
         delay: stagger(120, { start: 500 }),
         duration: 500,
@@ -829,8 +830,8 @@ function TrainingRoadmapModal({
       container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
     }, totalDuration);
 
-    setAnimated(true);
-  }, [loading, milestones.length, animated]);
+    animatedRef.current = true;
+  }, [loading, milestones.length]);
 
   // Compliance rate color
   const rateColor = (rate: number) => {

@@ -74,8 +74,8 @@
         "timezone": "America/Los_Angeles"
       }
     },
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "accessToken": "EXAMPLE_JWT_ACCESS_TOKEN",
+    "refreshToken": "EXAMPLE_JWT_REFRESH_TOKEN",
     "expiresIn": 900
   }
 }
@@ -116,7 +116,7 @@
 **请求体**:
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  "refreshToken": "EXAMPLE_JWT_REFRESH_TOKEN"
 }
 ```
 
@@ -125,7 +125,7 @@
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "accessToken": "EXAMPLE_JWT_ACCESS_TOKEN",
     "expiresIn": 900
   }
 }

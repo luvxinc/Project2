@@ -6,7 +6,9 @@ export interface ClinicalCase {
   siteId: string;
   patientId: string;
   caseDate: string;
+  operator: string;
   status: string;
+  tripId?: string | null;
   site?: { siteName: string };
   siteName: string;
 }
@@ -53,6 +55,7 @@ export interface LineItem {
   specNo: string;
   qty: number;
   picked: PickedProduct[];
+  available: PickedProduct[];
   loading: boolean;
 }
 
@@ -75,3 +78,18 @@ export const CONDITIONAL_NOTES_ITEMS = [
   'Products are still within the expiration date',
   'Temperature displayed as "OK" and is not triggered',
 ];
+
+export interface CompletionSummaryItem {
+  productType: string;
+  specNo: string;
+  serialNo: string | null;
+  qty: number;
+  expDate: string | null;
+  batchNo: string | null;
+}
+
+export interface CompletionSummary {
+  used: CompletionSummaryItem[];
+  returnedOk: CompletionSummaryItem[];
+  returnedDamaged: CompletionSummaryItem[];
+}

@@ -79,6 +79,27 @@ class VmaClinicalCaseController(
     ): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.updateCaseInfo(caseId, dto))
 
+    @DeleteMapping("/clinical-cases/{caseId}")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "DELETE_CLINICAL_CASE", riskLevel = "HIGH")
+    fun deleteCase(@PathVariable caseId: String): ResponseEntity<Any> =
+        ResponseEntity.ok(caseService.deleteCase(caseId))
+
+    @DeleteMapping("/clinical-cases/{caseId}/related-cases")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "DELETE_ALL_RELATED_CASES", riskLevel = "HIGH")
+    fun deleteAllRelatedCases(@PathVariable caseId: String): ResponseEntity<Any> =
+        ResponseEntity.ok(caseService.deleteAllRelatedCases(caseId))
+
+    @PostMapping("/clinical-cases/{caseId}/related-case")
+    @RequirePermission("vma.employees.manage")
+    @AuditLog(module = "VMA", action = "ADD_RELATED_CASE")
+    fun addRelatedCase(
+        @PathVariable caseId: String,
+        @RequestBody dto: AddRelatedCaseRequest,
+    ): ResponseEntity<Any> =
+        ResponseEntity.status(HttpStatus.CREATED).body(caseService.addRelatedCase(caseId, dto))
+
     // ═══════════ Case Item CRUD ═══════════
 
     @PatchMapping("/clinical-cases/{caseId}/items/{txnId}")

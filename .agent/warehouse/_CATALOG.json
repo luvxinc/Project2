@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "categories": [
+    "engineering",
+    "data",
+    "security",
+    "ux",
+    "platform",
+    "cognition"
+  ],
+  "libraries": [
+    {
+      "slug": "anthropic-skills",
+      "category": "cognition",
+      "keywords": ["skill", "规范", "frontmatter", "description"],
+      "index": "tools/anthropic-skills/INDEX.md"
+    },
+    {
+      "slug": "everything-claude-code",
+      "category": "engineering",
+      "keywords": ["review", "rules", "hooks", "qa"],
+      "index": "tools/everything-claude-code/INDEX.md"
+    },
+    {
+      "slug": "claude-mem",
+      "category": "cognition",
+      "keywords": ["memory", "context", "token"],
+      "index": "tools/claude-mem/INDEX.md"
+    }
+  ]
+}

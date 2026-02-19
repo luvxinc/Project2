@@ -52,31 +52,31 @@ description: 平台工程域 — 基础设施/CI-CD/容器/监控/性能/开发�
 
 | 关键词 | 工程师 | section | 具体能力 |
 |--------|--------|---------|---------|
-| `K8s`, `Pod`, `HPA`, `Deployment` | 基建架构师 | `infrastructure.md` §2 | K8s 资源定义/扩缩容/滚动更新 |
-| `Terraform`, `IaC`, `状态` | 基建架构师 | `infrastructure.md` §3 | 基础设施即代码/模块化 |
-| `Docker`, `镜像`, `Dockerfile` | 基建架构师 | `infrastructure.md` §4 | 多阶段构建/镜像优化 |
-| `CI/CD`, `Pipeline`, `GitHub Actions` | 基建架构师 | `infrastructure.md` §5 | 自动化测试→构建→部署 |
-| `灾备`, `高可用`, `多副本` | 基建架构师 | `infrastructure.md` §6 | 故障转移/备份恢复 |
+| `K8s`, `Pod`, `HPA`, `Deployment` | 基建架构师 | `core/skills/infrastructure.md` §2 | K8s 资源定义/扩缩容/滚动更新 |
+| `Terraform`, `IaC`, `状态` | 基建架构师 | `core/skills/infrastructure.md` §3 | 基础设施即代码/模块化 |
+| `Docker`, `镜像`, `Dockerfile` | 基建架构师 | `core/skills/infrastructure.md` §4 | 多阶段构建/镜像优化 |
+| `CI/CD`, `Pipeline`, `GitHub Actions` | 基建架构师 | `core/skills/infrastructure.md` §5 | 自动化测试→构建→部署 |
+| `灾备`, `高可用`, `多副本` | 基建架构师 | `core/skills/infrastructure.md` §6 | 故障转移/备份恢复 |
 
 ### 可观测性
 
 | 关键词 | 工程师 | section | 具体能力 |
 |--------|--------|---------|---------|
-| `Prometheus`, `Metrics`, `指标` | 可观测架构师 | `observability.md` §3 | 指标采集/Micrometer/自定义指标 |
-| `OpenTelemetry`, `Tracing`, `链路` | 可观测架构师 | `observability.md` §2 | 分布式追踪/Span/上下文传播 |
-| `日志`, `Loki`, `结构化` | 可观测架构师 | `observability.md` §4 | JSON 日志/日志聚合/查询 |
-| `Grafana`, `仪表盘`, `Dashboard` | 可观测架构师 | `observability.md` §5 | 仪表盘设计/模板 |
-| `告警`, `Alert`, `阈值` | 可观测架构师 | `observability.md` §6 | 告警规则/分级/通知 |
-| `SRE`, `SLO`, `事故`, `复盘` | 可观测架构师 | `observability.md` §8 | SLO 定义/错误预算/事故管理 |
+| `Prometheus`, `Metrics`, `指标` | 可观测架构师 | `core/skills/observability.md` §3 | 指标采集/Micrometer/自定义指标 |
+| `OpenTelemetry`, `Tracing`, `链路` | 可观测架构师 | `core/skills/observability.md` §2 | 分布式追踪/Span/上下文传播 |
+| `日志`, `Loki`, `结构化` | 可观测架构师 | `core/skills/observability.md` §4 | JSON 日志/日志聚合/查询 |
+| `Grafana`, `仪表盘`, `Dashboard` | 可观测架构师 | `core/skills/observability.md` §5 | 仪表盘设计/模板 |
+| `告警`, `Alert`, `阈值` | 可观测架构师 | `core/skills/observability.md` §6 | 告警规则/分级/通知 |
+| `SRE`, `SLO`, `事故`, `复盘` | 可观测架构师 | `core/skills/observability.md` §8 | SLO 定义/错误预算/事故管理 |
 
 ### 性能优化
 
 | 关键词 | 工程师 | section | 具体能力 |
 |--------|--------|---------|---------|
-| `N+1`, `慢查询`, `索引`, `批量` | 性能工程师 | `performance.md` §1 | JPA 优化/EXPLAIN/批量操作 |
-| `缓存`, `Redis`, `Caffeine`, `TTL` | 性能工程师 | `performance.md` §2 | 多级缓存/失效策略/雪崩防护 |
-| `React`, `渲染`, `bundle`, `LCP` | 性能工程师 | `performance.md` §3 | memo/Code Splitting/虚拟滚动 |
-| `P95`, `P99`, `性能指标` | 性能工程师 | `performance.md` §4 | SLA 指标/慢查询治理 |
+| `N+1`, `慢查询`, `索引`, `批量` | 性能工程师 | `core/skills/performance.md` §1 | JPA 优化/EXPLAIN/批量操作 |
+| `缓存`, `Redis`, `Caffeine`, `TTL` | 性能工程师 | `core/skills/performance.md` §2 | 多级缓存/失效策略/雪崩防护 |
+| `React`, `渲染`, `bundle`, `LCP` | 性能工程师 | `core/skills/performance.md` §3 | memo/Code Splitting/虚拟滚动 |
+| `P95`, `P99`, `性能指标` | 性能工程师 | `core/skills/performance.md` §4 | SLA 指标/慢查询治理 |
 
 ### 平台工具
 

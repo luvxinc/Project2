@@ -1,5 +1,5 @@
 ---
-description: 界面 — Hub 页面模板, 主题系统, 动画库
+description: /main_ui 工作流。Use when 需要页面模板、主题系统、动画规范与 UI 交付检查。
 ---
 
 # /ui — 界面
@@ -14,7 +14,7 @@ description: 界面 — Hub 页面模板, 主题系统, 动画库
 
 > **所有 UI 开发任务, 必须以 V3 架构规范为基准:**
 > - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md` (§3.2 前端技术栈, §9 i18n 规范)
-> - 📚 参考: `reference/conventions.md` (主题/i18n 约定), `reference/accessibility.md` (WCAG 2.2)
+> - 📚 参考: `.agent/projects/mgmt/reference/conventions.md` (主题/i18n 约定), `.agent/projects/mgmt/reference/accessibility.md` (WCAG 2.2)
 >
 > **前端技术栈: Next.js 16 + React 19 + TailwindCSS 4 + shadcn + React Query。不合规 = Block。**
 
@@ -251,10 +251,10 @@ Rule 9: Dynamic Mapping of Static Configurations
 
 ```
 1. 记录错题本:
-   写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
+   写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
    关键词索引更新 (便于日后检索)
 
-2. 交叉检查 (`memory.md` §3.5):
+2. 交叉检查 (`core/skills/memory.md` §3.5):
    a. 抽象错误模式: "在 {组件类型} 中做了 {操作} 导致 {后果}"
    b. grep 搜索同类代码: 其他组件是否有同样问题?
    c. 逐一检查 + 批量修复

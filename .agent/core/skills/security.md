@@ -1,6 +1,6 @@
 ---
 name: security
-description: 安全架构师 — Spring Security 6 + OAuth2/OIDC + Vault。负责认证/授权/密钥管理/加密/审计合规/API安全。
+description: 安全架构师 SOP（Spring Security/OAuth2/OIDC/Vault）。Use when 需要认证授权、密钥管理、加密、审计合规与 API 安全。
 ---
 
 # 安全与合规规范 — Spring Security + OIDC + Vault

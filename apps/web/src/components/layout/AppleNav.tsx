@@ -168,14 +168,14 @@ export function AppleNav({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // 检查登录状态
+  // Load user from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        setUser(JSON.parse(storedUser) as User);
       } catch {
-        setUser(null);
+        // ignore
       }
     }
   }, []);

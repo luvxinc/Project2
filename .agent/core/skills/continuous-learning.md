@@ -1,6 +1,6 @@
 ---
 name: continuous-learning
-description: 持续学习 SOP — 基于本能架构的 Agent 学习循环。从 ECC Continuous Learning v2 适配到 Antigravity + Knowledge Items 环境。
+description: 持续学习 SOP。Use when 需要将错误与实践沉淀为可复用经验并更新技能体系。
 ---
 
 # 持续学习 (Continuous Learning)
@@ -125,7 +125,7 @@ ECC 使用 Claude Code Hooks (文件系统)。我们使用 Antigravity Knowledge
 2. 记录: 值得沉淀的模式写入以下位置:
    - 通用模式 → 更新 agent-mastery/SKILL.md 对应 section
    - 领域模式 → 更新对应 V3 Skill
-   - 项目特定 → 更新 projects/{project}/reference/ 或 playbooks/
+   - 项目特定 → 更新 .agent/projects/{project}/reference/ 或 playbooks/
 
 3. 置信度检查: 已有本能是否需要调整?
    - 如果被用户修正 → 降低置信度或删除

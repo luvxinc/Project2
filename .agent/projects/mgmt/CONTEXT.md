@@ -24,9 +24,9 @@ V1 (Django+MySQL) → ~~V2 (NestJS+PostgreSQL)~~ → V3 (Kotlin/Spring Boot)。
 | 指标 | 值 |
 |------|-----|
 | **活跃阶段 1** | Phase 6.9 — VMA 多岗位数据模型重构 |
-| **活跃阶段 2** | Phase 7 — V2→V3 迁移 (7/9 子阶段已完成) |
-| **运行栈** | V2 (NestJS) + V3 (Spring Boot) 双栈并行 |
-| **下一步** | 完成 VMA 6.9 → API Gateway 流量切换 (7.8) |
+| **活跃阶段 2** | Phase 8 — V1→V3 业务模块迁移 |
+| **运行栈** | V3 (Spring Boot) 单栈运行（唯一后端） |
+| **下一步** | 完成 VMA 6.9 → 推进 Phase 8 各业务模块迁移 |
 
 ---
 
@@ -37,7 +37,7 @@ Agent 根据当前任务类型, 加载对应实施方案:
 | 你在做什么 | 加载实施方案 | 引用的 L1 通用 SOP |
 |------------|----------|----------------|
 | VMA 模块开发 (员工/培训/库存/临床) | [`playbooks/vma.md`](playbooks/vma.md) | backend, frontend, data |
-| V2→V3 迁移 (NestJS→Spring Boot) | [`playbooks/migration.md`](playbooks/migration.md) | backend, data, infrastructure |
+| V1→V3 迁移 / 历史迁移复盘 | [`playbooks/migration.md`](playbooks/migration.md) | backend, data, infrastructure |
 | 安全等级 / 权限 / 审计 | [`playbooks/security.md`](playbooks/security.md) | security, backend |
 | UI/Hub 页面 / 主题 | 直接用 L1: `core/workflows/ui.md` | frontend |
 | 数据库 / FIFO / 成本计算 | 直接用 L1: `core/skills/data.md` | data |
@@ -99,7 +99,7 @@ Agent 根据当前任务类型, 加载对应实施方案:
 | `reference/cdc.md` | Debezium CDC | Phase 8 数据同步 |
 | `reference/resilience.md` | Resilience4j 弹性模式 | 生产稳定性加固 |
 | `reference/config-management.md` | Vault 配置中心 | 生产密钥管理 |
-| `reference/feature-flags.md` | 功能开关 / 灰度发布 | V2→V3 流量切换 |
+| `reference/feature-flags.md` | 功能开关 / 灰度发布 | V3 模块灰度发布与风险控制 |
 | `reference/notification.md` | 多通道通知系统 | 通知功能开发 |
 | `reference/disaster-recovery.md` | 灾备与恢复 | 生产 DR 规划 |
 | `reference/workflow-engine.md` | Temporal 审批引擎 | 审批流程开发 |
@@ -127,4 +127,4 @@ Agent 根据当前任务类型, 加载对应实施方案:
 
 ---
 
-*MGMT Project Context v3.0 — 2026-02-16 (清理过期引用, 反映 V3 双栈现实)*
+*MGMT Project Context v3.1 — 2026-02-17 (统一语义: V2 已彻底弃用, V3 单栈现实)*

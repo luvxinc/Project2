@@ -49,10 +49,12 @@ PM 启动 (你正处于这一步)
 ```
 [ ] 读 core/skills/project-manager.md §2 — 需求领悟铁律
 [ ] 读 core/skills/requirements.md §Phase 1 — 自动采集 (GATHER)
-[ ] 🔴 加载项目上下文: `ls projects/` → 找到当前项目 → 读 `projects/{project}/CONTEXT.md`
-     (含铁律 R0-R4 + 当前阶段 + 实施方案路由)
-[ ] 完成领悟后: 输出需求文档 → 存 projects/{project}/data/specs/
-[ ] 交给 CTO (chief-engineer.md) 做任务分配
+[ ] 🔴 加载项目上下文: `ls .agent/projects/` → 找到当前项目 → 读 `.agent/projects/{project}/CONTEXT.md`
+     (含铁律 R0-R7 + 当前阶段 + 实施方案路由)
+[ ] 🔴 读取历史错误索引: `.agent/projects/{project}/data/errors/ERROR-BOOK.md` 关键词索引
+     + 检查 `.agent/projects/{project}/data/training/` 是否有相关经验条目 (避免重复犯错)
+[ ] 完成领悟后: 输出需求文档 → 存 `.agent/projects/{project}/data/specs/`
+[ ] 交给 CTO (`core/skills/chief-engineer.md`) 做任务分配
 ```
 
 ## 路由到工作流
@@ -65,6 +67,18 @@ PM 领悟+翻译+分诊后, 判断需要哪个工作流:
 | 部署/上线/环境 | `/main_ship` | DevOps 流程 |
 | 改 BUG/排查/审查 | `/main_guard` | 质量保障流程 |
 | UI/主题/动画 | `/main_ui` | 界面工程 |
+
+## 🔴 防复犯协议（Contact 入口强制）
+
+> 用户任何纠正/提示都必须进入可追溯记忆，避免同类错误重复发生。
+
+- 发生用户纠正时，必须按 `core/skills/memory.md` §3.5 分类记录（A/B/C/D）。
+- 至少更新一个持久文件：
+  - 错题：`.agent/projects/{project}/data/errors/ERROR-BOOK.md`
+  - 流程经验：`.agent/projects/{project}/data/training/*.md`
+  - 项目规范：`.agent/projects/{project}/CONTEXT.md` 或对应 reference
+- 下次同类任务启动前，先匹配关键词索引；命中条目必须先读后做。
+- 响应用户时必须明确回执记录位置（例如：“已记录到 ERROR-BOOK.md: ERR-0XX”）。
 
 ## 和用户的第一句话
 

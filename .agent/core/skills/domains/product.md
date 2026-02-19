@@ -28,32 +28,32 @@ description: 产品工程域 — 用户可见的一切。前端页面/组件/主
 
 | 关键词 | section | 具体能力 |
 |--------|---------|---------|
-| `页面`, `page`, `路由`, `layout` | `frontend.md` §2 | App Router 目录结构/嵌套布局/动态路由 |
-| `Server Component`, `Client Component` | `frontend.md` §2 | RSC 边界划分/数据预取 |
+| `页面`, `page`, `路由`, `layout` | `core/skills/frontend.md` §2 | App Router 目录结构/嵌套布局/动态路由 |
+| `Server Component`, `Client Component` | `core/skills/frontend.md` §2 | RSC 边界划分/数据预取 |
 
 ### 组件 & UI
 
 | 关键词 | section | 具体能力 |
 |--------|---------|---------|
-| `组件`, `Component`, `Modal`, `Table` | `frontend.md` §3 | 组件封装规范/Props/复用 |
-| `动画`, `Anime.js`, `过渡`, `交互` | `frontend.md` §3 + L3 | 微动画/页面过渡/Hub 动画 |
+| `组件`, `Component`, `Modal`, `Table` | `core/skills/frontend.md` §3 | 组件封装规范/Props/复用 |
+| `动画`, `Anime.js`, `过渡`, `交互` | `core/skills/frontend.md` §3 + L3 | 微动画/页面过渡/Hub 动画 |
 | `UI 设计`, `配色`, `排版`, `Hub` | L3: UI UX Pro | 20 风格 + 行业配色 + UX 70 准则 |
-| `主题`, `dark`, `light`, `Glassmorphism` | `frontend.md` §5 | CSS 变量/ThemeContext/双模式 |
+| `主题`, `dark`, `light`, `Glassmorphism` | `core/skills/frontend.md` §5 | CSS 变量/ThemeContext/双模式 |
 
 ### 数据通信
 
 | 关键词 | section | 具体能力 |
 |--------|---------|---------|
-| `API Client`, `React Query`, `fetch` | `frontend.md` §4 | OpenAPI 自动生成 TS Client |
-| `前后端解耦`, `DTO`, `契约` | `frontend.md` §6 | 前后端接口边界定义 |
+| `API Client`, `React Query`, `fetch` | `core/skills/frontend.md` §4 | OpenAPI 自动生成 TS Client |
+| `前后端解耦`, `DTO`, `契约` | `core/skills/frontend.md` §6 | 前后端接口边界定义 |
 
 ### 国际化 & 监控
 
 | 关键词 | section | 具体能力 |
 |--------|---------|---------|
-| `i18n`, `翻译`, `多语言`, `next-intl` | `frontend.md` §7 | 命名空间/显式注入/动态映射 |
-| `Sentry`, `Error Boundary`, `错误` | `frontend.md` §8 | 前端错误捕获/上报/告警 |
-| `埋点`, `analytics`, `track`, `行为` | `frontend.md` §9 | 用户行为数据采集/分析 |
+| `i18n`, `翻译`, `多语言`, `next-intl` | `core/skills/frontend.md` §7 | 命名空间/显式注入/动态映射 |
+| `Sentry`, `Error Boundary`, `错误` | `core/skills/frontend.md` §8 | 前端错误捕获/上报/告警 |
+| `埋点`, `analytics`, `track`, `行为` | `core/skills/frontend.md` §9 | 用户行为数据采集/分析 |
 
 ## 域内协调规则
 

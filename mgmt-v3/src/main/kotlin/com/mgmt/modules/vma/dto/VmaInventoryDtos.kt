@@ -171,7 +171,17 @@ data class CreateClinicalCaseRequest(
     val siteId: String,
     val patientId: String,
     val caseDate: String,
+    val operator: String? = null,
     val items: List<CaseLineItem>,
+    /** Additional cases sharing the same product pool (trip). */
+    val additionalCases: List<AdditionalCaseInfo> = emptyList(),
+)
+
+data class AdditionalCaseInfo(
+    val caseNo: String? = null,
+    val siteId: String,
+    val patientId: String,
+    val caseDate: String,
 )
 
 data class CaseLineItem(
@@ -188,6 +198,7 @@ data class UpdateClinicalCaseInfoRequest(
     val siteId: String? = null,
     val patientId: String? = null,
     val caseDate: String? = null,
+    val operator: String? = null,
 )
 
 data class UpdateCaseItemRequest(
@@ -205,6 +216,13 @@ data class AddCaseItemRequest(
     val qty: Int,
     val expDate: String? = null,
     val batchNo: String? = null,
+)
+
+data class AddRelatedCaseRequest(
+    val caseNo: String? = null,
+    val siteId: String,
+    val patientId: String,
+    val caseDate: String,
 )
 
 data class PickProductsRequest(
@@ -299,4 +317,30 @@ data class FridgeEligibleProduct(
     val batchNo: String?,
     val status: String,    // AVAILABLE, NEAR_EXP, EXPIRED, DEMO
     val alreadyInFridge: Boolean,
+)
+
+// ─── Clinical Trip DTOs ─────────────────────────────────────────
+
+data class CreateTripRequest(
+    val tripDate: String,
+    val siteId: String,
+    val caseIds: List<String> = emptyList(),
+    val items: List<CaseLineItem>,
+)
+
+data class AssignTripItemsRequest(
+    val caseId: String,
+    val transactionIds: List<String>,
+)
+
+data class ReturnTripItemsRequest(
+    val transactionIds: List<String>,
+)
+
+data class AddCaseToTripRequest(
+    val caseId: String,
+)
+
+data class RemoveCaseFromTripRequest(
+    val caseId: String,
 )

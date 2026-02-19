@@ -1,6 +1,6 @@
 ---
 name: platform
-description: 平台工程 — 脚手架/代码生成/CLI工具/Feature Flag/技术债治理/开发者效率。
+description: 平台工程 SOP。Use when 需要脚手架、代码生成、CLI、Feature Flag 或开发者效率治理。
 ---
 
 # 平台工程 (Platform Engineering)

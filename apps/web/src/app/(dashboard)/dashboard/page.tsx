@@ -85,10 +85,12 @@ export default function DashboardPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
-  // 读取当前用户权限
+  // Always start with safe defaults (matches SSR) — update from localStorage after mount
   const [userPerms, setUserPerms] = useState<{ isPrivileged: boolean; permissions: Record<string, unknown> }>({
-    isPrivileged: false, permissions: {}
+    isPrivileged: false,
+    permissions: {},
   });
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('user');
@@ -99,7 +101,9 @@ export default function DashboardPage() {
         isPrivileged: roles.includes('superuser') || roles.includes('admin'),
         permissions: user.permissions || {},
       });
-    } catch { /* ignore */ }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const canAccessModule = (modKey: string): boolean => {

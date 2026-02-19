@@ -174,7 +174,7 @@ SERVER_LOG="$LOG_DIR/server_runtime.log"
 TUNNEL_LOG="$LOG_DIR/cloudflared.log"
 
 # Cloudflare Token
-CF_TOKEN="eyJhIjoiM2FiYmI2YzYwYmQ2MTkxYjBmOWUxZTBhMzYzODFjYjYiLCJ0IjoiMmZjMWQwNTQtMTAyYS00MGFjLWFlMGItYmJiYWVhYTU2OTNhIiwicyI6IlpHVXhOVFV4Wm1ZdE5USm1ZaTAwTW1WbExUaGxZV0V0WkdFMVl6SXhOMlF6TXpNMSJ9"
+CF_TOKEN="YOUR_CF_TOKEN_HERE"
 
 # 确保日志目录存在
 mkdir -p "$LOG_DIR"
@@ -295,7 +295,7 @@ DEFAULT_USER_PASSWORD=6M130
 # ======================================================
 # 3. AI 服务 (Google Gemini)
 # ======================================================
-GOOGLE_API_KEY=AIzaSyAbdHirMyFjNcbllLeLhu7Eh0nCWbLBOKg
+GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
 
 # ======================================================
 # 4. 系统设置 (System)

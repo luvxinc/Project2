@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: 前端架构师 — Next.js + React + TypeScript。负责页面/组件/API Client/主题/i18n/错误监控/埋点。
+description: 前端架构师 SOP（Next.js/React/TypeScript）。Use when 需要页面、组件、API Client、主题、i18n 或前端质量治理。
 ---
 
 # 前端规范 — Next.js + React (保留 & 增强)
@@ -25,7 +25,7 @@ description: 前端架构师 — Next.js + React + TypeScript。负责页面/组
 ---
 
 > **企业级前端最佳实践: Next.js App Router + React + TypeScript + 设计系统。**
-> **本文件是泛化模板。项目特定的目录结构请参考 `projects/{project}/` 目录。**
+> **本文件是泛化模板。项目特定的目录结构请参考 `.agent/projects/{project}/` 目录。**
 
 ---
 

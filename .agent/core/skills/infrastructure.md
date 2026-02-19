@@ -1,6 +1,6 @@
 ---
 name: infrastructure
-description: 基建架构师 — Kubernetes + Terraform + Docker + CI/CD。负责容器编排/基础设施即代码/持续交付/灾备。
+description: 基建架构师 SOP（Kubernetes/Terraform/Docker/CI-CD）。Use when 需要部署、基础设施变更、发布流水线或灾备方案。
 ---
 
 # 基础设施规范 — Kubernetes + Terraform + CI/CD

@@ -1,6 +1,6 @@
 ---
 name: observability
-description: 可观测架构师 — OpenTelemetry + Prometheus + Grafana + Loki + SRE。负责Metrics/Tracing/Logging/告警/事故复盘/SLO。
+description: 可观测架构师 SOP。Use when 需要 Metrics/Tracing/Logging、告警策略、SLO 与事故复盘。
 ---
 
 # 可观测性规范 — OpenTelemetry + Prometheus + Grafana + Loki
@@ -389,7 +389,7 @@ groups:
 | 3 | 代码审查加缓存检查项 | QA | 1 周 | ⬜ |
 ```
 
-存储位置: `projects/{project}/data/audits/{YYYY-MM-DD}_postmortem_{title}.md`
+存储位置: `.agent/projects/{project}/data/audits/{YYYY-MM-DD}_postmortem_{title}.md`
 
 ### 8.2 Error Budget
 
