@@ -155,7 +155,44 @@ CSS `overflow: hidden` 会裁剪所有超出边界的子元素, 包括绝对定�
 > - 所有 overflow-hidden 容器内的 dropdown/popover → 待检查
 > - `SecurityCodeDialog` — 用的是 fixed 定位 (安全)
 > - Modal 弹窗 — 用的是 fixed 定位 (安全)
+| `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion` | ERR-005 | 🔴 |
+| `猜测`, `creativity`, `UVP规则`, `不懂就问` | ERR-006 | 🔴 |
 
 ---
 
-*Version: 1.1 — Updated: 2026-02-17*
+## ERR-005: Trip 交易 caseId=null — 所有查 caseId 的方法都会漏掉 trip 数据
+
+- **触发关键词**: `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion`, `generatePackingListPdf`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-18
+- **发生次数**: 3 (PDF生成、completeCase、reverseCompletion)
+- **影响范围**: VMA 临床案例模块 — 所有涉及 trip case 的后端逻辑
+
+### 错误描述
+`createCase` 中 trip 交易存储时 `caseId = null, tripId = tripId`。但后续多个方法 (generatePackingListPdf, completeCase, reverseCompletion) 都用 `findAllByCaseId(caseId)` 查询交易 → 返回空列表 → 功能失败。
+
+### 铁律
+**Trip 场景下, 所有交易操作必须检查 `c.tripId != null`, 然后用 `findAllByTripId()` 查询, 并过滤 `OUT_TRIP` 而非 `OUT_CASE`。**
+
+### 交叉检查 ⚠️
+> 任何新增的涉及 case 交易查询的方法, 都必须处理 trip 分支。
+
+---
+
+## ERR-006: 禁止猜测需求 — 不理解就问用户
+
+- **触发关键词**: `猜测`, `creativity`, `UVP规则`, `不懂就问`, `瞎想`, `联想`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-18
+- **发生次数**: 1
+- **影响范围**: 全局行为准则
+
+### 错误描述
+用户提到 "UVP写入规则我们之前定义过了", Agent 花费大量 Token 搜索历史记录并臆测格式, 而不是直接问用户格式是什么。
+
+### 铁律
+**需求不明 = 直接问用户。禁止猜测、搜索、联想。不理解 = 不动手。**
+
+---
+
+*Version: 1.2 — Updated: 2026-02-18*
