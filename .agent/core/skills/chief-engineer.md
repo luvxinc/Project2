@@ -82,27 +82,14 @@ PM 交来的文档必须包含:
 
 > **域索引内含:** 工程师索引表 + 域内协调规则 + 域级 L3 工具推荐
 
-### 3.3 任务分配单
+### 3.3 任务分配单（🔴 强制模板）
 
-```markdown
-## 🔨 任务分配: {任务名称}
+必须使用：`core/templates/cto-task-decomposition-template.md`
 
-来源: PM 需求文档 `.agent/.agent/projects/{project}/data/specs/{file}`
-复杂度: {S/M/L/XL}
-分配时间: {YYYY-MM-DD HH:MM}
-
-### 子任务
-| # | 任务 | 负责人 | 依赖 | 参考 SOP | 状态 |
-|---|------|--------|------|----------|------|
-| 1 | Schema 迁移 | 数据架构师 | — | data.md §Flyway | ⬜ |
-| 2 | 后端 Service | 后端架构师 | #1 | backend.md §DDD | ⬜ |
-| 3 | 前端页面 | 前端架构师 | #2 | frontend.md §页面 | ⬜ |
-| 4 | 安全审查 | 安全架构师 | #2 | security.md | ⬜ |
-
-### 协作要求
-- #2 完成后通知前端架构师开始 #3
-- #4 与 #3 可并行
-```
+硬规则：
+- 不得自由改结构
+- 必须包含 Owner/Scope/DoD/依赖/风险回滚/放行条件
+- 关键结论必须附证据字段（Source/Command/Output）
 
 ---
 
@@ -170,6 +157,8 @@ PM 交来的文档必须包含:
 
 ### 5.3 审批判定 (ECC Approval Criteria)
 
+输出结论必须使用：`core/templates/cto-integration-verdict-template.md`
+
 | 结果 | 条件 | 行为 |
 |------|------|------|
 | **Approve** ✅ | 零 CRITICAL, 零 HIGH | 打包审计包 → 交 QA |
@@ -178,21 +167,12 @@ PM 交来的文档必须包含:
 
 ### 5.4 不通过时 (精确驳回格式)
 
-```
-发现问题 → 定位到哪个工程师的产出 → 精确驳回
-驳回必须包含:
-  - 严重级: CRITICAL / HIGH / MEDIUM
-  - 具体文件和行号
-  - 预期行为 vs 实际行为
-  - 重现步骤 (如有)
+必须使用：`core/templates/rework-ticket-template.md`
 
-模板 (ECC Review Output):
-  ## [FILE_PATH]
-  ### 🔴 CRITICAL: [Issue Title]
-  **Line**: src/modules/vma/controller/EmployeeController.kt:45
-  **Issue**: GET /api/v1/vma/employees 返回的 DTO 缺少 department 字段
-  **Fix**: EmployeeResponse DTO 加 department 字段
-```
+硬规则：
+- 驳回项必须有 ID/严重级/位置/修复要求
+- 必须有可执行验收标准
+- 证据字段（Source/Command/Output）至少一项
 
 ---
 

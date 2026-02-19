@@ -157,4 +157,74 @@ else
   warn "Skip security extra audit: script not found"
 fi
 
+# 10) Governance hardening audits (phased: warn -> enforce)
+QA_GOVERNANCE_MODE="${QA_GOVERNANCE_MODE:-warn}" # warn|enforce
+QA_PROJECT_ROOT="${QA_PROJECT_ROOT:-/Users/aaron/Developer/MGMTV2/.agent/projects/mgmt}"
+QA_SCOPE_ALLOWLIST_FILE="${QA_SCOPE_ALLOWLIST_FILE:-/Users/aaron/Developer/MGMTV2/.agent/core/reference/scope-allowlist.example.txt}"
+QA_ACCEPTANCE_MATRIX_FILE="${QA_ACCEPTANCE_MATRIX_FILE:-}"
+QA_REPORT_FILE="${QA_REPORT_FILE:-}"
+
+# auto-resolve scope contract from task-id when not explicitly provided
+if [ -z "${QA_SCOPE_CONTRACT_FILE:-}" ] && [ -n "${QA_TASK_ID:-}" ]; then
+  candidate="$QA_PROJECT_ROOT/data/tmp/$QA_TASK_ID/scope-contract.txt"
+  if [ -f "$candidate" ]; then
+    QA_SCOPE_CONTRACT_FILE="$candidate"
+    echo "ℹ️ auto scope contract: $QA_SCOPE_CONTRACT_FILE"
+  fi
+fi
+
+run_governance() {
+  local label="$1"; shift
+  if "$@"; then
+    ok "$label"
+  else
+    if [ "$QA_GOVERNANCE_MODE" = "enforce" ]; then
+      fail "$label"
+    else
+      warn "$label (warn mode)"
+    fi
+  fi
+}
+
+if [ -n "${QA_SCOPE_CONTRACT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-contract-audit.sh" ]; then
+  run_governance "Scope contract audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-contract-audit.sh "$QA_SCOPE_CONTRACT_FILE"
+elif [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-audit.sh" ]; then
+  run_governance "Scope audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/scope-audit.sh "$QA_SCOPE_ALLOWLIST_FILE" "${QA_SCOPE_BASE_REF:-HEAD~1}"
+else
+  warn "Skip scope audit: script missing"
+fi
+
+if [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/acceptance-audit.sh" ]; then
+  if [ -n "$QA_ACCEPTANCE_MATRIX_FILE" ] && [ -f "$QA_ACCEPTANCE_MATRIX_FILE" ]; then
+    run_governance "Acceptance audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/acceptance-audit.sh "$QA_ACCEPTANCE_MATRIX_FILE"
+  else
+    if [ "$QA_GOVERNANCE_MODE" = "enforce" ]; then
+      fail "Acceptance audit: QA_ACCEPTANCE_MATRIX_FILE missing"
+    else
+      warn "Acceptance audit skipped: QA_ACCEPTANCE_MATRIX_FILE missing"
+    fi
+  fi
+else
+  warn "Skip acceptance audit: script missing"
+fi
+
+if [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/no-guess-audit.sh" ]; then
+  if [ -n "$QA_REPORT_FILE" ] && [ -f "$QA_REPORT_FILE" ]; then
+    run_governance "No-guess audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/no-guess-audit.sh "$QA_REPORT_FILE"
+  else
+    if [ "$QA_GOVERNANCE_MODE" = "enforce" ]; then
+      fail "No-guess audit: QA_REPORT_FILE missing"
+    else
+      warn "No-guess audit skipped: QA_REPORT_FILE missing"
+    fi
+  fi
+else
+  warn "Skip no-guess audit: script missing"
+fi
+
+# delivery gate format must be fixed when report exists
+if [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/delivery-gate-format-audit.sh" ] && [ -n "$QA_REPORT_FILE" ] && [ -f "$QA_REPORT_FILE" ]; then
+  run_governance "Delivery gate format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/delivery-gate-format-audit.sh "$QA_REPORT_FILE"
+fi
+
 echo "\n🎯 QA Gate completed successfully"
