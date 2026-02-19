@@ -227,4 +227,24 @@ if [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/delivery-gate-format-
   run_governance "Delivery gate format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/delivery-gate-format-audit.sh "$QA_REPORT_FILE"
 fi
 
+# role output format audits (optional via explicit files)
+if [ -n "${QA_CTO_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/cto-format-audit.sh" ]; then
+  run_governance "CTO format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/cto-format-audit.sh "$QA_CTO_REPORT_FILE"
+fi
+if [ -n "${QA_ENGINEER_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/engineer-format-audit.sh" ]; then
+  run_governance "Engineer format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/engineer-format-audit.sh "$QA_ENGINEER_REPORT_FILE"
+fi
+if [ -n "${QA_QA_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/qa-format-audit.sh" ]; then
+  run_governance "QA format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/qa-format-audit.sh "$QA_QA_REPORT_FILE"
+fi
+if [ -n "${QA_GUARD_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/guard-format-audit.sh" ]; then
+  run_governance "Guard format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/guard-format-audit.sh "$QA_GUARD_REPORT_FILE"
+fi
+if [ -n "${QA_SHIP_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/ship-format-audit.sh" ]; then
+  run_governance "Ship format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/ship-format-audit.sh "$QA_SHIP_REPORT_FILE"
+fi
+if [ -n "${QA_LEARN_REPORT_FILE:-}" ] && [ -x "/Users/aaron/Developer/MGMTV2/.agent/core/scripts/learn-format-audit.sh" ]; then
+  run_governance "Learn format audit" /Users/aaron/Developer/MGMTV2/.agent/core/scripts/learn-format-audit.sh "$QA_LEARN_REPORT_FILE"
+fi
+
 echo "\n🎯 QA Gate completed successfully"
