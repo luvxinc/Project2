@@ -6,45 +6,24 @@ description: /main_build 工作流。Use when 新建功能/重构/API契约/数�
 
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
-> 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。
 
 ---
 
-## 🔴 V3 架构合规 (Architecture Gate — 强制)
+## 🔴 架构合规 (Architecture Gate — 强制)
 
-> **任何 Build 任务开启前, 必须加载以下架构文件并确保代码完全合规:**
+> **任何 Build 任务开启前, 必须确保代码完全合规。**
+> 完整合规铁律 + 文档索引 → `{project}/reference/architecture-gate.md`（模板: `core/reference/architecture-gate-template.md`）
 
-```
-🏛️ 架构真相源 (Architecture Source of Truth):
-├── 📐 主文件: .agent/projects/mgmt/reference/v3-architecture.md
-│   → 技术栈, DDD 分层, API 规范, 数据库建模, 性能 SLA
-├── 📋 审计标准: .agent/projects/mgmt/data/audits/v3-architecture-audit.md
-│   → 19 GAP 审计报告, 覆盖率评级
-├── 🔬 质量基准: .agent/projects/mgmt/data/audits/v3-deep-quality-audit.md
-│   → Schema 审计, 索引策略, 算法效率分析
-├── 📑 分阶段计划: .agent/projects/mgmt/data/specs/v3-phase-plan.md
-│   → Phase 0-5 执行循环 (AUDIT→DESIGN→BUILD→VERIFY→GATE)
-└── 📚 24 个参考规范: .agent/projects/mgmt/reference/*.md
-    → resilience, cdc, disaster-recovery, kafka-design, testing-strategy,
-      notification, conventions, business-rules, etc.
-```
+---
 
-### 架构合规铁律
+## 执行模式
 
-| 规则 | 不合规后果 |
-|------|----------|
-| **后端必须 Kotlin + Spring Boot 3.x** | Block |
-| **DDD 分层: domain → application → infrastructure → api** | Block |
-| **Controller 禁止写业务逻辑** (只做入参校验 + 调用 UseCase) | Block |
-| **Domain 层禁止 import Spring/JPA** | Block |
-| **数据库禁止 Type Erasure** (TEXT 存日期/金额/ID) | Block |
-| **所有写操作必须审计日志** (traceId + userId + IP) | Block |
-| **安全等级 L1-L4 四级模型** | Block |
-| **统一响应格式** ({ success, data, pagination/error }) | Warning |
-| **i18n 从第一行代码开始** | Warning |
-| **API 命名: RESTful 资源式** (禁止 /getX, /createY) | Warning |
+| 模式 | 触发条件 | 流程 |
+|------|---------|------|
+| **Express** | contact.md 判定通过 | 领悟 → 执行 → `rules/common.md §5` 验证 → 交付（跳过 Spec/CTO/QA） |
+| **Standard** | 任意 Express 条件不满足 | §0-§7 完整状态机 |
 
-> **按需加载参考规范:** 涉及后端弹性 → 读 `.agent/projects/mgmt/reference/resilience.md`; 涉及 Kafka → 读 `.agent/projects/mgmt/reference/kafka-design.md`; 涉及数据库 → 读 `.agent/projects/mgmt/data/audits/v3-deep-quality-audit.md`; 涉及测试 → 读 `.agent/projects/mgmt/reference/testing-strategy.md`。
+> 模式由 PM 在 `contact.md` Express Path 判定中自动选择。Express 不满足 → 自动进入 Standard。
 
 ---
 
@@ -52,6 +31,7 @@ description: /main_build 工作流。Use when 新建功能/重构/API契约/数�
 
 | 关键词 | 跳转 |
 |--------|------|
+| `Express`, `模式`, `快速` | → 执行模式 (上方) |
 | `状态`, `流程`, `全局`, `闭环` | → §0 任务状态机 |
 | `需求`, `spec`, `wizard`, `采集` | → §1 需求获取 |
 | `分配`, `分解`, `plan`, `工单` | → §2 任务分配 |
@@ -168,6 +148,28 @@ CTO 审查交接包 → 按 PM 标注的域加载域索引 (domains/*.md)
 
 **铁律: 每个 Phase 必须能独立合并。禁止"全部完成才能用"的计划。**
 
+### Phase DoD — 解锁门禁（每个 Phase 完成前必须满足）
+
+> **DoD = Definition of Done。当前 Phase DoD 未满足，禁止解锁下一 Phase。**
+
+```
+Phase DoD 标准（通用，所有 Phase 适用）:
+  ✅ 编译通过（无 ERROR，只允许 WARNING 级别警告）
+  ✅ 新增功能有对应新测试用例（新增功能数 ≤ 新测试数）
+  ✅ 旧测试全通过（不允许为过关而注释测试）
+  ✅ 零 CRITICAL 问题（来自 CTO Review / QA Audit）
+  ✅ HIGH 问题有明确修复时间表（记录在 Spec §5）
+  ✅ CTO Approve（WARNING 必须有记录，不允许被跳过）
+  → 全部满足 → 解锁下一 Phase
+
+Phase 失败处理:
+  ❌ DoD 未满足 → 不宣布 Phase 完成
+  → 诊断缺少哪类「能力」（参考 root-cause-classifier.md）
+  → 进入 code → review → test → fix 循环
+  → 循环退出条件：Phase DoD 全部满足
+  → 不允许带未解决 CRITICAL 进入下一 Phase
+```
+
 ### CTO → 工程师 任务工单
 
 ```
@@ -189,24 +191,11 @@ CTO 审查交接包 → 按 PM 标注的域加载域索引 (domains/*.md)
 
 > **加载:** 对应工程师 SOP (各 SOP 已含 L3 引用)
 
-### 3.1 执行规则（引用真相源）
+### 3.1 执行规则
 
-> 本节只保留执行入口，不重复 Rules 正文。详细条款以下列真相源为准：
->
-> - 通用规则：`core/rules/common.md`（§1 代码风格、§5 验证循环、§6 影响分析、§9 拆分复用）
-> - 前端反模式：`core/rules/frontend.md`
-> - 后端反模式：`core/rules/backend.md`
-> - 记忆与复盘：`core/skills/memory.md`
-> - 协作传播：`core/skills/collaboration.md` §7
-> - 项目铁律：`projects/mgmt/reference/iron-laws.md`
->
-> **执行最小清单（必须）：**
->
-> 1. 严格按工单 + Spec 执行，不超范围；不确定先查证，禁止猜测。
-> 2. 每步更新 TRACKER；涉及共享模块必须做消费者追溯。
-> 3. 增量验证：子任务完成即执行编译/类型检查，失败立即修复。
-> 4. 交付前通过验证门禁（编译/类型/lint/测试/覆盖率/安全）并完成功能性验证。
-> 5. 交付前逐条对照用户原始需求，未验证项不得声称完成。
+规则真相源：`rules/common.md`（§1/§5/§6/§9）、`rules/frontend.md`、`rules/backend.md`、`skills/memory.md`、`skills/collaboration.md §7`、`projects/mgmt/reference/iron-laws.md`。
+
+执行最小清单：① 严格按工单+Spec，禁止猜测。② 每步更新 TRACKER，涉及共享模块做消费者追溯。③ 增量验证（子任务完即编译/类型检查）。④ 交付前通过验证门禁（编译/类型/lint/测试/覆盖率/安全）+ 功能性验证。⑤ 逐条对照用户需求打勾，未验证项不得宣称完成。
 
 ### 3.1.1 重构保真执行（🔴 强制）
 
@@ -341,34 +330,19 @@ PM 交付物完整性检查 (§5.3)
 └── 后续: {无 / 记录到 requirements-list}
 ```
 
-**关闭后操作 (按 `core/skills/project-structure.md` §6.2 删除规则):**
-- 更新 `.agent/projects/{project}/data/progress/requirements-list.md`
-- Spec 文件 §9 标记 CLOSED
-- 🔴 **错题本归档** → 本次任务中所有修复的问题归档到 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3`)
-- 🔴 **交叉检查确认** → 确认所有错题本条目的交叉检查已完成 (`core/skills/memory.md` §3.5`)
-- 📘 **项目复用记忆沉淀** → 将本次可复用需求写入 `.agent/projects/{project}/data/progress/PROJECT-MEMORY.md` (`core/skills/memory.md` §3.6)
-- ✅ 执行 `core/skills/memory.md` §2 验收后协议:
-  - 产出文件写入 ACCEPTED.md
-  - 删除 Spec 文件 (`data/specs/`)
-  - 删除 Plan 文件 (`data/plans/`)
-  - 删除 TRACKER-{task-id}.md
-  - 删除相关 Checkpoint
-  - 审计报告: 问题全修复 → 删除; 未修复 → 保留
-- ✅ 执行 `core/skills/project-structure.md` §6.3 健康检查
-- ✅ 执行记忆去重审计：`core/scripts/memory-dedupe-audit.sh .agent/projects/{project}`
-- ✅ 执行产物生命周期审计：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project}`
-- ✅ 修复完成后清理审计报告：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --cleanup-audits`
-- ✅ 审计报告空目录强校验：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --enforce-no-audits`
-- ✅ 清理任务临时目录（两阶段删除）：`core/scripts/artifact-lifecycle-audit.sh .agent/projects/{project} --cleanup-task {task-id}`
-- ✅ 清理过期临时回收站：`core/scripts/artifact-trash-purge.sh .agent/projects/{project} 24`
-- 🔴 **自动 Git 提交+推送:**
-  ```bash
-  git add -A
-  git commit -m "✅ {任务名称} — CLOSED"
-  git push
-  ```
-  > 用户确认后自动执行, 无需额外询问。commit message 包含任务名称。
-  > ⚠️ push 失败时: 提示用户 "commit 已完成, 但 push 失败 (原因: {错误}), 请手动 `git push`"。
+**关闭后操作（按 `project-structure.md` §6.2）:**
+
+| 步骤 | 操作 |
+|------|------|
+| ① 需求列表 | 更新 `data/progress/requirements-list.md` |
+| ② Spec 标记 | Spec §9 标记 CLOSED |
+| ③ 🔴 错题本归档 | 问题归档到 `data/errors/ERROR-BOOK.md` → `memory.md §3` |
+| ④ 🔴 交叉检查 | 确认同类代码已检查 → `memory.md §3.5` |
+| ⑤ 📘 记忆沉淀 | 写入 `data/progress/PROJECT-MEMORY.md` → `memory.md §3.6` |
+| ⑥ 验收协议 | `memory.md §2`：写 ACCEPTED.md，删 Spec/Plan/TRACKER/Checkpoint |
+| ⑦ 健康检查 | `project-structure.md §6.3` |
+| ⑧ 脚本清理 | `memory-dedupe-audit.sh` + `artifact-lifecycle-audit.sh` + `artifact-trash-purge.sh 24` |
+| ⑨ 🔴 Git 提交 | `git add -A && git commit -m "✅ {任务名称} — CLOSED" && git push`（用户确认后自动执行；push 失败时提示手动推送） |
 
 ---
 
@@ -415,17 +389,6 @@ PM 交付物完整性检查 (§5.3)
 
 ---
 
-## §8 L3 工具库引用
-
-| 环节 | 推荐工具 | 路径 | 何时加载 |
-|------|---------|------|---------|
-| §2 任务分解 | ECC: Planner | `warehouse/tools/everything-claude-code/01-agents-review.md` §2 | 大型任务分解参考 |
-| §4 整合验证 | ECC: Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 需要深度审查清单时 |
-| §3 提交前 | 🔴 Rules 层 | `core/rules/common.md` + `core/skills/frontend.md` / `core/skills/backend.md` | **必查** — 反模式 + 自检 Checklist |
-| 各 §3 执行 | 各工程师 SOP 已含 L3 引用 | — | 自动跟随 |
-| 各 §5 审计 | QA SOP 已含 L3 引用 | — | 自动跟随 |
-
 ---
 
-*Version: 3.0.0 — 闭环强化 (ECC 整合: Approval Criteria + Phased Delivery + PostToolUse + Confidence Filter)*
-*Created: 2026-02-12 | Updated: 2026-02-15*
+*Version: 3.1.0 — Phase 1 精简*

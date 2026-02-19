@@ -25,7 +25,7 @@ description: 项目级数据管理 SOP。Use when 需要规范目录结构、命
 ## 1. 标准目录结构
 
 ```
-.agent/.agent/projects/{project}/
+.agent/projects/{project}/
 │
 ├── CONTEXT.md                         ← 项目入口 (技术栈/铁律/阶段指针)
 ├── roadmap.md                         ← 路线图 (Phase 列表/当前指针)
@@ -51,7 +51,8 @@ description: 项目级数据管理 SOP。Use when 需要规范目录结构、命
     ├── audits/                        ← 审计报告 (修复后删)
     ├── errors/                        ← 错题本 (持久)
     │   └── ERROR-BOOK.md
-    └── training/                      ← 经验教训 (持久)
+    ├── training/                      ← 经验教训 (持久)
+    └── tmp/                           ← 任务临时文件 (任务结束即删)
 ```
 
 ---
@@ -235,7 +236,20 @@ PM 交付:
 | **索引** | 文件顶部维护关键词索引表 (memory.md §3.2) |
 | **切片规则** | 如果条目 > 50 条 → 按模块拆分: `ERROR-BOOK-{module}.md` |
 
-### 3.9 data/training/ (经验教训)
+### 3.9 data/tmp/ (临时工作区)
+
+| 项目 | 规范 |
+|------|------|
+| **位置** | `.agent/projects/{project}/data/tmp/` |
+| **创建者** | CTO / 工程师（需要隔离的临时计算产出时） |
+| **命名** | `{TASK-ID}/` 子目录，内含文件无格式限制 |
+| **命名示例** | `tmp/TASK-VMA-001/scope-contract.txt` |
+| **生命周期** | 🟡 临时 — **任务 CLOSED 立即删除整个子目录** |
+| **写入逻辑** | 仅在任务执行期间需要隔离中间产物时创建 |
+| **清理规则** | 任务验收后，执行 `rm -rf tmp/{TASK-ID}/` |
+| **🔴 铁律** | **禁止在 tmp/ 积压过期任务文件。健康检查时直接 rm。** |
+
+### 3.10 data/training/ (经验教训)
 
 | 项目 | 规范 |
 |------|------|
@@ -278,7 +292,9 @@ PM 交付:
 |------|------|------|
 | `YYYY-MM-DD_` | 所有任务级文件 (spec/plan/checkpoint/audit/training) | `2026-02-15_vma-phone.md` |
 | `TRACKER-` | 追踪器 | `TRACKER-VMA-PHONE-001.md` |
-| `ERROR-BOOK` | 错题本 | `.agent/projects/{project}/data/errors/ERROR-BOOK.md` |
+| `ERROR-BOOK` | 错题本 | `ERROR-BOOK.md` |
+| `BASELINE-` | 基线审计（长期保留的架构/traceability 报告） | `BASELINE-architecture-audit.md` |
+| `ARCHIVED-` | 归档文件（废弃版本保留参考，不可引用） | `ARCHIVED-v2-database-audit.md` |
 | 无前缀 | 持久级文件 (ACCEPTED, roadmap, playbook) | `ACCEPTED.md` |
 
 ### 4.2 task-name 规则
@@ -373,9 +389,10 @@ Agent 在每个任务开始前, 快速扫描:
 
 [ ] data/specs/ 中有无 CLOSED 状态的 Spec → 如有, 立即删除
 [ ] data/plans/ 中有无已完成任务的 Plan → 如有, 立即删除
-[ ] data/audits/ 中有无全 ✅ 的审计报告 → 如有, 立即删除
+[ ] data/audits/ 中有无全 ✅ 的临时审计报告 → 如有, 立即删除（BASELINE-* 和 ARCHIVED-* 前缀除外）
 [ ] data/checkpoints/ 中有无过期检查点 → 如有, 立即删除
 [ ] data/progress/ 中有无孤立 TRACKER → 如有, 确认后删除
+[ ] data/tmp/ 中有无已完成任务的子目录 → 如有, rm -rf tmp/{TASK-ID}/
 ```
 
 ---
@@ -389,7 +406,7 @@ PM 创建新项目时:
 [ ] mkdir -p .agent/projects/{project}
 [ ] 创建 CONTEXT.md (§1 简介 + §2 阶段指针 + §3 技术栈 + §4 铁律)
 [ ] 创建 roadmap.md (Phase 列表 + 当前指针→Phase 1)
-[ ] mkdir -p data/{specs,plans,progress,checkpoints,audits,errors,training}
+[ ] mkdir -p data/{specs,plans,progress,checkpoints,audits,errors,training,tmp}
 [ ] mkdir -p playbooks reference
 [ ] 创建 data/progress/ACCEPTED.md (空模板, memory.md §2.3 格式)
 [ ] 创建 data/progress/requirements-list.md (空表头)

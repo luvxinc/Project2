@@ -63,6 +63,15 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 | `交接`, `检查点`, `恢复` | [`skills/handoff.md`](skills/handoff.md) | 跨会话接力 | ~4KB |
 | `验证`, `编码标准`, `学习` | [`skills/agent-mastery.md`](skills/agent-mastery.md) | Agent 行为优化 (v2.1 精简版) | ~7KB |
 | `持续学习`, `本能`, `演化` | [`skills/continuous-learning.md`](skills/continuous-learning.md) | 本能架构 + 置信度 + 模式检测 | ~5KB |
+| `环境`, `预检`, `前置`, `服务状态` | [`skills/environment-check.md`](skills/environment-check.md) | 任务前环境预检 SOP (Harness B1) | ~3KB |
+| `E2E`, `端到端`, `用户旅程`, `链路测试` | [`skills/e2e-testing.md`](skills/e2e-testing.md) | E2E 测试策略 + 场景设计 + CI/CD 集成 + 失败处理 | ~4KB |
+
+### 🔧 Harness 诊断工具 (出错时加载)
+
+| 关键词 | 文件 | 能力 | 大小 |
+|--------|------|------|------|
+| `根因`, `出错`, `分类`, `诊断` | [`reference/root-cause-classifier.md`](reference/root-cause-classifier.md) | 根因分类决策树，出错时先诊断再改代码 | ~3KB |
+| `工具`, `能力`, `矩阵`, `失败处理` | [`reference/agent-tool-capability-matrix.md`](reference/agent-tool-capability-matrix.md) | 工具能力边界 + 验证通路 + 超界处理 | ~3KB |
 
 ### 🔴 强制规则层 (提交前必查)
 
@@ -100,6 +109,7 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 | 工具 | 目录 | 何时加载 |
 |------|------|---------|
 | ECC | [`warehouse/tools/everything-claude-code/`](../warehouse/tools/everything-claude-code/) | Agent 系统设计/审查清单 |
+| **Agent Research 2025** | [`warehouse/tools/agent-research-2025/`](../warehouse/tools/agent-research-2025/) | **最新 Agent 设计原则** (Context/Tool/Eval/Multi-Agent) |
 | UI UX Pro | [`warehouse/tools/ui-ux-pro-max/`](../warehouse/tools/ui-ux-pro-max/) | 选风格/配色/UX 审查 |
 | Anthropic Skills | [`warehouse/tools/anthropic-skills/`](../warehouse/tools/anthropic-skills/) | 创建新 Skill |
 | Knowledge Plugins | [`warehouse/tools/knowledge-work-plugins/`](../warehouse/tools/knowledge-work-plugins/) | 创建插件 |
@@ -143,6 +153,16 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 规则 5: L3 工具库按需加载, 先读 INDEX (~0.4K tok) 再读切片
 规则 6: 用完大文件 (>10KB) 释放上下文
 规则 7: 总单次加载上限: ≤ 30KB (~7.5K tok)
+规则 8: 防 Context Rot (Anthropic 2025-09 研究)
+         - Context 污染 = 注意力退化 → 工作质量下降
+         - 每加载一个文件: 读完后评估是否仍需保留
+         - 避免将错误信息、旧草稿、无关输出积累在上下文中
+         - 长任务中途执行 /compact 整理 → 减少 context noise
+规则 9: 渐进式披露 (Progressive Disclosure)
+         - L1 = metadata + 路由表 (轻量)
+         - L2 = 具体 SOP section (按需)
+         - L3 = 完整代码/模板 (仅在需要实现时)
+         - 先读摘要/路由表，确认相关后再读完整内容
 ```
 
 ### Token 预算参考
@@ -156,5 +176,24 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 ---
 
-*Version: 3.3.0 — +continuous-learning 拆分 + Token 预算表 + 规则编号更新*
-*Updated: 2026-02-15*
+## L3 工具统一引用 (按场景)
+
+> 各 Skill 文件末尾的 L3 引用表已移除，统一在此维护。域索引保留域级推荐（更精准）。
+
+| 场景 | 工具 | 路径 |
+|------|------|------|
+| 任务分解 / Agent 系统设计 | ECC: Planner | `warehouse/tools/everything-claude-code/01-agents-review.md §2` |
+| 代码审查清单 | ECC: Reviewer | `warehouse/tools/everything-claude-code/01-agents-review.md §3` |
+| 强制规则 / TDD | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md §1-§2` |
+| 代码采集策略 | ECC: System Prompter | `warehouse/tools/everything-claude-code/01-agents-review.md §1` |
+| UI 设计系统 | UI UX Pro: Design | `warehouse/tools/ui-ux-pro-max/01-design-system.md` |
+| UX 审查 / 需求评估 | UI UX Pro: UX Rules | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` |
+| 动画开发 | Anime.js | `warehouse/tools/animejs/INDEX.md` |
+| 文档→Skill 自动化 | Skill Seekers | `warehouse/tools/skill-seekers/01-commands-modules.md` |
+| 记忆架构设计 | Claude-Mem | `warehouse/tools/claude-mem/01-architecture.md` |
+| Skill 规范模板 | Anthropic Skills | `warehouse/tools/anthropic-skills/01-spec-template.md` |
+
+---
+
+*Version: 3.5.0 — P2 补全：e2e-testing.md 路由 + 规则 8/9 + Agent Research 2025*
+*Updated: 2026-02-19*

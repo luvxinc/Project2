@@ -6,7 +6,6 @@ description: 基建架构师 SOP（Kubernetes/Terraform/Docker/CI-CD）。Use wh
 # 基础设施规范 — Kubernetes + Terraform + CI/CD
 
 > **你是基建架构师。你的职责是: 设计+实现容器编排、基础设施自动化、CI/CD 管道、灾备方案。**
-> **⚠️ 本文件 ~12KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
 
 ## 路由表
 
@@ -27,31 +26,7 @@ description: 基建架构师 SOP（Kubernetes/Terraform/Docker/CI-CD）。Use wh
 
 ## 1. 云原生架构总览
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Kubernetes Cluster                    │
-│                                                         │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │  Namespace:  │  │  Namespace:  │  │  Namespace:   │  │
-│  │  production  │  │  staging     │  │  monitoring   │  │
-│  │             │  │              │  │               │  │
-│  │ ┌─────────┐ │  │              │  │ ┌───────────┐ │  │
-│  │ │ API     │ │  │              │  │ │ Prometheus│ │  │
-│  │ │ (3 pods)│ │  │              │  │ │ Grafana   │ │  │
-│  │ └─────────┘ │  │              │  │ │ Loki      │ │  │
-│  │ ┌─────────┐ │  │              │  │ │ Tempo     │ │  │
-│  │ │ Web     │ │  │              │  │ └───────────┘ │  │
-│  │ │ (2 pods)│ │  │              │  │               │  │
-│  │ └─────────┘ │  │              │  │               │  │
-│  └─────────────┘  └──────────────┘  └───────────────┘  │
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │              Infrastructure Services             │    │
-│  │  PostgreSQL · Redis · Kafka · OpenSearch · CH    │    │
-│  │  (Managed services or StatefulSets)              │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-```
+K8s 集群包含三类 Namespace：`production`（后端实例 + 前端实例）、`staging`、`monitoring`（可观测性栈），底层基础设施（数据库/缓存/消息队列/搜索 — 托管服务或 StatefulSet）。见 `CONTEXT.md §3` 获取当前服务清单。
 
 ---
 
@@ -67,77 +42,16 @@ description: 基建架构师 SOP（Kubernetes/Terraform/Docker/CI-CD）。Use wh
 | `monitoring` | 可观测性栈 (Prometheus/Grafana/Loki) |
 | `infra` | 基础设施服务 (Kafka/Redis/PG — 如不用托管) |
 
-### 2.2 API 部署示例
+### 2.2 API 部署规范
 
-```yaml
-# kubernetes/api-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: app-api
-  namespace: app-prod
-spec:
-  replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  template:
-    spec:
-      containers:
-        - name: api
-          image: harbor.app.com/app/api:${TAG}
-          ports:
-            - containerPort: 8080
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: production
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: app-secrets
-                  key: db-host
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 2000m
-              memory: 4Gi
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 30
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: app-api-hpa
-  namespace: app-prod
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: app-api
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-```
+**Deployment 关键配置**（完整模板 → `core/reference/k8s-templates.md`）：
+- `strategy: RollingUpdate` (maxSurge: 1, maxUnavailable: 0)
+- `resources.requests`: cpu 500m / memory 1Gi；`limits`: cpu 2000m / memory 4Gi
+- `readinessProbe`: `{health_readiness_path}`（见 `CONTEXT.md §3`） delay 30s period 10s
+- `livenessProbe`: `{health_liveness_path}`（见 `CONTEXT.md §3`） delay 60s period 30s
+- 环境变量从 `secretKeyRef` 注入（禁止硬编码）
+
+**HPA 规范**：minReplicas 3 / maxReplicas 10 / cpu averageUtilization 70
 
 ---
 
@@ -182,199 +96,68 @@ infra/terraform/
 
 ## 4. Docker
 
-### 4.1 API Dockerfile (多阶段构建)
+### 4.1 API Dockerfile（完整模板 → `core/reference/dockerfile-templates.md`）
 
-```dockerfile
-# Stage 1: Build
-FROM gradle:8-jdk21-alpine AS builder
-WORKDIR /app
-COPY build.gradle.kts settings.gradle.kts ./
-COPY src/ src/
-RUN gradle bootJar --no-daemon -x test
+多阶段构建：构建镜像（含构建工具）→ 运行镜像（最小 Runtime）。
+非 root 用户 + `HEALTHCHECK {health_path}` + `EXPOSE {port}`。
 
-# Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-COPY --from=builder /app/build/libs/*.jar app.jar
-USER appuser
-EXPOSE 8080
-HEALTHCHECK CMD wget -qO- http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
+> **基础镜像版本**: 见 `CONTEXT.md §3 后端技术栈`（gradle/maven 构建基础镜像 + JRE/runtime 运行镜像）。
 
-### 4.2 Web Dockerfile
+### 4.2 Web Dockerfile（完整模板 → `core/reference/dockerfile-templates.md`）
 
-```dockerfile
-FROM node:22-alpine AS builder
-WORKDIR /app
-RUN corepack enable pnpm
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-COPY apps/web/package.json apps/web/
-COPY packages/ packages/
-RUN pnpm install --frozen-lockfile
-COPY apps/web/ apps/web/
-RUN pnpm --filter web build
+多阶段构建：构建镜像（含 Node.js + 包管理器）→ 运行镜像（standalone/output 模式）。
+`EXPOSE {port}`、`CMD ["{start_command}"]`。
 
-FROM node:22-alpine
-WORKDIR /app
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./.next/static
-COPY --from=builder /app/apps/web/public ./public
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
+> **镜像版本**: 见 `CONTEXT.md §3 前端技术栈`（Node.js 版本 + 包管理器 + 框架 output 模式）。
 
 ### 4.3 本地开发 (docker-compose)
 
-```yaml
-# infra/docker-compose.yml
-services:
-  postgres:
-    image: postgres:16-alpine
-    ports: ["5432:5432"]
-    environment:
-      POSTGRES_DB: app_erp
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: dev_password
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+`infra/docker-compose.yml` 包含以下服务：
 
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
+| 服务 | 镜像 | 端口 |
+|------|------|------|
+| 关系型数据库 | 见 CONTEXT.md §3 | 见 CONTEXT.md §5 |
+| 缓存 | 见 CONTEXT.md §3 | 见 CONTEXT.md §5 |
+| 消息队列 | 见 CONTEXT.md §3 | 见 CONTEXT.md §5 |
+| 搜索引擎 | 见 CONTEXT.md §3 | 见 CONTEXT.md §5 |
+| OLAP | 见 CONTEXT.md §3 | 见 CONTEXT.md §5 |
 
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0
-    ports: ["9092:9092"]
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-
-  opensearch:
-    image: opensearchproject/opensearch:2.12.0
-    ports: ["9200:9200"]
-    environment:
-      discovery.type: single-node
-      DISABLE_SECURITY_PLUGIN: "true"
-
-  clickhouse:
-    image: clickhouse/clickhouse-server:24
-    ports: ["8123:8123", "9000:9000"]
-
-volumes:
-  pgdata:
-```
+> **具体镜像版本**: 见 `CONTEXT.md §3 数据存储层` 的版本锁定列表。
 
 ---
 
 ## 5. CI/CD 管道
 
-### 5.1 全链路流程
+Push/PR 触发，7 个阶段顺序执行：
 
-```
-Push / PR
-    ↓
-┌──────────────────────────────────────────┐
-│ 1. Lint & Format Check                   │
-│    - ktlint (Kotlin)                     │
-│    - eslint + prettier (Frontend)        │
-├──────────────────────────────────────────┤
-│ 2. Unit Tests                            │
-│    - JUnit 5 + MockK (Backend)           │
-│    - Jest (Frontend)                     │
-├──────────────────────────────────────────┤
-│ 3. Integration Tests                     │
-│    - Testcontainers (PG + Redis + Kafka) │
-│    - API Contract Tests                  │
-├──────────────────────────────────────────┤
-│ 4. Security Scan                         │
-│    - SAST (SonarQube / Semgrep)          │
-│    - SCA (Dependency Check / Snyk)       │
-│    - SBOM Generation                     │
-├──────────────────────────────────────────┤
-│ 5. Build                                 │
-│    - Gradle bootJar (API)                │
-│    - next build (Web)                    │
-│    - Docker build + push to Harbor       │
-├──────────────────────────────────────────┤
-│ 6. Deploy to Staging (自动)              │
-│    - K8s rolling update                  │
-│    - Smoke tests                         │
-├──────────────────────────────────────────┤
-│ 7. Deploy to Production (审批)           │
-│    - Canary deployment (10% → 50% → 100%)│
-│    - Health check gates                  │
-│    - Automatic rollback on failure       │
-└──────────────────────────────────────────┘
-```
+1. **Lint** — 见 `CONTEXT.md §5 lint_cmd`
+2. **Unit Tests** — 见 `CONTEXT.md §5 test_cmd`
+3. **Integration Tests** — 见 `CONTEXT.md §5 integration_test_cmd`
+4. **Security Scan** — Semgrep (SAST) + 依赖扫描 (SCA) + SBOM
+5. **Build** — 见 `CONTEXT.md §5 build_cmd` + Docker → 镜像仓库
+6. **Deploy Staging**（自动）— K8s rolling update + smoke tests
+7. **Deploy Production**（人工审批）— Canary 10%→50%→100%，失败自动回滚
 
-### 5.2 GitHub Actions 示例
+### 5.2 GitHub Actions 关键模式
 
 ```yaml
-# .github/workflows/ci.yml
-name: CI/CD Pipeline
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
+# 通用 CI 模式（具体命令见 CONTEXT.md §5）
 jobs:
   backend-test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: test
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-        ports: ["5432:5432"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - run: ./gradlew test
-      - run: ./gradlew ktlintCheck
-
+    # 1. 安装运行时（版本见 CONTEXT.md §3）
+    # 2. 运行 lint_cmd + test_cmd
   frontend-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter web lint
-      - run: pnpm --filter web build
-
+    # 1. 安装 Node.js + 包管理器（版本见 CONTEXT.md §3）
+    # 2. 运行 frontend_lint_cmd + frontend_build_cmd
   security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
-      - run: ./gradlew dependencyCheckAnalyze
-
+    # semgrep-action + 依赖漏洞扫描
   deploy-staging:
     needs: [backend-test, frontend-test, security-scan]
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          docker build -t harbor.app.com/app/api:${{ github.sha }} apps/api/
-          docker push harbor.app.com/app/api:${{ github.sha }}
-          kubectl set image deployment/app-api api=harbor.app.com/app/api:${{ github.sha }} -n app-staging
+    # build_cmd → docker build + push → kubectl rollout
 ```
+
+> **具体版本和命令**: 见 `CONTEXT.md §3 技术栈` + `§5 工具命令速查`。
 
 ---
 
@@ -390,15 +173,7 @@ jobs:
 
 ---
 
-## 7. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| 部署策略 | Ship 工作流 | `workflows/ship.md` | CI/CD + Docker + K8s 部署流程 |
-| 代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 基建配置反模式检查 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | IaC 命名/组织规范 |
-
 ---
 
-*Version: 1.1.0 — 含 L3 工具引用*
-*Based on: battle-tested enterprise patterns*
+*Version: 2.1.0 — L1 泛化：移除 ktlint/gradle/docker 特定命令，改为 CONTEXT.md §5 引用*
+*Updated: 2026-02-19*

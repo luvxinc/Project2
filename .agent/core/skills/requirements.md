@@ -54,11 +54,11 @@ Agent 收到用户 prompt 后, 必须先执行以下采集, 不允许跳过:
 ### 1.0 🔴 技术栈确认 (最先执行)
 
 ```
-1. 读 `.agent/.agent/projects/{project}/CONTEXT.md` §2 “当前阶段指针”
-2. 确认当前运行栈:
-   - V3: Spring Boot + Kotlin + JPA → 写 Kotlin, 用 Flyway Migration
-3. 后续所有后端代码按 V3 栈写
-4. 🔴 V2 已彻底弃用: 禁止引用/修改/依赖任何 V2 NestJS 代码
+1. 读 `.agent/projects/{project}/CONTEXT.md` §2 “当前阶段指针”
+2. 读 `.agent/projects/{project}/CONTEXT.md` §3 “技术栈” → 确认当前运行栈
+   （后端框架/前端框架/数据库/迁移工具/消息队列）
+3. 后续所有代码按 CONTEXT.md §3 指定的技术栈编写
+4. 🔴 禁止使用 CONTEXT.md §4 铁律中标记为”已废弃/已移除”的任何技术栈
 ```
 
 ### 1.1 采集清单
@@ -152,7 +152,7 @@ Agent 收到用户 prompt 后, 必须先执行以下采集, 不允许跳过:
 ### 2.2 Spec 存储位置
 
 ```
-.agent/.agent/projects/{project}/data/specs/YYYY-MM-DD_{task-name}.md
+.agent/projects/{project}/data/specs/YYYY-MM-DD_{task-name}.md
 ```
 
 > **命名和生命周期规则: `core/skills/project-structure.md` §3.3 + §4**
@@ -287,14 +287,5 @@ Diff:      3 files changed
 
 ---
 
-## L3 工具库引用 (按需加载)
-
-| 场景 | 推荐加载 | 文件路径 | 作用 |
-|------|---------|---------|------|
-| 代码采集策略 | ECC: System Prompter | `warehouse/tools/everything-claude-code/01-agents-review.md` §1 | 代码理解和依赖分析模式 |
-| UX 需求评估 | UI UX Pro: 准则 | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 评估 UI 需求合理性 |
-
----
-
-*Version: 1.1.0 — Added 工作流引用 + L3 工具*
-*Updated: 2026-02-12*
+*Version: 1.2.0 — Phase 3 L3 引用表移至 SKILL.md 统一管理*
+*Updated: 2026-02-19*

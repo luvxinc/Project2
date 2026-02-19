@@ -1,18 +1,18 @@
 ---
 name: backend
-description: 后端架构师 SOP（Kotlin/Spring Boot/DDD）。Use when 需要设计或修改后端模块、API、事务、测试与配置。
+description: 后端架构师 SOP（DDD + 企业级架构）。Use when 需要设计或修改后端模块、API、事务、测试与配置。
 ---
 
-# 后端规范 — Kotlin + Spring Boot 3
+# 后端规范（企业级 DDD 架构）
 
 > **你是后端架构师。你的职责是: 设计+实现后端业务模块、API 接口、事务管理、数据持久化。**
-> **⚠️ 本文件 ~13KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> **技术栈: 读 `CONTEXT.md §3` 确认当前后端框架/语言/ORM/迁移工具。禁止假设。**
 
 ## 路由表
 
 | 关键词 | 跳转 |
 |--------|------|
-| `为什么 kotlin`, `技术选型` | → §1 技术选型 |
+| `技术栈`, `技术选型`, `框架确认` | → §1 后端技术栈 |
 | `gradle`, `依赖`, `构建` | → §2 构建系统 |
 | `模块`, `DDD`, `领域`, `entity`, `service`, `controller` | → §3 模块结构 |
 | `security`, `认证`, `JWT` | → §4 Security 配置 |
@@ -22,452 +22,197 @@ description: 后端架构师 SOP（Kotlin/Spring Boot/DDD）。Use when 需要�
 
 ---
 
-> **企业级后端最佳实践: Kotlin + Spring Boot, DDD 分层, 声明式事务, 结构化并发。**
-> **本文件是泛化模板。 项目特定的模块列表/业务规则请参考 `.agent/projects/{project}/` 目录。**
+> **企业级后端最佳实践: DDD 分层, 声明式事务, 结构化并发。技术栈见 `CONTEXT.md §3`。**
+> **本文件是泛化模板。项目特定的模块列表/业务规则请参考 `.agent/projects/{project}/` 目录。**
 
 ---
 
-## 1. 为什么是 Kotlin + Spring Boot
+## 1. 后端技术栈（读 CONTEXT.md §3）
 
-### 1.1 语言选择: Kotlin over Java
+> **🔴 技术栈选型由项目决定，不在此文件硬编码。**
+> 1. 读 `CONTEXT.md §3` → 确认后端语言/框架/ORM/迁移工具
+> 2. 所有代码按 CONTEXT.md 指定的技术栈编写
+> 3. 架构原则（DDD 分层、声明式事务、类型安全）是跨技术栈通用的
 
-| 能力 | Java | Kotlin | 优势 |
-|------|------|--------|------|
-| Null Safety | 运行时 NPE | **编译期** `?` 标注 | 消灭生产环境最大 bug 类 |
-| 数据类 | Record (Java 16+) | `data class` | 原生不可变值对象 |
-| 密封类 | sealed (Java 17+) | `sealed class/interface` | 穷举模式匹配, 完美表达业务状态机 |
-| 协程 | Virtual Thread (Java 21) | `suspend fun` + 结构化并发 | 轻量级并发, 适合 I/O 密集 ERP |
-| 扩展函数 | 无 | `fun String.toSku()` | 领域语言化 |
-| DSL 构建 | 无 | builder DSL | 类型安全配置 |
-| Spring 兼容 | ✅ 原生 | ✅ 一等公民 (官方支持) | 零迁移成本 |
+### 通用架构原则（技术栈无关）
 
-### 1.2 框架选择: Spring Boot
-
-| 能力 | Node.js 框架 | Spring Boot | 差距 |
-|------|-------------|-------------------|------|
-| 事务管理 | `prisma.$transaction()` 手动 | `@Transactional(propagation=...)` 声明式 | 🔴 致命 |
-| 事务传播 | 不支持 | REQUIRED, REQUIRES_NEW, NESTED... | 🔴 致命 |
-| 并发模型 | 单线程事件循环 | 多线程 + 协程 | 🔴 百万数据处理 |
-| 内存上限 | ~1.5GB (V8) | 无限制 (JVM 可配) | 🔴 大批量 |
-| 批处理 | 无标准方案 | Spring Batch | 🔴 ETL 需求 |
-| 安全框架 | Passport (基础) | Spring Security 6 (企业级) | 🔴 SSO/RBAC |
-| 领域事件 | EventEmitter (基础) | Spring Modulith (企业级) | 🟡 模块化 |
-| 测试 | Jest | JUnit 5 + Testcontainers | 🟡 集成测试 |
-| 生态 | npm (Web 偏向) | Maven Central (企业偏向) | 🟡 中间件 SDK |
+| 原则 | 标准 |
+|------|------|
+| **DDD 分层** | domain → application → infrastructure → api（Controller 不写业务逻辑） |
+| **事务管理** | 所有写操作显式事务边界，避免跨服务事务 |
+| **Null 安全** | 强类型语言利用编译期 null 检查，弱类型语言显式验证 |
+| **不可变值对象** | DTO/VO 不可变，Domain Entity 通过方法变更状态 |
+| **声明式安全** | 权限注解/守卫在 API 层声明，不在 Service 层硬编码 |
+| **审计日志** | 所有写操作记录 traceId + userId + IP |
 
 ---
 
 ## 2. 构建系统
 
-### 2.1 Gradle (Kotlin DSL)
+> **构建工具与命令**: 见 `CONTEXT.md §3 后端技术栈` + `CONTEXT.md §5 工具命令速查`。
+> **项目具体构建配置（如 Gradle DSL / Maven POM / Cargo.toml）**: 见 `{project}/reference/impl-patterns-backend.md §8`。
 
-```kotlin
-// build.gradle.kts (根)
-plugins {
-    kotlin("jvm") version "2.0.x"
-    kotlin("plugin.spring") version "2.0.x"
-    kotlin("plugin.jpa") version "2.0.x"
-    id("org.springframework.boot") version "3.3.x"
-    id("io.spring.dependency-management") version "1.1.x"
-    id("org.flywaydb.flyway") version "10.x"
-}
+### 2.1 通用依赖分类
 
-dependencies {
-    // Spring Boot Starters
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-cache")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    
-    // Kotlin
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-    
-    // Database
-    runtimeOnly("org.postgresql:postgresql")
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-database-postgresql")
-    
-    // Redis
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    
-    // Kafka
-    implementation("org.springframework.kafka:spring-kafka")
-    
-    // OpenSearch
-    implementation("org.opensearch.client:opensearch-java")
-    
-    // OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.x")
-    
-    // Security
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    
-    // Batch
-    implementation("org.springframework.boot:spring-boot-starter-batch")
-    
-    // PDF/Document
-    implementation("com.itextpdf:itext7-core:8.x")
-    
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.mockk:mockk:1.13.x")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation("org.testcontainers:kafka")
-}
-```
+| 依赖类别 | 说明 | 具体库名 |
+|---------|------|---------|
+| Web 框架 | HTTP 请求处理、路由 | 见 CONTEXT.md §3 |
+| ORM/持久化 | 数据库访问层 | 见 CONTEXT.md §3 |
+| 安全框架 | 认证授权 | 见 CONTEXT.md §3 |
+| API 文档 | OpenAPI/Swagger | 见 CONTEXT.md §3 |
+| 消息中间件 | 事件/队列 | 见 CONTEXT.md §3 |
+| 缓存 | 内存/分布式缓存 | 见 CONTEXT.md §3 |
+| 测试 | 单元 + 集成 + 容器化 | 见 CONTEXT.md §3 |
 
 ---
 
 ## 3. 模块结构详解
 
-### 3.1 模块组织 (Spring Modulith)
+### 3.1 模块化架构
 
-每个业务域是一个独立模块, 包名遵循 `com.{company}.{app}.modules.{module}` 格式:
+> **框架选择**: 见 `CONTEXT.md §3`（如 Spring Modulith / NestJS Module / Go Package 等）
 
-| 模块类型 | 包名模式 | 典型示例 |
+每个业务域是一个独立模块，包/目录遵循 `{root}.modules.{module}` 格式:
+
+| 模块类型 | 路径模式 | 典型示例 |
 |----------|---------|----------|
-| **核心模块** | `modules.auth` | 认证 (OAuth2/OIDC/JWT) |
-| **核心模块** | `modules.users` | 用户 + 角色 + 权限 (RBAC) |
-| **业务模块** | `modules.{domain}` | 按领域划分 (产品/订单/库存...) |
-| **支撑模块** | `modules.logs` | 审计日志 + 错误日志 + 告警 |
+| **核心模块** | `modules/auth` | 认证 (OAuth2/OIDC/JWT) |
+| **核心模块** | `modules/users` | 用户 + 角色 + 权限 (RBAC) |
+| **业务模块** | `modules/{domain}` | 按领域划分 (产品/订单/库存...) |
+| **支撑模块** | `modules/logs` | 审计日志 + 错误日志 + 告警 |
 
 > **项目的具体模块列表在 `.agent/projects/{project}/overview.md` 中定义。**
 
-### 3.2 模块内部模板 (Kotlin)
+### 3.2 四层结构模板 (DDD)
 
-```kotlin
-// ==========================================
-// Domain Layer — 零框架依赖
-// ==========================================
+> **具体实现代码**: 见 `{project}/reference/impl-patterns-backend.md §10`
 
-// domain/model/Product.kt
-data class Product(
-    val id: ProductId,
-    val sku: Sku,
-    val name: String,
-    val category: Category,
-    val cost: Money,
-    val status: ProductStatus,
-) {
-    fun activate(): Product = copy(status = ProductStatus.ACTIVE)
-    fun deactivate(): Product = copy(status = ProductStatus.INACTIVE)
-}
-
-// domain/model/ValueObjects.kt
-@JvmInline value class ProductId(val value: UUID)
-@JvmInline value class Sku(val value: String) {
-    init { require(value.isNotBlank()) { "SKU cannot be blank" } }
-}
-
-data class Money(val amount: BigDecimal, val currency: Currency = Currency.USD) {
-    init { require(amount >= BigDecimal.ZERO) { "Amount must be non-negative" } }
-}
-
-// domain/event/ProductEvents.kt
-sealed interface ProductEvent {
-    data class Created(val product: Product) : ProductEvent
-    data class Activated(val productId: ProductId) : ProductEvent
-    data class Deactivated(val productId: ProductId) : ProductEvent
-}
-
-// domain/repository/ProductRepository.kt (接口, 非实现)
-interface ProductRepository {
-    fun findById(id: ProductId): Product?
-    fun findBySku(sku: Sku): Product?
-    fun save(product: Product): Product
-    fun findAll(page: Int, size: Int): Page<Product>
-}
-
-// ==========================================
-// Application Layer — 用例编排
-// ==========================================
-
-// application/usecase/CreateProductUseCase.kt
-@Service
-class CreateProductUseCase(
-    private val repository: ProductRepository,
-    private val eventPublisher: ApplicationEventPublisher,
-) {
-    @Transactional
-    fun execute(command: CreateProductCommand): ProductResponse {
-        // 业务规则校验
-        repository.findBySku(command.sku)?.let {
-            throw DuplicateSkuException(command.sku)
-        }
-        
-        val product = Product(
-            id = ProductId(UUID.randomUUID()),
-            sku = command.sku,
-            name = command.name,
-            category = command.category,
-            cost = command.cost,
-            status = ProductStatus.ACTIVE,
-        )
-        
-        val saved = repository.save(product)
-        eventPublisher.publishEvent(ProductEvent.Created(saved))
-        
-        return saved.toResponse()
-    }
-}
-
-// application/dto/ProductDtos.kt
-data class CreateProductCommand(
-    @field:NotBlank val sku: String,
-    @field:NotBlank val name: String,
-    val category: String,
-    @field:Positive val cost: BigDecimal,
-)
-
-data class ProductResponse(
-    val id: UUID,
-    val sku: String,
-    val name: String,
-    val category: String,
-    val cost: BigDecimal,
-    val status: String,
-)
-
-// ==========================================
-// Infrastructure Layer — 可替换实现
-// ==========================================
-
-// infrastructure/persistence/ProductJpaEntity.kt
-@Entity
-@Table(name = "products")
-class ProductJpaEntity(
-    @Id val id: UUID,
-    @Column(unique = true) val sku: String,
-    val name: String,
-    val category: String,
-    @Column(precision = 12, scale = 2) val cost: BigDecimal,
-    @Enumerated(EnumType.STRING) val status: ProductStatus,
-    val createdAt: Instant = Instant.now(),
-    val updatedAt: Instant = Instant.now(),
-    val createdBy: String? = null,
-    val updatedBy: String? = null,
-)
-
-// infrastructure/persistence/ProductJpaRepositoryImpl.kt
-@Repository
-class ProductJpaRepositoryImpl(
-    private val jpa: JpaProductRepository,
-) : ProductRepository {
-    override fun findById(id: ProductId) = jpa.findByIdOrNull(id.value)?.toDomain()
-    override fun save(product: Product) = jpa.save(product.toEntity()).toDomain()
-    // ...
-}
-
-interface JpaProductRepository : JpaRepository<ProductJpaEntity, UUID>
-
-// ==========================================
-// API Layer — Controller
-// ==========================================
-
-// api/ProductController.kt
-@RestController
-@RequestMapping("/api/v1/products")
-class ProductController(
-    private val createProduct: CreateProductUseCase,
-) {
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    fun create(@Valid @RequestBody command: CreateProductCommand): ApiResponse<ProductResponse> {
-        return ApiResponse.success(createProduct.execute(command))
-    }
-}
 ```
+// 四层 DDD 结构（伪代码，具体语法见 CONTEXT.md §3）
+
+// ① Domain Layer — 零框架依赖
+Entity Product { id, sku, status }
+  method activate() → copy(status = ACTIVE)
+ValueObject ProductId(uuid)
+Interface ProductRepository { findById(id); save(product) }
+DomainEvent ProductCreated(product)
+
+// ② Application Layer — 用例编排（声明式事务 + 领域事件发布）
+@Transactional
+UseCase CreateProduct(repo, eventPublisher):
+  execute(command) → repo.save(...) → eventPublisher.emit(ProductCreated)
+
+// ③ Infrastructure Layer — ORM 实现（隔离框架依赖）
+ORM_Entity products_table { id: UUID PK, sku: STRING UNIQUE, ... }
+RepositoryImpl → 实现 Domain 层 Repository 接口
+
+// ④ API Layer — Controller / Handler（输入验证 + 响应包装）
+POST /api/v1/products → validate(body) → useCase.execute(body) → ApiResponse
+```
+
+**分层规则**（跨技术栈通用）：
+
+| 规则 | 说明 |
+|------|------|
+| Domain 不依赖框架 | Domain Layer 只使用语言原生类型 |
+| Controller 不写业务 | Controller/Handler 只做验证+委托 |
+| Infrastructure 实现接口 | 通过 Repository 接口解耦 ORM |
+| Application 编排事务 | @Transactional 只在 UseCase 层 |
 
 ---
 
-## 4. Spring Security 配置
+## 4. 安全配置
 
-```kotlin
-@Configuration
-@EnableWebSecurity
-class SecurityConfig {
+> **框架选择**: 见 `CONTEXT.md §3 安全框架`
+> **具体实现代码**: 见 `security.md` + `{project}/reference/impl-patterns-backend.md §1`
 
-    @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http {
-            csrf { disable() }  // API-only, 用 Token
-            cors { configurationSource = corsConfig() }
-            
-            authorizeHttpRequests {
-                // 公开端点
-                authorize("/api/v1/auth/login", permitAll)
-                authorize("/api/v1/auth/refresh", permitAll)
-                authorize("/actuator/health", permitAll)
-                
-                // 安全等级
-                authorize("/api/v1/admin/**", hasRole("SUPERUSER"))
-                authorize("/api/v1/**", authenticated)
-            }
-            
-            oauth2ResourceServer { jwt { } }  // OIDC JWT 验证
-            
-            exceptionHandling {
-                authenticationEntryPoint = CustomAuthEntryPoint()
-                accessDeniedHandler = CustomAccessDeniedHandler()
-            }
-        }
-        return http.build()
-    }
-}
+```
+// 安全配置模式（伪代码）
+
+SecurityConfig:
+  - CSRF: 禁用（API-only，使用 Token 认证）
+  - CORS: 配置允许的域名
+  - 公开端点: /auth/login, /auth/refresh, /health
+  - 认证端点: /api/** → 需要有效 JWT
+  - 管理端点: /admin/** → 需要 SUPERUSER 角色
+  - JWT 验证: 使用 OIDC issuer URI（见 CONTEXT.md §3）
+  - 异常处理: 自定义 401/403 响应格式
 ```
 
 ---
 
 ## 5. 事务管理模式
 
-```kotlin
-// ✅ 正确: 事务在 UseCase 层
-@Service
-class ProcessPurchaseOrderUseCase(
-    private val poRepository: PurchaseOrderRepository,
-    private val inventoryService: InventoryService,
-    private val financeService: FinanceService,
-) {
-    @Transactional  // 整个用例是一个事务
-    fun execute(command: ProcessPOCommand) {
-        val po = poRepository.findById(command.poId)
-            ?: throw NotFoundException("PO not found")
-        
-        // 1. 更新 PO 状态
-        poRepository.save(po.markAsReceived())
-        
-        // 2. 入库 (同一事务)
-        inventoryService.receive(po.items)
-        
-        // 3. 生成财务凭证 (同一事务)
-        financeService.createVoucher(po)
-    }
-}
+> **具体实现代码**: 见 `{project}/reference/impl-patterns-backend.md §11`
 
-// ✅ 需要独立事务的场景
-@Service
-class AuditLogService {
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun log(event: AuditEvent) {
-        // 即使主事务回滚, 审计日志也必须保留
-        repository.save(event)
-    }
-}
 ```
+// 事务管理原则（伪代码）
+
+// ✅ 正确: 事务边界在 UseCase 层
+@Transactional
+UseCase ProcessPurchaseOrder:
+  1. 查找 PO（不存在则抛异常）
+  2. 更新 PO 状态 → 已接收
+  3. 入库操作（同一事务）
+  4. 生成财务凭证（同一事务）
+  → 任一步骤失败 = 全部回滚
+
+// ✅ 独立事务场景
+@Transactional(REQUIRES_NEW)
+AuditLogService.log(event):
+  → 即使主事务回滚，审计日志也必须保留
+```
+
+**通用事务规则**：
+
+| 规则 | 说明 |
+|------|------|
+| 事务在 Application 层 | 不在 Controller 层，不在 Repository 层 |
+| 避免跨服务事务 | 跨服务用事件驱动（最终一致性），不用分布式事务 |
+| 只读操作标记 readOnly | 提升性能，防意外写入 |
+| 审计日志独立事务 | 主事务回滚时审计记录仍需保留 |
 
 ---
 
 ## 6. 测试规范
 
-| 测试类型 | 框架 | 覆盖目标 | 要求 |
-|----------|------|----------|------|
-| **单元测试** | JUnit 5 + MockK | Domain + UseCase | ≥80% 覆盖率 |
-| **集成测试** | Testcontainers (PG+Redis+Kafka) | Repository + API | 核心路径 100% |
-| **契约测试** | Spring Cloud Contract | API 契约不破坏 | 所有公开 API |
-| **架构测试** | ArchUnit | DDD 分层约束 | 100% 通过 |
+> **具体测试框架与代码**: 见 `{project}/reference/impl-patterns-backend.md §12`
 
-```kotlin
-// ArchUnit 测试: 确保分层约束
-@Test
-fun `domain layer should not depend on Spring`() {
-    noClasses()
-        .that().resideInAPackage("..domain..")
-        .should().dependOnClassesThat()
-        .resideInAPackage("org.springframework..")
-        .check(importedClasses)
-}
+| 测试类型 | 工具（见 CONTEXT.md §3） | 覆盖目标 | 要求 |
+|----------|------------------------|----------|------|
+| **单元测试** | 见 §3 测试框架 | Domain + UseCase | ≥80% 覆盖率 |
+| **集成测试** | 容器化测试工具 | Repository + API | 核心路径 100% |
+| **契约测试** | API 契约工具 | API 不破坏 | 所有公开 API |
+| **架构测试** | 分层约束工具 | DDD 分层约束 | 100% 通过 |
 
-@Test
-fun `controllers should not access repositories directly`() {
-    noClasses()
-        .that().resideInAPackage("..api..")
-        .should().dependOnClassesThat()
-        .resideInAPackage("..infrastructure.persistence..")
-        .check(importedClasses)
-}
+**架构测试规则**（跨技术栈通用）：
+
+```
+Rule 1: Domain 层不依赖框架（无 ORM/Web 框架 import）
+Rule 2: Controller/Handler 不直接访问 Repository（必须经 UseCase）
+Rule 3: Infrastructure 不被 Domain 反向依赖
 ```
 
 ---
 
 ## 7. 配置管理
 
-```yaml
-# application.yml
-spring:
-  application:
-    name: my-app  # 替换为项目名
-  
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:myapp}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-  
-  jpa:
-    open-in-view: false  # 强制关闭 (性能陷阱)
-    hibernate:
-      ddl-auto: validate  # 只验证, 迁移交给 Flyway
-    properties:
-      hibernate:
-        default_batch_fetch_size: 100
-        jdbc:
-          batch_size: 50
-  
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-  
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
-  
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
-    consumer:
-      group-id: my-app
-      auto-offset-reset: earliest
-  
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${OIDC_ISSUER_URI}
+> **项目具体配置项与值**: 见 `{project}/reference/impl-patterns-backend.md §9`
 
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui
+**通用配置分类**（跨技术栈适用）：
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  tracing:
-    sampling:
-      probability: 1.0  # 生产环境调低
-```
+| 配置类别 | 关注点 | 最佳实践 |
+|---------|--------|---------|
+| ORM 配置 | lazy loading 陷阱、DDL 模式、批量操作 | 关闭 eager loading，DDL = validate only |
+| 连接池 | 最大连接数、超时、泄漏检测 | 按部署 Pod 数 × 并发量计算 |
+| 监控端点 | 暴露范围、认证保护 | 只暴露 health + metrics + info |
+| 链路追踪 | 采样率（dev vs prod） | dev = 100%, prod = 10% |
+| 消息队列 | 消费者偏移量策略 | earliest（不丢消息）vs latest（低延迟）|
+| 安全认证 | JWT issuer、Token 有效期 | 通过环境变量注入，不硬编码 |
 
 ---
 
-## 8. L3 工具库引用 (按需加载)
-
-| 场景 | 推荐加载 | 文件路径 | 作用 |
-|------|---------|---------|------|
-| 编码规范参考 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 强制规则: 不可变性/输入验证/错误处理/文件组织 |
-| 后端代码审查 | ECC: Backend 模式 | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | N+1 查询 / 未验证输入 / 缺少超时 / 错误泄漏 |
-| TDD 流程 | ECC: 测试规则 | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | RED→GREEN→REFACTOR + 80% 覆盖率 |
-| 🔴 提交前自检 | Rules: 后端 | `core/rules/backend.md` | **必查** — 10 反模式 (B1-B10) + CRITICAL/HIGH Checklist |
-
 ---
 
-*Version: 1.1.0 — Generic Core + 工具引用*
-*Based on: battle-tested enterprise patterns*
+*Version: 3.0.0 — L1 全量泛化：§3-§7 所有 Kotlin/Spring 代码替换为伪代码 + CONTEXT.md §3 引用*
+*Updated: 2026-02-19*

@@ -9,7 +9,6 @@ description: 性能工程 SOP。Use when 需要定位和优化 N+1、慢查询�
 > **原则: 先测量, 后优化。过早优化是万恶之源, 但已知的性能陷阱必须提前规避。**
 
 
-> **⚠️ 本文件 ~7KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
 
 ## 路由表
 
@@ -28,30 +27,28 @@ description: 性能工程 SOP。Use when 需要定位和优化 N+1、慢查询�
 
 ### 1.1 N+1 查询检测与修复
 
-```kotlin
-// ❌ N+1: 循环中逐条查询
-val orders = orderRepository.findAll()
-orders.forEach { order ->
-    val items = itemRepository.findByOrderId(order.id)  // N 次查询!
-}
+```
+// ❌ N+1: 循环中逐条查询（伪代码）
+orders = repository.findAll()
+for order in orders:
+    items = itemRepository.findByOrderId(order.id)  // N 次查询!
 
 // ✅ JOIN FETCH: 一次查询
-@Query("SELECT o FROM Order o JOIN FETCH o.items WHERE o.status = :status")
-fun findAllWithItems(@Param("status") status: OrderStatus): List<Order>
+query: "SELECT o FROM Order o JOIN FETCH o.items WHERE o.status = :status"
 
-// ✅ EntityGraph: 声明式
-@EntityGraph(attributePaths = ["items", "items.product"])
-fun findAllByStatus(status: OrderStatus): List<Order>
+// ✅ Eager Loading 声明式（框架语法见 CONTEXT.md §3）
+@EagerLoad(paths = ["items", "items.product"])
+findAllByStatus(status)
 ```
 
 ### 1.2 检测工具
 
-| 工具 | 用途 | 配置 |
-|------|------|------|
-| **Hibernate Statistics** | 查询计数 | `spring.jpa.properties.hibernate.generate_statistics=true` |
-| **P6Spy** | SQL 日志 + 耗时 | `spy.properties` |
-| **Hypersistence Optimizer** | JPA 反模式扫描 | Gradle 插件 |
-| **EXPLAIN ANALYZE** | 慢查询执行计划 | 手动分析 |
+| 工具类型 | 用途 | 说明 |
+|---------|------|------|
+| **ORM 查询统计** | 查询计数 | 开启 ORM 统计，检测 N+1（见 CONTEXT.md §3） |
+| **SQL 日志代理** | SQL 日志 + 耗时 | P6Spy / sqlcommenter 等 |
+| **ORM 反模式扫描** | 反模式检测 | 框架专用工具（见 CONTEXT.md §3）|
+| **EXPLAIN ANALYZE** | 慢查询执行计划 | 数据库原生，手动分析 |
 
 ### 1.3 数据库索引策略
 
@@ -74,24 +71,18 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 
 ### 1.4 批量操作
 
-```kotlin
-// ❌ 逐条保存
-items.forEach { repository.save(it) }  // N 次 INSERT
+```
+// ❌ 逐条保存（伪代码）
+for item in items:
+    repository.save(item)  // N 次 INSERT!
 
 // ✅ 批量保存
-@Modifying
-@Query("INSERT INTO items (name, sku) VALUES (:name, :sku)")
-fun batchInsert(@Param("name") names: List<String>, @Param("sku") skus: List<String>)
+repository.batchInsert(items)  // 单次批量 INSERT
 
-// ✅ JPA 批量配置
-// application.yml
-spring:
-  jpa:
-    properties:
-      hibernate:
-        jdbc.batch_size: 50
-        order_inserts: true
-        order_updates: true
+// ✅ ORM 批量配置（具体配置项见 CONTEXT.md §3 + impl-patterns-backend.md §9）
+batch_size: 50
+order_inserts: true
+order_updates: true
 ```
 
 ---
@@ -113,22 +104,24 @@ spring:
 
 ### 2.2 缓存模式
 
-```kotlin
-// Read-Through (最常用)
-@Cacheable(value = ["products"], key = "#sku")
-fun findBySku(sku: String): Product?
+```
+// 缓存模式（伪代码，注解语法见 CONTEXT.md §3 缓存框架）
+
+// Read-Through（最常用）
+@Cacheable(key = "products:{sku}")
+findBySku(sku) → Product
 
 // Write-Through
-@CachePut(value = ["products"], key = "#product.sku")
-fun save(product: Product): Product
+@CachePut(key = "products:{sku}")
+save(product) → Product
 
 // Cache Eviction
-@CacheEvict(value = ["products"], key = "#sku")
-fun delete(sku: String)
+@CacheEvict(key = "products:{sku}")
+delete(sku)
 
 // 批量清除
-@CacheEvict(value = ["products"], allEntries = true)
-fun refreshAll()
+@CacheEvict(key = "products:*")
+refreshAll()
 ```
 
 ### 2.3 缓存铁律
@@ -248,14 +241,7 @@ SELECT * FROM products WHERE status = 'ACTIVE';
 
 ---
 
-## 6. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| 后端性能审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | N+1/连接池/超时反模式 |
-| 前端性能审查 | UI UX Pro | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | 渲染性能 UX 准则 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 批量操作/错误处理规范 |
-
 ---
 
-*Version: 1.1.0 — 含路由表 + L3 工具引用*
+*Version: 2.0.0 — L1 泛化：N+1/批量/缓存 Kotlin 代码改为伪代码，检测工具表泛化*
+*Updated: 2026-02-19*

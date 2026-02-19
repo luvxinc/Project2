@@ -29,20 +29,20 @@
 
 ---
 
-## 2. Spring Boot/Kotlin 反模式黑名单
+## 2. 后端反模式黑名单（通用，适用于所有框架）
 
 | # | 反模式 | 问题 | 正确做法 |
 |---|--------|------|---------|
-| B1 | Controller 直接注入 Repository | 跳过 Service 层, 业务逻辑散落 | Controller → UseCase → Repository |
-| B2 | `open-in-view: true` (默认) | 懒加载导致 N+1, 事务泄漏到 Controller | 设 `open-in-view: false` |
-| B3 | `catch(e: Exception) {}` | 静默吞错, 问题无法追踪 | 记录日志 + 抛业务异常 |
-| B4 | Entity 上用 `@Data` (Lombok) | equals/hashCode 不正确 | Kotlin `data class` 或手写 |
-| B5 | 把 Entity 当 DTO 返回 API | 内部结构暴露, 修改困难 | 返回专用 Response DTO |
-| B6 | 循环依赖 (ServiceA → ServiceB → ServiceA) | Spring 启动失败/维护困难 | 领域事件解耦 |
-| B7 | `@Transactional` 在 private 方法 | 事务不生效 (代理机制) | 只在 public 方法上用 |
-| B8 | 在 Controller 中写业务逻辑 | 职责混乱 | 提取到 UseCase |
-| B9 | 不可变对象用 `var` | 数据可能被意外修改 | 用 `val` + `copy()` |
-| B10 | 手动管理数据库连接 | 连接泄漏 | 用 Spring Data/HikariCP |
+| B1 | Controller 直接访问 Repository | 跳过 Service 层, 业务逻辑散落 | Controller → UseCase → Repository |
+| B2 | ORM 默认 eager/lazy loading 陷阱 | N+1 查询 / 事务泄漏 | 显式配置加载策略（见 CONTEXT.md §3） |
+| B3 | 静默吞异常 `catch(e) {}` | 问题无法追踪 | 记录日志 + 抛业务异常 |
+| B4 | ORM Entity 用于 API 返回 | 内部结构暴露, 修改困难 | 返回专用 Response DTO |
+| B5 | 循环依赖 (ServiceA ↔ ServiceB) | 启动失败/维护困难 | 领域事件解耦 |
+| B6 | 事务注解在 private 方法 | 事务不生效（代理机制） | 只在 public 方法上用 |
+| B7 | Controller 写业务逻辑 | 职责混乱 | 提取到 UseCase |
+| B8 | 可变状态用于值对象 | 数据被意外修改 | 不可变类型 + copy 模式 |
+| B9 | 手动管理数据库连接 | 连接泄漏 | 使用框架连接池（见 CONTEXT.md §3）|
+| B10 | 无界查询 (SELECT * 无 LIMIT) | 内存溢出 | 必须有分页或 LIMIT |
 
 ---
 
@@ -50,10 +50,10 @@
 
 | 指标 | 红线 | 检测方式 |
 |------|------|---------|
-| API P99 延迟 | ≤ 200ms (简单 CRUD) | Actuator metrics |
-| API P99 延迟 | ≤ 2s (复杂报表) | Actuator metrics |
+| API P99 延迟 | ≤ 200ms (简单 CRUD) | 监控 metrics（见 CONTEXT.md §3）|
+| API P99 延迟 | ≤ 2s (复杂报表) | 监控 metrics |
 | 批处理吞吐 | ≥ 1000 条/秒 | 日志打点 |
-| DB 连接池 | 空闲 ≥ 5, 峰值 ≤ 80% max | HikariCP metrics |
+| DB 连接池 | 空闲 ≥ 5, 峰值 ≤ 80% max | 连接池 metrics（见 CONTEXT.md §3）|
 | 单个查询 | ≤ 100ms (EXPLAIN ANALYZE) | SQL 分析 |
 | 无全表扫描 | 高频查询有索引 | EXPLAIN ANALYZE |
 
@@ -62,32 +62,25 @@
 ## 4. 验证命令
 
 ```bash
-# 1. 编译
-./gradlew build --no-daemon 2>&1 | tail -20
-# 标准: BUILD SUCCESSFUL
+# 所有命令见 CONTEXT.md §5 工具命令速查
 
-# 2. 测试
-./gradlew test 2>&1 | tail -20
-# 标准: 全部 PASS
+# 1. 编译 — 标准: BUILD SUCCESSFUL
+{build_cmd}
 
-# 3. 覆盖率
-./gradlew jacocoTestReport
-# 标准: ≥ 80%
+# 2. 测试 — 标准: 全部 PASS
+{test_cmd}
 
-# 4. 架构约束 (如果有 ArchUnit)
-./gradlew test --tests "*ArchitectureTest*"
-# 标准: 全部 PASS
+# 3. 覆盖率 — 标准: ≥ 80%
+{coverage_cmd}
 
-# 5. 安全检查
-grep -rn "!!" src/main/kotlin/ | head -20
-# 标准: 零匹配 (无强制解包)
-grep -rn "password\|secret\|api_key" src/main/kotlin/ --include="*.kt" | grep -v "test"
-# 标准: 只有变量名引用, 无硬编码值
+# 4. 架构约束（如有）— 标准: 全部 PASS
+{arch_test_cmd}
 
-# 6. SQL 分析 (手动)
-# 对每个新增的 Repository 方法:
-# EXPLAIN ANALYZE <query>
-# 标准: 无 Seq Scan on 大表
+# 5. 安全检查 — 标准: 无硬编码密钥
+{lint_security_cmd}
+
+# 6. SQL 分析（手动）— 标准: 无 Seq Scan on 大表
+# 对每个新增的 Repository 方法: EXPLAIN ANALYZE <query>
 ```
 
 ---

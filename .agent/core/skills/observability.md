@@ -3,10 +3,10 @@ name: observability
 description: 可观测架构师 SOP。Use when 需要 Metrics/Tracing/Logging、告警策略、SLO 与事故复盘。
 ---
 
-# 可观测性规范 — OpenTelemetry + Prometheus + Grafana + Loki
+# 可观测性规范 — 追踪 + 指标 + 日志
 
 > **你是可观测架构师/SRE。你的职责是: 设计+实现监控体系、告警规则、事故响应、SLO 治理。**
-> **⚠️ 本文件 ~14KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> **技术栈**: 见 `CONTEXT.md §3 可观测性`（OTel SDK / 指标系统 / 日志系统 / Dashboard）
 
 ## 路由表
 
@@ -29,265 +29,145 @@ description: 可观测架构师 SOP。Use when 需要 Metrics/Tracing/Logging、
 
 ## 1. 可观测性三支柱
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  Application                         │
-│   Spring Boot + OTel SDK (Auto-Instrumentation)      │
-│                                                     │
-│   Traces ──────┐   Metrics ─────┐   Logs ──────┐   │
-│                │                │               │   │
-└────────────────┼────────────────┼───────────────┼───┘
-                 │                │               │
-        ┌────────▼──────┐ ┌──────▼────┐ ┌────────▼───┐
-        │ OTel Collector │ │ Prometheus│ │ Promtail   │
-        └────────┬──────┘ └──────┬────┘ └────────┬───┘
-                 │               │               │
-        ┌────────▼──────┐       │       ┌────────▼───┐
-        │    Tempo       │       │       │    Loki    │
-        │ (Trace Store)  │       │       │ (Log Store)│
-        └────────┬──────┘       │       └────────┬───┘
-                 │               │               │
-                 └───────────────┼───────────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │     Grafana      │
-                        │  Dashboard +     │
-                        │  Alerting        │
-                        └─────────────────┘
-```
+> **数据流**: 应用 + OTel SDK → Traces → Trace 后端；Metrics → Metrics 后端；Logs → Log 后端；三者统一汇入 Dashboard 告警和可视化。
 
-| 支柱 | 技术 | 数据类型 | 回答的问题 |
-|------|------|----------|------------|
-| **Traces** | OTel → Tempo | 请求在各服务间的流转路径 | "这个请求为什么慢？卡在哪里？" |
-| **Metrics** | OTel/Micrometer → Prometheus | 数值时序 (QPS/延迟/CPU/内存) | "系统现在的状态如何？趋势如何？" |
-| **Logs** | Logback → Promtail → Loki | 结构化日志 | "出了什么错？具体原因是什么？" |
+> **技术选型**: 见 `CONTEXT.md §3 可观测性`（Tempo/Jaeger + Prometheus/VictoriaMetrics + Loki/ELK + Grafana/Kibana）
+
+| 支柱 | 工具类型 | 数据类型 | 回答的问题 |
+|------|---------|----------|------------|
+| **Traces** | OTel → Trace 后端 | 请求在各服务间的流转路径 | "这个请求为什么慢？卡在哪里？" |
+| **Metrics** | OTel/框架指标 → Metrics 后端 | 数值时序 (QPS/延迟/CPU/内存) | "系统现在的状态如何？趋势如何？" |
+| **Logs** | 结构化日志 → Log 后端 | 结构化日志流 | "出了什么错？具体原因是什么？" |
 
 ---
 
 ## 2. OpenTelemetry (OTel) — 统一遥测
 
-### 2.1 自动注入 (Zero-Code)
+### 2.1 OTel SDK 接入
 
-```dockerfile
-# Dockerfile — 使用 OTel Java Agent
-FROM eclipse-temurin:21-jre-alpine
-COPY --from=otel/otel-java-agent:latest /usr/local/otel/opentelemetry-javaagent.jar /otel-agent.jar
-COPY app.jar app.jar
-ENTRYPOINT ["java", "-javaagent:/otel-agent.jar", "-jar", "app.jar"]
-```
+> **接入方式**: 见 `CONTEXT.md §3 后端技术栈`（Java Agent 注入 / SDK 代码集成 / 自动注入）
 
 ```yaml
-# application.yml
-management:
-  tracing:
-    sampling:
-      probability: 1.0  # 开发: 100%, 生产: 0.1 (10%)
-
+# OTel 核心配置（伪配置，具体格式见 CONTEXT.md §3）
 otel:
   exporter:
-    otlp:
-      endpoint: http://otel-collector:4317
-  resource:
-    attributes:
-      service.name: my-app-api
-      service.version: ${APP_VERSION}
-      deployment.environment: ${SPRING_PROFILES_ACTIVE}
+    endpoint: http://otel-collector:{port}
+  service:
+    name: {service-name}
+    version: {app-version}
+  environment: {deployment-env}
+  sampling:
+    rate: 1.0    # 开发: 100%，生产: 0.1 (10%)
 ```
 
-### 2.2 手动 Span (关键业务)
+### 2.2 手动 Span（关键业务流程）
 
-```kotlin
-@Service
-class ProcessPurchaseOrderUseCase(
-    private val tracer: Tracer,  // OTel Tracer
-) {
-    @Transactional
-    fun execute(command: ProcessPOCommand) {
-        val span = tracer.spanBuilder("process-purchase-order")
-            .setAttribute("po.id", command.poId.toString())
-            .setAttribute("po.items.count", command.items.size.toLong())
-            .startSpan()
-        
-        try {
-            span.makeCurrent().use {
-                // 1. 验证
-                val validated = validate(command)  // 自动创建子 Span
-                
-                // 2. 入库
-                inventoryService.receive(validated)  // 自动创建子 Span
-                
-                // 3. 财务
-                financeService.createVoucher(validated)  // 自动创建子 Span
-            }
-            span.setStatus(StatusCode.OK)
-        } catch (e: Exception) {
-            span.setStatus(StatusCode.ERROR, e.message ?: "Unknown error")
-            span.recordException(e)
-            throw e
-        } finally {
-            span.end()
-        }
-    }
-}
+```
+手动 Span 模式（伪代码）:
+  span = tracer.start("{business-operation}")
+  span.set_attribute("{key}", "{value}")
+  try:
+    执行业务逻辑（子调用自动创建子 Span）
+    span.set_status(OK)
+  catch exception:
+    span.set_status(ERROR, exception.message)
+    span.record_exception(exception)
+    throw
+  finally:
+    span.end()
 ```
 
 ### 2.3 Trace ID 传播
 
-```
-前端 Request
-  ↓ traceparent: 00-{traceId}-{spanId}-01
-API Gateway
-  ↓ traceId 传递
-Spring Boot (Controller → UseCase → Repository)
-  ↓ traceId 传递
-PostgreSQL (pg_stat_activity.application_name 含 traceId)
-  ↓ traceId 传递
-Kafka 消息 Header (traceparent)
-  ↓ traceId 传递
-Consumer (异步链路也可追踪)
-```
+`traceparent` / `tracestate` Header 贯穿全链路：前端 → API Gateway → 后端（Controller/Service/Repository）→ 数据库连接备注 → 消息队列消息 Header → 消费者，实现全链路异步追踪。
 
 ---
 
-## 3. Metrics — Prometheus + Micrometer
+## 3. Metrics — 指标收集
 
-### 3.1 自动指标 (Spring Boot Actuator)
+> **指标框架**: 见 `CONTEXT.md §3 可观测性`（Micrometer / OpenMetrics / 自定义 SDK）
 
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  metrics:
-    tags:
-      application: my-app
-      environment: ${SPRING_PROFILES_ACTIVE}
-```
+### 3.1 自动指标（HTTP + 系统）
 
-自动暴露的指标:
-
-| 指标 | 说明 | 告警阈值 |
+| 指标 | 说明 | 建议告警阈值 |
 |------|------|----------|
-| `http_server_requests_seconds` | HTTP 请求延迟 | P99 > 2s |
-| `jvm_memory_used_bytes` | JVM 内存使用 | > 80% |
-| `jvm_threads_live_threads` | 活跃线程数 | > 500 |
-| `hikaricp_connections_active` | 活跃数据库连接 | > 80% pool |
-| `spring_kafka_consumer_lag` | Kafka 消费延迟 | > 10000 |
-| `disk_free_bytes` | 磁盘剩余 | < 10GB |
+| `http_server_requests` | HTTP 请求延迟 | P99 > 2s |
+| `memory_used` | 进程内存使用 | > 80% |
+| `thread_count` | 活跃线程数 | > 500 |
+| `db_connection_active` | 活跃数据库连接 | > 80% pool |
+| `mq_consumer_lag` | 消息队列消费延迟 | > 10000 |
+| `disk_free` | 磁盘剩余 | < 10GB |
 
 ### 3.2 自定义业务指标
 
-```kotlin
-@Component
-class BusinessMetrics(
-    private val meterRegistry: MeterRegistry,
-) {
-    // 计数器: 订单创建数
-    fun orderCreated(module: String) {
-        meterRegistry.counter("business.orders.created", "module", module).increment()
-    }
-    
-    // 仪表盘: 当前库存量
-    fun registerInventoryGauge(supplier: () -> Double) {
-        Gauge.builder("business.inventory.total", supplier)
-            .register(meterRegistry)
-    }
-    
-    // 定时器: 报表生成耗时
-    fun recordReportGeneration(reportType: String, duration: Duration) {
-        meterRegistry.timer("business.report.generation", "type", reportType)
-            .record(duration)
-    }
-}
+```
+业务指标类型:
+  Counter (计数器): 单调递增，如订单创建数、登录次数
+  Gauge (仪表盘): 当前值，如在线用户数、库存总量
+  Histogram (直方图): 分布统计，如请求耗时、文件大小
+  Timer (定时器): 操作耗时，如报表生成时间
+
+标签 (Labels/Tags):
+  必须包含: module, environment
+  可选: action, status, region
+  禁止高基数标签（如 user_id, order_id 直接作为标签）
 ```
 
 ---
 
-## 4. Logs — 结构化日志 + Loki
+## 4. Logs — 结构化日志
 
-### 4.1 日志格式 (JSON)
+> **日志框架**: 见 `CONTEXT.md §3 后端技术栈`（Logback / Zap / Pino 等）
 
-```kotlin
-// logback-spring.xml
-<configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp/>
-                <logLevel/>
-                <loggerName/>
-                <message/>
-                <mdc/>  <!-- 包含 traceId, spanId, userId -->
-                <stackTrace/>
-                <arguments/>
-            </providers>
-        </encoder>
-    </appender>
-</configuration>
-```
+### 4.1 JSON 日志格式（必须结构化）
 
-输出:
 ```json
 {
-  "timestamp": "2026-02-11T12:00:00.000Z",
+  "timestamp": "2026-01-01T12:00:00.000Z",
   "level": "INFO",
-  "logger": "com.example.app.modules.inventory.InventoryService",
-  "message": "Inventory received",
-  "traceId": "abc123",
-  "spanId": "def456",
+  "logger": "{service}.{module}.{component}",
+  "message": "操作描述",
+  "traceId": "otel-trace-id",
+  "spanId": "otel-span-id",
   "userId": "user-uuid",
-  "module": "inventory",
-  "action": "inventory.receive",
-  "productType": "WidgetA",
-  "quantity": 50
+  "module": "{module-name}",
+  "action": "{module}.{action}",
+  "key_field_1": "value_1",
+  "key_field_2": "value_2"
 }
 ```
+
+> **配置方式**: 见 `CONTEXT.md §3 可观测性`（Logback JSON / Morgan JSON / 结构化日志库）
 
 ### 4.2 日志规范
 
 | 规则 | 说明 |
 |------|------|
-| **用 MDC 传递上下文** | traceId, userId, module 通过 MDC 自动注入 |
-| **禁止 println/stdout** | 必须使用 SLF4J Logger |
-| **日志等级规范** | ERROR=需要立即处理, WARN=可能问题, INFO=业务事件, DEBUG=排查 |
-| **禁止日志敏感信息** | 密码/Token/SSN 不得出现在日志中 |
-| **Kafka error 日志** | Consumer 失败必须包含 messageId + retryCount |
+| **用 MDC/Context 传递上下文** | traceId, userId, module 通过框架自动注入 |
+| **禁止 println/stdout 日志** | 必须使用框架日志器 |
+| **日志等级规范** | ERROR=需立即处理, WARN=潜在问题, INFO=业务事件, DEBUG=排查 |
+| **禁止日志敏感信息** | 密码/Token/PII 不得出现在日志中 |
+| **消费者失败日志** | 必须包含 messageId + retryCount |
 
 ---
 
-## 5. Grafana Dashboard
+## 5. Dashboard
 
 ### 5.1 Dashboard 分类
 
 | Dashboard | 数据源 | 内容 |
 |-----------|--------|------|
-| **Overview** | Prometheus | 系统全局: QPS, 延迟, 错误率, CPU/内存 |
-| **API Performance** | Prometheus + Tempo | 每个 API 的 P50/P99 延迟, 错误追踪 |
-| **Database** | Prometheus (PG Exporter) | 连接池, 查询延迟, 锁等待, 索引命中率 |
-| **Kafka** | Prometheus (Kafka Exporter) | 消费延迟, 吞吐量, Partition 分布 |
-| **Business** | Prometheus (自定义指标) | 订单量, 库存变动, 财务流水 |
-| **Logs** | Loki | 错误日志搜索, 按 traceId 过滤 |
-| **Traces** | Tempo | 分布式追踪, 慢请求分析 |
+| **Overview** | Metrics | 系统全局: QPS, 延迟, 错误率, CPU/内存 |
+| **API Performance** | Metrics + Traces | 每个 API 的 P50/P99 延迟, 错误追踪 |
+| **Database** | Metrics (DB Exporter) | 连接池, 查询延迟, 锁等待, 索引命中率 |
+| **Message Queue** | Metrics (MQ Exporter) | 消费延迟, 吞吐量, 分区分布 |
+| **Business** | 自定义指标 | 业务量, 关键业务事件 |
+| **Logs** | Log 后端 | 错误日志搜索, 按 traceId 过滤 |
+| **Traces** | Trace 后端 | 分布式追踪, 慢请求分析 |
 
-### 5.2 关键 Dashboard 面板
+### 5.2 Overview Dashboard 核心面板
 
-```
-┌──────────────────────────────────────┐
-│         Application - Overview          │
-│                                      │
-│  QPS: 1,234  │  P99: 180ms          │
-│  Error Rate: 0.1%  │  4xx: 23/min   │
-│                                      │
-│  ┌──────────┐  ┌──────────┐         │
-│  │ CPU: 45% │  │ MEM: 62% │         │
-│  └──────────┘  └──────────┘         │
-│                                      │
-│  Active DB Connections: 12/20       │
-│  Kafka Consumer Lag: 42             │
-│  Redis Hit Rate: 94.7%             │
-└──────────────────────────────────────┘
-```
+QPS · P99 延迟 · Error Rate · CPU/内存 · Active DB 连接 · MQ Consumer Lag · Cache Hit Rate。
 
 ---
 
@@ -299,51 +179,46 @@ class BusinessMetrics(
 |------|------|--------|----------|
 | **API P99 > 2s** | 持续 5 分钟 | Warning | Slack |
 | **API Error Rate > 5%** | 持续 2 分钟 | Critical | PagerDuty + Slack |
-| **Pod CrashLoopBackOff** | 任何 Pod 重启 > 3 次 | Critical | PagerDuty |
+| **实例 CrashLoop** | 重启 > 3 次 | Critical | PagerDuty |
 | **DB Connection Pool > 80%** | 持续 3 分钟 | Warning | Slack |
-| **Kafka Consumer Lag > 10000** | 持续 5 分钟 | Warning | Slack |
+| **MQ Consumer Lag > 10000** | 持续 5 分钟 | Warning | Slack |
 | **Disk Free < 10GB** | 任何节点 | Critical | PagerDuty |
-| **JVM OOM** | 内存使用 > 90% | Critical | PagerDuty |
+| **Memory > 90%** | 持续 5 分钟 | Critical | PagerDuty |
 | **Certificate Expiry < 7d** | 任何证书 | Warning | Slack + Email |
 
-### 6.2 Alertmanager 配置
+### 6.2 告警规则配置
+
+> **告警工具**: 见 `CONTEXT.md §3 可观测性`（Alertmanager / Grafana Alerts / CloudWatch Alarms）
 
 ```yaml
-# prometheus/alerting-rules.yml
-groups:
-  - name: api-alerts
-    rules:
-      - alert: HighErrorRate
-        expr: |
-          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
-          / sum(rate(http_server_requests_seconds_count[5m])) > 0.05
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "API error rate > 5%"
-          description: "Error rate is {{ $value | humanizePercentage }}"
+# 通用告警规则模式（以 Prometheus Alertmanager 格式为例）
+- alert: HighErrorRate
+  expr: error_rate > 0.05
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "API 错误率 > 5%"
 
-      - alert: HighLatency
-        expr: |
-          histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) > 2
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "API P99 latency > 2s"
+- alert: HighLatency
+  expr: p99_latency_seconds > 2
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "P99 延迟 > 2s"
 ```
 
 ---
 
 ## 7. 遗留系统迁移
 
-| 遗留系统 | 现代化目标 | 迁移策略 |
+| 遗留方案 | 现代化目标 | 迁移策略 |
 |----------|----------|----------|
-| 自研 ErrorLog 表 | OTel Traces + Loki | 保留 PG 审计, Error 移入 Loki |
-| 自研 AuditLog 表 | Append-only Audit + Kafka | PG 审计表保留, 增加签名和 Kafka 备份 |
-| 自研 BusinessLog 表 | 自定义 Prometheus Metrics | 业务计数移入 Prometheus |
-| 自研 AccessLog 表 | API Gateway Access Log | 移入 Kong + Loki |
+| 自研 Error 表 | OTel Traces + 日志后端 | 保留 DB 审计，Error 移入 Log 后端 |
+| 自研 Audit 表 | Append-only Audit + 事件流 | DB 审计表保留，增加签名和 MQ 备份 |
+| 自研 Business 表 | 自定义 Metrics | 业务计数移入 Metrics 系统 |
+| 自研 Access 表 | API Gateway Access Log | 移入 Gateway + Log 后端 |
 | 邮件告警 | Alertmanager + PagerDuty/Slack | 邮件作为备用通道 |
 
 ---
@@ -352,59 +227,12 @@ groups:
 
 ### 8.1 事故复盘 (Post-mortem)
 
-每次 P1/P2 事故后, 必须在 48 小时内完成复盘:
-
-```markdown
-## 🔥 事故复盘: {标题}
-
-事故时间: {YYYY-MM-DD HH:MM} - {HH:MM}
-影响时长: {X 分钟}
-影响范围: {哪些用户/模块受影响}
-严重级: {P1/P2}
-
-### 时间线
-| 时间 | 事件 |
-|------|------|
-| HH:MM | 告警触发 |
-| HH:MM | 开始排查 |
-| HH:MM | 定位根因 |
-| HH:MM | 修复部署 |
-| HH:MM | 恢复确认 |
-
-### 根因分析 (5 Whys)
-1. 为什么服务挂了? → 因为 OOM
-2. 为什么 OOM? → 因为内存泄漏
-3. 为什么内存泄漏? → 因为缓存没有 TTL
-4. 为什么没有 TTL? → 因为代码审查没检查
-5. 为什么审查没覆盖? → 缓存使用没有规范
-
-### 检测为什么慢
-{为什么没有更早发现? 监控/告警的盲区?}
-
-### 行动项
-| # | 行动 | 负责人 | 期限 | 状态 |
-|---|------|--------|------|------|
-| 1 | 加内存告警阈值 | SRE | 1 天 | ⬜ |
-| 2 | 缓存强制 TTL 规范 | QA | 1 周 | ⬜ |
-| 3 | 代码审查加缓存检查项 | QA | 1 周 | ⬜ |
-```
-
-存储位置: `.agent/projects/{project}/data/audits/{YYYY-MM-DD}_postmortem_{title}.md`
+P1/P2 事故后 48 小时内完成。格式 → `core/templates/postmortem-template.md`。
+存储：`.agent/projects/{project}/data/audits/{YYYY-MM-DD}_postmortem_{title}.md`。
 
 ### 8.2 Error Budget
 
-```
-SLO: 99.9% 可用性 (月)
-    = 允许 43.2 分钟停机 / 月
-
-已用: 15 分钟 (事故 #1 占 12 分钟, 部署占 3 分钟)
-剩余: 28.2 分钟
-
-Budget 状态:
-  > 50% 剩余 → 🟢 正常发布节奏
-  30-50% 剩余 → 🟡 减少变更频率
-  < 30% 剩余 → 🔴 冻结发布, 只修 BUG
-```
+Budget 状态：>50% 剩余 → 正常发布；30-50% → 减少变更；<30% → 冻结发布只修 Bug。
 
 | SLO | 目标 | 月允许停机 | 衡量方式 |
 |-----|------|-----------|----------|
@@ -414,27 +242,12 @@ Budget 状态:
 
 ### 8.3 On-Call 与事故响应
 
-```
-告警触发
-    ↓
-P1 (影响全部用户): 5 分钟内响应
-P2 (影响部分用户): 15 分钟内响应
-P3 (不影响用户): 下个工作日处理
-    ↓
-定位 → 缓解 → 修复 → 验证 → 复盘
-```
+P1（全用户受影响）5 分钟内响应；P2（部分用户）15 分钟；P3（无用户影响）下工作日。
+响应流程：定位 → 缓解 → 修复 → 验证 → 复盘。
 
 ---
 
-## 9. L3 工具库引用 (按需加载)
-
-| 场景 | 工具 | 路径 | 说明 |
-|------|------|------|------|
-| 告警审查 | Guard 工作流 | `workflows/guard.md` | 故障排查 + 事故响应流程 |
-| 代码审查 | ECC: Review | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 日志/指标反模式检查 |
-| 编码规范 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | 结构化日志格式规范 |
-
 ---
 
-*Version: 2.1.0 — 含 L3 工具引用*
-*Based on: battle-tested enterprise patterns*
+*Version: 3.0.0 — L1 泛化*
+*Updated: 2026-02-19*
