@@ -1,6 +1,6 @@
 ---
 name: agent-mastery
-description: Agent 行为优化 — 验证循环, 渐进检索, 编码标准, 上下文管理, 持续学习, Skill Seekers。学习自 ECC (42K+ stars) + Skill Seekers v3.0.0。
+description: Agent 行为优化 SOP。Use when 需要验证循环、渐进检索、上下文管理和执行习惯优化。
 ---
 
 # Agent 行为精通
@@ -23,7 +23,7 @@ description: Agent 行为优化 — 验证循环, 渐进检索, 编码标准, �
 ---
 
 > **来源**: [everything-claude-code](https://github.com/affaan-m/everything-claude-code) (Anthropic Hackathon Winner, 42K+ ⭐)
-> **适配**: 泛化版本, 适用于任何企业级项目。项目特定适配在 `projects/{project}/` 中。
+> **适配**: 泛化版本, 适用于任何企业级项目。项目特定适配在 `.agent/projects/{project}/` 中。
 
 ---
 

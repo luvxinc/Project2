@@ -18,7 +18,7 @@ DJANGO_PID_FILE="$PID_DIR/django.pid"
 TUNNEL_PID_FILE="$PID_DIR/tunnel.pid"
 
 # Cloudflare Token (Updated: 2025-12-23)
-CF_TOKEN="***REDACTED_CF_TOKEN***"
+CF_TOKEN="YOUR_CF_TOKEN_HERE"
 
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"

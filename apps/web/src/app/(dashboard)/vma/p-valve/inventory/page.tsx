@@ -3,10 +3,11 @@ import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInventorySummary, useActiveOperators, useSpecOptions, vmaKeys } from '@/lib/hooks/use-vma-queries';
 import { animate } from 'animejs';
+import { useModal } from '@/components/modal/GlobalModal';
 import PValveTabSelector from '../components/PValveTabSelector';
 import ReceiveFromChinaModal from './ReceiveFromChinaModal';
 import ReturnToChinaModal from './ReturnToChinaModal';
@@ -17,6 +18,7 @@ interface SpecSummary {
   wip: number;
   approachingExp: number;
   expired: number;
+  used: number;
   returned: number;
 }
 
@@ -89,6 +91,7 @@ export default function InventoryPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const t = useTranslations('vma');
+  const { showConfirm, showError } = useModal();
 
   const queryClient = useQueryClient();
 
@@ -215,7 +218,7 @@ export default function InventoryPage() {
   const handleSubmit = async () => {
     if (!showForm || !formData.specNo) return;
     try {
-      const body: any = {
+      const body: Record<string, unknown> = {
         date: formData.date,
         action: showForm,
         productType: formProductType,
@@ -243,6 +246,7 @@ export default function InventoryPage() {
     t('p_valve.inventory.columns.wip'),
     t('p_valve.inventory.columns.nearExp'),
     t('p_valve.inventory.columns.expired'),
+    t('p_valve.inventory.columns.used'),
     t('p_valve.inventory.columns.returned'),
   ];
 
@@ -285,7 +289,7 @@ export default function InventoryPage() {
   const saveTransaction = async (txn: FullTransaction) => {
     setEditSaving(true);
     try {
-      const body: any = {
+      const body: Record<string, unknown> = {
         date: txn.date,
         action: txn.action,
         productType: txn.productType,
@@ -321,6 +325,46 @@ export default function InventoryPage() {
       }
     } catch (e) { console.error(e); }
     setEditSaving(false);
+  };
+
+  const deleteTransaction = async (txn: FullTransaction) => {
+    showConfirm({
+      title: 'Delete Return to China Record',
+      message: `Delete this OUT_CN record?\n\nSpec: ${txn.specNo}\nS/N: ${txn.serialNo || 'N/A'}\nQty: ${txn.qty}\n\nThis product will be restored to available inventory.`,
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        setEditSaving(true);
+        try {
+          const res = await fetch(`${API}/vma/inventory-transactions/${txn.id}`, {
+            method: 'DELETE', headers: getAuthHeaders(),
+          });
+          if (res.ok) {
+            // Remove from modal list
+            setEditTransactions(prev => prev.filter(t => t.id !== txn.id));
+            // Refresh background data
+            if (selectedSpec) handleRowClick(selectedSpec.specNo, selectedSpec.productType);
+            refetchSummary();
+          } else {
+            const err = await res.json().catch(() => null);
+            showError({
+              title: 'Delete Failed',
+              message: err?.detail || 'Failed to delete transaction',
+              showCancel: false,
+              confirmText: 'OK',
+            });
+          }
+        } catch (e) {
+          console.error(e);
+          showError({
+            title: 'Delete Failed',
+            message: 'Network error',
+            showCancel: false,
+            confirmText: 'OK',
+          });
+        }
+        setEditSaving(false);
+      },
+    });
   };
 
   // Renders one detail section (Available / WIP / Near Exp / Expired / Returned to CN)
@@ -395,10 +439,10 @@ export default function InventoryPage() {
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={6} className="px-4 py-12 text-center text-[13px]" style={{ color: colors.textTertiary }}>{t('p_valve.inventory.loading')}</td></tr>
+            <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px]" style={{ color: colors.textTertiary }}>{t('p_valve.inventory.loading')}</td></tr>
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-4 py-12 text-center" style={{ color: colors.textTertiary }}>
+              <td colSpan={7} className="px-4 py-12 text-center" style={{ color: colors.textTertiary }}>
                 <div className="flex flex-col items-center gap-2">
                   {emptyIcon}
                   <p className="text-[13px]">{t('p_valve.inventory.empty')}</p>
@@ -416,6 +460,7 @@ export default function InventoryPage() {
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.wip > 0 ? colors.orange : colors.textTertiary, fontWeight: row.wip > 0 ? 600 : 400 }}>{row.wip}</td>
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.approachingExp > 0 ? colors.orange : colors.textTertiary, fontWeight: row.approachingExp > 0 ? 600 : 400 }}>{row.approachingExp}</td>
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.expired > 0 ? colors.red : colors.textTertiary, fontWeight: row.expired > 0 ? 600 : 400 }}>{row.expired}</td>
+              <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.used > 0 ? colors.purple : colors.textTertiary, fontWeight: row.used > 0 ? 600 : 400 }}>{row.used}</td>
               <td className="px-3 py-2.5 text-[12px] tabular-nums" style={{ color: row.returned > 0 ? colors.textSecondary : colors.textTertiary, fontWeight: row.returned > 0 ? 600 : 400 }}>{row.returned}</td>
             </tr>
           ))}
@@ -470,7 +515,7 @@ export default function InventoryPage() {
               {/* Product Type */}
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>Product Type *</label>
-                <select value={formProductType} onChange={e => handleProductTypeChange(e.target.value as any)}
+                <select value={formProductType} onChange={e => handleProductTypeChange(e.target.value as 'PVALVE' | 'DELIVERY_SYSTEM')}
                   className="w-full px-3 py-2 rounded-lg text-[13px] border" style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }}>
                   <option value="PVALVE">P-Valve</option>
                   <option value="DELIVERY_SYSTEM">Delivery System</option>
@@ -698,12 +743,13 @@ export default function InventoryPage() {
 
                     {editTransactions.map((txn, idx) => (
                       <LedgerEntry
-                        key={txn.id}
+                        key={`${txn.id}-${txn.updatedAt}`}
                         txn={txn}
                         colors={colors}
                         theme={theme}
                         saving={editSaving}
                         onSave={saveTransaction}
+                        onDelete={deleteTransaction}
                         isLast={idx === editTransactions.length - 1}
                         operatorOptions={operatorOptions}
                       />
@@ -789,14 +835,16 @@ function LedgerEntry({
   theme,
   saving,
   onSave,
+  onDelete,
   isLast,
   operatorOptions,
 }: {
   txn: FullTransaction;
-  colors: any;
-  theme: string;
+  colors: typeof themeColors.dark;
+  theme: 'dark' | 'light';
   saving: boolean;
   onSave: (txn: FullTransaction) => void;
+  onDelete: (txn: FullTransaction) => void;
   isLast: boolean;
   operatorOptions: string[];
 }) {
@@ -806,10 +854,10 @@ function LedgerEntry({
   const cfg = ACTION_CONFIG[txn.action] || { label: txn.action, abbr: '—' };
   const isWarehouse = WAREHOUSE_ACTIONS.includes(txn.action);
   const isRecCn = txn.action === 'REC_CN';
+  const isOutCn = txn.action === 'OUT_CN';
   const inputStyle = { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text };
 
-  // Sync from parent when save completes
-  useEffect(() => { setTxn(initialTxn); setEditing(false); }, [initialTxn]);
+  // state is re-initialized via component key when parent txn updates
 
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
@@ -882,6 +930,16 @@ function LedgerEntry({
                 className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition hover:opacity-80 disabled:opacity-40"
                 style={{ color: colors.textSecondary, backgroundColor: colors.bgTertiary }}
               >{downloadingPdf ? 'Downloading...' : 'Download PDF'}</button>
+            )}
+
+            {/* Delete button — only for OUT_CN */}
+            {isOutCn && !editing && (
+              <button
+                onClick={() => onDelete(initialTxn)}
+                disabled={saving}
+                className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition hover:opacity-80 disabled:opacity-40"
+                style={{ color: '#ff3b30', backgroundColor: colors.bgTertiary }}
+              >Delete</button>
             )}
 
             {isWarehouse ? (
@@ -1032,7 +1090,12 @@ function LedgerEntry({
 
 // ======== Reusable Edit Field ========
 function EditField({ label, value, onChange, type, colors, inputStyle }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; colors: any; inputStyle: any;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  colors: typeof themeColors.dark;
+  inputStyle: React.CSSProperties;
 }) {
   return (
     <div>

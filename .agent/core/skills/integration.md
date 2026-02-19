@@ -1,6 +1,6 @@
 ---
 name: integration
-description: 集成与接口工程 — API 契约/OpenAPI/第三方集成/Webhook/契约测试/API 网关/版本管理。
+description: 集成与接口工程 SOP。Use when 需要 API 契约治理、第三方集成、Webhook、网关策略或版本兼容控制。
 ---
 
 # 集成与接口工程 (Integration & API Engineering)
@@ -291,7 +291,7 @@ npx openapi-diff old-spec.json new-spec.json --check
 ```
 客户端 → API Gateway → 后端服务
            │
-           ├── 路由: /api/v2/* → V2 NestJS
+           ├── 路由: 历史旧路由（已退役，禁止新增依赖）
            ├── 路由: /api/v3/* → V3 Spring Boot
            ├── 认证: JWT 验证
            ├── 限流: 100 req/s per client

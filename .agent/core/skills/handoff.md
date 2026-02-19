@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 会话交接协议 — 长任务跨会话接力, 检查点保存/恢复, 上下文压缩传递。
+description: 会话交接协议 SOP。Use when 长任务跨会话接力、需要检查点保存/恢复与上下文压缩传递。
 ---
 
 # 会话交接协议 (Session Handoff Protocol)
@@ -29,7 +29,7 @@ description: 会话交接协议 — 长任务跨会话接力, 检查点保存/�
 
 > 保存时间: YYYY-MM-DD HH:MM
 > 会话 ID: {conversation-id}
-> Spec 文件: projects/{project}/data/specs/{spec-file}.md
+> Spec 文件: .agent/projects/{project}/data/specs/{spec-file}.md
 
 ## 已完成 ✅
 1. ✅ Step 1: {描述} — {关键输出}
@@ -46,7 +46,7 @@ description: 会话交接协议 — 长任务跨会话接力, 检查点保存/�
 5. ⬜ Step 5: {描述}
 
 ## 关键上下文 (新会话必读)
-- 当前在 Phase {X} — 参考 `projects/{project}/roadmap.md`
+- 当前在 Phase {X} — 参考 `.agent/projects/{project}/roadmap.md`
 - 正在使用实施方案: `playbooks/{name}.md`
 - 数据模型变更: {是/否, 如是说明}
 - 已知陷阱: {遇到的问题 + 解法}
@@ -54,7 +54,7 @@ description: 会话交接协议 — 长任务跨会话接力, 检查点保存/�
 ## 相关文件 (新会话应先读)
 - `path/to/modified-file-1.ts`
 - `path/to/modified-file-2.prisma`
-- `projects/{project}/data/specs/{spec-file}.md`
+- `.agent/projects/{project}/data/specs/{spec-file}.md`
 ```
 
 ---
@@ -62,10 +62,10 @@ description: 会话交接协议 — 长任务跨会话接力, 检查点保存/�
 ## 3. 存储位置
 
 ```
-projects/{project}/data/checkpoints/YYYY-MM-DD_{task-name}_checkpoint.md
+.agent/projects/{project}/data/checkpoints/YYYY-MM-DD_{task-name}_checkpoint.md
 ```
 
-> **命名和生命周期规则: `project-structure.md` §3.6 + §4**
+> **命名和生命周期规则: `core/skills/project-structure.md` §3.6 + §4**
 
 ---
 
@@ -74,9 +74,9 @@ projects/{project}/data/checkpoints/YYYY-MM-DD_{task-name}_checkpoint.md
 新会话开始时, 如果用户说 "继续上次" 或引用之前的任务:
 
 ```
-1. 读 projects/{project}/data/checkpoints/ 最新的检查点文件
+1. 读 .agent/projects/{project}/data/checkpoints/ 最新的检查点文件
 2. 读检查点中列出的相关文件
-3. 读对应的 Spec 文件 (projects/{project}/data/specs/)
+3. 读对应的 Spec 文件 (.agent/projects/{project}/data/specs/)
 4. 向用户确认: "上次做到 Step 3, 我从这里继续?"
 5. 恢复执行
 ```
@@ -129,7 +129,7 @@ projects/{project}/data/checkpoints/YYYY-MM-DD_{task-name}_checkpoint.md
 做到: Step {N}
 下一步: {一句话}
 关键文件: `path/to/file`
-Spec: `projects/{project}/data/specs/{file}.md`
+Spec: `.agent/projects/{project}/data/specs/{file}.md`
 ```
 
 ---

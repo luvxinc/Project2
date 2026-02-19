@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEmployees, useDepartments, vmaKeys, vmaFetch } from '@/lib/hooks/use-vma-queries';
 import VmaTabSelector from '../components/VmaTabSelector';
@@ -41,7 +41,7 @@ const api = vmaFetch;
 // ================================
 // Sort Arrow Icon
 // ================================
-function SortIcon({ active, dir, colors }: { active: boolean; dir: SortDir; colors: any }) {
+function SortIcon({ active, dir, colors }: { active: boolean; dir: SortDir; colors: typeof themeColors.dark }) {
   return (
     <span className="inline-flex flex-col ml-1 -mb-0.5">
       <svg
@@ -166,10 +166,7 @@ export default function EmployeesPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Show error toast on query error
-  useEffect(() => {
-    if (empError) showToast((empError as Error).message, 'err');
-  }, [empError]);
+  const queryErrorMessage = empError instanceof Error ? empError.message : null;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -194,8 +191,8 @@ export default function EmployeesPage() {
       showToast(t('employees.actions.activateSuccess'), 'ok');
       setSelectedEmp(null);
       refetchEmployees();
-    } catch (e: any) {
-      showToast(e.message, 'err');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Operation failed', 'err');
     }
   };
 
@@ -208,8 +205,8 @@ export default function EmployeesPage() {
       setTermTarget(null);
       setSelectedEmp(null);
       refetchEmployees();
-    } catch (e: any) {
-      showToast(e.message, 'err');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Operation failed', 'err');
     }
   };
 
@@ -219,8 +216,8 @@ export default function EmployeesPage() {
       showToast(t('employees.actions.deleteSuccess'), 'ok');
       setSelectedEmp(null);
       refetchEmployees();
-    } catch (e: any) {
-      showToast(e.message, 'err');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Operation failed', 'err');
     }
   };
 
@@ -551,9 +548,9 @@ function EmployeeCardModal({
   onViewCareer,
 }: {
   employee: Employee;
-  colors: any;
-  theme: string;
-  t: any;
+  colors: typeof themeColors.dark;
+  theme: 'dark' | 'light';
+  t: ReturnType<typeof useTranslations>;
   onClose: () => void;
   onEdit: () => void;
   onToggle: () => void;
@@ -798,9 +795,9 @@ function EmployeeFormModal({
 }: {
   employee: Employee | null;
   departments: Department[];
-  colors: any;
-  theme: string;
-  t: any;
+  colors: typeof themeColors.dark;
+  theme: 'dark' | 'light';
+  t: ReturnType<typeof useTranslations>;
   onClose: () => void;
   onSave: () => void;
   onError: (msg: string) => void;
@@ -850,8 +847,8 @@ function EmployeeFormModal({
         });
       }
       onSave();
-    } catch (e: any) {
-      onError(e.message);
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'Operation failed');
     } finally {
       setSaving(false);
     }

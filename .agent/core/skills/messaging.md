@@ -1,6 +1,6 @@
 ---
 name: messaging
-description: 消息与异步工程 — Kafka/消息队列/Saga/幂等/事件溯源/异步处理模式。
+description: 消息与异步工程 SOP。Use when 需要 Kafka/队列/Saga/幂等/事件驱动架构设计与故障治理。
 ---
 
 # 消息与异步工程 (Messaging & Async Engineering)

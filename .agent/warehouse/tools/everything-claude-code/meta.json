@@ -1,0 +1,40 @@
+{
+  "slug": "everything-claude-code",
+  "category": "engineering",
+  "keywords": [
+    "review",
+    "rules",
+    "hooks",
+    "qa"
+  ],
+  "source": {
+    "repo": "unknown",
+    "ref": "unknown",
+    "commit": "unknown",
+    "extractedAt": "2026-02-18T03:35:30Z"
+  },
+  "slices": [
+    {
+      "file": "01-agents-review.md",
+      "module": "agents-review",
+      "keywords": [
+        "review",
+        "rules",
+        "hooks",
+        "qa"
+      ],
+      "sourcePath": "unknown"
+    },
+    {
+      "file": "02-rules-hooks.md",
+      "module": "rules-hooks",
+      "keywords": [
+        "review",
+        "rules",
+        "hooks",
+        "qa"
+      ],
+      "sourcePath": "unknown"
+    }
+  ]
+}

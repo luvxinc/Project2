@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -330,40 +330,33 @@ export { colorTokens };
 // ==================== Provider ====================
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      return savedTheme;
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
-      setThemeState(savedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(prefersDark ? 'dark' : 'light');
-    }
-  }, []);
+    localStorage.setItem('theme', theme);
+    document.documentElement.classList.remove('theme-dark', 'theme-light');
+    document.documentElement.classList.add(`theme-${theme}`);
 
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('theme', theme);
-      document.documentElement.classList.remove('theme-dark', 'theme-light');
-      document.documentElement.classList.add(`theme-${theme}`);
-      
-      // 同步更新 CSS 变量
-      const colors = themeColors[theme];
-      const root = document.documentElement;
-      root.style.setProperty('--color-bg', colors.bg);
-      root.style.setProperty('--color-bg-secondary', colors.bgSecondary);
-      root.style.setProperty('--color-bg-tertiary', colors.bgTertiary);
-      root.style.setProperty('--color-text', colors.text);
-      root.style.setProperty('--color-text-secondary', colors.textSecondary);
-      root.style.setProperty('--color-border', colors.border);
-      root.style.setProperty('--color-blue', colors.blue);
-      root.style.setProperty('--color-shadow', colors.shadow);
-      root.style.setProperty('--logo-filter', colors.logoFilter);
-    }
-  }, [theme, mounted]);
+    // 同步更新 CSS 变量
+    const colors = themeColors[theme];
+    const root = document.documentElement;
+    root.style.setProperty('--color-bg', colors.bg);
+    root.style.setProperty('--color-bg-secondary', colors.bgSecondary);
+    root.style.setProperty('--color-bg-tertiary', colors.bgTertiary);
+    root.style.setProperty('--color-text', colors.text);
+    root.style.setProperty('--color-text-secondary', colors.textSecondary);
+    root.style.setProperty('--color-border', colors.border);
+    root.style.setProperty('--color-blue', colors.blue);
+    root.style.setProperty('--color-shadow', colors.shadow);
+    root.style.setProperty('--logo-filter', colors.logoFilter);
+  }, [theme]);
 
   const toggleTheme = () => {
     setThemeState(prev => prev === 'dark' ? 'light' : 'dark');

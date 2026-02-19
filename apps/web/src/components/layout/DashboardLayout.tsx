@@ -19,22 +19,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme } = useTheme();
   const colors = themeColors[theme];
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebarCollapsed');
-    if (saved === 'true') setCollapsed(true);
-  }, []);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('sidebarCollapsed') === 'true';
+  });
 
   const toggleSidebar = () => {
     const newState = !collapsed;
     setCollapsed(newState);
     localStorage.setItem('sidebarCollapsed', String(newState));
+    window.dispatchEvent(new Event('sidebar-collapsed-change'));
   };
 
   return (
     <>
-      {/* Toggle */}
       <button
         onClick={toggleSidebar}
         style={{ color: colors.textTertiary }}
@@ -47,25 +45,20 @@ export function Sidebar() {
         </svg>
       </button>
 
-      {/* Sidebar */}
-      <aside 
+      <aside
         style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
         className={`fixed left-0 top-0 h-full w-60 border-r flex flex-col z-40 transition-transform duration-200 ${
           collapsed ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
-        {/* Header */}
         <div style={{ borderColor: colors.border }} className="h-12 flex items-center px-5 border-b">
-          <Link href="/" style={{ color: colors.text }} className="text-[17px] font-semibold">
-            MGMT
-          </Link>
+          <Link href="/" style={{ color: colors.text }} className="text-[17px] font-semibold">MGMT</Link>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 py-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
-            
+
             if (item.disabled) {
               return (
                 <div
@@ -84,7 +77,7 @@ export function Sidebar() {
                 href={item.href}
                 style={{
                   backgroundColor: isActive ? colors.blue : 'transparent',
-                  color: isActive ? '#ffffff' : colors.textSecondary
+                  color: isActive ? '#ffffff' : colors.textSecondary,
                 }}
                 className="block mx-2 px-3 py-2 rounded-md text-[15px] transition-colors hover:opacity-80"
               >
@@ -94,13 +87,9 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* User */}
         <div style={{ borderColor: colors.border }} className="p-4 border-t">
           <div className="flex items-center gap-3">
-            <div 
-              style={{ backgroundColor: colors.bgTertiary }}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-            >
+            <div style={{ backgroundColor: colors.bgTertiary }} className="w-8 h-8 rounded-full flex items-center justify-center">
               <span style={{ color: colors.text }} className="text-[13px] font-medium">A</span>
             </div>
             <div>
@@ -117,22 +106,30 @@ export function Sidebar() {
 export function Header({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
   const { theme } = useTheme();
   const colors = themeColors[theme];
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('sidebarCollapsed') === 'true';
+  });
 
   useEffect(() => {
-    const checkCollapsed = () => {
+    const onSidebarCollapsedChange = () => {
       setCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
     };
-    checkCollapsed();
-    const interval = setInterval(checkCollapsed, 100);
-    return () => clearInterval(interval);
+
+    window.addEventListener('sidebar-collapsed-change', onSidebarCollapsedChange);
+    window.addEventListener('storage', onSidebarCollapsedChange);
+
+    return () => {
+      window.removeEventListener('sidebar-collapsed-change', onSidebarCollapsedChange);
+      window.removeEventListener('storage', onSidebarCollapsedChange);
+    };
   }, []);
 
   return (
-    <header 
-      style={{ 
-        backgroundColor: theme === 'dark' ? 'rgba(28, 28, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)', 
-        borderColor: colors.border 
+    <header
+      style={{
+        backgroundColor: theme === 'dark' ? 'rgba(28, 28, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+        borderColor: colors.border,
       }}
       className={`fixed top-0 right-0 h-12 backdrop-blur-xl border-b flex items-center justify-end px-4 z-30 transition-all duration-200 ${
         collapsed ? 'left-0' : 'left-60'

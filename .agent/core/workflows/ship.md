@@ -1,5 +1,5 @@
 ---
-description: 发 — 本地开发, CI/CD, Docker, K8s, 灰度发布
+description: /main_ship 工作流。Use when 需要本地开发、CI/CD、部署、灰度发布与回滚保障。
 ---
 
 # /ship — 发
@@ -14,7 +14,7 @@ description: 发 — 本地开发, CI/CD, Docker, K8s, 灰度发布
 
 > **所有部署/环境配置任务, 必须以 V3 架构规范为基准:**
 > - 📐 主文件: `.agent/projects/mgmt/reference/v3-architecture.md` (§3.7 云原生基础设施, §3.7a 弹性与韧性)
-> - 📚 参考: `reference/disaster-recovery.md` (灾备), `reference/resilience.md` (弹性), `reference/config-management.md` (配置)
+> - 📚 参考: `.agent/projects/mgmt/reference/disaster-recovery.md` (灾备), `.agent/projects/mgmt/reference/resilience.md` (弹性), `.agent/projects/mgmt/reference/config-management.md` (配置)
 >
 > **Docker/K8s/CI-CD 配置必须符合 V3 架构规范。**
 
@@ -43,7 +43,7 @@ description: 发 — 本地开发, CI/CD, Docker, K8s, 灰度发布
 # 1. 环境准备
 ./dev.sh up              # 启动 PostgreSQL + Redis
 
-# 2. 后端启动 (V2 NestJS / V3 Kotlin)
+# 2. 后端启动 (V3 Kotlin / Spring Boot)
 cd apps/api && pnpm dev  # V2
 ./gradlew bootRun        # V3
 
@@ -74,8 +74,8 @@ open http://localhost:3000             # 前端
 | 热加载失效 | 文件监听上限 | `ulimit -n 4096` |
 
 > 🔴 **问题复盘铁律:** 修复任何本地开发环境问题后, 必须:
-> 1. 记录到 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
-> 2. 交叉检查同类问题 (`memory.md` §3.5): 抽象模式 → 搜索 → 一并修复
+> 1. 记录到 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
+> 2. 交叉检查同类问题 (`core/skills/memory.md` §3.5): 抽象模式 → 搜索 → 一并修复
 
 ---
 
@@ -237,8 +237,8 @@ spec:
 5. 通知: 通知 PM → 通知用户
 6. 复盘: 根因分析 → 事故报告
 7. 🔴 问题复盘铁律:
-   a. 记录错题本: 写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
-   b. 交叉检查: 抽象回滚原因模式 → 搜索同类风险点 → 一并修复 → 记录 (`memory.md` §3.5)
+   a. 记录错题本: 写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
+   b. 交叉检查: 抽象回滚原因模式 → 搜索同类风险点 → 一并修复 → 记录 (`core/skills/memory.md` §3.5)
 ```
 
 ### 回滚命令速查

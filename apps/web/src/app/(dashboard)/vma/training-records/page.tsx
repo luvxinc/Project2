@@ -7,9 +7,10 @@ import { animate } from 'animejs';
 import { useRouter } from 'next/navigation';
 import VmaTabSelector from '../components/VmaTabSelector';
 import { getAuthHeaders } from '@/lib/vma-api';
+import { getApiBaseUrlCached } from '@/lib/api-url';
 import TrainingMatrixRoadmap from './_TrainingMatrixRoadmap';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1`;
+const API = getApiBaseUrlCached();
 
 // ================================
 // Types

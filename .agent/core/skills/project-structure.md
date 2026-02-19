@@ -1,6 +1,6 @@
 ---
 name: project-structure
-description: 项目级数据管理 SOP — 目录结构/文件命名/写入删除逻辑/索引切片/生命周期。全链路产出物的唯一规范。
+description: 项目级数据管理 SOP。Use when 需要规范目录结构、命名、索引切片、生命周期与产出物管理。
 ---
 
 # 项目级数据管理 SOP
@@ -25,7 +25,7 @@ description: 项目级数据管理 SOP — 目录结构/文件命名/写入删�
 ## 1. 标准目录结构
 
 ```
-.agent/projects/{project}/
+.agent/.agent/projects/{project}/
 │
 ├── CONTEXT.md                         ← 项目入口 (技术栈/铁律/阶段指针)
 ├── roadmap.md                         ← 路线图 (Phase 列表/当前指针)
@@ -45,6 +45,7 @@ description: 项目级数据管理 SOP — 目录结构/文件命名/写入删�
     │   ├── risk-register.md           ← 风险登记 (持久)
     │   ├── engineering-status.md      ← 工程状态 (持久)
     │   ├── user-feedback.md           ← 用户反馈 (持久)
+    │   ├── PROJECT-MEMORY.md          ← 项目复用记忆 (持久)
     │   └── TRACKER-{task-id}.md       ← 任务追踪器 (临时)
     ├── checkpoints/                   ← 断点存档 (临时)
     ├── audits/                        ← 审计报告 (修复后删)
@@ -116,7 +117,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/CONTEXT.md` |
+| **位置** | `.agent/projects/{project}/CONTEXT.md` |
 | **创建者** | PM (新项目初始化时) |
 | **命名** | 固定名, 不可改 |
 | **生命周期** | 🟢 持久 — 随项目演进更新 |
@@ -128,7 +129,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/roadmap.md` |
+| **位置** | `.agent/projects/{project}/roadmap.md` |
 | **创建者** | PM + CTO |
 | **命名** | 固定名, 不可改 |
 | **生命周期** | 🟢 持久 |
@@ -139,7 +140,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/specs/` |
+| **位置** | `.agent/projects/{project}/data/specs/` |
 | **创建者** | PM (requirements.md Phase 2 SPEC 输出) |
 | **命名** | `YYYY-MM-DD_{task-name}.md` |
 | **命名示例** | `2026-02-15_vma-employee-phone-field.md` |
@@ -154,7 +155,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/plans/` |
+| **位置** | `.agent/projects/{project}/data/plans/` |
 | **创建者** | CTO (build.md §2 分配时) |
 | **命名** | `YYYY-MM-DD_{task-name}_plan.md` |
 | **命名示例** | `2026-02-15_vma-employee-phone-field_plan.md` |
@@ -190,12 +191,13 @@ PM 交付:
 | `risk-register.md` | 固定名 | PM | 识别到风险时追加 (PM §6.3) | 🟢 永不删 |
 | `engineering-status.md` | 固定名 | CTO | 任务分配/完成时更新 (CTO §6) | 🟢 永不删 |
 | `user-feedback.md` | 固定名 | PM | 每次用户反馈后追加 (PM §5.5) | 🟢 永不删 |
+| `PROJECT-MEMORY.md` | 固定名 | PM/CTO | 任务结束时沉淀可复用需求（UIUX/数据口径/长期规则） | 🟢 永不删 |
 
 ### 3.6 data/checkpoints/ (断点存档)
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/checkpoints/` |
+| **位置** | `.agent/projects/{project}/data/checkpoints/` |
 | **创建者** | 当前执行角色 (会话即将结束时, handoff.md) |
 | **命名** | `YYYY-MM-DD_{task-name}_checkpoint.md` |
 | **命名示例** | `2026-02-15_vma-employee-phone-field_checkpoint.md` |
@@ -208,7 +210,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/audits/` |
+| **位置** | `.agent/projects/{project}/data/audits/` |
 | **创建者** | QA (qa-auditor.md §2.3 审计报告) |
 | **命名** | `YYYY-MM-DD_{task-name}_audit.md` |
 | **命名示例** | `2026-02-15_vma-employee-phone-field_audit.md` |
@@ -222,8 +224,8 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/errors/` |
-| **文件** | `ERROR-BOOK.md` (唯一文件, 不分拆) |
+| **位置** | `.agent/projects/{project}/data/errors/` |
+| **文件** | `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (主索引文件, 可按模块切片) |
 | **创建者** | QA/CTO/工程师 (发现错误时) |
 | **命名** | 固定名, 不可改 |
 | **生命周期** | 🟢 持久 — 只追加不删除 |
@@ -236,7 +238,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/data/training/` |
+| **位置** | `.agent/projects/{project}/data/training/` |
 | **创建者** | QA (qa-auditor.md §3.3 培训输出) |
 | **命名** | `YYYY-MM-DD_{topic}.md` |
 | **命名示例** | `2026-02-15_prisma-migration-gotchas.md` |
@@ -247,7 +249,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/playbooks/` |
+| **位置** | `.agent/projects/{project}/playbooks/` |
 | **创建者** | PM + CTO |
 | **命名** | `{domain}.md` (小写, 域名) |
 | **命名示例** | `vma.md`, `auth.md`, `products.md` |
@@ -258,7 +260,7 @@ PM 交付:
 
 | 项目 | 规范 |
 |------|------|
-| **位置** | `projects/{project}/reference/` |
+| **位置** | `.agent/projects/{project}/reference/` |
 | **创建者** | 任何角色 |
 | **命名** | `{topic}.md` (小写, 主题名) |
 | **命名示例** | `api-field-mapping.md`, `legacy-mysql-schema.md` |
@@ -275,7 +277,7 @@ PM 交付:
 |------|------|------|
 | `YYYY-MM-DD_` | 所有任务级文件 (spec/plan/checkpoint/audit/training) | `2026-02-15_vma-phone.md` |
 | `TRACKER-` | 追踪器 | `TRACKER-VMA-PHONE-001.md` |
-| `ERROR-BOOK` | 错题本 | `ERROR-BOOK.md` |
+| `ERROR-BOOK` | 错题本 | `.agent/projects/{project}/data/errors/ERROR-BOOK.md` |
 | 无前缀 | 持久级文件 (ACCEPTED, roadmap, playbook) | `ACCEPTED.md` |
 
 ### 4.2 task-name 规则
@@ -314,7 +316,7 @@ NNN: 3 位顺序号, 从 001 开始
 | `plans/` | 无需索引 | 同上 |
 | `progress/` | `requirements-list.md` 兼任索引 | 所有需求的状态一览 |
 | `audits/` | 无需索引 | 修复后即删, 目录应始终为空或只有活跃审计 |
-| `errors/` | `ERROR-BOOK.md` 顶部关键词索引表 | memory.md §3.2 定义 |
+| `errors/` | `.agent/projects/{project}/data/errors/ERROR-BOOK.md` 顶部关键词索引表 | memory.md §3.2 定义 |
 | `training/` | 无需索引 | 按日期排列, 数量少 |
 | `reference/` | 如 > 10 个文件 → 创建 `_INDEX.md` | 列出所有文件 + 一句话说明 |
 | `playbooks/` | 如 > 5 个文件 → 创建 `_INDEX.md` | 列出所有文件 + 域映射 |
@@ -323,15 +325,18 @@ NNN: 3 位顺序号, 从 001 开始
 
 | 文件类型 | 切片阈值 | 切片方式 |
 |---------|---------|---------|
-| `ERROR-BOOK.md` | > 50 条 | 按模块拆: `ERROR-BOOK-{module}.md` + 根文件保留索引 |
+| `.agent/projects/{project}/data/errors/ERROR-BOOK.md` | > 50 条 | 按模块拆: `ERROR-BOOK-{module}.md` + 根文件保留索引 |
 | `reference/{topic}.md` | > 500 行 | 按子主题拆: `{topic}-{subtopic}.md` |
 | `ACCEPTED.md` | > 200 条 | 按年份归档: `ACCEPTED-{YYYY}.md`, 当前年份在 `ACCEPTED.md` |
+| `PROJECT-MEMORY.md` | > 120 条 | 按主题切片: `PROJECT-MEMORY-uiux.md` / `PROJECT-MEMORY-data.md` / `PROJECT-MEMORY-rules.md`，根文件保留索引 |
 | `requirements-list.md` | > 100 条 | 已完成的移到 `requirements-archive-{YYYY}.md` |
 | `user-feedback.md` | > 100 条 | 按年份归档 |
 
 ---
 
 ## 6. 写入/删除逻辑速查表
+
+> 统一治理标准：`core/reference/artifact-governance-standard.md`
 
 ### 6.1 写入 (CREATE / APPEND)
 
@@ -413,3 +418,10 @@ chief-engineer.md  → §6 Engineering Status
 
 *Version: 2.0.0 — 项目级数据管理 SOP (目录+命名+写入删除+索引+切片)*
 *Created: 2026-02-15*
+
+
+### 6.4 去重与加权（强制）
+
+- ERROR-BOOK 与 PROJECT-MEMORY 均执行“命中即加权、禁止重复录入”。
+- 命中规则：关键词 + 指纹（模块/场景/后果）
+- 命中后仅更新 `count/weight/last_seen`，不新增重复条目。

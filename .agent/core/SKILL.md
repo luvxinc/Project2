@@ -1,6 +1,6 @@
 ---
 name: core-engineering
-description: 工程部内核 — 层级式索引路由。20 个技能 + 3 个强制规则 + 4 个工作流, 覆盖 CTO/PM/QA/工程师/协作全部角色。
+description: 工程部内核路由入口。Use when 需要在 PM/CTO/QA/工程师/规则/工作流之间做精准技能路由与最小上下文加载。
 ---
 
 # 工程部内核 (Engineering Core)
@@ -47,9 +47,9 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 | 域 | 索引文件 | 包含工程师 | 关键词 |
 |------|---------|------------|--------|
-| 📱 **产品工程部** | [`domains/product.md`](skills/domains/product.md) | 前端架构师 | `前端`, `React`, `页面`, `组件`, `主题`, `i18n`, `动画`, `UI` |
-| ⚙️ **服务工程部** | [`domains/service.md`](skills/domains/service.md) | 后端 + 数据 + 安全 + 集成 + 消息 | `后端`, `Kotlin`, `API`, `Schema`, `安全`, `Kafka`, `事务` |
-| 🛠️ **平台工程部** | [`domains/platform.md`](skills/domains/platform.md) | 基建 + 可观测 + 性能 + 平台 | `Docker`, `K8s`, `CI/CD`, `监控`, `性能`, `技术债` |
+| 📱 **产品工程部** | [`core/skills/domains/product.md`](skills/domains/product.md) | 前端架构师 | `前端`, `React`, `页面`, `组件`, `主题`, `i18n`, `动画`, `UI` |
+| ⚙️ **服务工程部** | [`core/skills/domains/service.md`](skills/domains/service.md) | 后端 + 数据 + 安全 + 集成 + 消息 | `后端`, `Kotlin`, `API`, `Schema`, `安全`, `Kafka`, `事务` |
+| 🛠️ **平台工程部** | [`core/skills/domains/platform.md`](skills/domains/platform.md) | 基建 + 可观测 + 性能 + 平台 | `Docker`, `K8s`, `CI/CD`, `监控`, `性能`, `技术债` |
 
 > **加载流程:** CTO 判断域 → 读域索引 (~30行) → 按索引加载具体工程师 SOP 的具体 section
 
@@ -65,6 +65,9 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 ### 🔴 强制规则层 (提交前必查)
 
+> 规则真相源索引：`rules/INDEX.md`
+> 文档门禁绿灯标准：`core/reference/agent-doc-gate-standard.md`
+
 | 规则 | 文件 | 内容 | 大小 |
 |------|------|------|------|
 | 通用规则 | [`rules/common.md`](rules/common.md) | 代码风格/Git/测试门禁(§5)/跨文件影响(§6)/代码拆分+复用(§9) | ~6KB |
@@ -75,30 +78,33 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 ### 工作流 (Slash Commands)
 
+> 流程真相源索引：`workflows/INDEX.md`
+
 | 命令 | 文件 | 何时触发 |
 |------|------|----------|
 | `/main_build` | [`workflows/build.md`](workflows/build.md) | 新建/重构 (§0 状态机 + §1-§7 全闭环) |
 | `/main_ship` | [`workflows/ship.md`](workflows/ship.md) | 本地开发/CI-CD/部署 |
 | `/main_guard` | [`workflows/guard.md`](workflows/guard.md) | TDD/审查/排查 |
 | `/main_ui` | [`workflows/ui.md`](workflows/ui.md) | Hub 页面/主题/动画 |
+| `/learn` | [`workflows/learn.md`](workflows/learn.md) | 学习/更新 GitHub 库并自动纳入工具库 |
 
 ### 客户项目 (L4 — 仅在项目上下文时加载)
 
 | 关键词 | 入口文件 | 说明 |
 |--------|----------|------|
-| `MGMT`, `ERP`, `VMA` | [`../../projects/mgmt/CONTEXT.md`](../../projects/mgmt/CONTEXT.md) | 项目入口 → roadmap → playbooks → data/ |
+| `MGMT`, `ERP`, `VMA` | [`../projects/mgmt/CONTEXT.md`](../projects/mgmt/CONTEXT.md) | 项目入口 → roadmap → playbooks → data/ |
 
 ### 工具库 (L3 — 按需加载, 先读 INDEX.md)
 
 | 工具 | 目录 | 何时加载 |
 |------|------|---------|
-| ECC | [`warehouse/tools/everything-claude-code/`](../../warehouse/tools/everything-claude-code/) | Agent 系统设计/审查清单 |
-| UI UX Pro | [`warehouse/tools/ui-ux-pro-max/`](../../warehouse/tools/ui-ux-pro-max/) | 选风格/配色/UX 审查 |
-| Anthropic Skills | [`warehouse/tools/anthropic-skills/`](../../warehouse/tools/anthropic-skills/) | 创建新 Skill |
-| Knowledge Plugins | [`warehouse/tools/knowledge-work-plugins/`](../../warehouse/tools/knowledge-work-plugins/) | 创建插件 |
-| Claude-Mem | [`warehouse/tools/claude-mem/`](../../warehouse/tools/claude-mem/) | 理解记忆架构 |
-| Skill Seekers | [`warehouse/tools/skill-seekers/`](../../warehouse/tools/skill-seekers/) | 文档→Skill |
-| Anime.js | [`warehouse/tools/animejs/`](../../warehouse/tools/animejs/) | 动画开发 |
+| ECC | [`warehouse/tools/everything-claude-code/`](../warehouse/tools/everything-claude-code/) | Agent 系统设计/审查清单 |
+| UI UX Pro | [`warehouse/tools/ui-ux-pro-max/`](../warehouse/tools/ui-ux-pro-max/) | 选风格/配色/UX 审查 |
+| Anthropic Skills | [`warehouse/tools/anthropic-skills/`](../warehouse/tools/anthropic-skills/) | 创建新 Skill |
+| Knowledge Plugins | [`warehouse/tools/knowledge-work-plugins/`](../warehouse/tools/knowledge-work-plugins/) | 创建插件 |
+| Claude-Mem | [`warehouse/tools/claude-mem/`](../warehouse/tools/claude-mem/) | 理解记忆架构 |
+| Skill Seekers | [`warehouse/tools/skill-seekers/`](../warehouse/tools/skill-seekers/) | 文档→Skill |
+| Anime.js | [`warehouse/tools/animejs/`](../warehouse/tools/animejs/) | 动画开发 |
 
 ---
 

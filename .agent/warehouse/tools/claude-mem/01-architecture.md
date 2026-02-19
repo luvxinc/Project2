@@ -299,7 +299,7 @@ Chroma Vector DB (语义相似度)
 
 ```
 <private>
-API_KEY=sk-proj-abc123
+API_KEY=YOUR_API_KEY_HERE
 </private>
 
 → Claude 当前会话可见

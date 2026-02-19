@@ -1,5 +1,5 @@
 ---
-description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查, 事故响应
+description: /main_guard 工作流。Use when 需要 TDD、代码审查、安全审计、故障排查或事故响应。
 ---
 
 # /guard — 守
@@ -31,6 +31,7 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 | `构建`, `编译`, `build`, `依赖` | → §4 构建错误修复 |
 | `排查`, `debug`, `故障`, `日志` | → §5 故障排查 |
 | `事故`, `incident`, `回滚`, `P0` | → §6 事故响应 |
+| `死循环`, `卡死`, `timeout`, `hang` | → §7 反死循环与终端防卡死 |
 
 ---
 
@@ -138,8 +139,8 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 4. 修复 → 验证 (6 阶段验证循环)
 5. 确认无回归
 6. 🔴 问题复盘铁律:
-   a. 记录错题本: 写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
-   b. 交叉检查: 抽象错误模式 → grep 搜索同类代码 → 一并修复 → 记录 (`memory.md` §3.5)
+   a. 记录错题本: 写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
+   b. 交叉检查: 抽象错误模式 → grep 搜索同类代码 → 一并修复 → 记录 (`core/skills/memory.md` §3.5)
 
 验证循环:
   Build → Types → Lint → Tests → Security → Diff
@@ -170,8 +171,8 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 4. 缩小: 二分法定位问题代码
 5. 修复: 修改 + 验证 + 补测试 (防回归)
 6. 🔴 问题复盘铁律 (必须执行, 不可跳过):
-   a. 记录错题本: 写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
-   b. 交叉检查: 抽象错误模式 → grep 搜索同类代码 → 逐一检查 → 批量修复 → 记录 (`memory.md` §3.5)
+   a. 记录错题本: 写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
+   b. 交叉检查: 抽象错误模式 → grep 搜索同类代码 → 逐一检查 → 批量修复 → 记录 (`core/skills/memory.md` §3.5)
 
 关键规则:
   - 不要猜, 用日志和数据说话
@@ -180,8 +181,8 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 ```
 
 ### 错题本 (永久学习)
-- 修复后必须记录到 `projects/{project}/data/errors/ERROR-BOOK.md`
-- 必须执行交叉检查 (`memory.md` §3.5) 确认无同类问题残留
+- 修复后必须记录到 `.agent/projects/{project}/data/errors/ERROR-BOOK.md`
+- 必须执行交叉检查 (`core/skills/memory.md` §3.5) 确认无同类问题残留
 - 详见 `skills/memory.md` §3
 
 ---
@@ -208,13 +209,37 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 4. 修复: 永久修复 + 部署
 5. 复盘: 事故报告 → 存 audits/
 6. 🔴 问题复盘铁律:
-   a. 记录错题本: 写入 `ERROR-BOOK.md` (`memory.md` §3.2 格式)
-   b. 交叉检查: 抽象事故模式 → grep 搜索同类危险点 → 一并修复 → 记录 (`memory.md` §3.5)
+   a. 记录错题本: 写入 `.agent/projects/{project}/data/errors/ERROR-BOOK.md` (`core/skills/memory.md` §3.2 格式)
+   b. 交叉检查: 抽象事故模式 → grep 搜索同类危险点 → 一并修复 → 记录 (`core/skills/memory.md` §3.5)
 ```
 
 ---
 
-## §7 L3 工具库引用
+## §7 反死循环与终端防卡死（LOOP_BREAK）
+
+触发条件（任一满足即触发）：
+- 同策略指纹失败达到 2 次后仍要重复同法
+- 连续失败 3 次
+- 10 分钟无净进展
+- 终端命令 60 秒无输出且无明确长任务标识
+
+触发后必须执行：
+1. 停止当前重复路径
+2. 输出 `LOOP_BREAK` 四件套：
+   - 已证伪方案
+   - 最小可复现
+   - 三个替代路径（含风险）
+   - 选择下一路径理由
+3. 终端命令切换到安全执行：`core/scripts/safe-exec.sh`
+
+终端执行硬规则：
+- 默认超时：短命令 90s，重命令 600s（需显式声明）
+- 同命令同参数最多 2 次
+- 无界扫描命令必须加范围/limit
+
+---
+
+## §8 L3 工具库引用
 
 | 环节 | 推荐工具 | 路径 | 何时加载 |
 |------|---------|------|---------| 
@@ -222,11 +247,19 @@ description: 守 — TDD, 代码审查, 安全审查, 构建错误, 故障排查
 | §3 安全审查 | ECC: Security | `warehouse/tools/everything-claude-code/01-agents-review.md` §3 | 8 项安全检查 |
 | §1 TDD / §4 构建 | ECC: Rules | `warehouse/tools/everything-claude-code/02-rules-hooks.md` §1 | TDD 规则 + 验证循环 |
 | §5 前端排查 | UI UX Pro | `warehouse/tools/ui-ux-pro-max/03-ux-rules-checklist.md` | UX 反模式检查 |
-| §2/§3 提交前 | 🔴 Rules 层 | `core/rules/common.md` + `frontend.md` / `backend.md` | **必查** — 反模式 + 自检 Checklist |
+| §2/§3 提交前 | 🔴 Rules 层 | `core/rules/common.md` + `core/skills/frontend.md` / `core/skills/backend.md` | **必查** — 反模式 + 自检 Checklist |
 
 ---
 
-## §8 交接闭环
+## §9 文档门禁闭环（Agent 链路）
+
+交付前必须执行文档门禁：
+- 运行：`core/scripts/agent-doc-audit.sh .agent`
+- 判定：Hard missing references 必须为 0
+- Soft placeholders 允许存在，但要在审计报告中注明数量与原因
+- 依据：`core/reference/agent-doc-gate-standard.md`
+
+## §10 交接闭环
 
 每个 Guard 任务必须以下列之一结束:
 

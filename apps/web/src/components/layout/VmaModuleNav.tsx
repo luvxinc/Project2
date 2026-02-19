@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { animate, stagger } from 'animejs';
 
 // VMA 模块子导航配置
@@ -70,15 +70,15 @@ export function VmaModuleNav() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const navRef = useRef<HTMLDivElement>(null);
-  const [animated, setAnimated] = useState(false);
+  const animatedRef = useRef(false);
 
   // 只在 HUB 页面 (/vma) 显示图标栏
   const isHubPage = pathname === '/vma' || pathname?.endsWith('/vma') || pathname?.match(/^\/[a-z]{2}\/vma$/);
   
   // Stagger animation on mount (Apple style: left to right fade in)
   useEffect(() => {
-    if (navRef.current && !animated && isHubPage) {
-      setAnimated(true);
+    if (navRef.current && !animatedRef.current && isHubPage) {
+      animatedRef.current = true;
       const items = navRef.current.querySelectorAll('.nav-item');
       
       // 先设置初始状态
@@ -103,12 +103,12 @@ export function VmaModuleNav() {
         }
       });
     }
-  }, [isHubPage, animated]);
+  }, [isHubPage]);
 
   // 当离开 HUB 页面时重置动画状态
   useEffect(() => {
     if (!isHubPage) {
-      setAnimated(false);
+      animatedRef.current = false;
     }
   }, [isHubPage]);
 

@@ -106,7 +106,12 @@ class VmaInventoryTransactionService(
 
     fun remove(id: String): VmaInventoryTransaction {
         val txn = findOne(id)
+        require(txn.action == VmaInventoryAction.OUT_CN) {
+            "Only Return to China (OUT_CN) transactions can be deleted. This transaction is ${txn.action}."
+        }
         txn.deletedAt = Instant.now()
+        log.info("Soft-deleted OUT_CN transaction {} — specNo={}, serialNo={}, qty={}",
+            txn.id, txn.specNo, txn.serialNo, txn.qty)
         return txnRepo.save(txn)
     }
 
@@ -189,7 +194,7 @@ class VmaInventoryTransactionService(
         val today = LocalDate.now()
         val in30Days = today.plusDays(30)
 
-        data class Entry(var available: Int = 0, var wip: Int = 0, var nearExp: Int = 0, var expired: Int = 0, var returned: Int = 0)
+        data class Entry(var available: Int = 0, var wip: Int = 0, var nearExp: Int = 0, var expired: Int = 0, var used: Int = 0, var returned: Int = 0)
         val specMap = mutableMapOf<String, Entry>()
 
         // Pass 1: totals per (specNo, action)
@@ -200,6 +205,7 @@ class VmaInventoryTransactionService(
             val totalQty = group.sumOf { it.qty }
             entry.available += totalQty * (availMult[action] ?: 0)
             entry.wip += totalQty * (wipMult[action] ?: 0)
+            if (action == VmaInventoryAction.USED_CASE) entry.used += totalQty
             if (action == VmaInventoryAction.OUT_CN) entry.returned += totalQty
         }
 
@@ -238,6 +244,7 @@ class VmaInventoryTransactionService(
                     "wip" to maxOf(0, data.wip),
                     "approachingExp" to maxOf(0, data.nearExp),
                     "expired" to maxOf(0, data.expired),
+                    "used" to data.used,
                     "returned" to data.returned,
                 )
             }
@@ -355,6 +362,7 @@ class VmaInventoryTransactionService(
                         }
                     }
                     VmaInventoryAction.OUT_CASE -> outCase += txn.qty
+                    VmaInventoryAction.OUT_TRIP -> outCase += txn.qty  // Trip checkout = same as case checkout
                     VmaInventoryAction.REC_CASE -> recCase += txn.qty
                     VmaInventoryAction.USED_CASE -> usedCase += txn.qty
                     VmaInventoryAction.OUT_CN -> outCn += txn.qty

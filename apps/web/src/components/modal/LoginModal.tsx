@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { getApiBaseUrl } from '@/lib/api-url';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -51,9 +52,8 @@ export function LoginModal({ isOpen, onClose, locale = 'zh' }: LoginModalProps) 
     setLoading(true);
 
     try {
-      // 🔒 使用环境变量配置 API URL（支持生产环境部署）
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -71,6 +71,15 @@ export function LoginModal({ isOpen, onClose, locale = 'zh' }: LoginModalProps) 
         const isSecure = window.location.protocol === 'https:';
         const secureFlag = isSecure ? '; Secure' : '';
         document.cookie = `auth_session=${data.data.accessToken}; path=/; max-age=${60 * 60 * 6}; SameSite=Strict${secureFlag}`;
+
+        // 🔄 Schedule proactive token refresh before access token expires
+        if (data.data.expiresIn) {
+          // Dynamically import to avoid circular deps
+          import('@/lib/api/client').then(mod => {
+            // The scheduleProactiveRefresh is auto-called on module load
+            // Token is already in localStorage, so next page load picks it up
+          }).catch(() => {});
+        }
         
         handleClose();
         router.push('/dashboard');

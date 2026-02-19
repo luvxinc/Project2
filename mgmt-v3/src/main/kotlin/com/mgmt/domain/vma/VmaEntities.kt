@@ -283,13 +283,34 @@ class VmaReceivingBatch(
 )
 
 /**
+ * VmaClinicalTrip — maps to 'vma_clinical_trips' table.
+ * A Trip is a shared "packing list" — products are checked out together
+ * for multiple Cases, then distributed to individual Cases upon return.
+ */
+@Entity
+@Table(name = "vma_clinical_trips", indexes = [
+    Index(columnList = "trip_date"), Index(columnList = "status"),
+    Index(columnList = "site_id")
+])
+class VmaClinicalTrip(
+    @Id @Column(name = "trip_id") var tripId: String = "",
+    @Column(name = "trip_date", nullable = false) var tripDate: LocalDate = LocalDate.now(),
+    @Column(name = "site_id", nullable = false) var siteId: String = "",
+    @Enumerated(EnumType.STRING) @Column(nullable = false) var status: VmaClinicalTripStatus = VmaClinicalTripStatus.OUT,
+    @Column(name = "created_at", nullable = false, updatable = false) var createdAt: Instant = Instant.now(),
+    @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
+)
+
+enum class VmaClinicalTripStatus { OUT, COMPLETED }
+
+/**
  * VmaClinicalCase — maps to 'vma_clinical_cases' table.
  * PK is caseId (not UUID), e.g. "UVP-001-003"
  */
 @Entity
 @Table(name = "vma_clinical_cases", indexes = [
     Index(columnList = "status"), Index(columnList = "case_date"),
-    Index(columnList = "site_id")
+    Index(columnList = "site_id"), Index(columnList = "trip_id")
 ])
 class VmaClinicalCase(
     @Id @Column(name = "case_id") var caseId: String = "",
@@ -297,6 +318,8 @@ class VmaClinicalCase(
     @Column(name = "site_id", nullable = false) var siteId: String = "",
     @Column(name = "patient_id", nullable = false) var patientId: String = "",
     @Column(name = "case_date", nullable = false) var caseDate: LocalDate = LocalDate.now(),
+    @Column(nullable = false) var operator: String = "",
+    @Column(name = "trip_id") var tripId: String? = null,
     @Enumerated(EnumType.STRING) @Column(nullable = false) var status: VmaClinicalCaseStatus = VmaClinicalCaseStatus.IN_PROGRESS,
     @Column(name = "created_at", nullable = false, updatable = false) var createdAt: Instant = Instant.now(),
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
@@ -331,12 +354,13 @@ class VmaInventoryTransaction(
     @Column(columnDefinition = "integer[]") var condition: Array<Int> = arrayOf(),
     @Column(name = "batch_no") var batchNo: String? = null,
     @Column(name = "case_id") var caseId: String? = null,
+    @Column(name = "trip_id") var tripId: String? = null,
     @Column(name = "created_at", nullable = false, updatable = false) var createdAt: Instant = Instant.now(),
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
     @Column(name = "deleted_at") var deletedAt: Instant? = null,
 )
 
-enum class VmaInventoryAction { REC_CN, REC_CASE, OUT_CASE, OUT_CN, USED_CASE, MOVE_DEMO, RETURN_DEMO }
+enum class VmaInventoryAction { REC_CN, REC_CASE, OUT_CASE, OUT_CN, OUT_TRIP, USED_CASE, MOVE_DEMO, RETURN_DEMO }
 enum class VmaProductType { PVALVE, DELIVERY_SYSTEM }
 enum class VmaInspectionResult { ACCEPT, REJECT }
 

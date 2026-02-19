@@ -20,7 +20,7 @@ PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
 # Cloudflare Token (与 ops/start_server.sh 一致)
-CF_TOKEN="***REDACTED_CF_TOKEN***"
+CF_TOKEN="YOUR_CF_TOKEN_HERE"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"

@@ -1,6 +1,6 @@
 ---
 name: memory
-description: 记忆管理 SOP — 任务追踪器/验收保护/错题本/大任务规划/上下文约束。全流程记忆, 验收后清理。
+description: 记忆管理 SOP。Use when 需要任务追踪、验收保护、错题本沉淀、上下文约束与会话收敛。
 ---
 
 # 记忆管理 (Memory Management)
@@ -14,6 +14,7 @@ description: 记忆管理 SOP — 任务追踪器/验收保护/错题本/大任�
 | `进度`, `tracker`, `追踪`, `跟随` | → §1 任务追踪器 |
 | `验收`, `保护`, `gitignore`, `清理` | → §2 验收后协议 |
 | `错题`, `错误`, `复犯`, `交叉检查` | → §3 错题本 |
+| `项目记忆`, `复用`, `风格`, `口径`, `字段`, `规范` | → §3.6 项目复用记忆 |
 | `用户提示`, `纠正`, `理解错误`, `流程问题` | → §3.5 用户提示强制记录 |
 | `规划`, `plan`, `大任务`, `3个文件` | → §4 大任务规划 |
 | `上下文`, `token`, `约束`, `释放` | → §5 上下文智能约束 |
@@ -29,7 +30,7 @@ description: 记忆管理 SOP — 任务追踪器/验收保护/错题本/大任�
 ```
 PM 创建 Spec
     ↓ 同时创建追踪器
-projects/{project}/data/progress/TRACKER-{task-id}.md
+.agent/projects/{project}/data/progress/TRACKER-{task-id}.md
     (命名规则: project-structure.md §3.5.1 + §4.3)
     ↓ 全流程更新
     ↓ 每个状态变更都写入
@@ -47,7 +48,7 @@ projects/{project}/data/progress/TRACKER-{task-id}.md
 # 📍 TRACKER: {task-id} — {task-name}
 
 > 创建: YYYY-MM-DD HH:MM
-> Spec: projects/{project}/data/specs/{spec-file}.md
+> Spec: .agent/projects/{project}/data/specs/{spec-file}.md
 > 状态: {DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS → ...}
 
 ## 当前状态
@@ -127,17 +128,17 @@ Step 1: Spec 文件标记 CLOSED
     ↓
 Step 2: 验收内容保护
     将已验收的关键产出文件路径追加到
-    projects/{project}/data/progress/ACCEPTED.md
+    .agent/projects/{project}/data/progress/ACCEPTED.md
     ↓
 Step 3: 删除追踪器
-    rm projects/{project}/data/progress/TRACKER-{task-id}.md
+    rm .agent/projects/{project}/data/progress/TRACKER-{task-id}.md
     ↓
 Step 4: 删除相关检查点
-    rm projects/{project}/data/checkpoints/{相关检查点}.md
+    rm .agent/projects/{project}/data/checkpoints/{相关检查点}.md
     ↓
 Step 5: 审计报告处理
     审计报告中所有问题已修复?
-      → 是: 删除 projects/{project}/data/audits/{审计报告}.md
+      → 是: 删除 .agent/projects/{project}/data/audits/{审计报告}.md
       → 否: 保留直到所有项关闭
     (规则详见 project-structure.md §3.7)
 ```
@@ -181,11 +182,17 @@ Agent 修改文件前的检查:
 ## §3 错题本 (Error Book)
 
 > **每个错误都是一次学习。同样的错误不允许犯第二次。**
+## §3A 双账本原则（错误 vs 需求）
+
+- `ERROR-BOOK`：只记录错误、防复犯、交叉检查结果。
+- `PROJECT-MEMORY`：只记录可复用需求（UIUX 风格、数据口径、长期规则）。
+- 两类内容禁止混写；冲突时优先回到用户确认。
+
 
 ### 3.1 错题本位置
 
 ```
-projects/{project}/data/errors/ERROR-BOOK.md
+.agent/projects/{project}/data/errors/ERROR-BOOK.md
 ```
 
 ### 3.2 错题本格式
@@ -319,6 +326,57 @@ Step 5: 记录
 ```
 
 ---
+
+### 3.6 项目复用记忆 (Project Memory)
+
+> 与 ERROR-BOOK 严格分离：
+> - ERROR-BOOK = 防复犯（错误经验）
+> - PROJECT-MEMORY = 可复用需求（正向约束）
+
+**存储位置**
+```
+.agent/projects/{project}/data/progress/PROJECT-MEMORY.md
+```
+
+**记录范围（仅正向复用）**
+- UI/UX 风格偏好与交互约束
+- 数据口径、字段语义、命名规范
+- 业务规则与长期约束
+- 集成协议约定（字段/幂等/重试）
+
+**禁止写入**
+- Bug/返工/失败教训（必须进入 ERROR-BOOK）
+- 一次性临时进展（写 TRACKER）
+
+**执行规则（强制）**
+1. 新任务开始先读 PROJECT-MEMORY
+2. 与已沉淀规则冲突时先确认
+3. 任务结束将可复用需求增量写回
+
+---
+
+### 3.7 去重与加权（ERROR-BOOK + PROJECT-MEMORY 通用）
+
+**目标：只保留唯一条目，重复出现只加权，不重复录入。**
+
+执行规则：
+1. 新条目入库前先做“关键词 + 指纹”匹配（模块/场景/后果）。
+2. 若命中已有条目：
+   - `count += 1`
+   - `weight += 1`（用户明确强调可 `+2`）
+   - 更新 `last_seen` 与最近证据
+   - **禁止新增重复条目**
+3. 若未命中：创建新条目并初始化 `count=1, weight=1`。
+4. 排序规则：按 `weight` 降序，作为优先检索与预警顺序。
+
+最小字段（建议）：
+- `id`（ERR-xxx / MEM-xxx）
+- `keywords`
+- `fingerprint`（去重键）
+- `count`（出现次数）
+- `weight`（优先权重）
+- `last_seen`（最近出现时间）
+
 
 ## §4 大任务规划 (强制)
 

@@ -1,6 +1,6 @@
 ---
 name: data
-description: 数据架构师 — PostgreSQL + Redis + Kafka + OpenSearch + ClickHouse。负责数据建模/存储/查询/ETL/一致性保障。
+description: 数据架构师 SOP（PostgreSQL/Redis/Kafka/OpenSearch/ClickHouse）。Use when 需要数据建模、迁移、查询优化、ETL 或一致性治理。
 ---
 
 # 数据层规范 — PostgreSQL + Redis + Kafka + OpenSearch + ClickHouse

@@ -78,7 +78,31 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config = CorsConfiguration()
-        config.allowedOrigins = allowedOrigins.split(",").map { it.trim() }
+
+        // Explicit origins from config (production use)
+        val explicitOrigins = allowedOrigins.split(",").map { it.trim() }
+
+        // In dev: also allow all private network IPs (RFC 1918) on any port
+        // This enables LAN access without hardcoding IPs
+        val lanPatterns = listOf(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "http://192.168.*:*",   // Home/office LAN
+            "http://10.*:*",        // Corporate LAN
+            "http://172.16.*:*", "http://172.17.*:*", "http://172.18.*:*",
+            "http://172.19.*:*", "http://172.20.*:*", "http://172.21.*:*",
+            "http://172.22.*:*", "http://172.23.*:*", "http://172.24.*:*",
+            "http://172.25.*:*", "http://172.26.*:*", "http://172.27.*:*",
+            "http://172.28.*:*", "http://172.29.*:*", "http://172.30.*:*",
+            "http://172.31.*:*",    // Docker bridge
+        )
+
+        // Use patterns (supports wildcards) instead of exact origins
+        config.allowedOriginPatterns = (explicitOrigins.map { origin ->
+            // Convert exact origins to patterns (e.g., http://localhost:3000 → http://localhost:3000)
+            origin
+        } + lanPatterns).distinct()
+
         config.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         config.allowedHeaders = listOf(
             "Authorization", "Content-Type", "X-Trace-Id",

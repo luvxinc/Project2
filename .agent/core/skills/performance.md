@@ -1,6 +1,6 @@
 ---
 name: performance
-description: 性能工程 — N+1 检测, 缓存策略, 慢查询治理, 前端性能, 批量操作优化。
+description: 性能工程 SOP。Use when 需要定位和优化 N+1、慢查询、缓存策略、前端性能或批处理效率。
 ---
 
 # 性能工程 (Performance Engineering)

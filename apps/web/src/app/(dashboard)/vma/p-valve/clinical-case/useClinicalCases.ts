@@ -5,7 +5,7 @@ import { animate } from 'animejs';
 import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 import type {
   ClinicalCase, CaseTransaction, Site, PickedProduct,
-  SpecOption, DSOption, LineItem, CompletionItem,
+  SpecOption, DSOption, LineItem, CompletionItem, CompletionSummary,
 } from './types';
 
 export function useClinicalCases() {
@@ -19,6 +19,8 @@ export function useClinicalCases() {
   // ====== Flip / Detail State ======
   const [selectedCase, setSelectedCase] = useState<ClinicalCase | null>(null);
   const [caseDetail, setCaseDetail] = useState<CaseTransaction[]>([]);
+  const [relatedCases, setRelatedCases] = useState<Array<{ caseId: string; caseNo: string | null; siteId: string; siteName?: string; patientId: string; caseDate: string; status: string }>>([]);
+  const [completionSummary, setCompletionSummary] = useState<CompletionSummary | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const frontRef = useRef<HTMLDivElement>(null);
@@ -43,20 +45,21 @@ export function useClinicalCases() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [caseNoDup, setCaseNoDup] = useState(false);
+  const [additionalCases, setAdditionalCases] = useState<Array<{caseNo: string; siteId: string; patientId: string; caseDate: string}>>([]);
 
   // ====== Detail Panel: Edit Case Info ======
   const [editInfoMode, setEditInfoMode] = useState(false);
-  const [infoForm, setInfoForm] = useState({ caseNo: '', siteId: '', patientId: '', caseDate: '' });
+  const [infoForm, setInfoForm] = useState({ caseNo: '', siteId: '', patientId: '', caseDate: '', operator: '' });
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoError, setInfoError] = useState('');
 
   // P-Valve lines (for New Case modal)
   const [pvSpecOptions, setPvSpecOptions] = useState<SpecOption[]>([]);
-  const [pvLines, setPvLines] = useState<LineItem[]>([{ specNo: '', qty: 1, picked: [], loading: false }]);
+  const [pvLines, setPvLines] = useState<LineItem[]>([{ specNo: '', qty: 1, picked: [], available: [], loading: false }]);
 
   // DS lines (for New Case modal)
   const [dsOptions, setDsOptions] = useState<DSOption[]>([]);
-  const [dsLines, setDsLines] = useState<LineItem[]>([{ specNo: '', qty: 1, picked: [], loading: false }]);
+  const [dsLines, setDsLines] = useState<LineItem[]>([{ specNo: '', qty: 1, picked: [], available: [], loading: false }]);
 
   // ====== Detail Panel: Add-Item State ======
   const [addPvSpecOptions, setAddPvSpecOptions] = useState<SpecOption[]>([]);
@@ -155,25 +158,89 @@ export function useClinicalCases() {
     setLines(prev => prev.map((l, i) => i === lineIndex ? { ...l, loading: true } : l));
 
     try {
+      // Use the correct case date: existing case for detail mode, form value for new case modal
+      const effectiveCaseDate = mode === 'detail'
+        ? (selectedCase?.caseDate?.split('T')[0] || caseDate)
+        : caseDate;
+
       const res = await fetch(`${API}/vma/case-available-products`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           specNo,
-          caseDate: caseDate,
+          caseDate: effectiveCaseDate,
           productType: type === 'pv' ? 'PVALVE' : 'DELIVERY_SYSTEM',
         }),
       });
       if (res.ok) {
-        const available: PickedProduct[] = await res.json();
-        const picked = available.slice(0, qty);
-        setLines(prev => prev.map((l, i) => i === lineIndex ? { ...l, picked, loading: false } : l));
+        const allAvailable: PickedProduct[] = await res.json();
+
+        // Exclude products already picked in OTHER rows of the same type
+        const getLines = mode === 'modal'
+          ? (type === 'pv' ? pvLines : dsLines)
+          : (type === 'pv' ? addPvLines : addDsLines);
+
+        let filteredAvailable: PickedProduct[];
+
+        if (type === 'pv') {
+          // P-Valve: 1 serial = 1 product, exclude entirely once picked
+          const usedSerials = new Set<string>();
+          getLines.forEach((l, i) => {
+            if (i !== lineIndex) l.picked.forEach(p => usedSerials.add(p.serialNo));
+          });
+          filteredAvailable = allAvailable.filter(a => !usedSerials.has(a.serialNo));
+        } else {
+          // DS: 1 serial = lot (multiple units). Count consumed qty per serial across other rows
+          const usedQtyMap = new Map<string, number>();
+          getLines.forEach((l, i) => {
+            if (i !== lineIndex) l.picked.forEach(p => {
+              usedQtyMap.set(p.serialNo, (usedQtyMap.get(p.serialNo) ?? 0) + (p.qty || 1));
+            });
+          });
+          // For each available entry, subtract already-consumed units
+          filteredAvailable = [];
+          const consumedSoFar = new Map<string, number>();
+          for (const a of allAvailable) {
+            const totalUsed = usedQtyMap.get(a.serialNo) ?? 0;
+            const consumed = consumedSoFar.get(a.serialNo) ?? 0;
+            // How many of this serial's entries to skip = totalUsed
+            if (consumed < totalUsed) {
+              consumedSoFar.set(a.serialNo, consumed + 1);
+              // skip this entry — it's consumed by another row
+            } else {
+              filteredAvailable.push(a);
+            }
+          }
+        }
+
+        const picked = filteredAvailable.slice(0, qty);
+        setLines(prev => prev.map((l, i) => i === lineIndex ? { ...l, picked, available: filteredAvailable, loading: false } : l));
       } else {
         setLines(prev => prev.map((l, i) => i === lineIndex ? { ...l, loading: false } : l));
       }
     } catch {
       setLines(prev => prev.map((l, i) => i === lineIndex ? { ...l, loading: false } : l));
     }
+  };
+
+  // ====== Swap a picked product with another from available ======
+  const swapPicked = (
+    type: 'pv' | 'ds',
+    lineIndex: number,
+    pickedIndex: number,
+    newProduct: PickedProduct,
+    mode: 'modal' | 'detail',
+  ) => {
+    const setLines = mode === 'modal'
+      ? (type === 'pv' ? setPvLines : setDsLines)
+      : (type === 'pv' ? setAddPvLines : setAddDsLines);
+
+    setLines(prev => prev.map((l, i) => {
+      if (i !== lineIndex) return l;
+      const newPicked = [...l.picked];
+      newPicked[pickedIndex] = newProduct;
+      return { ...l, picked: newPicked };
+    }));
   };
 
   // ====== Flip Animation: Open Detail ======
@@ -210,6 +277,8 @@ export function useClinicalCases() {
       if (res.ok) {
         const data = await res.json();
         setCaseDetail(data.transactions || []);
+        setRelatedCases(data.relatedCases || []);
+        setCompletionSummary(data.completionSummary || null);
       }
     } catch (e) { console.error(e); }
     setLoadingDetail(false);
@@ -232,6 +301,7 @@ export function useClinicalCases() {
       setIsFlipped(false);
       setSelectedCase(null);
       setCaseDetail([]);
+      setRelatedCases([]);
       setEditTxn(null);
       setEditInfoMode(false);
       fetchCases();
@@ -254,6 +324,8 @@ export function useClinicalCases() {
       if (res.ok) {
         const data = await res.json();
         setCaseDetail(data.transactions || []);
+        setRelatedCases(data.relatedCases || []);
+        setCompletionSummary(data.completionSummary || null);
       }
     } catch (e) { console.error(e); }
   };
@@ -354,6 +426,28 @@ export function useClinicalCases() {
       }
     } catch (e) { console.error(e); }
     setDeleteLoading(false);
+  };
+
+  // ====== Delete Entire Case ======
+  const handleDeleteCase = async (caseId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(caseId)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        fetchCases();
+        return true;
+      } else {
+        const err = await res.json().catch(() => null);
+        setToastError(err?.detail || 'Failed to delete case');
+        return false;
+      }
+    } catch (e) {
+      console.error(e);
+      setToastError('Network error');
+      return false;
+    }
   };
 
   // ====== Add Items to Case ======
@@ -586,7 +680,12 @@ export function useClinicalCases() {
       const res = await fetch(`${API}/vma/clinical-cases`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ caseNo: caseNo || undefined, siteId, patientId, caseDate, items }),
+        body: JSON.stringify({
+          caseNo: caseNo || undefined, siteId, patientId, caseDate, items,
+          additionalCases: additionalCases.filter(c => c.siteId && c.patientId.length === 3 && c.caseDate).map(c => ({
+            caseNo: c.caseNo || undefined, siteId: c.siteId, patientId: c.patientId, caseDate: c.caseDate,
+          })),
+        }),
       });
       if (res.ok) {
         const blob = await res.blob();
@@ -619,10 +718,53 @@ export function useClinicalCases() {
     setSiteId('');
     setPatientId('');
     setCaseDate(new Date().toISOString().split('T')[0]);
-    setPvLines([{ specNo: '', qty: 1, picked: [], loading: false }]);
-    setDsLines([{ specNo: '', qty: 1, picked: [], loading: false }]);
+    setPvLines([{ specNo: '', qty: 1, picked: [], available: [], loading: false }]);
+    setDsLines([{ specNo: '', qty: 1, picked: [], available: [], loading: false }]);
     setError('');
     setCaseNoDup(false);
+    setAdditionalCases([]);
+  };
+
+  // ====== Related Cases (Trip) ======
+  const handleAddRelatedCase = async (sourceCaseId: string, dto: { caseNo?: string; siteId: string; patientId: string; caseDate: string }) => {
+    try {
+      const res = await fetch(`${API}/vma/clinical-cases/${sourceCaseId}/related-case`, {
+        method: 'POST', headers: getAuthHeaders(),
+        body: JSON.stringify(dto),
+      });
+      if (res.ok) {
+        fetchCases();
+        if (selectedCase) handleCaseClick(selectedCase);
+        return true;
+      } else {
+        const data = await res.json().catch(() => null);
+        setToastError(data?.message || 'Failed to add related case');
+        return false;
+      }
+    } catch (e: unknown) {
+      setToastError(e instanceof Error ? e.message : 'Network error');
+      return false;
+    }
+  };
+
+  const handleDeleteAllRelated = async (caseId: string) => {
+    try {
+      const res = await fetch(`${API}/vma/clinical-cases/${caseId}/related-cases`, {
+        method: 'DELETE', headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        handleBack();
+        fetchCases();
+        return true;
+      } else {
+        const data = await res.json().catch(() => null);
+        setToastError(data?.message || 'Failed to delete related cases');
+        return false;
+      }
+    } catch (e: unknown) {
+      setToastError(e instanceof Error ? e.message : 'Network error');
+      return false;
+    }
   };
 
   const isCompleted = selectedCase?.status === 'COMPLETED';
@@ -633,7 +775,7 @@ export function useClinicalCases() {
     // List
     cases, loading,
     // Flip / Detail
-    selectedCase, caseDetail, loadingDetail, isFlipped,
+    selectedCase, caseDetail, relatedCases, completionSummary, loadingDetail, isFlipped,
     frontRef, backRef, completionRef,
     handleCaseClick, handleBack,
     // Completion Review
@@ -650,6 +792,8 @@ export function useClinicalCases() {
     pvSpecOptions, pvLines, setPvLines,
     dsOptions, dsLines, setDsLines,
     handleSubmit, resetModal,
+    additionalCases, setAdditionalCases,
+    handleAddRelatedCase, handleDeleteAllRelated,
     // Detail Panel
     editInfoMode, setEditInfoMode,
     infoForm, setInfoForm, infoSaving, infoError,
@@ -667,8 +811,9 @@ export function useClinicalCases() {
     openEdit, handleEditSpecChange, handleEditSerialChange, saveEdit,
     // Delete
     deletingId, setDeletingId, deleteLoading, confirmDelete,
-    // Auto pick
-    autoPick,
+    handleDeleteCase,
+    // Auto pick & swap
+    autoPick, swapPicked,
     // API helper (for inline fetch in Add button)
     API, getAuthHeaders,
   };
