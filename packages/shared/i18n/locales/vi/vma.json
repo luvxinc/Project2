@@ -91,6 +91,7 @@
         "wip": "WIP",
         "nearExp": "Sắp hết hạn",
         "expired": "Đã hết hạn",
+        "used": "Đã sử dụng",
         "returned": "Đã trả lại"
       },
       "empty": "Không có dữ liệu tồn kho",
@@ -393,7 +394,8 @@
         "caseId": "Case ID",
         "site": "Cơ sở",
         "date": "Ngày",
-        "status": "Trạng thái"
+        "status": "Trạng thái",
+        "trip": "Trip"
       },
       "status": {
         "completed": "Hoàn thành",
@@ -432,7 +434,28 @@
         "addRow": "+ Dòng",
         "dsHint": "Thêm spec P-Valve để xem DS tương thích",
         "adding": "Đang thêm...",
-        "addToCase": "Thêm vào ca"
+        "addToCase": "Thêm vào ca",
+        "completionSummary": "Tóm tắt hoàn thành",
+        "summaryUsed": "Đã dùng",
+        "summaryReturnedOk": "Trả lại tốt",
+        "summaryReturnedDamaged": "Trả lại hỏng",
+        "operator": "Người vận hành",
+        "operatorPlaceholder": "Tên người vận hành",
+        "deleteCase": "Xóa ca bệnh",
+        "deleteCaseMessage": "Xóa ca bệnh {caseId}? Tất cả sản phẩm liên quan sẽ được trả về kho.",
+        "delete": "Xóa",
+        "edit": "Sửa",
+        "relatedCases": "Ca bệnh liên quan (Trip)",
+        "deleteAllRelated": "Xóa tất cả ca bệnh liên quan?",
+        "deleteAllRelatedMessage": "Thao tác này sẽ xóa tất cả ca bệnh trong nhóm trip và trả sản phẩm về kho.",
+        "deleteAll": "Xóa tất cả",
+        "current": "Hiện tại",
+        "pvalveLabel": "P-Valve",
+        "dsLabel": "DS",
+        "pvShort": "PV",
+        "dsShort": "DS",
+        "deliverySystem": "Delivery System",
+        "addRelatedCase": "+ Thêm ca bệnh liên quan"
       },
       "newCaseModal": {
         "title": "Ca lâm sàng mới",
@@ -449,7 +472,16 @@
         "addRow": "+ Thêm dòng",
         "selectPvFirst": "Chọn spec P-Valve trước",
         "creating": "Đang tạo...",
-        "createAndDownload": "Tạo ca & Tải phiếu đóng gói"
+        "createAndDownload": "Tạo ca & Tải phiếu đóng gói",
+        "caseIdPreview": "Case ID: UVP-{siteId}-{patientId}",
+        "additionalCaseTitle": "Ca bệnh {number}",
+        "remove": "Xóa",
+        "site": "Địa điểm",
+        "select": "Chọn",
+        "optional": "Tùy chọn",
+        "threeDigits": "3 chữ số",
+        "date": "Ngày",
+        "addAnotherCase": "+ Thêm ca bệnh khác (Sản phẩm chia sẻ)"
       },
       "editModal": {
         "title": "Sửa mục ca",
@@ -467,7 +499,9 @@
         "pick": "Chọn",
         "serialNo": "Serial No.",
         "expDate": "Hạn SD",
-        "qty": "SL"
+        "qty": "SL",
+        "swap": "Đổi",
+        "swapTitle": "Chọn sản phẩm thay thế"
       },
       "completion": {
         "backToCase": "Quay lại ca",
