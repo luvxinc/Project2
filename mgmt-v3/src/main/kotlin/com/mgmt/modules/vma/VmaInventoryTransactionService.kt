@@ -362,7 +362,7 @@ class VmaInventoryTransactionService(
                         }
                     }
                     VmaInventoryAction.OUT_CASE -> outCase += txn.qty
-                    VmaInventoryAction.OUT_TRIP -> outCase += txn.qty  // Trip checkout = same as case checkout
+
                     VmaInventoryAction.REC_CASE -> recCase += txn.qty
                     VmaInventoryAction.USED_CASE -> usedCase += txn.qty
                     VmaInventoryAction.OUT_CN -> outCn += txn.qty

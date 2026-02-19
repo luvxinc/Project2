@@ -91,7 +91,7 @@ export default function NewCaseModal({
         <div className="px-6 py-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
-              Case 1 — Primary
+              {t('p_valve.clinicalCase.newCaseModal.primaryCaseTitle')}
             </h3>
           </div>
           <div className="grid grid-cols-4 gap-4">
@@ -142,12 +142,12 @@ export default function NewCaseModal({
                   {t('p_valve.clinicalCase.newCaseModal.remove')}
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.newCaseModal.caseNo')}</label>
                   <input type="text" value={row.caseNo}
                     onChange={e => updateAdditional(idx, 'caseNo', e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase())}
-                    placeholder={t('p_valve.clinicalCase.newCaseModal.optional')} className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle} />
+                    placeholder={t('p_valve.clinicalCase.newCaseModal.caseNoPlaceholder')} className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.newCaseModal.site')}</label>
@@ -164,13 +164,8 @@ export default function NewCaseModal({
                     placeholder={t('p_valve.clinicalCase.newCaseModal.threeDigits')} maxLength={3}
                     className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle} />
                   {row.siteId && row.patientId.length === 3 && (
-                    <p className="text-xs mt-1 font-mono" style={{ color: colors.controlAccent }}>UVP-{row.siteId}-{row.patientId}</p>
+                    <p className="text-xs mt-1 font-mono" style={{ color: colors.controlAccent }}>{t('p_valve.clinicalCase.newCaseModal.caseIdPreview', { siteId: row.siteId, patientId: row.patientId })}</p>
                   )}
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.newCaseModal.date')}</label>
-                  <input type="date" value={row.caseDate} onChange={e => updateAdditional(idx, 'caseDate', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-sm border outline-none" style={inputStyle} />
                 </div>
               </div>
             </div>

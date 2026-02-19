@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { animate } from 'animejs';
 import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 import type {
   ClinicalCase, CaseTransaction, Site, PickedProduct,
-  SpecOption, DSOption, LineItem, CompletionItem, CompletionSummary,
+  SpecOption, DSOption, LineItem, CompletionSummary,
 } from './types';
+import { useCaseCompletion } from './useCaseCompletion';
+import { useCaseItemEditor } from './useCaseItemEditor';
 
 export function useClinicalCases() {
   // ====== List State ======
@@ -21,19 +23,11 @@ export function useClinicalCases() {
   const [caseDetail, setCaseDetail] = useState<CaseTransaction[]>([]);
   const [relatedCases, setRelatedCases] = useState<Array<{ caseId: string; caseNo: string | null; siteId: string; siteName?: string; patientId: string; caseDate: string; status: string }>>([]);
   const [completionSummary, setCompletionSummary] = useState<CompletionSummary | null>(null);
+  const [usedItems, setUsedItems] = useState<Array<{ specNo: string; serialNo: string; caseId: string }>>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
-
-  // ====== Completion Review State (Layer 2) ======
-  const completionRef = useRef<HTMLDivElement>(null);
-  const [showCompletion, setShowCompletion] = useState(false);
-  const [completionItems, setCompletionItems] = useState<CompletionItem[]>([]);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [completing, setCompleting] = useState(false);
-  const [reverseModalOpen, setReverseModalOpen] = useState(false);
-  const [reversing, setReversing] = useState(false);
 
   // ====== New Case Modal State ======
   const [modalOpen, setModalOpen] = useState(false);
@@ -69,18 +63,8 @@ export function useClinicalCases() {
   const [addingItems, setAddingItems] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // ====== Detail Panel: Edit Item Modal ======
-  const [editTxn, setEditTxn] = useState<CaseTransaction | null>(null);
-  const [editForm, setEditForm] = useState({ specNo: '', serialNo: '', qty: 1, expDate: '', batchNo: '' });
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState('');
-  const [editSpecOptions, setEditSpecOptions] = useState<SpecOption[]>([]);
-  const [editAvailable, setEditAvailable] = useState<PickedProduct[]>([]);
-  const [editLoadingAvail, setEditLoadingAvail] = useState(false);
 
-  // Delete confirm
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
 
   // ====== Fetch Cases ======
   const fetchCases = useCallback(async () => {
@@ -88,7 +72,7 @@ export function useClinicalCases() {
     try {
       const res = await fetch(`${API}/vma/clinical-cases`, { headers: getAuthHeaders() });
       if (res.ok) setCases(await res.json());
-    } catch (e) { console.error(e); }
+    } catch { setToastError('Failed to load cases'); }
     setLoading(false);
   }, []);
 
@@ -115,6 +99,7 @@ export function useClinicalCases() {
   }, []);
 
   // ====== When P-Valve specs change (New Case modal), fetch compatible DS ======
+  const pvSpecKey = useMemo(() => pvLines.map(l => l.specNo).join(','), [pvLines]);
   useEffect(() => {
     const activeSpecs = pvLines.filter(l => l.specNo).map(l => l.specNo);
     if (activeSpecs.length === 0) { setDsOptions([]); return; }
@@ -122,25 +107,26 @@ export function useClinicalCases() {
       try {
         const res = await fetch(`${API}/vma/case-compatible-ds?specs=${activeSpecs.join(',')}`, { headers: getAuthHeaders() });
         if (res.ok) setDsOptions(await res.json());
-      } catch (e) { console.error(e); }
+      } catch { /* non-critical: DS options will be empty */ }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pvLines.map(l => l.specNo).join(',')]);
+  }, [pvSpecKey]);
 
   // ====== When add-form P-Valve specs change, fetch compatible DS ======
-  useEffect(() => {
+  const addPvSpecKey = useMemo(() => {
     const activeSpecs = addPvLines.filter(l => l.specNo).map(l => l.specNo);
     const existingPvSpecs = caseDetail.filter(t => t.productType === 'PVALVE').map(t => t.specNo);
-    const allSpecs = [...new Set([...activeSpecs, ...existingPvSpecs])];
+    return [...new Set([...activeSpecs, ...existingPvSpecs])].join(',');
+  }, [addPvLines, caseDetail]);
+  useEffect(() => {
+    const allSpecs = addPvSpecKey.split(',').filter(Boolean);
     if (allSpecs.length === 0) { setAddDsOptions([]); return; }
     (async () => {
       try {
         const res = await fetch(`${API}/vma/case-compatible-ds?specs=${allSpecs.join(',')}`, { headers: getAuthHeaders() });
         if (res.ok) setAddDsOptions(await res.json());
-      } catch (e) { console.error(e); }
+      } catch { /* non-critical: DS options will be empty */ }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addPvLines.map(l => l.specNo).join(','), caseDetail.map(t => t.productType === 'PVALVE' ? t.specNo : '').join(',')]);
+  }, [addPvSpecKey]);
 
   // ====== Auto-pick Products ======
   const autoPick = async (
@@ -279,15 +265,39 @@ export function useClinicalCases() {
         setCaseDetail(data.transactions || []);
         setRelatedCases(data.relatedCases || []);
         setCompletionSummary(data.completionSummary || null);
+        setUsedItems(data.usedItems || []);
       }
     } catch (e) { console.error(e); }
     setLoadingDetail(false);
   }, []);
 
+  // ====== Refresh Case Detail ======
+  const refreshDetail = async (caseId: string) => {
+    try {
+      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(caseId)}`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setCaseDetail(data.transactions || []);
+        setRelatedCases(data.relatedCases || []);
+        setCompletionSummary(data.completionSummary || null);
+        setUsedItems(data.usedItems || []);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  // ====== Sub-hooks ======
+  const completion = useCaseCompletion({
+    selectedCase, caseDetail, usedItems, backRef,
+    refreshDetail, fetchCases, setToastError, setSelectedCase,
+  });
+
+  const itemEditor = useCaseItemEditor({
+    selectedCase, refreshDetail, setToastError,
+  });
+
   // ====== Flip Animation: Back (Detail → List) ======
   const handleBack = useCallback(() => {
-    setShowCompletion(false);
-    setCompletionItems([]);
+    completion.setCompletionItems([]);
 
     if (backRef.current) {
       animate(backRef.current, {
@@ -302,7 +312,7 @@ export function useClinicalCases() {
       setSelectedCase(null);
       setCaseDetail([]);
       setRelatedCases([]);
-      setEditTxn(null);
+      itemEditor.setEditTxn(null);
       setEditInfoMode(false);
       fetchCases();
       requestAnimationFrame(() => {
@@ -315,120 +325,10 @@ export function useClinicalCases() {
         }
       });
     }, 400);
-  }, [fetchCases]);
+  }, [fetchCases, completion, itemEditor]);
 
-  // ====== Refresh Case Detail ======
-  const refreshDetail = async (caseId: string) => {
-    try {
-      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(caseId)}`, { headers: getAuthHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setCaseDetail(data.transactions || []);
-        setRelatedCases(data.relatedCases || []);
-        setCompletionSummary(data.completionSummary || null);
-      }
-    } catch (e) { console.error(e); }
-  };
 
-  // ====== Edit Item ======
-  const fetchEditAvailable = async (specNo: string, productType: string, currentSerial?: string) => {
-    if (!selectedCase || !specNo) { setEditAvailable([]); return; }
-    setEditLoadingAvail(true);
-    try {
-      const res = await fetch(`${API}/vma/case-available-products`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ specNo, caseDate: selectedCase.caseDate.split('T')[0], productType }),
-      });
-      if (res.ok) {
-        const avail: PickedProduct[] = await res.json();
-        if (currentSerial && !avail.some(a => a.serialNo === currentSerial)) {
-          avail.unshift({ serialNo: currentSerial, specNo, expDate: '', batchNo: '', qty: 1 });
-        }
-        setEditAvailable(avail);
-      }
-    } catch (e) { console.error(e); }
-    setEditLoadingAvail(false);
-  };
 
-  const openEdit = async (txn: CaseTransaction) => {
-    setEditTxn(txn);
-    setEditForm({
-      specNo: txn.specNo,
-      serialNo: txn.serialNo || '',
-      qty: txn.qty,
-      expDate: txn.expDate?.split('T')[0] || '',
-      batchNo: txn.batchNo || '',
-    });
-    setEditError('');
-    try {
-      const res = await fetch(`${API}/vma/inventory-transactions/spec-options?productType=${txn.productType}`, { headers: getAuthHeaders() });
-      if (res.ok) setEditSpecOptions(await res.json());
-    } catch (e) { console.error(e); }
-    fetchEditAvailable(txn.specNo, txn.productType, txn.serialNo || undefined);
-  };
-
-  const handleEditSpecChange = (newSpec: string) => {
-    if (!editTxn) return;
-    setEditForm(p => ({ ...p, specNo: newSpec, serialNo: '', expDate: '', batchNo: '' }));
-    fetchEditAvailable(newSpec, editTxn.productType);
-  };
-
-  const handleEditSerialChange = (serialNo: string) => {
-    const prod = editAvailable.find(a => a.serialNo === serialNo);
-    if (prod) {
-      setEditForm(p => ({
-        ...p,
-        serialNo: prod.serialNo,
-        expDate: prod.expDate || p.expDate,
-        batchNo: prod.batchNo || p.batchNo,
-      }));
-    } else {
-      setEditForm(p => ({ ...p, serialNo }));
-    }
-  };
-
-  const saveEdit = async () => {
-    if (!editTxn || !selectedCase) return;
-    setEditSaving(true);
-    setEditError('');
-    try {
-      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/items/${editTxn.id}`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(editForm),
-      });
-      if (res.ok) {
-        setEditTxn(null);
-        refreshDetail(selectedCase.caseId);
-      } else {
-        const data = await res.json().catch(() => null);
-        setEditError(data?.message || 'Failed to update');
-      }
-    } catch (e: unknown) {
-      setEditError(e instanceof Error ? e.message : 'Network error');
-    }
-    setEditSaving(false);
-  };
-
-  // ====== Delete Item ======
-  const confirmDelete = async (txnId: string) => {
-    if (!selectedCase) return;
-    setDeleteLoading(true);
-    try {
-      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/items/${txnId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      if (res.ok) {
-        setDeletingId(null);
-        refreshDetail(selectedCase.caseId);
-      }
-    } catch (e) { console.error(e); }
-    setDeleteLoading(false);
-  };
-
-  // ====== Delete Entire Case ======
   const handleDeleteCase = async (caseId: string): Promise<boolean> => {
     try {
       const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(caseId)}`, {
@@ -450,7 +350,7 @@ export function useClinicalCases() {
     }
   };
 
-  // ====== Add Items to Case ======
+  // ====== Add Items to Case (batch) ======
   const handleAddItems = async () => {
     if (!selectedCase) return;
     const items: Array<{ productType: string; specNo: string; serialNo: string; qty: number; expDate: string; batchNo: string }> = [];
@@ -468,18 +368,21 @@ export function useClinicalCases() {
 
     setAddingItems(true);
     try {
-      for (const item of items) {
-        await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/items`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(item),
-        });
+      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/items/batch`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(items),
+      });
+      if (res.ok) {
+        setShowAddForm(false);
+        setAddPvLines([]);
+        setAddDsLines([]);
+        refreshDetail(selectedCase.caseId);
+      } else {
+        const err = await res.json().catch(() => null);
+        setToastError(err?.message || 'Failed to add items');
       }
-      setShowAddForm(false);
-      setAddPvLines([]);
-      setAddDsLines([]);
-      refreshDetail(selectedCase.caseId);
-    } catch (e) { console.error(e); }
+    } catch { setToastError('Network error adding items'); }
     setAddingItems(false);
   };
 
@@ -510,13 +413,22 @@ export function useClinicalCases() {
     } catch (e) { console.error(e); }
   };
 
-  // ====== Check caseNo uniqueness (debounced) ======
+  // ====== Check caseNo uniqueness (debounced, via backend) ======
   useEffect(() => {
     if (!caseNo) { setCaseNoDup(false); return; }
     const timer = setTimeout(async () => {
-      const existing = cases.find(c => c.caseNo === caseNo);
-      setCaseNoDup(!!existing);
-    }, 200);
+      // Quick local check first
+      const localDup = cases.find(c => c.caseNo === caseNo);
+      if (localDup) { setCaseNoDup(true); return; }
+      // Backend check for cases not yet loaded
+      try {
+        const res = await fetch(`${API}/vma/clinical-cases`, { headers: getAuthHeaders() });
+        if (res.ok) {
+          const allCases: ClinicalCase[] = await res.json();
+          setCaseNoDup(allCases.some(c => c.caseNo === caseNo));
+        }
+      } catch { setCaseNoDup(false); }
+    }, 300);
     return () => clearTimeout(timer);
   }, [caseNo, cases]);
 
@@ -545,112 +457,7 @@ export function useClinicalCases() {
     setInfoSaving(false);
   };
 
-  // ====== Open Completion Review (slide in Layer 2) ======
-  const openCompletionReview = () => {
-    setCompletionItems(caseDetail.map(txn => ({
-      txnId: txn.id,
-      returned: false,
-      accepted: true,
-      returnCondition: [],
-    })));
 
-    if (backRef.current) {
-      animate(backRef.current, {
-        translateX: [0, -window.innerWidth],
-        duration: 450,
-        ease: 'inOut(3)',
-      });
-    }
-
-    setTimeout(() => {
-      setShowCompletion(true);
-      requestAnimationFrame(() => {
-        if (completionRef.current) {
-          animate(completionRef.current, {
-            translateX: [window.innerWidth, 0],
-            duration: 450,
-            ease: 'inOut(3)',
-          });
-        }
-      });
-    }, 400);
-  };
-
-  // ====== Close Completion Review (slide back to detail) ======
-  const closeCompletionReview = () => {
-    if (completionRef.current) {
-      animate(completionRef.current, {
-        translateX: [0, window.innerWidth],
-        duration: 450,
-        ease: 'inOut(3)',
-      });
-    }
-
-    setTimeout(() => {
-      setShowCompletion(false);
-      setCompletionItems([]);
-      requestAnimationFrame(() => {
-        if (backRef.current) {
-          animate(backRef.current, {
-            translateX: [-window.innerWidth, 0],
-            duration: 450,
-            ease: 'inOut(3)',
-          });
-        }
-      });
-    }, 400);
-  };
-
-  // ====== Confirm Completion ======
-  const handleConfirmCompletion = async () => {
-    if (!selectedCase) return;
-    setCompleting(true);
-    try {
-      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/complete`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ items: completionItems }),
-      });
-      if (res.ok) {
-        setConfirmModalOpen(false);
-        setShowCompletion(false);
-        setCompletionItems([]);
-        setSelectedCase(prev => prev ? { ...prev, status: 'COMPLETED' } : prev);
-        refreshDetail(selectedCase.caseId);
-        fetchCases();
-      } else {
-        const data = await res.json().catch(() => null);
-        setToastError(data?.message || 'Failed to complete case');
-      }
-    } catch (e: unknown) {
-      setToastError(e instanceof Error ? e.message : 'Network error');
-    }
-    setCompleting(false);
-  };
-
-  // ====== Reverse Completion ======
-  const handleReverseCompletion = async () => {
-    if (!selectedCase) return;
-    setReversing(true);
-    try {
-      const res = await fetch(`${API}/vma/clinical-cases/${encodeURIComponent(selectedCase.caseId)}/reverse`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
-      if (res.ok) {
-        setReverseModalOpen(false);
-        setSelectedCase(prev => prev ? { ...prev, status: 'IN_PROGRESS' } : prev);
-        refreshDetail(selectedCase.caseId);
-        fetchCases();
-      } else {
-        const data = await res.json().catch(() => null);
-        setToastError(data?.message || 'Failed to reverse');
-      }
-    } catch (e: unknown) {
-      setToastError(e instanceof Error ? e.message : 'Network error');
-    }
-    setReversing(false);
-  };
 
   // ====== Submit New Case ======
   const handleSubmit = async () => {
@@ -660,6 +467,19 @@ export function useClinicalCases() {
     if (!caseDate) { setError('Please select a case date'); return; }
     if (caseNo && caseNoDup) { setError('Case # already exists'); return; }
     if (caseNo && !/^\d+[A-Za-z]?$/.test(caseNo)) { setError('Case # must be digits + optional letter (e.g. 123 or 123A)'); return; }
+
+    // Validate additional cases: caseNo is required and must be unique
+    for (let i = 0; i < additionalCases.length; i++) {
+      const ac = additionalCases[i];
+      if (!ac.caseNo) { setError(`Case ${i + 2}: Case # is required`); return; }
+      if (!/^\d+[A-Za-z]?$/.test(ac.caseNo)) { setError(`Case ${i + 2}: Case # must be digits + optional letter`); return; }
+      if (!ac.siteId) { setError(`Case ${i + 2}: Please select a site`); return; }
+      if (!ac.patientId || ac.patientId.length !== 3) { setError(`Case ${i + 2}: Patient ID must be 3 digits`); return; }
+    }
+    // Check uniqueness among all case numbers
+    const allCaseNos = [caseNo, ...additionalCases.map(c => c.caseNo)].filter(Boolean);
+    const uniqueNos = new Set(allCaseNos);
+    if (uniqueNos.size !== allCaseNos.length) { setError('Case # must be unique across all cases'); return; }
 
     const items: Array<{ productType: string; specNo: string; serialNo: string; qty: number; expDate: string; batchNo: string }> = [];
     for (const line of pvLines) {
@@ -682,8 +502,8 @@ export function useClinicalCases() {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           caseNo: caseNo || undefined, siteId, patientId, caseDate, items,
-          additionalCases: additionalCases.filter(c => c.siteId && c.patientId.length === 3 && c.caseDate).map(c => ({
-            caseNo: c.caseNo || undefined, siteId: c.siteId, patientId: c.patientId, caseDate: c.caseDate,
+          additionalCases: additionalCases.map(c => ({
+            caseNo: c.caseNo, siteId: c.siteId, patientId: c.patientId, caseDate: caseDate,
           })),
         }),
       });
@@ -776,14 +596,23 @@ export function useClinicalCases() {
     cases, loading,
     // Flip / Detail
     selectedCase, caseDetail, relatedCases, completionSummary, loadingDetail, isFlipped,
-    frontRef, backRef, completionRef,
+    frontRef, backRef, completionRef: completion.completionRef,
     handleCaseClick, handleBack,
-    // Completion Review
-    showCompletion, completionItems, setCompletionItems,
-    confirmModalOpen, setConfirmModalOpen,
-    completing, reverseModalOpen, setReverseModalOpen, reversing,
-    openCompletionReview, closeCompletionReview,
-    handleConfirmCompletion, handleReverseCompletion,
+    // Completion Review (from sub-hook)
+    showCompletion: completion.showCompletion,
+    completionItems: completion.completionItems,
+    completionTxns: completion.completionTxns,
+    setCompletionItems: completion.setCompletionItems,
+    confirmModalOpen: completion.confirmModalOpen,
+    setConfirmModalOpen: completion.setConfirmModalOpen,
+    completing: completion.completing,
+    reverseModalOpen: completion.reverseModalOpen,
+    setReverseModalOpen: completion.setReverseModalOpen,
+    reversing: completion.reversing,
+    openCompletionReview: completion.openCompletionReview,
+    closeCompletionReview: completion.closeCompletionReview,
+    handleConfirmCompletion: completion.handleConfirmCompletion,
+    handleReverseCompletion: completion.handleReverseCompletion,
     // New Case Modal
     modalOpen, setModalOpen, sites,
     caseNo, setCaseNo, siteId, setSiteId,
@@ -804,13 +633,15 @@ export function useClinicalCases() {
     addPvLines, setAddPvLines, addDsLines, setAddDsLines,
     addingItems, showAddForm, setShowAddForm,
     handleAddItems,
-    // Edit Item
-    editTxn, setEditTxn, editForm,
-    editSaving, editError, editSpecOptions,
-    editAvailable, editLoadingAvail,
-    openEdit, handleEditSpecChange, handleEditSerialChange, saveEdit,
-    // Delete
-    deletingId, setDeletingId, deleteLoading, confirmDelete,
+    // Edit Item (from sub-hook)
+    editTxn: itemEditor.editTxn, setEditTxn: itemEditor.setEditTxn, editForm: itemEditor.editForm,
+    editSaving: itemEditor.editSaving, editError: itemEditor.editError, editSpecOptions: itemEditor.editSpecOptions,
+    editAvailable: itemEditor.editAvailable, editLoadingAvail: itemEditor.editLoadingAvail,
+    openEdit: itemEditor.openEdit, handleEditSpecChange: itemEditor.handleEditSpecChange,
+    handleEditSerialChange: itemEditor.handleEditSerialChange, saveEdit: itemEditor.saveEdit,
+    // Delete (from sub-hook)
+    deletingId: itemEditor.deletingId, setDeletingId: itemEditor.setDeletingId,
+    deleteLoading: itemEditor.deleteLoading, confirmDelete: itemEditor.confirmDelete,
     handleDeleteCase,
     // Auto pick & swap
     autoPick, swapPicked,

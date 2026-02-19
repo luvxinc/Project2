@@ -23,7 +23,7 @@ export default function ClinicalCasePage() {
     selectedCase, caseDetail, relatedCases, completionSummary, loadingDetail, isFlipped,
     frontRef, backRef, completionRef,
     handleCaseClick, handleBack,
-    showCompletion, completionItems, setCompletionItems,
+    showCompletion, completionItems, completionTxns, setCompletionItems,
     confirmModalOpen, setConfirmModalOpen,
     completing, reverseModalOpen, setReverseModalOpen, reversing,
     openCompletionReview, closeCompletionReview,
@@ -166,7 +166,7 @@ export default function ClinicalCasePage() {
                 <div ref={completionRef}>
                   <CompletionReviewPanel
                     selectedCase={selectedCase}
-                    caseDetail={caseDetail}
+                    caseDetail={completionTxns}
                     completionItems={completionItems}
                     setCompletionItems={setCompletionItems}
                     colors={colors}

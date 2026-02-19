@@ -216,6 +216,8 @@ interface VmaInventoryTransactionRepository : JpaRepository<VmaInventoryTransact
     fun findFirstBySerialNoAndDeletedAtIsNullOrderByDateDesc(serialNo: String): VmaInventoryTransaction?
 
     fun findAllByTripIdAndDeletedAtIsNull(tripId: String): List<VmaInventoryTransaction>
+
+    fun findAllByTripIdInAndDeletedAtIsNull(tripIds: List<String>): List<VmaInventoryTransaction>
 }
 
 // ─── Clinical Case ──────────────────────────────────────
@@ -230,6 +232,8 @@ interface VmaClinicalCaseRepository : JpaRepository<VmaClinicalCase, String> {
     fun findByCaseNo(caseNo: String): VmaClinicalCase?
 
     fun findAllByTripId(tripId: String): List<VmaClinicalCase>
+
+    fun findAllByTripIdIn(tripIds: List<String>): List<VmaClinicalCase>
 }
 
 // ─── Clinical Trip ──────────────────────────────────────
