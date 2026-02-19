@@ -4,6 +4,8 @@ description: /main_guard 工作流。Use when 需要 TDD、代码审查、安全
 
 # /guard — 守
 
+> 输出报告必须使用：`core/templates/guard-check-report-template.md`（固定结构：Scope/需求对照/反猜测/结论/证据）
+
 > **内部路由: Agent 根据关键词自动跳转到对应 section。不要全部阅读。**
 > **本文件是编排层 — 引用 L1 SOP, 不重复其内容。**
 > 🔴 **Token 节约铁律:** SOP 只读命中 section; 域索引先读; L3 工具先读 INDEX; 大文件用完释放; 单次 ≤30KB。

@@ -4,6 +4,7 @@ description: 学 — 学习 GitHub 库并纳入工具库。Use when 需要对外
 
 # /learn — 工具库学习工作流（严格版）
 
+> 学习/更新结果必须使用：`core/templates/learn-ingestion-report-template.md`（固定结构：来源/入库结果/去重更新/UNKNOWN/证据）
 > 核心原则：**不遗漏、不瞎猜**。未验证信息必须标注“未知/待确认”。
 
 ## §0 强制约束（100%理解门槛）

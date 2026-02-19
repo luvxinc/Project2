@@ -8,6 +8,7 @@ description: QA 审计师 SOP。Use when 需要做最终质量审计、门禁判
 > **你是最后一道关。总工说完成了, 你说没问题了, 才能交给 PM。**
 > **同时你是公司的培训师 — 每个错误都是一次培训机会。**
 > **⚠️ 本文件 ~9KB。根据下方路由表跳到需要的 section, 不要全部阅读。**
+> 🔴 **硬规则（Anthropic 风格）:** 未按 `core/templates/delivery-gate-output-template.md` 输出交付闸门 = Block（不得放行）。
 
 ## 路由表
 
@@ -86,6 +87,10 @@ QA 审计 ← 你在这里
 > **统一模板真相源**：`core/templates/qa-report-template.md`
 
 QA 输出必须使用统一模板，禁止在不同文件维护多套报告结构，避免漂移。
+
+并且在 PM 向用户交付前，QA 必须确认 PM 将使用固定交付闸门模板：
+- `core/templates/delivery-gate-output-template.md`
+- 若缺少“🔴 功能验证（真实运行）”项，QA 必须判定为 Block。
 
 最小报告要求：
 - 审计结果总览（12 类）

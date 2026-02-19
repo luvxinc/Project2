@@ -28,6 +28,7 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
   (任何环节可驳回 → REWORK → 回到驳回点)
 ```
 > 详见 `workflows/build.md` §0
+> 🔴 交付输出格式强制：`core/templates/delivery-gate-output-template.md`（PM 对用户回复必须使用）
 
 ---
 
