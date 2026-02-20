@@ -21,7 +21,8 @@ const modules = [
   },
   {
     key: 'purchase',
-    enabled: false,
+    enabled: true,
+    href: '/purchase/suppliers',
     groups: [
       { key: 'supplier', items: ['add', 'strategy'] },
       { key: 'po', items: ['create', 'manage'] },
@@ -109,6 +110,12 @@ const modules = [
 
 // VMA dropdown href overrides (group.key → href, or group.key/item → href)
 const NAV_HREF_OVERRIDES: Record<string, string> = {
+  'purchase.supplier':           '/purchase/suppliers',
+  'purchase.supplier.add':       '/purchase/suppliers',
+  'purchase.supplier.strategy':  '/purchase/suppliers',
+  'purchase.po':                 '/purchase/orders',
+  'purchase.po.create':          '/purchase/orders',
+  'purchase.po.manage':          '/purchase/orders',
   'vma.truvalve':                '/vma/truvalve',
   'vma.p_valve.inventory':       '/vma/p-valve/inventory',
   'vma.p_valve.clinical_case':   '/vma/p-valve/clinical-case',

@@ -20,6 +20,13 @@ data class SupplierResponse(
 data class CreateSupplierRequest(
     val supplierCode: String,
     val supplierName: String,
+    val category: String = "E",
+    val type: String? = null,
+    val currency: String = "USD",
+    val floatCurrency: Boolean = false,
+    val floatThreshold: BigDecimal = BigDecimal.ZERO,
+    val requireDeposit: Boolean = false,
+    val depositRatio: BigDecimal = BigDecimal.ZERO,
 )
 
 data class UpdateSupplierRequest(
@@ -32,6 +39,7 @@ data class SupplierStrategyResponse(
     val supplierId: Long,
     val supplierCode: String,
     val category: String,
+    val type: String?,
     val currency: String,
     val floatCurrency: Boolean,
     val floatThreshold: Double,
@@ -44,9 +52,20 @@ data class SupplierStrategyResponse(
     val updatedAt: Instant,
 )
 
+data class SupplierWithStrategyResponse(
+    val id: Long,
+    val supplierCode: String,
+    val supplierName: String,
+    val status: Boolean,
+    val latestStrategy: SupplierStrategyResponse?,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+)
+
 data class ModifyStrategyRequest(
     val supplierCode: String,
     val category: String? = null,
+    val type: String? = null,
     val currency: String? = null,
     val floatCurrency: Boolean? = null,
     val floatThreshold: BigDecimal? = null,
@@ -54,6 +73,9 @@ data class ModifyStrategyRequest(
     val depositRatio: BigDecimal? = null,
     val effectiveDate: LocalDate,
     val note: String? = null,
+    val status: Boolean? = null,
+    val supplierName: String? = null,
+    val override: Boolean = false,
 )
 
 // ═══════════════════════════════════════════════
@@ -66,6 +88,7 @@ data class PurchaseOrderQueryParams(
     val search: String? = null,
     val supplierCode: String? = null,
     val status: String? = null,
+    val includeDeleted: Boolean = true,
     val dateFrom: LocalDate? = null,
     val dateTo: LocalDate? = null,
 )
@@ -77,6 +100,21 @@ data class PurchaseOrderResponse(
     val supplierCode: String,
     val poDate: LocalDate,
     val status: String,
+    // V1 parity: summary fields for list view
+    val itemCount: Int? = null,
+    val totalAmount: Double? = null,
+    val totalRmb: Double? = null,
+    val totalUsd: Double? = null,
+    val currency: String? = null,
+    val exchangeRate: Double? = null,
+    val isDeleted: Boolean = false,
+    val shippingStatus: String? = null,
+    // V1 parity: version seqs displayed as L01/V01
+    val detailSeq: String? = null,
+    val strategySeq: String? = null,
+    val createdBy: String? = null,
+    val updatedBy: String? = null,
+    // Detail fields (only populated in detail endpoint)
     val items: List<PurchaseOrderItemResponse>? = null,
     val strategy: PurchaseOrderStrategyResponse? = null,
     val createdAt: Instant,
@@ -137,6 +175,7 @@ data class CreatePoStrategyRequest(
 data class UpdatePurchaseOrderRequest(
     val status: String? = null,
     val items: List<CreatePoItemRequest>? = null,
+    val strategy: CreatePoStrategyRequest? = null,
 )
 
 // ═══════════════════════════════════════════════

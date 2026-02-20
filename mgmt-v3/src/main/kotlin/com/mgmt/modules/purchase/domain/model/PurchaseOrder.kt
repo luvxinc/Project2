@@ -48,6 +48,10 @@ class PurchaseOrder(
     @Column(name = "deleted_at")
     var deletedAt: Instant? = null,
 
+    /** V1 parity: item edit version counter (L01, L02, ...) */
+    @Column(name = "detail_seq", nullable = false)
+    var detailSeq: Int = 1,
+
     @Version
     @Column(nullable = false)
     var version: Int = 0,

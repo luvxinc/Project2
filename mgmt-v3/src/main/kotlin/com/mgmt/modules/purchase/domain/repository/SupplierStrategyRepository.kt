@@ -18,4 +18,8 @@ interface SupplierStrategyRepository : JpaRepository<SupplierStrategy, Long> {
     ): SupplierStrategy?
 
     fun existsBySupplierCodeAndEffectiveDateAndDeletedAtIsNull(supplierCode: String, effectiveDate: LocalDate): Boolean
+
+    fun findBySupplierCodeAndEffectiveDateAndDeletedAtIsNull(
+        supplierCode: String, effectiveDate: LocalDate
+    ): SupplierStrategy?
 }

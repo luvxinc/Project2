@@ -5,10 +5,14 @@ import com.mgmt.modules.purchase.application.dto.*
 import com.mgmt.modules.purchase.domain.model.PurchaseOrder
 import com.mgmt.modules.purchase.domain.model.PurchaseOrderItem
 import com.mgmt.modules.purchase.domain.model.PurchaseOrderStrategy
+import com.mgmt.modules.purchase.domain.model.PurchaseOrderEvent
+import com.mgmt.modules.purchase.domain.repository.PurchaseOrderEventRepository
 import com.mgmt.modules.purchase.domain.repository.PurchaseOrderItemRepository
 import com.mgmt.modules.purchase.domain.repository.PurchaseOrderRepository
 import com.mgmt.modules.purchase.domain.repository.PurchaseOrderStrategyRepository
+import com.mgmt.modules.purchase.domain.repository.ShipmentItemRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
@@ -30,6 +34,9 @@ class PurchaseOrderUseCase(
     private val itemRepo: PurchaseOrderItemRepository,
     private val strategyRepo: PurchaseOrderStrategyRepository,
     private val supplierRepo: SupplierRepository,
+    private val shipmentItemRepo: ShipmentItemRepository,
+    private val eventRepo: PurchaseOrderEventRepository,
+    private val objectMapper: ObjectMapper,
 ) {
 
     // ═══════════ Query ═══════════
@@ -120,6 +127,13 @@ class PurchaseOrderUseCase(
         )
         strategyRepo.save(strategy)
 
+        // Audit: record CREATE event
+        val createdItems = itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(savedPo.id)
+        recordEvent(savedPo.id, poNum, "CREATE", mapOf(
+            "items" to itemsToMap(createdItems),
+            "strategy" to strategyToMap(strategy),
+        ), "原始订单", username)
+
         return savedPo
     }
 
@@ -128,39 +142,115 @@ class PurchaseOrderUseCase(
     @Transactional
     fun update(id: Long, dto: UpdatePurchaseOrderRequest, username: String): PurchaseOrder {
         val po = findOne(id)
+        // V1 parity: cannot modify if shipped
+        val (canModify, shippingStatus) = canModifyOrDelete(id)
+        if (!canModify) {
+            throw IllegalStateException("Cannot modify order with shipping status: $shippingStatus")
+        }
+
         dto.status?.let { po.status = it }
         po.updatedAt = Instant.now()
         po.updatedBy = username
 
-        // If items provided, replace all items
+        // Capture before state for audit
+        val oldItems = itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(id)
+        val oldStrategy = strategyRepo.findByPoId(id)
+        val beforeItems = itemsToMap(oldItems)
+        val beforeStrategy = strategyToMap(oldStrategy)
+
+        // If items provided, replace all items + increment detailSeq
         dto.items?.let { newItems ->
-            // Soft-delete old items
-            val oldItems = itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(id)
             oldItems.forEach {
                 it.deletedAt = Instant.now()
                 it.updatedBy = username
                 itemRepo.save(it)
             }
-
-            // Create new items
             newItems.forEach { itemDto ->
                 val item = PurchaseOrderItem(
-                    poId = po.id,
-                    poNum = po.poNum,
-                    sku = itemDto.sku.trim().uppercase(),
-                    quantity = itemDto.quantity,
-                    unitPrice = itemDto.unitPrice,
-                    currency = itemDto.currency,
-                    exchangeRate = itemDto.exchangeRate,
-                    note = itemDto.note,
-                    createdBy = username,
-                    updatedBy = username,
+                    poId = po.id, poNum = po.poNum,
+                    sku = itemDto.sku.trim().uppercase(), quantity = itemDto.quantity,
+                    unitPrice = itemDto.unitPrice, currency = itemDto.currency,
+                    exchangeRate = itemDto.exchangeRate, note = itemDto.note,
+                    createdBy = username, updatedBy = username,
                 )
                 itemRepo.save(item)
             }
+            po.detailSeq += 1
         }
 
-        return poRepo.save(po)
+        // If strategy update provided, update + increment strategySeq
+        dto.strategy?.let { stratDto ->
+            val existing = strategyRepo.findByPoId(id)
+            if (existing != null) {
+                existing.currency = stratDto.currency
+                existing.exchangeRate = stratDto.exchangeRate
+                existing.rateMode = stratDto.rateMode
+                existing.floatEnabled = stratDto.floatEnabled
+                existing.floatThreshold = stratDto.floatThreshold
+                existing.requireDeposit = stratDto.requireDeposit
+                existing.depositRatio = stratDto.depositRatio
+                existing.note = stratDto.note
+                existing.updatedBy = username
+                existing.updatedAt = Instant.now()
+                existing.strategySeq += 1
+                strategyRepo.save(existing)
+            }
+        }
+
+        val savedPo = poRepo.save(po)
+
+        // Audit: record UPDATE event with before/after diff
+        val afterItems = itemsToMap(itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(id))
+        val afterStrategy = strategyToMap(strategyRepo.findByPoId(id))
+        val changes = mutableMapOf<String, Any?>()
+        if (dto.items != null) changes["items"] = mapOf("before" to beforeItems, "after" to afterItems)
+        if (dto.strategy != null) changes["strategy"] = mapOf("before" to beforeStrategy, "after" to afterStrategy)
+        val eventType = when {
+            dto.items != null && dto.strategy != null -> "UPDATE_ITEMS_AND_STRATEGY"
+            dto.items != null -> "UPDATE_ITEMS"
+            dto.strategy != null -> "UPDATE_STRATEGY"
+            else -> "UPDATE_STATUS"
+        }
+        recordEvent(po.id, po.poNum, eventType, changes, null, username)
+
+        return savedPo
+    }
+
+    // ═══════════ Shipping Status ═══════════
+
+    /**
+     * V1 parity: calculate shipping status from actual shipment_items data.
+     * Returns: "not_shipped" | "partially_shipped" | "fully_shipped"
+     */
+    @Transactional(readOnly = true)
+    fun calculateShippingStatus(poId: Long): String {
+        val poItems = itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(poId)
+        if (poItems.isEmpty()) return "not_shipped"
+
+        val totalOrdered = poItems.sumOf { it.quantity.toLong() }
+        if (totalOrdered == 0L) return "not_shipped"
+
+        val shippedItems = shipmentItemRepo.findAllByPoIdAndDeletedAtIsNull(poId)
+        val totalShipped = shippedItems.sumOf { it.quantity.toLong() }
+
+        return when {
+            totalShipped == 0L -> "not_shipped"
+            totalShipped >= totalOrdered -> "fully_shipped"
+            else -> "partially_shipped"
+        }
+    }
+
+    /**
+     * V1 parity: check if PO can be deleted/modified.
+     * Cannot delete if any items have been shipped.
+     */
+    @Transactional(readOnly = true)
+    fun canModifyOrDelete(poId: Long): Pair<Boolean, String> {
+        val status = calculateShippingStatus(poId)
+        return when (status) {
+            "not_shipped" -> true to status
+            else -> false to status
+        }
     }
 
     // ═══════════ Delete / Restore ═══════════
@@ -168,22 +258,84 @@ class PurchaseOrderUseCase(
     @Transactional
     fun softDelete(id: Long, username: String): Boolean {
         val po = findOne(id)
+        // V1 parity: cannot delete if shipped
+        val (canDelete, shippingStatus) = canModifyOrDelete(id)
+        if (!canDelete) {
+            throw IllegalStateException("Cannot delete order with shipping status: $shippingStatus")
+        }
+        // Capture items before deletion for audit
+        val itemsAtDeletion = itemsToMap(itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(id))
+
         po.deletedAt = Instant.now()
         po.status = "cancelled"
         po.updatedBy = username
         poRepo.save(po)
+
+        // Audit: record DELETE event (V1: note="删除订单_{operator}_{date}")
+        val today = java.time.LocalDate.now().toString()
+        recordEvent(po.id, po.poNum, "DELETE", mapOf(
+            "items_at_deletion" to itemsAtDeletion,
+        ), "删除订单_${username}_${today}", username)
+
         return true
     }
 
     @Transactional
     fun restore(id: Long, username: String): PurchaseOrder {
         val po = poRepo.findById(id).orElseThrow { NotFoundException("purchase.errors.poNotFound") }
+
+        // Capture current state for audit
+        val restoredItems = itemsToMap(itemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(id))
+
         po.deletedAt = null
         po.status = "active"
         po.updatedAt = Instant.now()
         po.updatedBy = username
-        return poRepo.save(po)
+        val saved = poRepo.save(po)
+
+        // Audit: record RESTORE event (V1: note="恢复删除_{operator}_{date}")
+        val today = java.time.LocalDate.now().toString()
+        recordEvent(po.id, po.poNum, "RESTORE", mapOf(
+            "restored_items" to restoredItems,
+        ), "恢复删除_${username}_${today}", username)
+
+        return saved
     }
+
+    // ═══════════ Event History ═══════════
+
+    @Transactional(readOnly = true)
+    fun getHistory(poId: Long): List<PurchaseOrderEvent> =
+        eventRepo.findAllByPoIdOrderByEventSeqAsc(poId)
+
+    /**
+     * Record an audit event. Append-only — never updated or deleted.
+     * V1 parity: maps to in_po table's seq-based history chain.
+     */
+    private fun recordEvent(
+        poId: Long, poNum: String, eventType: String,
+        changes: Map<String, Any?>, note: String?, operator: String,
+    ) {
+        val nextSeq = eventRepo.findMaxEventSeq(poId) + 1
+        val event = PurchaseOrderEvent(
+            poId = poId,
+            poNum = poNum,
+            eventType = eventType,
+            eventSeq = nextSeq,
+            changes = objectMapper.writeValueAsString(changes),
+            note = note,
+            operator = operator,
+        )
+        eventRepo.save(event)
+    }
+
+    private fun itemsToMap(items: List<PurchaseOrderItem>): List<Map<String, Any?>> =
+        items.map { mapOf("sku" to it.sku, "qty" to it.quantity, "price" to it.unitPrice.toDouble()) }
+
+    private fun strategyToMap(s: PurchaseOrderStrategy?): Map<String, Any?>? =
+        s?.let { mapOf("currency" to it.currency, "exchangeRate" to it.exchangeRate.toDouble(),
+            "floatEnabled" to it.floatEnabled, "floatThreshold" to it.floatThreshold.toDouble(),
+            "requireDeposit" to it.requireDeposit, "depositRatio" to it.depositRatio.toDouble()) }
 
     // ═══════════ Helpers ═══════════
 
@@ -201,7 +353,9 @@ class PurchaseOrderUseCase(
     private fun buildSpec(params: PurchaseOrderQueryParams): Specification<PurchaseOrder> {
         @Suppress("DEPRECATION")
         return Specification.where<PurchaseOrder> { root, _, cb ->
-            cb.isNull(root.get<Instant>("deletedAt"))
+            // V1 parity: list shows ALL POs including deleted ones
+            if (params.includeDeleted) cb.conjunction()
+            else cb.isNull(root.get<Instant>("deletedAt"))
         }.let { spec ->
             if (params.search != null) {
                 spec.and { root, _, cb ->

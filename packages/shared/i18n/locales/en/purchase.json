@@ -1,0 +1,283 @@
+{
+  "title": "Supplier Management",
+  "description": "Manage suppliers and procurement strategies",
+  "table": {
+    "code": "Code",
+    "name": "Name",
+    "category": "Category",
+    "type": "Type",
+    "currency": "Currency",
+    "floatCurrency": "Price Float",
+    "requireDeposit": "Deposit",
+    "status": "Status",
+    "effectiveDate": "Effective Date",
+    "actions": "Actions",
+    "noSuppliers": "No suppliers found",
+    "loading": "Loading suppliers...",
+    "loadFailed": "Failed to load suppliers",
+    "retry": "Retry",
+    "total": "{count} suppliers"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "category": {
+    "E": "Auto Parts",
+    "A": "Amazon"
+  },
+  "type": {
+    "A": "E-commerce Goods",
+    "B": "Goods Dependencies",
+    "C": "Consumables & Other"
+  },
+  "currency": {
+    "USD": "USD",
+    "RMB": "RMB"
+  },
+  "add": {
+    "title": "Add Supplier",
+    "pill": {
+      "basic": "Basic Info",
+      "strategy": "Strategy",
+      "confirm": "Confirm"
+    },
+    "field": {
+      "supplierCode": "Supplier Code",
+      "supplierName": "Supplier Name",
+      "category": "Category",
+      "type": "Type",
+      "currency": "Currency",
+      "floatCurrency": "Enable Price Float",
+      "floatThreshold": "Float Threshold (%)",
+      "requireDeposit": "Require Deposit",
+      "depositRatio": "Deposit Ratio (%)"
+    },
+    "placeholder": {
+      "code": "2 letters (e.g. AB)",
+      "name": "Enter supplier name"
+    },
+    "errors": {
+      "codeFormat": "Code must be exactly 2 uppercase letters",
+      "nameRequired": "Supplier name is required",
+      "codeExists": "This supplier code already exists",
+      "floatRange": "Float threshold must be >0 and ≤10",
+      "depositPositive": "Deposit ratio must be >0"
+    },
+    "checking": "Checking code availability...",
+    "codeAvailable": "Code is available",
+    "codeUnavailable": "Code already exists",
+    "codeCheckPending": "Code will be verified on submit",
+    "success": "Supplier created successfully",
+    "securityDescription": "This action requires L3 security code",
+    "summary": "Summary",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Create Supplier"
+  },
+  "edit": {
+    "title": "Modify Strategy",
+    "pill": {
+      "strategy": "Strategy",
+      "confirm": "Confirm"
+    },
+    "supplierCode": "Supplier Code",
+    "supplierName": "Supplier Name",
+    "statusLabel": "Supplier Status",
+    "categoryLabel": "Category",
+    "typeLabel": "Type",
+    "currencyLabel": "Currency",
+    "floatCurrency": "Enable Price Float",
+    "floatThreshold": "Float Threshold (%)",
+    "requireDeposit": "Require Deposit",
+    "depositRatio": "Deposit Ratio (%)",
+    "effectiveDate": "Effective Date",
+    "note": "Note",
+    "notePlaceholder": "Optional note for this strategy change",
+    "conflictWarning": "A strategy already exists for this date",
+    "overrideConfirm": "Override Existing Strategy",
+    "noConflict": "No date conflict",
+    "submit": "Save Strategy"
+  },
+  "messages": {
+    "createSuccess": "Supplier created successfully",
+    "strategySuccess": "Strategy updated successfully",
+    "deletedSuccess": "Supplier deleted successfully"
+  },
+  "errors": {
+    "codeRequired": "Supplier code is required",
+    "codeFormat": "Code must be exactly 2 letters",
+    "nameRequired": "Supplier name is required",
+    "floatThresholdInvalid": "Float threshold must be >0 and ≤10",
+    "depositRatioInvalid": "Deposit ratio must be >0",
+    "dateRequired": "Effective date is required"
+  },
+  "security": {
+    "requiresL3": "This action requires L3 security code"
+  },
+  "detail": {
+    "historyTitle": "Strategy History",
+    "noHistory": "No strategy history",
+    "latestBadge": "Current"
+  },
+  "actions": {
+    "edit": "Edit",
+    "addSupplier": "Add Supplier"
+  },
+  "orders": {
+    "title": "Order Management",
+    "description": "Manage purchase orders and procurement",
+    "createPO": "Create PO",
+    "table": {
+      "poNum": "PO Number",
+      "supplier": "Supplier",
+      "orderDate": "Order Date",
+      "status": "Status",
+      "totalRmb": "Total (RMB)",
+      "totalUsd": "Total (USD)",
+      "items": "Items",
+      "total": "Total",
+      "noOrders": "No purchase orders found",
+      "loading": "Loading orders...",
+      "loadFailed": "Failed to load orders",
+      "retry": "Retry",
+      "count": "{count} orders",
+      "search": "Search by PO# or supplier...",
+      "allSuppliers": "All Suppliers",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "clearFilters": "Clear"
+    },
+    "shipping": {
+      "notShipped": "Not Shipped",
+      "partiallyShipped": "Partially Shipped",
+      "fullyShipped": "Fully Shipped",
+      "deleted": "Deleted"
+    },
+    "detail": {
+      "orderInfo": "Order Information",
+      "strategyInfo": "Strategy",
+      "itemsTitle": "Items",
+      "noItems": "No items",
+      "sku": "SKU",
+      "qty": "Quantity",
+      "unitPrice": "Unit Price",
+      "amount": "Amount",
+      "currency": "Currency",
+      "exchangeRate": "Exchange Rate",
+      "rateMode": "Rate Mode",
+      "rateAuto": "Auto",
+      "rateManual": "Manual",
+      "floatEnabled": "Price Float",
+      "floatThreshold": "Float Threshold",
+      "depositEnabled": "Deposit Required",
+      "depositRatio": "Deposit Ratio",
+      "totalAmount": "Total Amount",
+      "totalRMB": "Total (RMB)",
+      "totalUSD": "Total (USD)",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "note": "Note",
+      "yes": "Yes",
+      "no": "No",
+      "edit": "Edit",
+      "delete": "Delete",
+      "restore": "Restore",
+      "exportExcel": "Export Excel",
+      "itemCount": "{count} items",
+      "operator": "Created by",
+      "lastEditor": "Last edited by",
+      "historyTitle": "Change History"
+    },
+    "create": {
+      "title": "Create Purchase Order",
+      "pill": {
+        "supplier": "Supplier",
+        "strategy": "Strategy",
+        "rate": "Exchange Rate",
+        "items": "Items",
+        "confirm": "Confirm"
+      },
+      "selectSupplier": "Select Supplier",
+      "noSuppliers": "No active suppliers available",
+      "orderDate": "Order Date",
+      "orderDateHint": "Date for this purchase order",
+      "strategyPreview": "Current supplier strategy for selected date",
+      "noStrategy": "No effective strategy found for this date",
+      "useOriginal": "Use Original",
+      "useCustom": "Use Custom",
+      "exchangeRate": "USD / RMB Exchange Rate",
+      "fetchingRate": "Fetching exchange rate...",
+      "rateFetched": "Rate fetched from {source}",
+      "rateFailed": "Could not fetch rate automatically",
+      "manualRate": "Enter rate manually",
+      "autoRate": "Auto-fetch",
+      "futureDate": "Future date — manual rate required",
+      "itemsManual": "Manual Entry",
+      "itemsExcel": "Upload Excel",
+      "addRow": "Add Row",
+      "removeRow": "Remove",
+      "skuPlaceholder": "Enter SKU",
+      "qtyPlaceholder": "Qty",
+      "pricePlaceholder": "Price",
+      "notePlaceholder": "Note (optional)",
+      "uploadExcel": "Upload Excel File",
+      "uploadHint": "Excel must have columns: SKU, Quantity, Unit Price",
+      "downloadTemplate": "Download Template",
+      "parseSuccess": "Parsed {count} items from Excel",
+      "parseFailed": "Failed to parse Excel file",
+      "excelSupplierMismatch": "Supplier mismatch: expected {expected}, got {actual}",
+      "excelDateMismatch": "Date mismatch: expected {expected}, got {actual}",
+      "excelCurrencyMismatch": "Currency mismatch: expected {expected}, got {actual}",
+      "summary": "Order Summary",
+      "summarySupplier": "Supplier",
+      "summaryDate": "Order Date",
+      "summaryCurrency": "Currency",
+      "summaryRate": "Exchange Rate",
+      "summaryItems": "Items",
+      "summaryTotal": "Total",
+      "submit": "Submit Order",
+      "success": "Purchase order created successfully",
+      "securityDescription": "Creating a purchase order requires L3 security code"
+    },
+    "edit": {
+      "title": "Edit Order Items",
+      "currentItems": "Current Items",
+      "addItem": "Add Item",
+      "remove": "Remove",
+      "submit": "Save Changes",
+      "success": "Order updated successfully",
+      "noChanges": "No changes detected",
+      "securityDescription": "Editing a purchase order requires security verification"
+    },
+    "delete": {
+      "title": "Delete Order",
+      "confirm": "Are you sure you want to delete this order?",
+      "success": "Order deleted successfully",
+      "securityDescription": "Deleting a purchase order requires L3 security code"
+    },
+    "restore": {
+      "title": "Restore Order",
+      "confirm": "Restore this deleted order?",
+      "success": "Order restored successfully",
+      "securityDescription": "Restoring a purchase order requires L2 security code"
+    },
+    "export": {
+      "title": "Export to Excel",
+      "fileName": "PurchaseOrder",
+      "sheetName": "Order Details"
+    },
+    "errors": {
+      "supplierRequired": "Please select a supplier",
+      "dateRequired": "Order date is required",
+      "rateRequired": "Exchange rate is required",
+      "ratePositive": "Exchange rate must be greater than 0",
+      "noItems": "At least one item is required",
+      "skuRequired": "SKU is required",
+      "qtyPositive": "Quantity must be greater than 0",
+      "pricePositive": "Unit price must be greater than 0",
+      "skuNotFound": "SKU not found in product database",
+      "poNotFound": "Purchase order not found"
+    }
+  }
+}
