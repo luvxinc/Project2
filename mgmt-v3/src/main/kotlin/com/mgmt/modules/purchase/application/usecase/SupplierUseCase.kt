@@ -57,13 +57,35 @@ class SupplierUseCase(
         if (code.length != 2) throw BadRequestException("Supplier code must be exactly 2 characters")
         if (codeExists(code)) throw ConflictException("Supplier code '$code' already exists")
 
+        // Validate float/deposit business rules
+        validateStrategyRules(dto.floatCurrency, dto.floatThreshold, dto.requireDeposit, dto.depositRatio)
+
         val supplier = Supplier(
             supplierCode = code,
             supplierName = dto.supplierName.trim(),
             createdBy = username,
             updatedBy = username,
         )
-        return supplierRepo.save(supplier)
+        val saved = supplierRepo.save(supplier)
+
+        // Create initial default strategy (V1 parity)
+        val strategy = SupplierStrategy(
+            supplierId = saved.id,
+            supplierCode = saved.supplierCode,
+            category = dto.category,
+            type = dto.type,
+            currency = dto.currency,
+            floatCurrency = dto.floatCurrency,
+            floatThreshold = dto.floatThreshold,
+            requireDeposit = dto.requireDeposit,
+            depositRatio = dto.depositRatio,
+            effectiveDate = LocalDate.now(),
+            createdBy = username,
+            updatedBy = username,
+        )
+        strategyRepo.save(strategy)
+
+        return saved
     }
 
     // ═══════════ Update ═══════════
@@ -116,20 +138,98 @@ class SupplierUseCase(
     fun modifyStrategy(dto: ModifyStrategyRequest, username: String): SupplierStrategy {
         val supplier = findByCode(dto.supplierCode)
 
+        val floatCurrency = dto.floatCurrency ?: false
+        val floatThreshold = dto.floatThreshold ?: java.math.BigDecimal.ZERO
+        val requireDeposit = dto.requireDeposit ?: false
+        val depositRatio = dto.depositRatio ?: java.math.BigDecimal.ZERO
+
+        // Validate float/deposit business rules
+        validateStrategyRules(floatCurrency, floatThreshold, requireDeposit, depositRatio)
+
+        // Update supplier name/status if provided
+        dto.supplierName?.let {
+            supplier.supplierName = it.trim()
+            supplier.updatedAt = Instant.now()
+            supplier.updatedBy = username
+        }
+        dto.status?.let {
+            supplier.status = it
+            supplier.updatedAt = Instant.now()
+            supplier.updatedBy = username
+        }
+        if (dto.supplierName != null || dto.status != null) {
+            supplierRepo.save(supplier)
+        }
+
+        // Check date conflict
+        val existing = strategyRepo.findBySupplierCodeAndEffectiveDateAndDeletedAtIsNull(
+            supplier.supplierCode, dto.effectiveDate
+        )
+        if (existing != null && !dto.override) {
+            throw ConflictException("Strategy already exists for date ${dto.effectiveDate}. Set override=true to replace.")
+        }
+
+        if (existing != null && dto.override) {
+            // Update in-place
+            existing.category = dto.category ?: existing.category
+            existing.type = dto.type ?: existing.type
+            existing.currency = dto.currency ?: existing.currency
+            existing.floatCurrency = floatCurrency
+            existing.floatThreshold = floatThreshold
+            existing.requireDeposit = requireDeposit
+            existing.depositRatio = depositRatio
+            existing.note = dto.note
+            existing.updatedAt = Instant.now()
+            existing.updatedBy = username
+            return strategyRepo.save(existing)
+        }
+
+        // Create new strategy
         val strategy = SupplierStrategy(
             supplierId = supplier.id,
             supplierCode = supplier.supplierCode,
             category = dto.category ?: "E",
+            type = dto.type,
             currency = dto.currency ?: "USD",
-            floatCurrency = dto.floatCurrency ?: false,
-            floatThreshold = dto.floatThreshold ?: java.math.BigDecimal.ZERO,
-            requireDeposit = dto.requireDeposit ?: false,
-            depositRatio = dto.depositRatio ?: java.math.BigDecimal.ZERO,
+            floatCurrency = floatCurrency,
+            floatThreshold = floatThreshold,
+            requireDeposit = requireDeposit,
+            depositRatio = depositRatio,
             effectiveDate = dto.effectiveDate,
             note = dto.note,
             createdBy = username,
             updatedBy = username,
         )
         return strategyRepo.save(strategy)
+    }
+
+    // ═══════════ Aggregated Query ═══════════
+
+    @Transactional(readOnly = true)
+    fun findAllWithStrategy(): List<Pair<Supplier, SupplierStrategy?>> {
+        val suppliers = supplierRepo.findAllByDeletedAtIsNullOrderBySupplierCodeAsc()
+        return suppliers.map { supplier ->
+            val latestStrategy = strategyRepo
+                .findFirstBySupplierCodeAndEffectiveDateLessThanEqualAndDeletedAtIsNullOrderByEffectiveDateDesc(
+                    supplier.supplierCode, LocalDate.now()
+                )
+            supplier to latestStrategy
+        }
+    }
+
+    // ═══════════ Validation ═══════════
+
+    private fun validateStrategyRules(
+        floatCurrency: Boolean,
+        floatThreshold: java.math.BigDecimal,
+        requireDeposit: Boolean,
+        depositRatio: java.math.BigDecimal,
+    ) {
+        if (floatCurrency && (floatThreshold <= java.math.BigDecimal.ZERO || floatThreshold > java.math.BigDecimal.TEN)) {
+            throw BadRequestException("Float threshold must be >0 and <=10 when float currency is enabled")
+        }
+        if (requireDeposit && depositRatio <= java.math.BigDecimal.ZERO) {
+            throw BadRequestException("Deposit ratio must be >0 when deposit is required")
+        }
     }
 }

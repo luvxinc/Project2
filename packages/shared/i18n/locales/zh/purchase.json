@@ -1,0 +1,283 @@
+{
+  "title": "供应商管理",
+  "description": "管理供应商及采购策略",
+  "table": {
+    "code": "代号",
+    "name": "名称",
+    "category": "类别",
+    "type": "种类",
+    "currency": "货币",
+    "floatCurrency": "价格浮动",
+    "requireDeposit": "定金",
+    "status": "状态",
+    "effectiveDate": "生效日期",
+    "actions": "操作",
+    "noSuppliers": "暂无供应商数据",
+    "loading": "加载供应商中...",
+    "loadFailed": "加载供应商失败",
+    "retry": "重试",
+    "total": "共 {count} 个供应商"
+  },
+  "status": {
+    "active": "合作方",
+    "inactive": "非合作方"
+  },
+  "category": {
+    "E": "汽配",
+    "A": "亚马逊"
+  },
+  "type": {
+    "A": "电商货物",
+    "B": "货物依赖品",
+    "C": "耗材和其他"
+  },
+  "currency": {
+    "USD": "美元",
+    "RMB": "人民币"
+  },
+  "add": {
+    "title": "新增供应商",
+    "pill": {
+      "basic": "基本信息",
+      "strategy": "策略配置",
+      "confirm": "确认提交"
+    },
+    "field": {
+      "supplierCode": "供应商代号",
+      "supplierName": "供应商名称",
+      "category": "类别",
+      "type": "种类",
+      "currency": "货币",
+      "floatCurrency": "启用价格浮动",
+      "floatThreshold": "浮动阈值 (%)",
+      "requireDeposit": "要求定金",
+      "depositRatio": "定金比例 (%)"
+    },
+    "placeholder": {
+      "code": "2个字母 (如 AB)",
+      "name": "请输入供应商名称"
+    },
+    "errors": {
+      "codeFormat": "代号必须为2个大写字母",
+      "nameRequired": "请输入供应商名称",
+      "codeExists": "该供应商代号已存在",
+      "floatRange": "浮动阈值必须 >0 且 ≤10",
+      "depositPositive": "定金比例必须 >0"
+    },
+    "checking": "检查代号可用性...",
+    "codeAvailable": "代号可用",
+    "codeUnavailable": "代号已存在",
+    "codeCheckPending": "提交时将验证代号",
+    "success": "供应商创建成功",
+    "securityDescription": "此操作需要 L3 安全码",
+    "summary": "摘要",
+    "next": "下一步",
+    "back": "上一步",
+    "submit": "创建供应商"
+  },
+  "edit": {
+    "title": "修改策略",
+    "pill": {
+      "strategy": "策略信息",
+      "confirm": "确认提交"
+    },
+    "supplierCode": "供应商代号",
+    "supplierName": "供应商名称",
+    "statusLabel": "供应商状态",
+    "categoryLabel": "类别",
+    "typeLabel": "种类",
+    "currencyLabel": "货币",
+    "floatCurrency": "启用价格浮动",
+    "floatThreshold": "浮动阈值 (%)",
+    "requireDeposit": "要求定金",
+    "depositRatio": "定金比例 (%)",
+    "effectiveDate": "生效日期",
+    "note": "备注",
+    "notePlaceholder": "可选备注",
+    "conflictWarning": "该日期已存在策略",
+    "overrideConfirm": "覆盖现有策略",
+    "noConflict": "无日期冲突",
+    "submit": "保存策略"
+  },
+  "messages": {
+    "createSuccess": "供应商创建成功",
+    "strategySuccess": "策略更新成功",
+    "deletedSuccess": "供应商已删除"
+  },
+  "errors": {
+    "codeRequired": "请输入供应商代号",
+    "codeFormat": "代号必须为2个字母",
+    "nameRequired": "请输入供应商名称",
+    "floatThresholdInvalid": "浮动阈值必须 >0 且 ≤10",
+    "depositRatioInvalid": "定金比例必须 >0",
+    "dateRequired": "请选择生效日期"
+  },
+  "security": {
+    "requiresL3": "此操作需要 L3 安全码"
+  },
+  "detail": {
+    "historyTitle": "策略历史",
+    "noHistory": "暂无策略记录",
+    "latestBadge": "当前"
+  },
+  "actions": {
+    "edit": "编辑",
+    "addSupplier": "新增供应商"
+  },
+  "orders": {
+    "title": "采购订单管理",
+    "description": "管理采购订单与采购流程",
+    "createPO": "创建采购单",
+    "table": {
+      "poNum": "采购单号",
+      "supplier": "供应商",
+      "orderDate": "下单日期",
+      "status": "状态",
+      "totalRmb": "总额 (RMB)",
+      "totalUsd": "总额 (USD)",
+      "items": "商品",
+      "total": "合计",
+      "noOrders": "暂无采购订单",
+      "loading": "加载订单中...",
+      "loadFailed": "加载订单失败",
+      "retry": "重试",
+      "count": "共 {count} 笔订单",
+      "search": "搜索单号或供应商...",
+      "allSuppliers": "全部供应商",
+      "dateFrom": "起始日期",
+      "dateTo": "截止日期",
+      "clearFilters": "清除"
+    },
+    "shipping": {
+      "notShipped": "在产未发货",
+      "partiallyShipped": "部分已发货",
+      "fullyShipped": "全部已发货",
+      "deleted": "已删除"
+    },
+    "detail": {
+      "orderInfo": "订单信息",
+      "strategyInfo": "策略信息",
+      "itemsTitle": "商品明细",
+      "noItems": "暂无商品",
+      "sku": "SKU",
+      "qty": "数量",
+      "unitPrice": "单价",
+      "amount": "金额",
+      "currency": "货币",
+      "exchangeRate": "汇率",
+      "rateMode": "汇率模式",
+      "rateAuto": "自动",
+      "rateManual": "手动",
+      "floatEnabled": "价格浮动",
+      "floatThreshold": "浮动阈值",
+      "depositEnabled": "需要定金",
+      "depositRatio": "定金比例",
+      "totalAmount": "总金额",
+      "totalRMB": "合计 (人民币)",
+      "totalUSD": "合计 (美元)",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间",
+      "note": "备注",
+      "yes": "是",
+      "no": "否",
+      "edit": "编辑",
+      "delete": "删除",
+      "restore": "恢复",
+      "exportExcel": "导出 Excel",
+      "itemCount": "共 {count} 项",
+      "operator": "操作人",
+      "lastEditor": "最后修改人",
+      "historyTitle": "变更记录"
+    },
+    "create": {
+      "title": "创建采购订单",
+      "pill": {
+        "supplier": "供应商",
+        "strategy": "策略",
+        "rate": "汇率",
+        "items": "商品",
+        "confirm": "确认"
+      },
+      "selectSupplier": "选择供应商",
+      "noSuppliers": "暂无可用供应商",
+      "orderDate": "下单日期",
+      "orderDateHint": "采购订单日期",
+      "strategyPreview": "该供应商在所选日期的当前策略",
+      "noStrategy": "未找到该日期的有效策略",
+      "useOriginal": "使用原策略",
+      "useCustom": "采用新策略",
+      "exchangeRate": "美元/人民币汇率",
+      "fetchingRate": "正在获取汇率...",
+      "rateFetched": "汇率来源: {source}",
+      "rateFailed": "无法自动获取汇率",
+      "manualRate": "手动输入汇率",
+      "autoRate": "自动获取",
+      "futureDate": "未来日期 — 需手动输入汇率",
+      "itemsManual": "手动录入",
+      "itemsExcel": "上传 Excel",
+      "addRow": "添加行",
+      "removeRow": "移除",
+      "skuPlaceholder": "输入 SKU",
+      "qtyPlaceholder": "数量",
+      "pricePlaceholder": "单价",
+      "notePlaceholder": "备注 (可选)",
+      "uploadExcel": "上传 Excel 文件",
+      "uploadHint": "Excel 需包含列: SKU、数量、单价",
+      "downloadTemplate": "下载模板",
+      "parseSuccess": "从 Excel 解析出 {count} 项商品",
+      "parseFailed": "Excel 文件解析失败",
+      "excelSupplierMismatch": "供应商不匹配: 期望 {expected}, 实际 {actual}",
+      "excelDateMismatch": "日期不匹配: 期望 {expected}, 实际 {actual}",
+      "excelCurrencyMismatch": "货币不匹配: 期望 {expected}, 实际 {actual}",
+      "summary": "订单汇总",
+      "summarySupplier": "供应商",
+      "summaryDate": "下单日期",
+      "summaryCurrency": "货币",
+      "summaryRate": "汇率",
+      "summaryItems": "商品数",
+      "summaryTotal": "总金额",
+      "submit": "提交订单",
+      "success": "采购订单创建成功",
+      "securityDescription": "创建采购订单需要 L3 安全码"
+    },
+    "edit": {
+      "title": "编辑订单商品",
+      "currentItems": "当前商品",
+      "addItem": "添加商品",
+      "remove": "移除",
+      "submit": "保存修改",
+      "success": "订单更新成功",
+      "noChanges": "未检测到更改",
+      "securityDescription": "编辑采购订单需要安全验证"
+    },
+    "delete": {
+      "title": "删除订单",
+      "confirm": "确定要删除此采购订单吗？",
+      "success": "订单已删除",
+      "securityDescription": "删除采购订单需要 L3 安全码"
+    },
+    "restore": {
+      "title": "恢复订单",
+      "confirm": "确定恢复此已删除的订单？",
+      "success": "订单已恢复",
+      "securityDescription": "恢复采购订单需要 L2 安全码"
+    },
+    "export": {
+      "title": "导出 Excel",
+      "fileName": "采购订单",
+      "sheetName": "订单明细"
+    },
+    "errors": {
+      "supplierRequired": "请选择供应商",
+      "dateRequired": "请选择下单日期",
+      "rateRequired": "请输入汇率",
+      "ratePositive": "汇率必须大于 0",
+      "noItems": "至少需要一项商品",
+      "skuRequired": "SKU 不能为空",
+      "qtyPositive": "数量必须大于 0",
+      "pricePositive": "单价必须大于 0",
+      "skuNotFound": "SKU 不存在于产品数据库中",
+      "poNotFound": "未找到该采购订单"
+    }
+  }
+}

@@ -51,6 +51,10 @@ class PurchaseOrderStrategy(
     @Column(length = 500)
     var note: String? = null,
 
+    /** V1 parity: strategy edit version counter (V01, V02, ...) */
+    @Column(name = "strategy_seq", nullable = false)
+    var strategySeq: Int = 1,
+
     // §8.1 Audit
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),

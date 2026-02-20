@@ -65,6 +65,10 @@ dependencies {
     implementation("com.google.zxing:javase:3.5.3")
     implementation("org.apache.pdfbox:pdfbox:3.0.4")
 
+    // === Excel (Apache POI) ===
+    // V1 parity: PO template generation, upload validation, export with formatting
+    implementation("org.apache.poi:poi-ooxml:5.3.0")
+
     // === Dev Tools ===
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
