@@ -33,6 +33,7 @@ description: "Bug 修复、调试、事故响应 — 诊断优先，修复闭环
 ## 排查必读
 
 遇到错误时，**先读** `.claude/core/reference/root-cause-classifier.md` 分类根因（A-F），再改代码。
+🧠 **Think Discipline (`rules/common.md` §12)**: 诊断和修复前必须推理 — 根因确认了吗? 修的是症状还是根因?
 
 ## 置信度过滤
 

@@ -28,8 +28,8 @@ description: /main_ship 工作流。Use when 需要本地开发、CI/CD、部署
 | `Docker`, `镜像`, `容器`, `Dockerfile` | → §2 容器化 |
 | `CI/CD`, `Pipeline`, `GitHub Actions`, `部署` | → §3 CI/CD 管道 |
 | `K8s`, `Pod`, `Deployment`, `HPA` | → §4 K8s 部署 |
-| `灰度`, `canary`, `blue-green`, `发布` | → §5 发布策略 |
-| `回滚`, `rollback`, `紧急` | → §6 回滚协议 |
+| `灰度`, `canary`, `blue-green`, `发布` | → §5 发布策略 (🧠 THINK 检查点) |
+| `回滚`, `rollback`, `紧急` | → §6 回滚协议 (🧠 THINK 检查点) |
 
 ---
 
@@ -131,6 +131,7 @@ stages:
 ## §5 发布策略
 
 > **加载:** `skills/infrastructure.md` §2 + `skills/platform.md` §3 (Feature Flag)
+> 🧠 **THINK (`rules/common.md` §12)**: 发布决策前必须推理 — 测试全通过? 回滚方案就绪? 监控指标基线确认? 灰度比例合理?
 
 ### 策略选择
 
@@ -155,6 +156,7 @@ stages:
 ## §6 回滚协议
 
 > **加载:** `skills/observability.md` §8 (SRE)
+> 🧠 **THINK (`rules/common.md` §12)**: 回滚决策前必须推理 — 根因确认了吗? 回滚能解决问题吗? 数据迁移可逆吗?
 
 ### 回滚流程
 

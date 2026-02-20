@@ -19,15 +19,15 @@ version: v1.5.0
 
 ## 快速参考 (不需要读切片)
 
-| ECC 概念 | 我们的对应 | 差异 |
+| ECC 概念 | 我们的对应 | 状态 |
 |---------|-----------|------|
 | 14 Agents (扁平) | PM→CTO→10工程师→QA (层级) | 我们更企业化 |
 | 28 Skills (TS/Py/Go/Java) | 散布在各 L1 Skill 中 | ECC 更跨语言 |
-| 30 Commands (含 PM2/Multi) | ❌ 无独立命令层 | 🔴 需评估 |
-| 6 语言 Rules | 散布在各 Skill 中 | 🔴 需独立 rules 层 |
-| AgentShield 安全审计 | ✅ qa-auditor.md §3 | ECC 有独立工具 |
-| Continuous Learning v2 | ❌ 无 | 🔴 Instinct 进化系统 |
-| PreToolUse/PostToolUse | ❌ 无 | 🔴 需评估 |
-| 验证循环 6 阶段 | ✅ agent-mastery §1 | 一致 |
+| 30 Commands (含 PM2/Multi) | ✅ SKILL.md 快速操作索引 + Express 快速通道 | 已对齐 (工作流覆盖) |
+| 6 语言 Rules | ✅ `rules/` 独立层 (common + frontend + backend) | 已对齐 |
+| AgentShield 安全审计 | ✅ qa-auditor.md §3 + guard.md §3 | ECC 有独立工具 |
+| Continuous Learning v2 | ✅ continuous-learning.md | 已实现 (无 Instinct 命令入口) |
+| PreToolUse/PostToolUse | ✅ hooks-runtime-standard.md + hook-*.sh | 已对齐 (ECC-aligned) |
+| 验证循环 6 阶段 | ✅ common.md §5 + qa-gate skill | 一致 |
 | Planner | ✅ chief-engineer.md §3 | 一致 |
-| Code Reviewer | ✅ qa-auditor.md §2 | ECC 更详尽 |
+| Code Reviewer | ✅ `/review` skill 完整内联清单 (S1-S8/Q1-Q8/R1-R7/K1-K7/P1-P6) | 已对齐 |
