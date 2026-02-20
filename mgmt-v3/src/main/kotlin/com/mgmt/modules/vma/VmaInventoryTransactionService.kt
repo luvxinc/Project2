@@ -267,11 +267,12 @@ class VmaInventoryTransactionService(
         val wip = mutableListOf<InventoryDetailRow>()
         val nearExp = mutableListOf<InventoryDetailRow>()
         val expired = mutableListOf<InventoryDetailRow>()
+        val used = mutableListOf<InventoryDetailRow>()
         val returnedToCn = mutableListOf<InventoryDetailRow>()
 
         for ((serialKey, serialTxns) in serialMap) {
             var recCn = 0; var outCase = 0; var recCase = 0; var usedCase = 0; var outCn = 0
-            var recDate: LocalDate? = null; var outCnDate: LocalDate? = null
+            var recDate: LocalDate? = null; var outCnDate: LocalDate? = null; var usedCaseDate: LocalDate? = null
             var batchNo = ""; var operator = ""; var expDate: LocalDate? = null
 
             for (txn in serialTxns) {
@@ -285,7 +286,10 @@ class VmaInventoryTransactionService(
                     }
                     VmaInventoryAction.OUT_CASE -> outCase += txn.qty
                     VmaInventoryAction.REC_CASE -> recCase += txn.qty
-                    VmaInventoryAction.USED_CASE -> usedCase += txn.qty
+                    VmaInventoryAction.USED_CASE -> {
+                        usedCase += txn.qty
+                        if (usedCaseDate == null || txn.date > usedCaseDate) usedCaseDate = txn.date
+                    }
                     VmaInventoryAction.OUT_CN -> {
                         outCn += txn.qty
                         if (outCnDate == null || txn.date > outCnDate) outCnDate = txn.date
@@ -309,6 +313,10 @@ class VmaInventoryTransactionService(
                 transactionIds = txnIds,
             )
 
+            if (usedCase > 0) {
+                used.add(baseRow.copy(quantity = usedCase, actionDate = usedCaseDate?.toString()))
+            }
+
             if (outCn > 0) {
                 returnedToCn.add(baseRow.copy(quantity = outCn, actionDate = outCnDate?.toString()))
             }
@@ -328,7 +336,8 @@ class VmaInventoryTransactionService(
 
         return mapOf(
             "available" to available, "wip" to wip,
-            "nearExp" to nearExp, "expired" to expired, "returnedToCn" to returnedToCn,
+            "nearExp" to nearExp, "expired" to expired,
+            "used" to used, "returnedToCn" to returnedToCn,
         )
     }
 
@@ -647,6 +656,9 @@ class VmaInventoryTransactionService(
         }
 
         // ─── Source 2: Demo products ───
+        // Track serials already added from Source 1 to avoid duplicates
+        val seenSerials = results.map { "${it.specNo}|${it.serialNo}" }.toMutableSet()
+
         val returnDemoKeys = mutableMapOf<String, Int>()
         for (txn in allTxns) {
             if (txn.action != VmaInventoryAction.RETURN_DEMO) continue
@@ -663,6 +675,11 @@ class VmaInventoryTransactionService(
             val budget = returnBudget[dk] ?: 0
             if (budget >= tx.qty) { returnBudget[dk] = budget - tx.qty; continue }
             if (budget > 0) returnBudget[dk] = 0
+
+            // Skip if this serial was already added from on-shelf inventory
+            val serialKey = "${tx.specNo}|${tx.serialNo}"
+            if (serialKey in seenSerials) continue
+            seenSerials.add(serialKey)
 
             results.add(FridgeEligibleProduct(
                 specNo = tx.specNo,

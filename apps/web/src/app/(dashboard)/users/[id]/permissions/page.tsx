@@ -118,10 +118,22 @@ const permissionTree = [
     key: 'module.vma',
     i18nKey: 'vma',
     children: [
+      { key: 'module.vma.truvalve', nameKey: 'vmaTruvalve' },
+      { key: 'module.vma.truvalve.manage', nameKey: 'vmaTruvalveManage' },
+      { key: 'module.vma.pvalve', nameKey: 'vmaPvalve' },
+      { key: 'module.vma.pvalve.inventory', nameKey: 'vmaPvalveInventory' },
+      { key: 'module.vma.pvalve.clinical_case', nameKey: 'vmaPvalveClinicalCase' },
+      { key: 'module.vma.pvalve.delivery_system', nameKey: 'vmaPvalveDeliverySystem' },
+      { key: 'module.vma.pvalve.overview', nameKey: 'vmaPvalveOverview' },
+      { key: 'module.vma.pvalve.demo_inventory', nameKey: 'vmaPvalveDemoInventory' },
+      { key: 'module.vma.pvalve.fridge_shelf', nameKey: 'vmaPvalveFridgeShelf' },
+      { key: 'module.vma.pvalve.product_mgmt', nameKey: 'vmaPvalveProductMgmt' },
+      { key: 'module.vma.pvalve.site_mgmt', nameKey: 'vmaPvalveSiteMgmt' },
       { key: 'module.vma.employees.manage', nameKey: 'vmaEmployees' },
       { key: 'module.vma.departments.manage', nameKey: 'vmaDepartments' },
       { key: 'module.vma.training_sop.manage', nameKey: 'vmaTrainingSop' },
       { key: 'module.vma.training.manage', nameKey: 'vmaTraining' },
+      { key: 'module.vma.training_records.manage', nameKey: 'vmaTrainingRecords' },
     ],
   },
 ];
@@ -338,7 +350,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
   if (isLoading) {
     return (
       <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
-        <div style={{ borderColor: colors.text, borderTopColor: 'transparent' }} className="w-8 h-8 border-2 rounded-full animate-spin" />
+        <div style={{ borderRightColor: colors.text, borderBottomColor: colors.text, borderLeftColor: colors.text, borderTopColor: 'transparent' }} className="w-8 h-8 border-2 rounded-full animate-spin" />
       </div>
     );
   }

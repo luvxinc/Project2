@@ -354,7 +354,19 @@
       "vmaEmployees": "员工管理",
       "vmaDepartments": "部门/职责",
       "vmaTrainingSop": "培训SOP",
-      "vmaTraining": "培训记录"
+      "vmaTraining": "培训管理",
+      "vmaTrainingRecords": "培训记录",
+      "vmaTruvalve": "TruValve",
+      "vmaTruvalveManage": "TruValve 管理",
+      "vmaPvalve": "P-Valve",
+      "vmaPvalveInventory": "P-Valve 库存",
+      "vmaPvalveClinicalCase": "临床病例",
+      "vmaPvalveDeliverySystem": "导管系统",
+      "vmaPvalveOverview": "总览",
+      "vmaPvalveDemoInventory": "演示库存",
+      "vmaPvalveFridgeShelf": "冰箱货架",
+      "vmaPvalveProductMgmt": "产品管理",
+      "vmaPvalveSiteMgmt": "站点管理"
     },
     "notice": {
       "title": "操作须知",

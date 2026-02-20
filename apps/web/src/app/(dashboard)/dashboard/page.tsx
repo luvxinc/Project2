@@ -85,13 +85,14 @@ export default function DashboardPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
-  // Always start with safe defaults (matches SSR) — update from localStorage after mount
+  // Always start with safe defaults (matches SSR) — update from API after mount
   const [userPerms, setUserPerms] = useState<{ isPrivileged: boolean; permissions: Record<string, unknown> }>({
     isPrivileged: false,
     permissions: {},
   });
 
   useEffect(() => {
+    // Immediately load from localStorage for fast render
     try {
       const stored = localStorage.getItem('user');
       if (!stored) return;
@@ -99,11 +100,39 @@ export default function DashboardPage() {
       const roles: string[] = user.roles || [];
       setUserPerms({
         isPrivileged: roles.includes('superuser') || roles.includes('admin'),
-        permissions: user.permissions || {},
+        permissions: (typeof user.permissions === 'object' && user.permissions) ? user.permissions : {},
       });
     } catch {
       // ignore
     }
+
+    // Then fetch fresh data from API for real-time sync
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    
+    import('@/lib/api/client').then(({ api }) => {
+      api.get<{ id: string; username: string; roles: string[]; permissions?: Record<string, unknown> }>('/auth/me')
+        .then(freshUser => {
+          if (!freshUser) return;
+          const roles: string[] = freshUser.roles || [];
+          const perms = (typeof freshUser.permissions === 'object' && freshUser.permissions) ? freshUser.permissions : {};
+          setUserPerms({
+            isPrivileged: roles.includes('superuser') || roles.includes('admin'),
+            permissions: perms,
+          });
+          // Update localStorage so AppleNav also picks up fresh data
+          const stored = localStorage.getItem('user');
+          if (stored) {
+            try {
+              const existing = JSON.parse(stored);
+              existing.permissions = freshUser.permissions;
+              existing.roles = freshUser.roles;
+              localStorage.setItem('user', JSON.stringify(existing));
+            } catch { /* ignore */ }
+          }
+        })
+        .catch(() => { /* use cached data on error */ });
+    });
   }, []);
 
   const canAccessModule = (modKey: string): boolean => {

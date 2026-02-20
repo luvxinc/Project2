@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -330,16 +330,27 @@ export { colorTokens };
 // ==================== Provider ====================
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
+  // Always start with 'dark' to match SSR — avoids hydration mismatch.
+  // The real theme is loaded from localStorage in the useEffect below.
+  const [theme, setThemeState] = useState<Theme>('dark');
+  const mountedRef = useRef(false);
+
+  // After hydration: read the real user preference from localStorage
+  useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark' || savedTheme === 'light') {
-      return savedTheme;
+      setThemeState(savedTheme);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setThemeState('light');
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+    mountedRef.current = true;
+  }, []);
 
   useEffect(() => {
+    // Only persist after initial mount — prevents SSR default 'dark' from
+    // overwriting the user's saved theme before the mount effect reads it.
+    if (!mountedRef.current) return;
+
     localStorage.setItem('theme', theme);
     document.documentElement.classList.remove('theme-dark', 'theme-light');
     document.documentElement.classList.add(`theme-${theme}`);

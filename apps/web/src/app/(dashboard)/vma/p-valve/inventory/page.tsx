@@ -50,6 +50,7 @@ interface InventoryDetail {
   wip: DetailRow[];
   nearExp: DetailRow[];
   expired: DetailRow[];
+  used: DetailRow[];
   returnedToCn: DetailRow[];
 }
 
@@ -678,6 +679,7 @@ export default function InventoryPage() {
                   {renderDetailSection('WIP', detail.wip, colors.orange)}
                   {renderDetailSection('Near Exp', detail.nearExp, colors.orange)}
                   {renderDetailSection('Expired', detail.expired, colors.red)}
+                  {renderDetailSection('Used', detail.used, colors.purple)}
                   {renderDetailSection('Returned to CN', detail.returnedToCn, colors.textSecondary)}
                 </div>
               )}

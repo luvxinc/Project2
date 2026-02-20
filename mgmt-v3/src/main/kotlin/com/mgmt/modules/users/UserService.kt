@@ -80,9 +80,17 @@ class UserService(
             "module.user_admin.password_policy", "module.user_admin.role_switches",
             // Audit (2 keys)
             "module.audit", "module.audit.logs",
-            // VMA (5 keys)
-            "module.vma", "module.vma.employees.manage", "module.vma.departments.manage",
+            // VMA (17 keys)
+            "module.vma",
+            "module.vma.truvalve", "module.vma.truvalve.manage",
+            "module.vma.pvalve", "module.vma.pvalve.inventory",
+            "module.vma.pvalve.clinical_case", "module.vma.pvalve.delivery_system",
+            "module.vma.pvalve.overview", "module.vma.pvalve.demo_inventory",
+            "module.vma.pvalve.fridge_shelf", "module.vma.pvalve.product_mgmt",
+            "module.vma.pvalve.site_mgmt",
+            "module.vma.employees.manage", "module.vma.departments.manage",
             "module.vma.training_sop.manage", "module.vma.training.manage",
+            "module.vma.training_records.manage",
         )
     }
     /**
@@ -349,6 +357,17 @@ class UserService(
         }
     }
 
+    private val summaryMapper = com.fasterxml.jackson.databind.ObjectMapper()
+
+    private fun parseJsonField(json: String?): Any? {
+        if (json.isNullOrBlank()) return null
+        return try {
+            summaryMapper.readValue(json, Map::class.java)
+        } catch (e: Exception) {
+            json // fallback to raw string if parse fails
+        }
+    }
+
     private fun mapToSummary(user: User): UserSummary = UserSummary(
         id = user.id,
         username = user.username,
@@ -356,8 +375,8 @@ class UserService(
         displayName = user.displayName,
         status = user.status.name,
         roles = user.roles.toList(),
-        permissions = user.permissions,
-        settings = user.settings,
+        permissions = parseJsonField(user.permissions),
+        settings = parseJsonField(user.settings),
         lastLoginAt = user.lastLoginAt,
         createdAt = user.createdAt,
     )
