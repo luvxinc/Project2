@@ -199,6 +199,140 @@ export default function FridgeShelfPage() {
     }
   };
 
+  // ─── Print ───
+
+  const handlePrint = () => {
+    const getSlotForPrint = (shelfNo: number, rowNo: number, colNo: number) =>
+      slots.find(s => s.shelfNo === shelfNo && s.rowNo === rowNo && s.colNo === colNo);
+
+    const renderShelfHTML = (shelfNo: number) => {
+      const shelfSlots = slots.filter(s => s.shelfNo === shelfNo);
+      let rows = '';
+      for (let c = 1; c <= COLS; c++) {
+        let cells = '';
+        for (let r = 1; r <= ROWS; r++) {
+          const slot = getSlotForPrint(shelfNo, r, c);
+          if (slot) {
+            const isExpired = slot.expDate ? slot.expDate < new Date().toISOString().slice(0, 10) : false;
+            cells += `
+              <td class="slot occupied ${isExpired ? 'expired' : ''}">
+                <div class="spec">${slot.specNo}</div>
+                <div class="sn">SN: ${slot.serialNo || '—'}</div>
+                <div class="meta">${slot.batchNo ? 'Batch: ' + slot.batchNo : ''}</div>
+                <div class="meta exp">${slot.expDate ? 'Exp: ' + slot.expDate : ''}</div>
+              </td>`;
+          } else {
+            cells += '<td class="slot empty"></td>';
+          }
+        }
+        rows += `<tr>${cells}</tr>`;
+      }
+      return `
+        <div class="shelf">
+          <div class="shelf-label">Shelf ${shelfNo} <span class="shelf-count">(${shelfSlots.length}/${ROWS * COLS})</span></div>
+          <table class="shelf-grid"><tbody>${rows}</tbody></table>
+        </div>`;
+    };
+
+    const renderDoorHTML = (shelves: number[], label: string) => {
+      return `
+        <div class="door">
+          <div class="door-label">${label}</div>
+          ${shelves.map(s => renderShelfHTML(s)).join('')}
+        </div>`;
+    };
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Fridge Shelf Layout — ${dateStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; color: #1d1d1f; padding: 20px; }
+    @page { size: A4 landscape; margin: 12mm; }
+    @media print { body { padding: 0; } .no-print { display: none !important; } }
+    .header { text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e5e5e5; }
+    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    .header .subtitle { font-size: 11px; color: #86868b; margin-top: 4px; }
+    .header .stats { display: flex; justify-content: center; gap: 32px; margin-top: 8px; font-size: 12px; }
+    .header .stats .stat-val { font-size: 16px; font-weight: 700; }
+    .header .stats .stat-label { color: #86868b; font-size: 10px; }
+    .fridge { display: flex; gap: 16px; }
+    .door { flex: 1; }
+    .door-label { text-align: center; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #86868b; margin-bottom: 8px; }
+    .shelf { margin-bottom: 8px; }
+    .shelf-label { font-size: 9px; font-weight: 600; color: #6e6e73; margin-bottom: 2px; }
+    .shelf-label .shelf-count { font-weight: 400; color: #aeaeb2; }
+    .shelf-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .slot { border: 1px solid #d2d2d7; height: 52px; vertical-align: top; padding: 3px 4px; font-size: 8px; }
+    .slot.empty { background: #f5f5f7; }
+    .slot.occupied { background: #e8f0fe; border-color: #b8d4f0; }
+    .slot.expired { background: #fef0ef; border-color: #f0b8b8; }
+    .slot .spec { font-weight: 700; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slot .sn { color: #424245; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slot .meta { color: #86868b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slot .meta.exp { color: #e8590c; font-weight: 500; }
+    .slot.expired .meta.exp { color: #d32f2f; font-weight: 700; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .shelf { margin-bottom: 8px; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <!-- Page 1: Shelves 3,4,5,6 -->
+  <div class="page">
+    <div class="header">
+      <h1>VMA Fridge — Shelf Layout</h1>
+      <div class="subtitle">${dateStr} at ${timeStr}</div>
+      <div class="stats">
+        <div><div class="stat-val">${totalCount}</div><div class="stat-label">Total Slots</div></div>
+        <div><div class="stat-val" style="color:#0071e3">${usedCount}</div><div class="stat-label">Used</div></div>
+        <div><div class="stat-val" style="color:#30d158">${totalCount - usedCount}</div><div class="stat-label">Available</div></div>
+      </div>
+    </div>
+    <div class="fridge">
+      ${renderDoorHTML([3, 5], 'Left Door (S3, S5)')}
+      ${renderDoorHTML([4, 6], 'Right Door (S4, S6)')}
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#e8f0fe;border-color:#b8d4f0"></div> Occupied</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#fef0ef;border-color:#f0b8b8"></div> Expired</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f5f5f7"></div> Empty</div>
+    </div>
+  </div>
+
+  <!-- Page 2: Shelves 7,8,9,10 -->
+  <div class="page">
+    <div class="header">
+      <h1>VMA Fridge — Shelf Layout (cont.)</h1>
+      <div class="subtitle">${dateStr} at ${timeStr}</div>
+    </div>
+    <div class="fridge">
+      ${renderDoorHTML([7, 9], 'Left Door (S7, S9)')}
+      ${renderDoorHTML([8, 10], 'Right Door (S8, S10)')}
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#e8f0fe;border-color:#b8d4f0"></div> Occupied</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#fef0ef;border-color:#f0b8b8"></div> Expired</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f5f5f7"></div> Empty</div>
+    </div>
+    <div class="footer">Generated by MGMT ERP — VMA</div>
+  </div>
+  <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
   // ─── Rendering ───
 
   const renderSlotCell = (shelfNo: number, rowNo: number, colNo: number, isFrontRow: boolean) => {
@@ -221,6 +355,8 @@ export default function FridgeShelfPage() {
           title={`${slot.specNo} · ${slot.serialNo || ''}`}
           className="w-full rounded-lg border overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:shadow-xl cursor-pointer text-left"
           style={{
+            position: 'relative',
+            zIndex: 1,
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(0,113,227,0.18) 0%, rgba(0,60,140,0.12) 100%)'
               : 'linear-gradient(135deg, rgba(0,113,227,0.10) 0%, rgba(0,80,180,0.05) 100%)',
@@ -277,6 +413,8 @@ export default function FridgeShelfPage() {
         onClick={() => handleSlotClick(shelfNo, rowNo, colNo)}
         title={`${t('p_valve.fridgeShelf.shelf')} ${shelfNo} R${rowNo}C${colNo}`}
         style={{
+          position: 'relative',
+          zIndex: 1,
           backgroundColor: frontTint || (theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
           borderColor: frontBorder || (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
           height: '68px',
@@ -379,7 +517,7 @@ export default function FridgeShelfPage() {
               {t('p_valve.fridgeShelf.subtitle')}
             </p>
           </div>
-          <div className="flex gap-4 text-[13px]">
+          <div className="flex items-center gap-4 text-[13px]">
             <div className="text-center">
               <div className="font-semibold text-[18px]" style={{ color: colors.text }}>{totalCount}</div>
               <div style={{ color: colors.textTertiary }}>{t('p_valve.fridgeShelf.totalSlots')}</div>
@@ -392,6 +530,17 @@ export default function FridgeShelfPage() {
               <div className="font-semibold text-[18px]" style={{ color: '#30d158' }}>{totalCount - usedCount}</div>
               <div style={{ color: colors.textTertiary }}>{t('p_valve.fridgeShelf.availableSlots')}</div>
             </div>
+            <button
+              onClick={handlePrint}
+              disabled={loading}
+              className="ml-4 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors hover:opacity-80"
+              style={{ backgroundColor: colors.bgTertiary, color: colors.text, border: `1px solid ${colors.border}` }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18.75 7.131H5.25" />
+              </svg>
+              Print
+            </button>
           </div>
         </div>
 
@@ -406,12 +555,11 @@ export default function FridgeShelfPage() {
               className="w-full max-w-[700px]"
               style={{
                 transform: 'rotateX(2deg)',
-                transformStyle: 'preserve-3d',
               }}
             >
               {/* Fridge body */}
               <div
-                className="rounded-2xl overflow-hidden"
+                className="rounded-2xl overflow-clip"
                 style={{
                   background: theme === 'dark'
                     ? 'linear-gradient(180deg, #3a4050 0%, #2a3040 50%, #252a35 100%)'
@@ -578,8 +726,8 @@ export default function FridgeShelfPage() {
                           <option value="">{t('p_valve.fridgeShelf.selectSerial')}</option>
                           {(eligibleMap[placeSpec] || [])
                             .filter(p => !p.alreadyInFridge)
-                            .map(p => (
-                              <option key={p.serialNo} value={p.serialNo}>
+                            .map((p, idx) => (
+                              <option key={`${p.serialNo}-${p.status}-${idx}`} value={p.serialNo}>
                                 {p.serialNo} · {p.status}{p.expDate ? ` · Exp: ${p.expDate}` : ''}
                               </option>
                             ))

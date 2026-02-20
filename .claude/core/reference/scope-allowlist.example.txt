@@ -1,0 +1,4 @@
+# one regex per line
+^\.claude/core/scripts/.*
+^\.claude/core/reference/.*
+^\.claude/projects/mgmt/data/(plans|audits)/.*

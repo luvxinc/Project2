@@ -354,7 +354,19 @@
       "vmaEmployees": "Employee Management",
       "vmaDepartments": "Department & Duties",
       "vmaTrainingSop": "Training SOP",
-      "vmaTraining": "Training Records"
+      "vmaTraining": "Training Management",
+      "vmaTrainingRecords": "Training Records",
+      "vmaTruvalve": "TruValve",
+      "vmaTruvalveManage": "Manage TruValve",
+      "vmaPvalve": "P-Valve",
+      "vmaPvalveInventory": "Inventory",
+      "vmaPvalveClinicalCase": "Clinical Case",
+      "vmaPvalveDeliverySystem": "Delivery System",
+      "vmaPvalveOverview": "Overview",
+      "vmaPvalveDemoInventory": "Demo Inventory",
+      "vmaPvalveFridgeShelf": "Fridge Shelf",
+      "vmaPvalveProductMgmt": "Product Management",
+      "vmaPvalveSiteMgmt": "Site Management"
     },
     "notice": {
       "title": "Operation Notes",

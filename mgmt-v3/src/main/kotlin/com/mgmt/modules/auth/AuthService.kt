@@ -87,6 +87,12 @@ class AuthService(
         // Create session in Redis
         sessionService.createSession(user.id, jwtTokenProvider.getAccessTokenExpirationSec())
 
+        // Cache permissions in Redis for PermissionCheckAspect
+        val permKeys = extractPermissionKeys(user.permissions)
+        if (permKeys.isNotEmpty()) {
+            sessionService.cachePermissions(user.id, permKeys)
+        }
+
         // Update last login
         user.lastLoginAt = Instant.now()
         userRepo.save(user)
@@ -195,6 +201,17 @@ class AuthService(
         }
     }
 
+    private val summaryMapper = com.fasterxml.jackson.databind.ObjectMapper()
+
+    private fun parseJsonField(json: String?): Any? {
+        if (json.isNullOrBlank()) return null
+        return try {
+            summaryMapper.readValue(json, Map::class.java)
+        } catch (e: Exception) {
+            json
+        }
+    }
+
     private fun mapToSummary(user: User): UserSummary = UserSummary(
         id = user.id,
         username = user.username,
@@ -202,9 +219,26 @@ class AuthService(
         displayName = user.displayName,
         status = user.status.name,
         roles = user.roles.toList(),
-        permissions = user.permissions,
-        settings = user.settings,
+        permissions = parseJsonField(user.permissions),
+        settings = parseJsonField(user.settings),
         lastLoginAt = user.lastLoginAt,
         createdAt = user.createdAt,
     )
+
+    /**
+     * Extract flat permission keys from the user's JSON permissions string.
+     * Input: '{"module.vma":true,"module.sales":false}'
+     * Output: ["module.vma"]  (only keys with value=true)
+     */
+    private fun extractPermissionKeys(permissionsJson: String?): List<String> {
+        if (permissionsJson.isNullOrBlank()) return emptyList()
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            val map = summaryMapper.readValue(permissionsJson, Map::class.java) as Map<String, Any?>
+            map.entries.filter { it.value == true }.map { it.key }
+        } catch (e: Exception) {
+            log.warn("Failed to parse permissions JSON: {}", e.message)
+            emptyList()
+        }
+    }
 }
