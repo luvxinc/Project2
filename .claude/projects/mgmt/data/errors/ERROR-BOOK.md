@@ -13,6 +13,9 @@
 | `overflow`, `dropdown`, `absolute`, `z-index`, `裁剪`, `filter` | ERR-004 | 🔴 |
 | `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion` | ERR-005 | 🔴 |
 | `猜测`, `creativity`, `UVP规则`, `不懂就问` | ERR-006 | 🔴 |
+| `V1迁移`, `复刻`, `sheet_to_json`, `Excel模板`, `cell偏移` | ERR-007 | 🔴 |
+| `status`, `shipping_status`, `active/cancelled`, `not_shipped` | ERR-008 | 🔴 |
+| `API_BASE_URL`, `hardcode端口`, `3001`, `8080`, `getApiBaseUrlCached` | ERR-009 | 🔴 |
 
 ---
 
@@ -195,4 +198,49 @@ CSS `overflow: hidden` 会裁剪所有超出边界的子元素, 包括绝对定�
 
 ---
 
-*Version: 1.2 — Updated: 2026-02-18*
+## ERR-007: V1→V3 迁移 — Excel sheet_to_json 列偏移
+
+- **触发关键词**: `V1迁移`, `复刻`, `sheet_to_json`, `Excel模板`, `cell偏移`, `in_po_upload`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-20
+- **发生次数**: 3 (模板生成、上传解析、导出)
+
+### 错误描述
+SheetJS `sheet_to_json({header:1})` 在 sheet range 从 B1 开始时，B 列映射到数组 index 0（不是 1）。导致 `rows[0][1]` 读到 C1 而非 B1，所有 cell 位置偏移一列。前端解析器因此检测不到 V1 模板格式，走了 fallback（从零生成空白文件）。
+
+### 铁律
+**Excel 操作必须用直接 cell 引用 `ws['B1']?.v`，禁止用 `sheet_to_json` 数组索引。必须写 round-trip 自动化测试验证。**
+
+---
+
+## ERR-008: V1→V3 迁移 — 发明不存在的 status 概念
+
+- **触发关键词**: `status`, `shipping_status`, `active/cancelled`, `not_shipped`, `复刻`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-20
+- **发生次数**: 1
+
+### 错误描述
+V3 首版实现用了 `active/cancelled/completed` 状态体系，这是 Agent 自己发明的概念。V1 实际用 `shipping_status` (not_shipped/partially_shipped/fully_shipped) + `is_deleted` (boolean)，两者完全不同。
+
+### 铁律
+**V1→V3 迁移必须先逐行读完 V1 源码。禁止用"我觉得应该是"替代"V1 实际是"。所有字段、状态、枚举值必须从 V1 代码中抄写，不得创造。**
+
+---
+
+## ERR-009: 前端 API base URL hardcode
+
+- **触发关键词**: `API_BASE_URL`, `hardcode端口`, `3001`, `8080`, `getApiBaseUrlCached`, `fetch`
+- **严重度**: 🔴 CRITICAL
+- **首次发生**: 2026-02-20
+- **发生次数**: 2 (模板下载、导出下载)
+
+### 错误描述
+在 `downloadTemplate()` 和 `handleExport()` 中 hardcode `window.location.hostname:3001/api` 作为 base URL。实际后端在 `8080/api/v1`。导致 fetch 失败，走 fallback（前端生成空白 Excel 而非后端模板）。
+
+### 铁律
+**所有前端 API 调用统一用 `getApiBaseUrlCached()`（来自 `@/lib/api-url`）。禁止 hardcode 端口号或路径。**
+
+---
+
+*Version: 1.3 — Updated: 2026-02-20*

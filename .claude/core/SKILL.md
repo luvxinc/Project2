@@ -104,6 +104,28 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 > 完整的 14 个 skill 入口表见项目根目录 `CLAUDE.md`。以上仅为核心工作流。
 
+### 快速操作索引 (Quick Operations — ECC 命令层对齐)
+
+> **ECC 有 30 个细粒度命令; 本框架用工作流覆盖同等能力。**
+> 下表为 ECC 命令 → 框架等效路径的映射, 方便快速定位。
+
+| ECC 命令 | 操作 | 框架等效路径 | 入口 |
+|----------|------|-------------|------|
+| `/plan` | 需求分析 → 实现计划 | `build.md` §1-§2 | `/build` |
+| `/review` | 代码审查 | `guard.md` §2 + 完整内联清单 | `/review` |
+| `/test` | 运行测试 | `common.md` §5 验证循环 | `/qa-gate` |
+| `/debug` | 调试定位 | `guard.md` §5 + `root-cause-classifier.md` | `/guard` |
+| `/tdd-start` `/tdd-verify` | TDD 红绿重构 | `guard.md` §1 | `/guard` |
+| `/commit` `/pr` `/changelog` | Git 版本管理 | `build.md` §6 + `common.md` §2 | `/build` 闭环 |
+| `/security-scan` `/audit` | 安全扫描 | `guard.md` §3 + `common.md` §4 | `/guard` or `/qa-gate` |
+| `/multi-*` `/pm2` | 多代理编排 | Orchestrator-Worker 蜂群 | `/team` |
+| `/instinct-*` `/evolve` | 持续学习 | `continuous-learning.md` 本能架构 | 自动触发 |
+| `/skill-create` | 从仓库生成 Skill | `learn.md` 学习/切片/去重 | `/learn` |
+
+> **Express 快速通道:** 满足 4 条件 (≤2 文件, 无 DB 变更, 无安全变更, 非重构) 的任务走 Express Path, 跳过完整状态机 — 等效于 ECC 的原子命令体验。详见 `/start` Express 判定。
+
+---
+
 ### 客户项目 (L4 — 仅在项目上下文时加载)
 
 | 关键词 | 入口文件 | 说明 |
@@ -114,8 +136,9 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 | 工具 | 目录 | 何时加载 |
 |------|------|---------|
+| **Anthropic Agent Bible** | [`warehouse/tools/anthropic-agent-bible/`](../warehouse/tools/anthropic-agent-bible/) | **15 篇核心博客精华 — 金字塔五层** (L1 基础→L5 生产) |
 | ECC | [`warehouse/tools/everything-claude-code/`](../warehouse/tools/everything-claude-code/) | Agent 系统设计/审查清单 |
-| **Agent Research 2025** | [`warehouse/tools/agent-research-2025/`](../warehouse/tools/agent-research-2025/) | **最新 Agent 设计原则** (Context/Tool/Eval/Multi-Agent) |
+| Agent Research 2025 | [`warehouse/tools/agent-research-2025/`](../warehouse/tools/agent-research-2025/) | Agent 设计原则补充 (Context/Tool/Eval/Multi-Agent) |
 | UI UX Pro | [`warehouse/tools/ui-ux-pro-max/`](../warehouse/tools/ui-ux-pro-max/) | 选风格/配色/UX 审查 |
 | Anthropic Skills | [`warehouse/tools/anthropic-skills/`](../warehouse/tools/anthropic-skills/) | 创建新 Skill |
 | Knowledge Plugins | [`warehouse/tools/knowledge-work-plugins/`](../warehouse/tools/knowledge-work-plugins/) | 创建插件 |
@@ -202,5 +225,5 @@ DRAFT → SPEC → CONFIRMED → ASSIGNED → IN_PROGRESS
 
 ---
 
-*Version: 3.5.0 — P2 补全：e2e-testing.md 路由 + 规则 8/9 + Agent Research 2025*
+*Version: 3.6.0 — 新增快速操作索引 (ECC 命令层对齐)*
 *Updated: 2026-02-19*

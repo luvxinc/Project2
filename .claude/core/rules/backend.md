@@ -26,6 +26,8 @@
 - [ ] **Domain 层零框架依赖** — `domain/model/` 下无 Spring 注解
 - [ ] **DTO ⇄ Entity 分离** — Controller 不直接暴露 JPA Entity
 - [ ] **测试覆盖** — 新 UseCase ≥ 80% 覆盖率
+- [ ] **无同步 I/O 阻塞** — 协程/异步上下文中无阻塞调用 (B11)
+- [ ] **缓存策略** — 高频读取的数据有缓存层 (Redis/本地), 写操作有失效策略
 
 ---
 
@@ -43,6 +45,7 @@
 | B8 | 可变状态用于值对象 | 数据被意外修改 | 不可变类型 + copy 模式 |
 | B9 | 手动管理数据库连接 | 连接泄漏 | 使用框架连接池（见 CONTEXT.md §3）|
 | B10 | 无界查询 (SELECT * 无 LIMIT) | 内存溢出 | 必须有分页或 LIMIT |
+| B11 | 同步 I/O 在协程/异步上下文中 | 线程池饥饿, 吞吐量骤降 | 用异步客户端 (WebClient) 或 `Dispatchers.IO` 隔离 |
 
 ---
 
@@ -56,6 +59,7 @@
 | DB 连接池 | 空闲 ≥ 5, 峰值 ≤ 80% max | 连接池 metrics（见 CONTEXT.md §3）|
 | 单个查询 | ≤ 100ms (EXPLAIN ANALYZE) | SQL 分析 |
 | 无全表扫描 | 高频查询有索引 | EXPLAIN ANALYZE |
+| 缓存命中率 | 高频数据 ≥ 90% 命中率 | Redis metrics / 日志打点 |
 
 ---
 
@@ -99,5 +103,5 @@ find src/main/resources/db/migration -name "*.sql" -newer .git/HEAD
 
 ---
 
-*Version: 1.0.0 — 后端自检 Rules*
-*Created: 2026-02-15*
+*Version: 1.1.0 — 新增 B11 同步I/O阻塞 + 缓存策略检查 + 缓存命中率红线 (ECC 对齐)*
+*Created: 2026-02-15 | Updated: 2026-02-19*

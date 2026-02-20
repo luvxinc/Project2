@@ -25,6 +25,7 @@
 - [ ] **响应式** — 新增 UI 在 mobile/tablet/desktop 都不崩溃
 - [ ] **无 console.log** — 调试用的全部删除
 - [ ] **无 TODO 残留** — 提交代码中不含 TODO (或已有对应 ticket)
+- [ ] **无过期闭包** — 事件处理器/回调中引用的 state 确保是最新值 (F11)
 
 ---
 
@@ -42,6 +43,7 @@
 | F8 | `useMemo`/`useCallback` 滥用 | 不必要的记忆化开销 | 只在有实测性能问题时使用 |
 | F9 | 在条件/循环中使用 Hook | React Hooks 规则违反 | Hook 只在顶层使用 |
 | F10 | 忽略 TypeScript 错误 (`@ts-ignore`) | 类型安全被绕过 | 修复类型, 非忽略 |
+| F11 | 过期闭包 (事件处理器捕获过期 state) | 点击/提交时操作基于旧数据 | 用 `useRef` 持有最新值, 或确保事件处理器在 deps 中更新 |
 
 ---
 
@@ -54,6 +56,7 @@
 | 列表虚拟化 | 列表 > 50 项必须虚拟化 | 代码审查 |
 | 图片优化 | 必须用 `next/image` | 代码审查 |
 | Font 加载 | 用 `next/font` 避免 FOUT | 代码审查 |
+| 不必要重渲染 | 内联对象/函数作 prop 导致子组件每次重渲染 | React DevTools Profiler |
 
 ---
 
@@ -85,5 +88,5 @@ grep -r "t('" src/ --include="*.tsx" | grep -oE "t\('[^']+'\)" | sort -u > /tmp/
 
 ---
 
-*Version: 1.0.0 — 前端自检 Rules*
-*Created: 2026-02-15*
+*Version: 1.1.0 — 新增 F11 过期闭包 + 不必要重渲染检查 + 过期闭包 Checklist (ECC 对齐)*
+*Created: 2026-02-15 | Updated: 2026-02-19*

@@ -125,7 +125,9 @@ PM 领悟 (§2) → Wizard 采集 (requirements.md Phase 1)
 > **加载:** `skills/chief-engineer.md` §2-§3, 然后按域加载 `skills/domains/*.md`
 
 ```
-CTO 审查交接包 → 按 PM 标注的域加载域索引 (domains/*.md)
+CTO 审查交接包
+    → 🧠 THINK (§12): 需求清晰吗? 依赖关系? 域边界? 假设需验证?
+    → 按 PM 标注的域加载域索引 (domains/*.md)
     → 域索引定位具体工程师 SOP + section
     → 分解子任务 → 分配
     → 输出任务分配单 → 存 .claude/projects/{project}/data/plans/
@@ -193,7 +195,7 @@ Phase 失败处理:
 
 ### 3.1 执行规则
 
-规则真相源：`rules/common.md`（§1/§5/§6/§9）、`rules/frontend.md`、`rules/backend.md`、`skills/memory.md`、`skills/collaboration.md §7`、`projects/mgmt/reference/iron-laws.md`。
+规则真相源：`rules/common.md`（§1/§5/§6/§9/§12 Think/§13 Token-Efficient）、`rules/frontend.md`、`rules/backend.md`、`skills/memory.md`、`skills/collaboration.md §7`、`projects/mgmt/reference/iron-laws.md`。
 
 执行最小清单：① 严格按工单+Spec，禁止猜测。② 每步更新 TRACKER，涉及共享模块做消费者追溯。③ 增量验证（子任务完即编译/类型检查）。④ 交付前通过验证门禁（编译/类型/lint/测试/覆盖率/安全）+ 功能性验证。⑤ 逐条对照用户需求打勾，未验证项不得宣称完成。
 
@@ -236,6 +238,7 @@ Phase 失败处理:
 
 ```
 CTO 汇总完工报告 → 执行验证清单 (CTO SOP §5.1)
+    → 🧠 THINK (§12): 证据充分吗? 有遗漏的维度吗? 置信度 >80%?
     → 按审批标准判定:
       ✅ Approve (零 CRITICAL/HIGH): 打包审计包 → QA
       ⚠️ Warning (仅 HIGH): 记录 + CTO 判断是否放行 → QA 或 REWORK
@@ -277,6 +280,7 @@ CTO 汇总完工报告 → 执行验证清单 (CTO SOP §5.1)
 ```
 QA 读 Spec → 选审计模板 (§2.5) → 执行审计清单 (§2.2)
     → 影响半径分析 (§2.6) → 输出审计报告 (§2.3)
+    → 🧠 THINK (§12): 所有检查项都覆盖了吗? 有隐藏风险吗? 判定置信度?
     → 按审批标准判定:
       ✅ Approve (零 CRITICAL/HIGH): 交 PM
       ⚠️ Warning: 仅 HIGH → 记录建议, 可交 PM 但标注风险
