@@ -12,6 +12,7 @@ import zhChangelog from '../../../packages/shared/i18n/locales/zh/changelog.json
 import zhNav from '../../../packages/shared/i18n/locales/zh/nav.json';
 import zhLogs from '../../../packages/shared/i18n/locales/zh/logs.json';
 import zhProducts from '../../../packages/shared/i18n/locales/zh/products.json';
+import zhPurchase from '../../../packages/shared/i18n/locales/zh/purchase.json';
 import zhVma from '../../../packages/shared/i18n/locales/zh/vma.json';
 
 // English
@@ -25,6 +26,7 @@ import enChangelog from '../../../packages/shared/i18n/locales/en/changelog.json
 import enNav from '../../../packages/shared/i18n/locales/en/nav.json';
 import enLogs from '../../../packages/shared/i18n/locales/en/logs.json';
 import enProducts from '../../../packages/shared/i18n/locales/en/products.json';
+import enPurchase from '../../../packages/shared/i18n/locales/en/purchase.json';
 import enVma from '../../../packages/shared/i18n/locales/en/vma.json';
 
 // Vietnamese (Only VMA — others fallback to EN per Iron Law R6)
@@ -46,6 +48,7 @@ const messages = {
     nav: zhNav,
     logs: zhLogs,
     products: zhProducts,
+    purchase: zhPurchase,
     vma: zhVma,
   },
   en: {
@@ -59,6 +62,7 @@ const messages = {
     nav: enNav,
     logs: enLogs,
     products: enProducts,
+    purchase: enPurchase,
     vma: enVma,
   },
   // Vietnamese: Only VMA has real VI translations.
@@ -74,6 +78,7 @@ const messages = {
     nav: enNav,
     logs: enLogs,
     products: enProducts,
+    purchase: enPurchase, // Fallback to EN (no VI translations for purchase)
     vma: viVma, // ← Only VMA uses real Vietnamese
   },
 };

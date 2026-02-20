@@ -50,6 +50,7 @@ class CreateProductUseCase(
             cogs = cogs,
             weight = dto.weight ?: 0,
             upc = dto.upc,
+            createdBy = username,
         ))
 
         log.info("Product created: {}", sku)

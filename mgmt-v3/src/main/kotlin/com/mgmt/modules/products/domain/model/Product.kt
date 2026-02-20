@@ -1,6 +1,7 @@
 package com.mgmt.modules.products.domain.model
 
 import jakarta.persistence.*
+import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -58,6 +59,12 @@ class Product(
 
     @Column(name = "updated_by", length = 36)
     var updatedBy: String? = null,
+
+    var moq: Int? = null,
+
+    @Version
+    @Column(nullable = false)
+    var version: Long = 0,
 )
 
 enum class ProductStatus {

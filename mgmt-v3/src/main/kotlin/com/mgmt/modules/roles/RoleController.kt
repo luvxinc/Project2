@@ -1,5 +1,6 @@
 package com.mgmt.modules.roles
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.modules.auth.dto.*
 import jakarta.validation.Valid
@@ -21,11 +22,13 @@ class RoleController(
     }
 
     @PostMapping
+    @AuditLog(module = "ROLE", action = "CREATE_ROLE", riskLevel = "HIGH")
     fun create(@Valid @RequestBody request: CreateRoleRequest): ApiResponse<RoleResponse> {
         return ApiResponse.ok(roleService.create(request))
     }
 
     @PatchMapping("/{id}")
+    @AuditLog(module = "ROLE", action = "UPDATE_ROLE", riskLevel = "HIGH")
     fun update(
         @PathVariable id: String,
         @Valid @RequestBody request: UpdateRoleRequest,
@@ -34,12 +37,14 @@ class RoleController(
     }
 
     @DeleteMapping("/{id}")
+    @AuditLog(module = "ROLE", action = "DELETE_ROLE", riskLevel = "CRITICAL")
     fun delete(@PathVariable id: String): ApiResponse<Map<String, String>> {
         roleService.delete(id)
         return ApiResponse.ok(mapOf("message" to "角色已删除"))
     }
 
     @PostMapping("/seed")
+    @AuditLog(module = "ROLE", action = "SEED_ROLES")
     fun seed(): ApiResponse<Map<String, Any>> {
         val seeded = roleService.seed()
         return ApiResponse.ok(mapOf("seeded" to seeded, "message" to "角色初始化完成"))
@@ -53,6 +58,7 @@ class RoleController(
     }
 
     @PutMapping("/{id}/boundaries")
+    @AuditLog(module = "ROLE", action = "SET_BOUNDARIES", riskLevel = "HIGH")
     fun setBoundaries(
         @PathVariable id: String,
         @Valid @RequestBody request: SetBoundariesRequest,
@@ -62,6 +68,7 @@ class RoleController(
     }
 
     @PostMapping("/{id}/boundaries")
+    @AuditLog(module = "ROLE", action = "ADD_BOUNDARY")
     fun addBoundary(
         @PathVariable id: String,
         @Valid @RequestBody request: BoundaryRequest,
@@ -70,6 +77,7 @@ class RoleController(
     }
 
     @DeleteMapping("/{id}/boundaries/{permissionKey}")
+    @AuditLog(module = "ROLE", action = "REMOVE_BOUNDARY", riskLevel = "HIGH")
     fun removeBoundary(
         @PathVariable id: String,
         @PathVariable permissionKey: String,

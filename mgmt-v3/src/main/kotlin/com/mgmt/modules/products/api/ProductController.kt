@@ -7,10 +7,12 @@ import com.mgmt.common.response.PagedResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
 import com.mgmt.modules.auth.JwtTokenProvider
+import com.mgmt.common.exception.BusinessException
 import com.mgmt.modules.products.application.dto.*
 import com.mgmt.modules.products.application.usecase.*
 import com.mgmt.modules.products.domain.model.Product
 import com.mgmt.modules.products.infrastructure.barcode.BarcodeGeneratorService
+import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -103,7 +105,7 @@ class ProductController(
     @RequirePermission("module.products.catalog.create")
     @SecurityLevel(level = "L3", actionKey = "btn_create_skus")
     @AuditLog(module = "PRODUCTS", action = "CREATE_PRODUCT", riskLevel = "MEDIUM")
-    fun create(@RequestBody dto: CreateProductRequest): ResponseEntity<Any> =
+    fun create(@Valid @RequestBody dto: CreateProductRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.ok(toResponse(createUseCase.create(dto, currentUsername()))))
 
@@ -119,8 +121,9 @@ class ProductController(
 
     @PatchMapping("/{id}")
     @RequirePermission("module.products.catalog.cogs")
+    @SecurityLevel(level = "L2", actionKey = "btn_update_cogs")
     @AuditLog(module = "PRODUCTS", action = "UPDATE_PRODUCT", riskLevel = "MEDIUM")
-    fun update(@PathVariable id: String, @RequestBody dto: UpdateProductRequest): ResponseEntity<Any> =
+    fun update(@PathVariable id: String, @Valid @RequestBody dto: UpdateProductRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(updateUseCase.update(id, dto, currentUsername()))))
 
     @PostMapping("/cogs/batch")
@@ -158,7 +161,7 @@ class ProductController(
         val result = barcodeService.generateBatch(serviceItems)
 
         if (!result.success || result.pdfBytes == null) {
-            return ResponseEntity.badRequest().body(null)
+            throw BusinessException(result.error ?: "Barcode generation failed")
         }
 
         return ResponseEntity.ok()
@@ -173,7 +176,7 @@ class ProductController(
         id = p.id, sku = p.sku, name = p.name,
         category = p.category, subcategory = p.subcategory, type = p.type,
         cost = p.cost.toDouble(), freight = p.freight.toDouble(),
-        cogs = p.cogs.toDouble(), weight = p.weight, upc = p.upc,
+        cogs = p.cogs.toDouble(), weight = p.weight, moq = p.moq, upc = p.upc,
         status = p.status.name,
         createdAt = p.createdAt, updatedAt = p.updatedAt,
     )

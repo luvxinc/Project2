@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 const ROUTE_TO_PERMISSION: Record<string, string> = {
+  '/purchase': 'module.purchase',
   '/products': 'module.products',
   '/vma':      'module.vma',
   '/users':    'module.user_admin',

@@ -16,16 +16,24 @@ data class ProductQueryParams(
 // ═══════════ Create DTOs (V1 parity: 5 fields) ═══════════
 
 data class CreateProductRequest(
+    @field:jakarta.validation.constraints.NotBlank(message = "SKU is required")
+    @field:jakarta.validation.constraints.Pattern(regexp = "^[A-Za-z0-9/_\\-]+$", message = "SKU can only contain letters, numbers, slashes, hyphens, and underscores")
     val sku: String,
     val name: String? = null,
     val category: String? = null,
     val subcategory: String? = null,
     val type: String? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "Cost must be >= 0")
     val cost: BigDecimal? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "Freight must be >= 0")
     val freight: BigDecimal? = null,
+    @field:jakarta.validation.constraints.Min(value = 0, message = "Weight must be >= 0")
     val weight: Int? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "COGS must be >= 0")
     val cogs: BigDecimal? = null,
     val upc: String? = null,
+    @field:jakarta.validation.constraints.Min(value = 0, message = "MOQ must be >= 0")
+    val moq: Int? = null,
 )
 
 data class BatchCreateProductRequest(
@@ -39,12 +47,18 @@ data class UpdateProductRequest(
     val category: String? = null,
     val subcategory: String? = null,
     val type: String? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "Cost must be >= 0")
     val cost: BigDecimal? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "Freight must be >= 0")
     val freight: BigDecimal? = null,
+    @field:jakarta.validation.constraints.Min(value = 0, message = "Weight must be >= 0")
     val weight: Int? = null,
+    @field:jakarta.validation.constraints.DecimalMin(value = "0", message = "COGS must be >= 0")
     val cogs: BigDecimal? = null,
     val upc: String? = null,
     val status: String? = null,
+    @field:jakarta.validation.constraints.Min(value = 0, message = "MOQ must be >= 0")
+    val moq: Int? = null,
 )
 
 // V1 parity: COGS batch update sends {id, cogs}
@@ -91,10 +105,11 @@ data class ProductResponse(
     val freight: Double,
     val cogs: Double,
     val weight: Int,
+    val moq: Int?,
     val upc: String?,
     val status: String,
-    val createdAt: Any,
-    val updatedAt: Any,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 )
 
 data class BatchResult(
