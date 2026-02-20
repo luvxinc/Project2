@@ -9,16 +9,20 @@
 | 关键词 | 跳转 |
 |--------|------|
 | `代码风格`, `命名`, `不可变` | → §1 代码风格 |
-| `Git`, `commit`, `分支` | → §2 Git 纪律 |
+| `Git`, `commit`, `分支`, `conventional` | → §2 Git 纪律 + §2.1 Conventional Commits |
 | `验证`, `测试`, `编译`, `lint` | → §5 验证循环 (集成测试门禁) |
 | `影响分析`, `消费者`, `共享模块` | → §6 跨文件影响分析 + 共享模块追溯 |
 | `React`, `Next.js`, `组件` | → §7 React/Next.js 规则 |
 | `Spring`, `后端` | → §8 后端规则 |
 | `拆分`, `复用`, `300行`, `新建文件` | → §9 代码拆分与复用 |
 | `死循环`, `卡死`, `timeout`, `重试` | → §10 反死循环与终端安全执行 |
-| `hooks`, `PreToolUse`, `PostToolUse`, `Stop` | → §10.1 Hooks 执行拦截 |
+| `hooks`, `PreToolUse`, `PostToolUse`, `Stop`, `拦截` | → §10.4 Hooks 执行拦截 |
 | `重构`, `迁移`, `等价`, `像素级审计` | → §11 重构保真门禁 |
-| `复盘`, `错误记录`, `ERROR-BOOK`, `交叉检查` | → §12 问题复盘铁律 |
+| `Think`, `推理`, `停下来想`, `行动前`, `链式思考` | → §12 Think Discipline |
+| `Token`, `编排`, `脚本处理`, `大数据`, `中间结果` | → §13 Token-Efficient Execution |
+| `复盘`, `错误记录`, `ERROR-BOOK`, `交叉检查` | → §14 问题复盘铁律 |
+| `性能`, `复杂度`, `O(n)`, `内存`, `分页` | → §15 性能意识 |
+| `设计模式`, `Factory`, `DI`, `AOP`, `DTO` | → §16 设计模式优先 |
 
 ## 0. 变更边界铁律（scope-discipline）
 
@@ -70,9 +74,25 @@
 
 | 规则 | 标准 |
 |------|------|
+| Commit 格式 | **Conventional Commits** — `type(scope): description` |
 | Commit 粒度 | 一个逻辑变更 = 一个 commit |
 | 分支策略 | feature/ → develop → main |
 | 合并前 | 必须通过验证循环 6 阶段 |
+
+### 2.1 Conventional Commits 类型
+
+| type | 用途 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | Bug 修复 |
+| `docs` | 文档变更 |
+| `style` | 格式调整（不影响逻辑） |
+| `refactor` | 重构（不改功能、不修 Bug） |
+| `test` | 测试相关 |
+| `chore` | 构建/CI/依赖等杂务 |
+| `perf` | 性能优化 |
+
+格式：`type(scope): 简短描述`，scope 可选。示例：`feat(product): add barcode generation API`
 
 ---
 
@@ -121,6 +141,8 @@
 
 **关键: 阶段 1 失败 = 后续全部 STOP, 不继续。**
 **🔴 铁律: 集成测试 (阶段 4) 不通过 = 禁止提交完工报告, 发回工程师重做。(详见 `{project}/reference/iron-laws.md` §4)**
+
+> **Token-Efficient (§13)**: 6 阶段验证应优先使用 `core/scripts/qa-gate.sh` 一次性编排, 避免逐阶段回到 Agent 浪费 Token。大型测试输出用脚本预处理后返回摘要。
 
 ### 验证失败重试协议
 
@@ -225,9 +247,6 @@ grep -r "{SharedModuleName}" --include="*.kt" --include="*.ts" --include="*.tsx"
 
 ---
 
-*Version: 2.1.0 — 新增 §12 问题复盘铁律（统一真相源）*
-*Created: 2026-02-15 | Updated: 2026-02-19*
-
 ---
 
 ## 9. 代码拆分与复用 (🔴 强制)
@@ -289,13 +308,23 @@ grep -r "{SharedModuleName}" --include="*.kt" --include="*.ts" --include="*.tsx"
 
 - 推荐统一包装器：`core/scripts/safe-exec.sh`
 - 所有高风险命令优先用包装器执行，确保 timeout 与输出边界生效。
+- 大数据量操作同时遵守 §13 Token-Efficient Execution (脚本编排, 中间结果不进 context)。
 
-### 10.4 Hooks 执行拦截（新增）
+### 10.4 Hooks 执行拦截
 
-- PreToolUse：执行前必须过 `core/scripts/hook-pretool.sh`
-- PostToolUse：关键写操作后执行 `core/scripts/hook-posttool.sh`
-- Stop：任务收尾执行 `core/scripts/hook-stop.sh`
-- 任一 Hook 失败：不得宣称任务完成
+**机制原理**：Hooks 是 Claude Code 的**真实系统级拦截**，由 `.claude/settings.json` 中 `hooks` 字段配置。它们是 shell 脚本，在工具调用前后由宿主进程自动执行——不是 Agent 自己调用的，而是**系统强制注入的**。
+
+| 生命周期 | 触发时机 | 脚本 |
+|---------|---------|------|
+| PreToolUse | 工具调用**执行前**，系统自动拦截 | `core/scripts/hook-pretool.sh` |
+| PostToolUse | 写操作**执行后**，系统自动检查 | `core/scripts/hook-posttool.sh` |
+| Stop | Agent 任务**结束前**，系统自动收尾 | `core/scripts/hook-stop.sh` |
+
+**关键认知**：
+- Hook 返回非零退出码 → 工具调用被**系统阻止**，不是 Agent 的选择
+- 被 Hook 拦截时：读取 Hook 输出的错误信息，按提示修正后重试，不要猜测原因
+- 任一 Hook 失败 → 不得宣称任务完成
+- Hook 的判断是确定性的（基于 shell 逻辑），不存在"绕过"或"忽略"的可能
 
 ---
 
@@ -325,7 +354,92 @@ grep -r "{SharedModuleName}" --include="*.kt" --include="*.ts" --include="*.tsx"
 
 ---
 
-## 12. 问题复盘铁律（🔴 强制 — 每次错误修复后必做）
+## 12. Think Discipline — 行动前链式推理（🔴 关键决策点强制）
+
+> **来源**: Anthropic "The Think Tool" — 复杂顺序决策前停下来想, 一致性提升 54%。
+> **原理**: 错误在顺序决策中会累积; 行动前显式推理能打断盲目执行链。
+
+### 12.1 何时必须 Think
+
+| 触发点 | 角色 | Think 内容 |
+|--------|------|-----------|
+| 任务分解前 | CTO | 需求是否清晰? 依赖关系? 域边界? 哪些假设需要验证? |
+| 工具结果返回后 | 工程师 | 结果是否符合预期? 是否需要追加操作? 是否触发了新风险? |
+| 审计判定前 | CTO/QA | 收集的证据是否充分? 有没有遗漏的维度? 置信度是否 >80%? |
+| Bug 修复前 | 工程师 | 根因确认了吗? 修的是症状还是根因? 有同类代码吗? |
+| 破坏性操作前 | 任何人 | R0 三问: 会丢数据吗? 可逆吗? 影响现有记录吗? |
+
+### 12.2 Think 输出格式 (内部推理, 不输出给用户)
+
+```
+THINK:
+  已知: [收集到的事实/工具结果]
+  约束: [适用的规则/铁律/Spec 要求]
+  选项: [可能的方案 A/B/C]
+  风险: [每个方案的风险]
+  决定: [选择方案 X, 因为...]
+  下一步: [具体行动]
+```
+
+### 12.3 Think vs 直接执行
+
+| 场景 | 做法 |
+|------|------|
+| 简单顺序操作 (创建文件/运行测试) | 直接执行, 不需要 Think |
+| 复杂策略决策 (分解任务/选方案) | **必须 Think** |
+| 多步工具链 (>3 步依赖) | **必须在关键分支点 Think** |
+| 错误诊断 | **必须先 Think 再改代码** (与 root-cause-classifier 联动) |
+
+> **衡量标准**: 用 pass^k (k 次全部通过) 衡量一致性, 非 pass@k。
+
+---
+
+## 13. Token-Efficient Execution — 代码编排优先（大数据操作强制）
+
+> **来源**: Anthropic "Code Execution with MCP" — 代码编排比顺序工具调用节省 98.7% Token。
+> **原理**: 中间数据在沙箱/脚本中处理, 只将最终结果返回 context, 避免 Token 膨胀。
+
+### 13.1 何时使用代码编排
+
+| 场景 | Token 影响 | 做法 |
+|------|-----------|------|
+| 处理大数据集 (>100 行结果) | 全量进 context = 膨胀 | 用脚本过滤/聚合, 只返回摘要 |
+| 3+ 依赖工具调用链 | 每步中间结果累积 | 写脚本一次性编排 |
+| 批量操作 (N 个文件/记录) | N 次调用 = N 倍 Token | `for` 循环在脚本中, 一次返回结果 |
+| 搜索 + 过滤 + 转换 | 每步都进 context | 管道在脚本中, 最终结果进 context |
+
+### 13.2 实现模式
+
+```bash
+# 反模式: 每步都回到 Agent
+grep ... → Agent 看结果 → wc ... → Agent 看结果 → sort ... → Agent 看结果
+
+# 正确模式: 一次脚本编排
+grep ... | wc -l | sort > /tmp/summary.txt && cat /tmp/summary.txt
+# Agent 只看最终摘要
+```
+
+### 13.3 文件系统作为中间缓冲
+
+大型工具输出 → 写入临时文件 → 用脚本处理 → 只将关键结果读入 context。
+
+```
+大数据流: 工具 → /tmp/raw.json → jq 过滤 → /tmp/filtered.json → 读取摘要
+```
+
+### 13.4 与现有机制的关系
+
+| 机制 | 用途 | 联动 |
+|------|------|------|
+| `core/scripts/qa-gate.sh` | 6 阶段验证一次运行 | 已符合代码编排模式 |
+| `core/scripts/safe-exec.sh` | 安全执行包装器 | 可与编排脚本结合 |
+| §10.2 终端执行防卡死 | 超时/边界控制 | 编排脚本同样需遵守 |
+
+> **铁律**: 处理 >100 行工具输出时, 禁止全量返回 context; 必须在脚本中预处理后返回摘要。
+
+---
+
+## 14. 问题复盘铁律（🔴 强制 — 每次错误修复后必做）
 
 > **真相源**: 所有工作流（build/guard/ship）中的「问题复盘铁律」均指向本节。
 
@@ -339,4 +453,36 @@ grep -r "{SharedModuleName}" --include="*.kt" --include="*.ts" --include="*.tsx"
 
 ---
 
-*Version: 2.1.0 | Updated: 2026-02-19*
+## 15. 性能意识 (performance-awareness)
+
+> **原则**: 代码不仅要正确，还要高效。时间/空间复杂度和 token 消耗都是一等约束。
+
+| 维度 | 规则 |
+|------|------|
+| **算法复杂度** | 选择数据结构和算法时必须考虑时间/空间复杂度；O(n²) 以上需注释说明为何不可避免 |
+| **查询性能** | 禁止 N+1 查询（§8）；大数据集必须分页；索引覆盖关键查询路径 |
+| **前端渲染** | 长列表用虚拟滚动；避免不必要的 re-render；大计算移到 Web Worker |
+| **Token 预算** | 遵守 §13；中间结果不进 context；批量操作用脚本编排 |
+| **内存意识** | 流式处理优于全量加载；及时释放大对象引用 |
+
+---
+
+## 16. 设计模式优先 (design-pattern-first)
+
+> **原则**: 优先采用语言/框架内置的通用设计模式，避免自造轮子。
+
+| 场景 | 优先模式 |
+|------|---------|
+| 对象创建 | Factory / Builder（Kotlin `data class` + `copy()`） |
+| 依赖管理 | Spring DI（`@Service` / `@Component`），禁止手动 `new` 服务类 |
+| 横切关注 | AOP（`@Aspect`）用于日志/审计/权限，不侵入业务代码 |
+| 状态管理 | React Context / Zustand，禁止 prop drilling >3 层（§7） |
+| 异步流程 | Kotlin Coroutines / React Suspense，禁止回调地狱 |
+| 数据转换 | DTO ↔ Entity 用 Mapper 层（`toDto()` / `toEntity()`），禁止直接暴露 Entity |
+
+**决策规则**：写新逻辑前先问——框架有没有内置方案？社区有没有标准模式？只有都没有才自己写。
+
+---
+
+*Version: 2.3.0 — 新增 §2.1 Conventional Commits + §10.4 Hook 机制说明 + §15 性能意识 + §16 设计模式优先*
+*Created: 2026-02-15 | Updated: 2026-02-20*
