@@ -89,6 +89,10 @@ class SecurityLevelAspect(
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required")
 
         // Superuser bypass (V1 parity: superusers bypass all security levels)
+        // ⚠️ SECURITY DESIGN DECISION: Superuser bypasses ALL security level checks.
+        // This matches V1 behavior where superusers (is_superuser=True) skip SecurityPolicyManager.
+        // Rationale: Superuser is the system owner and must retain emergency access.
+        // If this behavior needs to change, implement a separate "emergency mode" toggle.
         if (claims.roles.contains("superuser")) {
             return joinPoint.proceed()
         }

@@ -262,14 +262,24 @@ class BarcodeGeneratorService {
             cs.drawImage(pdfImage, dmLeft, dmBottom, DM_SIZE, DM_SIZE)
         } catch (e: Exception) {
             log.warn("Failed to generate DataMatrix for SKU {}: {}", item.sku, e.message)
-            // V1: draw "DM ERR" as fallback
-            cs.beginText()
-            cs.setFont(fontBold, 10f)
+            // Draw visible error indicator (bordered box + "DM ERR" text)
             val dmRight = PAGE_WIDTH - MARGIN
             val dmLeft = dmRight - DM_SIZE
-            cs.newLineAtOffset(dmLeft, MARGIN + DM_SIZE / 2)
+            val dmBottom = MARGIN
+            // Draw error border
+            cs.setStrokingColor(1f, 0f, 0f)  // Red border
+            cs.setLineWidth(1.5f)
+            cs.addRect(dmLeft, dmBottom, DM_SIZE, DM_SIZE)
+            cs.stroke()
+            // Draw error text
+            cs.beginText()
+            cs.setFont(fontBold, 10f)
+            cs.setNonStrokingColor(1f, 0f, 0f)  // Red text
+            cs.newLineAtOffset(dmLeft + DM_SIZE * 0.2f, dmBottom + DM_SIZE / 2)
             cs.showText("DM ERR")
             cs.endText()
+            cs.setNonStrokingColor(0f, 0f, 0f)  // Reset to black
+            cs.setStrokingColor(0f, 0f, 0f)
         }
 
         cs.close()

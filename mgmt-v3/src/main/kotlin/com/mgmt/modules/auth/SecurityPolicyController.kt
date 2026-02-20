@@ -1,5 +1,6 @@
 package com.mgmt.modules.auth
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.common.exception.ForbiddenException
 import com.mgmt.domain.auth.SecurityCodeRepository
@@ -54,6 +55,7 @@ class SecurityPolicyController(
      * Security: Requires superuser + L0 (user password) + L4 (nuclear code).
      */
     @PutMapping
+    @AuditLog(module = "SECURITY", action = "UPDATE_POLICIES", riskLevel = "CRITICAL")
     fun savePolicies(
         @Valid @RequestBody request: SecurityPolicyRequest,
         httpRequest: HttpServletRequest,
@@ -171,6 +173,7 @@ class SecurityPolicyController(
      * Body: { "keys": ["module.sales", ...], "sec_code_l0": "...", "sec_code_l4": "..." }
      */
     @PutMapping("/whitelist")
+    @AuditLog(module = "SECURITY", action = "UPDATE_WHITELIST", riskLevel = "CRITICAL")
     fun saveWhitelist(
         @RequestBody body: Map<String, Any>,
         httpRequest: HttpServletRequest,
@@ -204,6 +207,7 @@ class SecurityPolicyController(
      * Safe to call multiple times (idempotent).
      */
     @PostMapping("/whitelist/initialize")
+    @AuditLog(module = "SECURITY", action = "INIT_WHITELIST", riskLevel = "HIGH")
     fun initializeWhitelist(
         httpRequest: HttpServletRequest,
     ): ApiResponse<Map<String, Any>> {

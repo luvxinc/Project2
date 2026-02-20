@@ -9,6 +9,7 @@
   "close": "Close",
   "previous": "Previous",
   "next": "Next",
+  "back": "Back",
   "page": "Page",
   "ok": "OK",
   "networkError": "Network error",

@@ -8,7 +8,6 @@ import com.mgmt.modules.auth.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -29,6 +28,7 @@ class UserService(
     private val refreshTokenRepo: RefreshTokenRepository,
     private val sessionService: SessionService,
     private val passwordEncoder: BCryptPasswordEncoder,
+    private val objectMapper: com.fasterxml.jackson.databind.ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(UserService::class.java)
 
@@ -107,14 +107,27 @@ class UserService(
         val pageable = PageRequest.of(
             (page - 1).coerceAtLeast(0),
             limit.coerceIn(1, 100),
-            Sort.by(Sort.Direction.ASC, "username"),
         )
         val users = if (!search.isNullOrBlank()) {
             userRepo.searchActive(search, pageable)
         } else {
             userRepo.findAllActive(pageable)
         }
-        return users.map { mapToSummary(it) }
+
+        // Sort by role weight (superuser=0 first) then username
+        val sorted = users.content
+            .map { mapToSummary(it) }
+            .sortedWith(compareBy<UserSummary> { getRoleWeight(it.roles) }.thenBy { it.username })
+
+        return org.springframework.data.domain.PageImpl(sorted, pageable, users.totalElements)
+    }
+
+    private fun getRoleWeight(roles: List<String>): Int {
+        return roles.mapNotNull { ROLE_HIERARCHY[it] }.minOrNull() ?: 999
+    }
+
+    fun isUsernameAvailable(username: String): Boolean {
+        return userRepo.findByUsername(username) == null
     }
 
     fun findOne(id: String): UserSummary {
@@ -172,10 +185,19 @@ class UserService(
         request.email?.let { user.email = it }
         request.displayName?.let { user.displayName = it }
         request.status?.let { user.status = UserStatus.valueOf(it) }
+
+        val rolesChanged = request.roles != null && request.roles.toSet() != user.roles.toSet()
         request.roles?.let { user.roles = it.toTypedArray() }
         user.updatedAt = Instant.now()
-
         userRepo.save(user)
+
+        // Force logout when roles change — invalidate JWT and Redis session
+        if (rolesChanged) {
+            refreshTokenRepo.revokeAllByUserId(id)
+            sessionService.forceLogout(id)
+            log.info("Roles changed for user {}, forced logout", user.username)
+        }
+
         return mapToSummary(user)
     }
 
@@ -254,7 +276,6 @@ class UserService(
 
         val user = findEntity(id)
 
-        val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
         user.permissions = objectMapper.writeValueAsString(permissions)
         user.updatedAt = Instant.now()
         userRepo.save(user)
@@ -279,7 +300,6 @@ class UserService(
             return
         }
 
-        val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
         @Suppress("UNCHECKED_CAST")
         val actorPerms = try {
             objectMapper.readValue(actorPermsJson, Map::class.java) as Map<String, Any>
@@ -357,12 +377,10 @@ class UserService(
         }
     }
 
-    private val summaryMapper = com.fasterxml.jackson.databind.ObjectMapper()
-
     private fun parseJsonField(json: String?): Any? {
         if (json.isNullOrBlank()) return null
         return try {
-            summaryMapper.readValue(json, Map::class.java)
+            objectMapper.readValue(json, Map::class.java)
         } catch (e: Exception) {
             json // fallback to raw string if parse fails
         }

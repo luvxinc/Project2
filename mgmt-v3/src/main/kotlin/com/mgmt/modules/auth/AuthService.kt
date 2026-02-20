@@ -27,6 +27,7 @@ class AuthService(
     private val jwtTokenProvider: JwtTokenProvider,
     private val sessionService: SessionService,
     private val passwordEncoder: BCryptPasswordEncoder,
+    private val objectMapper: com.fasterxml.jackson.databind.ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -201,12 +202,10 @@ class AuthService(
         }
     }
 
-    private val summaryMapper = com.fasterxml.jackson.databind.ObjectMapper()
-
     private fun parseJsonField(json: String?): Any? {
         if (json.isNullOrBlank()) return null
         return try {
-            summaryMapper.readValue(json, Map::class.java)
+            objectMapper.readValue(json, Map::class.java)
         } catch (e: Exception) {
             json
         }
@@ -234,7 +233,7 @@ class AuthService(
         if (permissionsJson.isNullOrBlank()) return emptyList()
         return try {
             @Suppress("UNCHECKED_CAST")
-            val map = summaryMapper.readValue(permissionsJson, Map::class.java) as Map<String, Any?>
+            val map = objectMapper.readValue(permissionsJson, Map::class.java) as Map<String, Any?>
             map.entries.filter { it.value == true }.map { it.key }
         } catch (e: Exception) {
             log.warn("Failed to parse permissions JSON: {}", e.message)

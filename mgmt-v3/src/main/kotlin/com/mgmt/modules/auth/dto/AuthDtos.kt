@@ -73,10 +73,12 @@ data class UserSummary(
 data class CreateUserRequest(
     @field:NotBlank
     @field:Size(min = 3, max = 50)
+    @field:Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     val username: String,
     @field:NotBlank @field:Email
     val email: String,
     @field:NotBlank
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
     val password: String,
     val displayName: String? = null,
     val roles: List<String> = listOf("viewer"),

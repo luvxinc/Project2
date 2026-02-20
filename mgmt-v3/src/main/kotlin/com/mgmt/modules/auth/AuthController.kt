@@ -1,5 +1,6 @@
 package com.mgmt.modules.auth
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.common.security.RateLimit
 import com.mgmt.common.web.IpUtils
@@ -25,6 +26,7 @@ class AuthController(
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     @RateLimit(key = "auth:login", maxAttempts = 10, windowSeconds = 300)
+    @AuditLog(module = "AUTH", action = "LOGIN")
     fun login(
         @Valid @RequestBody request: LoginRequest,
         httpRequest: HttpServletRequest,
@@ -42,6 +44,7 @@ class AuthController(
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.OK)
+    @AuditLog(module = "AUTH", action = "LOGOUT")
     fun logout(httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         authService.logout(claims.userId)
@@ -57,6 +60,7 @@ class AuthController(
 
     @PostMapping("/change-password")
     @ResponseStatus(HttpStatus.OK)
+    @AuditLog(module = "AUTH", action = "CHANGE_PASSWORD", riskLevel = "HIGH")
     fun changePassword(
         @Valid @RequestBody request: ChangePasswordRequest,
         httpRequest: HttpServletRequest,
@@ -76,6 +80,23 @@ class AuthController(
         val claims = extractClaims(httpRequest)
         val result = securityCodeService.verifySecurityCode(request, claims.userId)
         return ApiResponse.ok(result)
+    }
+
+    /**
+     * GET /auth/role-check
+     * Lightweight endpoint for frontend polling to detect role changes.
+     * V1 parity: check_role_version() in user_admin/views/actions.py
+     * Returns current roles so frontend can compare with cached state.
+     */
+    @GetMapping("/role-check")
+    fun roleCheck(httpRequest: HttpServletRequest): ApiResponse<Map<String, Any>> {
+        val claims = extractClaims(httpRequest)
+        val user = authService.getCurrentUser(claims.userId)
+        return ApiResponse.ok(mapOf(
+            "userId" to user.id,
+            "roles" to user.roles,
+            "status" to user.status,
+        ))
     }
 
     private fun extractClaims(request: HttpServletRequest): JwtTokenProvider.TokenClaims {

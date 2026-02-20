@@ -1,6 +1,8 @@
 package com.mgmt.modules.users
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
+import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
 import com.mgmt.modules.auth.JwtTokenProvider
 import com.mgmt.modules.auth.dto.*
@@ -14,6 +16,7 @@ class UserController(
     private val userService: UserService,
 ) {
     @GetMapping
+    @RequirePermission("module.user_admin.users")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") limit: Int,
@@ -35,12 +38,15 @@ class UserController(
     }
 
     @GetMapping("/{id}")
+    @RequirePermission("module.user_admin.users")
     fun findOne(@PathVariable id: String): ApiResponse<UserSummary> {
         return ApiResponse.ok(userService.findOne(id))
     }
 
     @PostMapping
     @SecurityLevel(level = "L2", actionKey = "btn_create_user")
+    @AuditLog(module = "USER_ADMIN", action = "CREATE_USER", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.register")
     fun create(
         @Valid @RequestBody request: CreateUserRequest,
         httpRequest: HttpServletRequest,
@@ -51,6 +57,9 @@ class UserController(
     }
 
     @PatchMapping("/{id}")
+    @SecurityLevel(level = "L2", actionKey = "btn_update_user")
+    @AuditLog(module = "USER_ADMIN", action = "UPDATE_USER", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.users")
     fun update(
         @PathVariable id: String,
         @Valid @RequestBody request: UpdateUserRequest,
@@ -63,6 +72,8 @@ class UserController(
 
     @DeleteMapping("/{id}")
     @SecurityLevel(level = "L4", actionKey = "btn_delete_user")
+    @AuditLog(module = "USER_ADMIN", action = "DELETE_USER", riskLevel = "CRITICAL")
+    @RequirePermission("module.user_admin.users")
     fun delete(
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?,
@@ -75,6 +86,8 @@ class UserController(
 
     @PostMapping("/{id}/lock")
     @SecurityLevel(level = "L2", actionKey = "btn_toggle_user_lock")
+    @AuditLog(module = "USER_ADMIN", action = "LOCK_USER", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.users")
     fun lock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.lock(id, claims.userId, claims.roles)
@@ -83,6 +96,8 @@ class UserController(
 
     @PostMapping("/{id}/unlock")
     @SecurityLevel(level = "L2", actionKey = "btn_toggle_user_lock")
+    @AuditLog(module = "USER_ADMIN", action = "UNLOCK_USER", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.users")
     fun unlock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.unlock(id, claims.userId, claims.roles)
@@ -91,6 +106,8 @@ class UserController(
 
     @PutMapping("/{id}/permissions")
     @SecurityLevel(level = "L2", actionKey = "btn_update_perms")
+    @AuditLog(module = "USER_ADMIN", action = "UPDATE_PERMISSIONS", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.users")
     fun updatePermissions(
         @PathVariable id: String,
         @RequestBody request: UpdatePermissionsRequest,
@@ -101,8 +118,19 @@ class UserController(
         return ApiResponse.ok(mapOf("message" to "权限已更新"))
     }
 
+    @GetMapping("/check-username")
+    fun checkUsername(@RequestParam username: String): ApiResponse<Map<String, Any>> {
+        val available = userService.isUsernameAvailable(username)
+        return ApiResponse.ok(mapOf(
+            "username" to username,
+            "available" to available,
+        ))
+    }
+
     @PostMapping("/{id}/reset-password")
     @SecurityLevel(level = "L3", actionKey = "btn_reset_pwd")
+    @AuditLog(module = "USER_ADMIN", action = "RESET_PASSWORD", riskLevel = "HIGH")
+    @RequirePermission("module.user_admin.users")
     fun resetPassword(
         @PathVariable id: String,
         @Valid @RequestBody request: ResetPasswordRequest,

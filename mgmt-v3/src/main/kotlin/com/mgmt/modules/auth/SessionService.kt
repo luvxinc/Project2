@@ -1,9 +1,13 @@
 package com.mgmt.modules.auth
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mgmt.domain.auth.ActionRegistryEntry
+import com.mgmt.domain.auth.ActionRegistryRepository
+import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 
 /**
@@ -18,6 +22,7 @@ import java.time.Duration
 class SessionService(
     private val redis: StringRedisTemplate,
     private val objectMapper: ObjectMapper,
+    private val actionRegistryRepo: ActionRegistryRepository,
 ) {
     private val log = LoggerFactory.getLogger(SessionService::class.java)
 
@@ -153,14 +158,32 @@ class SessionService(
      * Returns empty list if no tokens required (action is unprotected).
      */
     fun getRequiredTokensForAction(actionKey: String): List<String> {
+        // Try Redis first
         val key = "action_registry:$actionKey"
-        val json = redis.opsForValue().get(key) ?: return emptyList()
-        return try {
-            objectMapper.readValue(json, objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java))
-        } catch (e: Exception) {
-            log.warn("Failed to parse action registry for '{}': {}", actionKey, e.message)
-            emptyList()
+        val json = redis.opsForValue().get(key)
+        if (json != null) {
+            return try {
+                objectMapper.readValue(json, objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java))
+            } catch (e: Exception) {
+                log.warn("Failed to parse action registry from Redis for '{}': {}", actionKey, e.message)
+                emptyList()
+            }
         }
+
+        // Redis miss -> try DB
+        val dbEntry = actionRegistryRepo.findByActionKey(actionKey)
+        if (dbEntry != null) {
+            // Backfill Redis
+            redis.opsForValue().set(key, dbEntry.tokens)
+            return try {
+                objectMapper.readValue(dbEntry.tokens, objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java))
+            } catch (e: Exception) {
+                log.warn("Failed to parse action registry from DB for '{}': {}", actionKey, e.message)
+                emptyList()
+            }
+        }
+
+        return emptyList()
     }
 
     /**
@@ -194,20 +217,28 @@ class SessionService(
      * V1 parity: UserAdminService.update_all_policies()
      * Returns the count of policies saved.
      */
+    @Transactional
     fun saveAllActionPolicies(policies: Map<String, List<String>>): Int {
-        // Delete existing action_registry keys first
+        // 1. Persist to DB (write-through)
+        actionRegistryRepo.deleteAll()
+        policies.forEach { (actionKey, tokens) ->
+            actionRegistryRepo.save(ActionRegistryEntry(
+                id = java.util.UUID.randomUUID().toString(),
+                actionKey = actionKey,
+                tokens = objectMapper.writeValueAsString(tokens),
+            ))
+        }
+
+        // 2. Update Redis cache
         val existingKeys = redis.keys("action_registry:*")
         if (!existingKeys.isNullOrEmpty()) {
             redis.delete(existingKeys)
         }
-
-        // Save new policies
         policies.forEach { (actionKey, tokens) ->
-            val json = objectMapper.writeValueAsString(tokens)
-            redis.opsForValue().set("action_registry:$actionKey", json)
+            redis.opsForValue().set("action_registry:$actionKey", objectMapper.writeValueAsString(tokens))
         }
 
-        log.info("Security policies saved: {} action keys", policies.size)
+        log.info("Security policies saved: {} action keys (DB + Redis)", policies.size)
         return policies.size
     }
 
@@ -242,6 +273,21 @@ class SessionService(
 
     data class SecurityFailureResult(val remainingAttempts: Int, val blocked: Boolean)
     data class LoginFailureResult(val remainingAttempts: Int, val locked: Boolean)
+
+    // ─── Action Registry DB→Redis Loader ────────────────────────
+
+    @PostConstruct
+    fun loadActionRegistryFromDb() {
+        val entries = actionRegistryRepo.findAll()
+        if (entries.isEmpty()) {
+            log.info("No action registry entries in DB — Redis will use runtime-configured policies")
+            return
+        }
+        entries.forEach { entry ->
+            redis.opsForValue().set("action_registry:${entry.actionKey}", entry.tokens)
+        }
+        log.info("Loaded {} action registry entries from DB to Redis", entries.size)
+    }
 
     // ─── Permission Whitelist Cache ──────────────────────────────
 
