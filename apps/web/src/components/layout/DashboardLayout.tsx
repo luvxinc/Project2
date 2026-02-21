@@ -11,7 +11,7 @@ const navItems = [
   { key: 'users', href: '/users' },
   { key: 'products', href: '/products' },
   { key: 'inventory', href: '/inventory', disabled: true },
-  { key: 'purchase', href: '/purchase', disabled: true },
+  { key: 'purchase', href: '/purchase' },
 ];
 
 export function Sidebar() {

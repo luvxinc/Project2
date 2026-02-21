@@ -15,6 +15,7 @@ import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import AbnormalTable from './components/AbnormalTable';
+import PurchaseTabSelector from '../components/PurchaseTabSelector';
 import AbnormalDetailPanel from './components/AbnormalDetailPanel';
 import ProcessWizard from './components/ProcessWizard';
 
@@ -38,6 +39,8 @@ export default function AbnormalPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
+  const wizardRef = useRef<HTMLDivElement>(null);
 
   // Process wizard state
   const [showProcessWizard, setShowProcessWizard] = useState(false);
@@ -172,8 +175,56 @@ export default function AbnormalPage() {
     onExecute: (code) => processMutation.mutate(code),
   });
 
+  const animateToWizard = useCallback(() => {
+    if (detailRef.current) {
+      animate(detailRef.current, {
+        translateX: [0, -window.innerWidth],
+        opacity: [1, 0],
+        duration: 400,
+        ease: 'inOut(3)',
+      });
+    }
+    setTimeout(() => {
+      setShowProcessWizard(true);
+      requestAnimationFrame(() => {
+        if (wizardRef.current) {
+          animate(wizardRef.current, {
+            translateX: [window.innerWidth, 0],
+            opacity: [0, 1],
+            duration: 400,
+            ease: 'inOut(3)',
+          });
+        }
+      });
+    }, 350);
+  }, []);
+
+  const animateToDetail = useCallback(() => {
+    if (wizardRef.current) {
+      animate(wizardRef.current, {
+        translateX: [0, window.innerWidth],
+        opacity: [1, 0],
+        duration: 400,
+        ease: 'inOut(3)',
+      });
+    }
+    setTimeout(() => {
+      setShowProcessWizard(false);
+      requestAnimationFrame(() => {
+        if (detailRef.current) {
+          animate(detailRef.current, {
+            translateX: [-window.innerWidth, 0],
+            opacity: [0, 1],
+            duration: 400,
+            ease: 'inOut(3)',
+          });
+        }
+      });
+    }, 350);
+  }, []);
+
   const handleProcess = () => {
-    setShowProcessWizard(true);
+    animateToWizard();
   };
 
   const handleProcessConfirm = (
@@ -215,30 +266,27 @@ export default function AbnormalPage() {
 
   if (!isClient) return null;
 
-  const STATUS_OPTIONS = ['pending', 'resolved', 'deleted'];
+  const STATUS_OPTIONS = ['pending', 'resolved'];
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Header */}
-      <section className="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h1 style={{ color: colors.text }} className="text-2xl font-semibold tracking-tight">
-            {t('abnormal.title')}
-          </h1>
-        </div>
-        {!isFlipped && (
-          <>
-            <p style={{ color: colors.textSecondary }} className="text-sm">
-              {t('abnormal.description')}
-            </p>
-            <div className="mt-3">
-              <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('abnormal.totalRecords', { count: items.length })}
-              </span>
-            </div>
-          </>
-        )}
-      </section>
+      {/* Apple Pill Tab Selector */}
+      {!isFlipped && (
+        <section className="pt-12 pb-6 px-6">
+          <div className="max-w-[1400px] mx-auto">
+            <PurchaseTabSelector />
+          </div>
+        </section>
+      )}
+
+      {/* Count Bar */}
+      {!isFlipped && (
+        <section className="max-w-[1400px] mx-auto px-6 pb-4">
+          <span style={{ color: colors.textTertiary }} className="text-sm">
+            {t('abnormal.totalRecords', { count: items.length })}
+          </span>
+        </section>
+      )}
 
       {/* Filters */}
       {!isFlipped && (
@@ -320,12 +368,28 @@ export default function AbnormalPage() {
 
           {/* BACK: Detail or ProcessWizard */}
           {isFlipped && selectedItem && (
-            <div ref={backRef}>
-              {showProcessWizard && detail ? (
-                <div>
+            <div ref={backRef} className="relative overflow-hidden">
+              {/* Detail Panel */}
+              {!showProcessWizard && (
+                <div ref={detailRef}>
+                  <AbnormalDetailPanel
+                    item={selectedItem}
+                    detail={detail}
+                    historyItems={historyItems}
+                    isLoading={loadingDetail}
+                    onBack={handleBack}
+                    onProcess={handleProcess}
+                    onDelete={handleDelete}
+                  />
+                </div>
+              )}
+
+              {/* Process Wizard */}
+              {showProcessWizard && detail && (
+                <div ref={wizardRef}>
                   {/* Back to detail */}
                   <button
-                    onClick={() => setShowProcessWizard(false)}
+                    onClick={animateToDetail}
                     className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70 mb-6"
                     style={{ color: colors.blue }}
                   >
@@ -337,20 +401,10 @@ export default function AbnormalPage() {
                   <ProcessWizard
                     detail={detail}
                     onConfirm={handleProcessConfirm}
-                    onCancel={() => setShowProcessWizard(false)}
+                    onCancel={animateToDetail}
                     isSubmitting={processMutation.isPending}
                   />
                 </div>
-              ) : (
-                <AbnormalDetailPanel
-                  item={selectedItem}
-                  detail={detail}
-                  historyItems={historyItems}
-                  isLoading={loadingDetail}
-                  onBack={handleBack}
-                  onProcess={handleProcess}
-                  onDelete={handleDelete}
-                />
               )}
             </div>
           )}

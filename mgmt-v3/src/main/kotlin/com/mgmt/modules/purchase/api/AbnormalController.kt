@@ -424,8 +424,10 @@ class AbnormalController(
     }
 
     // ═══════════════════════════════════════
-    // DELETE — V1: abnormal_delete_api
-    // Marks resolved diffs as deleted by setting resolution_note prefix
+    // DELETE (ROLLBACK) — V1: abnormal_delete_api
+    // Full V1-parity rollback: revert all changes made by process strategies,
+    // reset diff to pending, and record ROLLBACK audit event.
+    // More audit-compliant than V1 (which physically deleted log records).
     // ═══════════════════════════════════════
     @PostMapping("/delete")
     @RequirePermission("module.purchase.receive.mgmt")
@@ -440,20 +442,192 @@ class AbnormalController(
             )
         }
 
-        var deletedCount = 0
+        var rolledBackCount = 0
         for (diff in diffs) {
+            // 1. Parse which strategy was used from resolutionNote (#M1/#M2/#M3/#M4)
+            val strategy = parseStrategy(diff.resolutionNote)
+
+            // 2. Find the original diffQuantity from the PROCESS event's before-snapshot
+            val originalDiffQuantity = findOriginalDiffQuantity(diff)
+
+            // 3. Rollback related table changes based on strategy
+            rollbackStrategy(diff, strategy)
+
+            // 4. Record ROLLBACK event BEFORE mutating (captures resolved→pending transition)
             val beforeSnapshot = diffSnapshot(diff)
-            diff.resolutionNote = "删除异常处理: ${diff.resolutionNote}"
+
+            // 5. Reset diff to pending state with original diffQuantity
+            diff.status = "pending"
+            diff.diffQuantity = originalDiffQuantity
+            diff.resolutionNote = null
             diff.updatedAt = Instant.now()
             diffRepo.save(diff)
-            recordDiffEvent(diff, "DELETED", beforeSnapshot, "删除异常处理")
-            deletedCount++
+
+            recordDiffEvent(diff, "ROLLBACK", beforeSnapshot, "撤销异常处理 (原策略: M$strategy)")
+            rolledBackCount++
         }
 
         return ResponseEntity.ok(ApiResponse.ok(mapOf(
             "logisticNum" to request.logisticNum,
-            "deletedCount" to deletedCount,
+            "deletedCount" to rolledBackCount,
         )))
+    }
+
+    /**
+     * Parse strategy number from resolutionNote.
+     * Expected format: "...#M1", "...#M2", "...#M3", "...#M4"
+     * Returns 1 as default if parsing fails.
+     */
+    private fun parseStrategy(note: String?): Int {
+        if (note == null) return 1
+        val match = Regex("#M(\\d)").find(note) ?: return 1
+        return match.groupValues[1].toIntOrNull() ?: 1
+    }
+
+    /**
+     * Find the original diffQuantity from the PROCESS event's before-snapshot.
+     * Reads the append-only event trail to recover the pre-process state.
+     */
+    private fun findOriginalDiffQuantity(diff: ReceiveDiff): Int {
+        val events = diffEventRepo.findAllByDiffIdOrderByEventSeqAsc(diff.id)
+        // Find the PROCESS event (PROCESS_M1..M4) — take the latest one
+        val processEvent = events.lastOrNull { e ->
+            e.eventType.startsWith("PROCESS_M")
+        }
+        if (processEvent != null) {
+            try {
+                // Parse changes JSON: {"before":{...},"after":{...}}
+                val changesJson = processEvent.changes
+                val beforeMatch = Regex(""""diffQuantity"\s*:\s*(-?\d+)""")
+                    .find(changesJson.substringBefore(""""after""""))
+                if (beforeMatch != null) {
+                    return beforeMatch.groupValues[1].toInt()
+                }
+            } catch (_: Exception) {
+                // Fall through to calculation
+            }
+        }
+        // Fallback: recalculate from sent - received
+        return diff.sentQuantity - diff.receiveQuantity
+    }
+
+    /**
+     * Rollback changes based on the strategy that was applied during processing.
+     * Reverts shipment_items, receives, and po_items to pre-process state.
+     */
+    private fun rollbackStrategy(diff: ReceiveDiff, strategy: Int) {
+        when (strategy) {
+            1 -> rollbackM1(diff)
+            2 -> rollbackM2(diff)
+            3 -> rollbackM3(diff)
+            4 -> rollbackM4(diff)
+        }
+    }
+
+    /**
+     * Rollback M1: Restore shipment_item.quantity and receive.sentQuantity
+     * to their original values (sentQuantity from the diff record).
+     */
+    private fun rollbackM1(diff: ReceiveDiff) {
+        // Restore shipment items: quantity back to original sentQuantity
+        val shipItems = shipmentItemRepo.findAllByLogisticNumAndDeletedAtIsNull(diff.logisticNum)
+        shipItems.filter { it.poNum == diff.poNum && it.sku == diff.sku }.forEach { si ->
+            si.quantity = diff.sentQuantity
+            si.note = null  // Clear the process note
+            si.updatedAt = Instant.now()
+            shipmentItemRepo.save(si)
+        }
+
+        // Restore receives: sentQuantity back to original
+        receiveRepo.findAllByLogisticNumOrderBySkuAsc(diff.logisticNum)
+            .filter { it.poNum == diff.poNum && it.sku == diff.sku }.forEach { r ->
+                r.sentQuantity = diff.sentQuantity
+                r.updatedAt = Instant.now()
+                receiveRepo.save(r)
+            }
+    }
+
+    /**
+     * Rollback M2: M1 rollback + restore PO item quantity.
+     */
+    private fun rollbackM2(diff: ReceiveDiff) {
+        // Do M1 rollback first
+        rollbackM1(diff)
+
+        // Restore PO item quantity: undo the receive_quantity overwrite
+        val poItems = poItemRepo.findAllByPoNumAndDeletedAtIsNull(diff.poNum)
+        poItems.filter { it.sku == diff.sku }.forEach { pi ->
+            pi.quantity = diff.poQuantity  // Restore to original PO quantity
+            pi.updatedAt = Instant.now()
+            poItemRepo.save(pi)
+        }
+    }
+
+    /**
+     * Rollback M3: Soft-delete the delay shipment and its items.
+     * M3 created a new shipment "{logisticNum}_delay_V##".
+     */
+    private fun rollbackM3(diff: ReceiveDiff) {
+        // Find delay shipments matching the pattern
+        val delayPattern = "${diff.logisticNum}_delay_"
+        val allShipments = shipmentRepo.findAll()
+        val delayShipments = allShipments.filter { s ->
+            s.logisticNum.startsWith(delayPattern) && s.deletedAt == null
+        }
+
+        for (delayShipment in delayShipments) {
+            // Soft-delete delay shipment items matching this diff's poNum+sku
+            val delayItems = shipmentItemRepo.findAllByLogisticNumAndDeletedAtIsNull(delayShipment.logisticNum)
+            val matchingItems = delayItems.filter { it.poNum == diff.poNum && it.sku == diff.sku }
+            matchingItems.forEach { si ->
+                si.deletedAt = Instant.now()
+                si.updatedAt = Instant.now()
+                shipmentItemRepo.save(si)
+            }
+
+            // If no active items remain, soft-delete the shipment itself
+            val remainingItems = shipmentItemRepo.findAllByLogisticNumAndDeletedAtIsNull(delayShipment.logisticNum)
+            if (remainingItems.isEmpty()) {
+                delayShipment.deletedAt = Instant.now()
+                delayShipment.updatedAt = Instant.now()
+                shipmentRepo.save(delayShipment)
+            }
+        }
+    }
+
+    /**
+     * Rollback M4: Restore PO, shipment, and receive changes.
+     * M4 adjusted PO item quantity and set shipment/receive to receiveQuantity.
+     */
+    private fun rollbackM4(diff: ReceiveDiff) {
+        // Restore PO item: undo the quantity adjustment
+        // M4 did: pi.quantity = pi.quantity - adjustQty
+        // Rollback: pi.quantity = pi.quantity + adjustQty (where adjustQty = original diffQuantity)
+        val originalDiffQuantity = findOriginalDiffQuantity(diff)
+        val poItems = poItemRepo.findAllByPoNumAndDeletedAtIsNull(diff.poNum)
+        poItems.filter { it.sku == diff.sku }.forEach { pi ->
+            pi.quantity = pi.quantity + originalDiffQuantity  // Undo the M4 PO adjustment
+            pi.updatedAt = Instant.now()
+            poItemRepo.save(pi)
+        }
+
+        // Restore shipment items: quantity back to original sentQuantity
+        val shipItems = shipmentItemRepo.findAllByLogisticNumAndDeletedAtIsNull(diff.logisticNum)
+        shipItems.filter { it.poNum == diff.poNum && it.sku == diff.sku }.forEach { si ->
+            si.quantity = diff.sentQuantity
+            si.note = null
+            si.updatedAt = Instant.now()
+            shipmentItemRepo.save(si)
+        }
+
+        // Restore receives: sentQuantity back to original
+        receiveRepo.findAllByLogisticNumOrderBySkuAsc(diff.logisticNum)
+            .filter { it.poNum == diff.poNum && it.sku == diff.sku }.forEach { r ->
+                r.sentQuantity = diff.sentQuantity
+                r.note = null
+                r.updatedAt = Instant.now()
+                receiveRepo.save(r)
+            }
     }
 
     // ═══════════════════════════════════════
@@ -461,17 +635,15 @@ class AbnormalController(
     // ═══════════════════════════════════════
 
     /**
-     * V1-parity status derivation:
-     *   - If any resolutionNote starts with '删除异常处理' → 'deleted'
+     * Status derivation:
      *   - If ALL diffs have status='resolved' → 'resolved'
      *   - Else → 'pending'
+     *
+     * Note: 'deleted' status removed — we now do full rollbacks instead
+     * of marking as deleted. The append-only event trail (ROLLBACK events)
+     * provides complete audit history.
      */
     private fun deriveGroupStatus(diffs: List<ReceiveDiff>): String {
-        val hasDeleteNote = diffs.any { d ->
-            d.resolutionNote?.startsWith("删除异常处理") == true
-        }
-        if (hasDeleteNote) return "deleted"
-
         val allResolved = diffs.all { it.status == "resolved" }
         return if (allResolved) "resolved" else "pending"
     }

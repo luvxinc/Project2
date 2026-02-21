@@ -9,6 +9,7 @@ import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import ReceiveTable from './components/ReceiveTable';
+import PurchaseTabSelector from '../components/PurchaseTabSelector';
 import ReceiveDetailPanel from './components/ReceiveDetailPanel';
 import EditReceiveModal from './components/EditReceiveModal';
 import ReceiveDrawer from './components/ReceiveDrawer';
@@ -216,26 +217,23 @@ export default function ReceivingManagementPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Header */}
-      <section className="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h1 style={{ color: colors.text }} className="text-2xl font-semibold tracking-tight">
-            {t('receives.title')}
-          </h1>
-        </div>
-        {!isFlipped && (
-          <>
-            <p style={{ color: colors.textSecondary }} className="text-sm">
-              {t('receives.description')}
-            </p>
-            <div className="mt-3">
-              <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('receives.table.count', { count: items.length })}
-              </span>
-            </div>
-          </>
-        )}
-      </section>
+      {/* Apple Pill Tab Selector */}
+      {!isFlipped && (
+        <section className="pt-12 pb-6 px-6">
+          <div className="max-w-[1400px] mx-auto">
+            <PurchaseTabSelector />
+          </div>
+        </section>
+      )}
+
+      {/* Count Bar */}
+      {!isFlipped && (
+        <section className="max-w-[1400px] mx-auto px-6 pb-4">
+          <span style={{ color: colors.textTertiary }} className="text-sm">
+            {t('receives.table.count', { count: items.length })}
+          </span>
+        </section>
+      )}
 
       {/* Filters */}
       {!isFlipped && (

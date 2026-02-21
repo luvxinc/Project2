@@ -280,13 +280,14 @@ function DetailTab({ detail, colors, t }: {
 // Aligned with ShipmentDetailPanel history layout
 // ═════════════════════════════════════════════════════════════════
 
-type ThemeColorKey = 'green' | 'blue' | 'yellow' | 'purple';
+type ThemeColorKey = 'green' | 'blue' | 'yellow' | 'purple' | 'red';
 
 const STRATEGY_PANELS: readonly { key: string; eventTypes: readonly string[]; colorKey: ThemeColorKey }[] = [
   { key: 'M1', eventTypes: ['PROCESS_M1'], colorKey: 'green'  },
   { key: 'M2', eventTypes: ['PROCESS_M2'], colorKey: 'blue'   },
   { key: 'M3', eventTypes: ['PROCESS_M3'], colorKey: 'yellow' },
   { key: 'M4', eventTypes: ['PROCESS_M4'], colorKey: 'purple' },
+  { key: 'RB', eventTypes: ['ROLLBACK', 'DELETED'], colorKey: 'red' },
 ];
 
 interface ChangesSnapshot {
@@ -330,7 +331,7 @@ function HistoryTab({ historyItems, colors, t }: {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-5 gap-4">
       {STRATEGY_PANELS.map(panel => {
         const events = grouped[panel.key];
         const panelColor = colors[panel.colorKey];

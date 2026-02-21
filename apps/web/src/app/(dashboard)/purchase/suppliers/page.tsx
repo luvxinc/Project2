@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type SupplierWithStrategy, type SupplierStrategy } from '@/lib/api';
 import { animate } from 'animejs';
 import SupplierTable from './components/SupplierTable';
+import PurchaseTabSelector from '../components/PurchaseTabSelector';
 import SupplierDetailPanel from './components/SupplierDetailPanel';
 import AddSupplierModal from './components/AddSupplierModal';
 import EditStrategyModal from './components/EditStrategyModal';
@@ -241,30 +242,23 @@ export default function SuppliersPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Header */}
-      <section className="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h1
-            style={{ color: colors.text }}
-            className="text-2xl font-semibold tracking-tight"
-          >
-            {t('title')}
-          </h1>
+      {/* Apple Pill Tab Selector */}
+      {!isFlipped && (
+        <section className="pt-12 pb-6 px-6">
+          <div className="max-w-[1400px] mx-auto">
+            <PurchaseTabSelector />
+          </div>
+        </section>
+      )}
 
-        </div>
-        {!isFlipped && (
-          <>
-            <p style={{ color: colors.textSecondary }} className="text-sm">
-              {t('description')}
-            </p>
-            <div className="mt-3">
-              <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('table.total', { count: filteredSuppliers.length })}
-              </span>
-            </div>
-          </>
-        )}
-      </section>
+      {/* Count Bar */}
+      {!isFlipped && (
+        <section className="max-w-[1400px] mx-auto px-6 pb-4">
+          <span style={{ color: colors.textTertiary }} className="text-sm">
+            {t('table.total', { count: filteredSuppliers.length })}
+          </span>
+        </section>
+      )}
 
       {/* Filter Bar */}
       {!isFlipped && (
