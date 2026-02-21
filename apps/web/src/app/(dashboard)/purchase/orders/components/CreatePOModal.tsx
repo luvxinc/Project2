@@ -305,30 +305,38 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
           }
 
           const parsedItems: ItemRow[] = [];
+          const parseErrors: string[] = [];
           for (let r = 5; r <= 1004; r++) {
             const sku = cell(`B${r}`).trim().toUpperCase();
             if (!sku) continue;
             const qty = Number(cell(`C${r}`)); const price = Number(cell(`D${r}`));
+            if (isNaN(qty) || qty <= 0) parseErrors.push(`Row ${r}: ${sku} — ${t('orders.errors.qtyPositive')}`);
+            if (isNaN(price) || price <= 0) parseErrors.push(`Row ${r}: ${sku} — ${t('orders.errors.pricePositive')}`);
             parsedItems.push({ id: generateId(), sku, quantity: isNaN(qty) || qty <= 0 ? 0 : Math.round(qty), unitPrice: isNaN(price) || price <= 0 ? 0 : parseFloat(price.toFixed(5)), note: '' });
           }
 
           if (parsedItems.length > 0) {
             setItems(parsedItems);
-            setExcelParseMessage(t('orders.create.parseSuccess', { count: parsedItems.length }));
+            const msg = t('orders.create.parseSuccess', { count: parsedItems.length });
+            setExcelParseMessage(parseErrors.length > 0 ? `${msg}\n${parseErrors.join('\n')}` : msg);
             setExcelParseError(false);
           } else { setExcelParseMessage(t('orders.create.parseFailed')); setExcelParseError(true); }
         } else {
           const rows: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
           const parsedItems: ItemRow[] = [];
+          const parseErrors: string[] = [];
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i]; if (!row || row.length === 0) continue;
             const sku = String(row[0] || '').trim().toUpperCase(); if (!sku) continue;
             const qty = Number(row[1]); const price = Number(row[2]);
+            if (isNaN(qty) || qty <= 0) parseErrors.push(`Row ${i + 1}: ${sku} — ${t('orders.errors.qtyPositive')}`);
+            if (isNaN(price) || price <= 0) parseErrors.push(`Row ${i + 1}: ${sku} — ${t('orders.errors.pricePositive')}`);
             parsedItems.push({ id: generateId(), sku, quantity: isNaN(qty) || qty <= 0 ? 0 : Math.round(qty), unitPrice: isNaN(price) || price <= 0 ? 0 : parseFloat(price.toFixed(5)), note: '' });
           }
           if (parsedItems.length > 0) {
             setItems(parsedItems);
-            setExcelParseMessage(t('orders.create.parseSuccess', { count: parsedItems.length }));
+            const msg = t('orders.create.parseSuccess', { count: parsedItems.length });
+            setExcelParseMessage(parseErrors.length > 0 ? `${msg}\n${parseErrors.join('\n')}` : msg);
             setExcelParseError(false);
           } else { setExcelParseMessage(t('orders.create.parseFailed')); setExcelParseError(true); }
         }
