@@ -734,3 +734,108 @@ export interface ReceiveDiffHistoryChange {
 }
 
 
+// ═══════════ Abnormal (Receive Diff) Management ═══════════
+
+export interface AbnormalListItem {
+  logisticNum: string;
+  receiveDate: string;
+  status: 'pending' | 'resolved' | 'deleted';
+  skuCount: number;
+  totalDiff: number;
+  note: string | null;
+}
+
+export interface AbnormalDetailItem {
+  id: number;
+  poNum: string;
+  sku: string;
+  poQuantity: number;
+  sentQuantity: number;
+  receiveQuantity: number;
+  diffQuantity: number;
+  status: string;
+  resolutionNote: string | null;
+  unitPrice: number | null;
+  currency: string | null;
+}
+
+export interface AbnormalSummary {
+  totalSkus: number;
+  totalDiff: number;
+  overReceived: number;
+  underReceived: number;
+}
+
+export interface AbnormalDetail {
+  logisticNum: string;
+  receiveDate: string;
+  overallStatus: string;
+  items: AbnormalDetailItem[];
+  summary: AbnormalSummary;
+}
+
+export interface AbnormalHistoryItem {
+  id: number;
+  diffId: number;
+  logisticNum: string;
+  eventType: string;
+  eventSeq: number;
+  changes: string;           // JSONB: {"before":{...}, "after":{...}}
+  note: string | null;
+  operator: string;
+  createdAt: string;
+}
+
+// ═══════════ Abnormal API ═══════════
+
+export interface PoMethodStrategy {
+  positive?: number | null;   // Strategy for shortage (diff > 0): 1/2/3/4
+  negative?: number | null;   // Strategy for overage  (diff < 0): 1/2/4
+}
+
+export interface ProcessAbnormalRequest {
+  logisticNum: string;
+  note?: string;
+  delayDate?: string;         // Required if M3 selected
+  poMethods: Record<string, PoMethodStrategy>;
+  sec_code_l3?: string;       // Security code for L3 verification
+}
+
+export interface ProcessAbnormalResponse {
+  logisticNum: string;
+  processedCount: number;
+  details: string[];
+}
+
+export interface DeleteAbnormalRequest {
+  logisticNum: string;
+  sec_code_l3?: string;       // Security code for L3 verification
+}
+
+export const abnormalApi = {
+  /** V1: abnormal_list_api */
+  getList: (params?: { sortOrder?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.sortOrder) qs.set('sortOrder', params.sortOrder);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return api.get<AbnormalListItem[]>(`/purchase/abnormal${q ? `?${q}` : ''}`);
+  },
+
+  /** V1: abnormal_detail_api */
+  getDetail: (logisticNum: string) =>
+    api.get<AbnormalDetail>(`/purchase/abnormal/${encodeURIComponent(logisticNum)}`),
+
+  /** V1: abnormal_history_api */
+  getHistory: (logisticNum: string) =>
+    api.get<AbnormalHistoryItem[]>(`/purchase/abnormal/${encodeURIComponent(logisticNum)}/history`),
+
+  /** V1: abnormal_process_api — apply strategies to pending diffs */
+  process: (request: ProcessAbnormalRequest) =>
+    api.post<ProcessAbnormalResponse>('/purchase/abnormal/process', request),
+
+  /** V1: abnormal_delete_api — delete resolved records */
+  delete: (request: DeleteAbnormalRequest) =>
+    api.post<{ logisticNum: string; deletedCount: number }>('/purchase/abnormal/delete', request),
+};
+

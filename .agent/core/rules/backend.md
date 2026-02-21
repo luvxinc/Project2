@@ -85,7 +85,30 @@
 
 ---
 
-## 5. 迁移脚本安全检查
+## 5. 认证与权限规则 (Auth & Permission — 2026-02-21 审计修复)
+
+> **源自 Users 模块企业级审计 (36 项发现)。以下规则不可违反。**
+
+### 🔴 CRITICAL
+
+- [ ] **User Entity 必须有 @Version** — JPA 乐观锁, 防止并发更新覆写 (`@Version var version: Long = 0`)
+- [ ] **非关键字段更新用 @Modifying @Query** — `lastLoginAt` 等辅助字段直接 UPDATE, 绕过 @Version 避免 OptimisticLockException
+- [ ] **密码最低 8 位** — CreateUserRequest 和 ResetPasswordRequest 统一 `@Size(min = 8)`, 不允许 min=6
+- [ ] **RoleController 全端点加权限注解** — `@RequirePermission("module.user_admin.role_switches")`, CUD 操作额外加 `@SecurityLevel`
+- [ ] **JWT Filter 必须校验 Redis Session** — `sessionService.isSessionActive(userId)`, 用户被强制下线后 JWT 立即失效
+- [ ] **Actuator 只暴露 health** — SecurityConfig 只放行 `/actuator/health`, application.yml `include: health`
+
+### 🟡 HIGH
+
+- [ ] **CORS LAN 模式仅 dev 环境** — `192.168.*` 和 `10.*` 的 CORS 源只在 `spring.profiles.active=dev` 时生效
+- [ ] **Redis 权限缓存 TTL ≤ 5 分钟** — NIST AC-3(8) 合规, `SessionService.PERM_TTL = Duration.ofMinutes(5)`
+- [ ] **角色删除前检查引用** — `RoleService.delete()` 必须先查 `userRepo.findByRole(name)`, 有用户引用时拒绝删除
+- [ ] **枚举解析用安全方式** — `UserStatus.entries.find { it.name == value }` + BadRequestException, 禁止直接 `valueOf()`
+- [ ] **DTO Email 校验** — UpdateUserRequest 的 email 字段加 `@Email` 注解
+
+---
+
+## 6. 迁移脚本安全检查
 
 ```bash
 # 对每个新 Flyway migration 文件:
@@ -99,5 +122,5 @@ find src/main/resources/db/migration -name "*.sql" -newer .git/HEAD
 
 ---
 
-*Version: 1.0.0 — 后端自检 Rules*
-*Created: 2026-02-15*
+*Version: 1.2.0 — 新增 §5 认证与权限规则 (Users 模块审计修复)*
+*Created: 2026-02-15 | Updated: 2026-02-21*

@@ -11,6 +11,9 @@
 | 卡片化, 低饱和, 弱动效 | MEM-001 | UIUX | 1 | 1 | 2026-02-17 |
 | gross_margin, 百分比, 0-100 | MEM-002 | 数据口径 | 1 | 1 | 2026-02-17 |
 | 审批, 二次确认, 高风险操作 | MEM-003 | 业务规则 | 1 | 1 | 2026-02-17 |
+| @Version, 乐观锁, lastLoginAt | MEM-004 | 技术约定 | 2 | 1 | 2026-02-21 |
+| 密码8位, RoleController, role_switches | MEM-005 | 技术约定 | 2 | 1 | 2026-02-21 |
+| 权限同步, mgmt:user-updated, 60s轮询 | MEM-006 | 技术约定 | 2 | 1 | 2026-02-21 |
 
 ---
 
@@ -42,8 +45,11 @@
 
 | ID | 规则 | keywords | weight | last_seen |
 |----|------|---------|--------|-----------|
+| MEM-004 | User Entity 有 `@Version` 乐观锁。非关键字段更新(lastLoginAt)用 `@Modifying @Query` 绕过 @Version，避免并发 OptimisticLockException。 | @Version, 乐观锁, lastLoginAt | 2 | 2026-02-21 |
+| MEM-005 | 密码统一最低 8 位。RoleController 全端点需 `@RequirePermission("module.user_admin.role_switches")`。Capabilities 页面需客户端权限守卫。 | 密码8位, RoleController, role_switches | 2 | 2026-02-21 |
+| MEM-006 | 权限实时同步: AuthSessionGuard 60s 轮询 `/auth/me`, 差异时 dispatch `CustomEvent('mgmt:user-updated')`。所有权限敏感组件须监听此事件。Redis PERM_TTL=5min。 | 权限同步, mgmt:user-updated, 60s轮询 | 2 | 2026-02-21 |
 
 ---
 
-*结构版本: v2.0 — 分类结构化 (Phase 4 增强)*
-*Updated: 2026-02-19*
+*结构版本: v2.1 — 新增技术约定 MEM-004~006 (Users 审计修复)*
+*Updated: 2026-02-21*

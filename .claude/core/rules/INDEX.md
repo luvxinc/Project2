@@ -17,8 +17,10 @@
   - §16 设计模式优先（内置模式 > 自造轮子）
 - `frontend.md`
   - 前端反模式 (F1-F11) + CRITICAL/HIGH Checklist + 性能红线
+  - §2.5 权限与安全规则 (2026-02-21) — 客户端权限守卫、i18n 强制、mgmt:user-updated 事件监听
 - `backend.md`
   - 后端反模式 (B1-B11) + CRITICAL/HIGH Checklist + 性能红线 + 缓存策略
+  - §5 认证与权限规则 (2026-02-21) — @Version 乐观锁、密码8位、RoleController 权限、JWT Redis 校验、Actuator 限制
 
 ## 使用约定
 

@@ -79,6 +79,11 @@ class SessionService(
         }
     }
 
+    /** Check if user session is still active in Redis */
+    fun isSessionActive(userId: String): Boolean {
+        return redis.hasKey("$SESS_PREFIX$userId")
+    }
+
     /** Clear session */
     fun clearSession(userId: String) {
         redis.delete("$SESS_PREFIX$userId")

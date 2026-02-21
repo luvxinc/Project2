@@ -15,16 +15,17 @@ interface UserRepository : JpaRepository<User, String> {
 
     fun findByDeletedAtIsNull(): List<User>
 
-    @Query("""
-        SELECT u FROM User u 
-        WHERE u.deletedAt IS NULL 
-        AND (LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) 
-             OR LOWER(u.displayName) LIKE LOWER(CONCAT('%', :search, '%'))
-             OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
-    """)
+    @Query(value = """
+        SELECT * FROM users
+        WHERE deleted_at IS NULL
+        AND (LOWER(username) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(display_name) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(email) LIKE LOWER(CONCAT('%', :search, '%')))
+        ORDER BY CASE WHEN 'superuser' = ANY(roles) THEN 0 WHEN 'admin' = ANY(roles) THEN 1 WHEN 'staff' = ANY(roles) THEN 2 WHEN 'editor' = ANY(roles) THEN 3 ELSE 4 END, username
+    """, countQuery = "SELECT count(*) FROM users WHERE deleted_at IS NULL AND (LOWER(username) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(display_name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(email) LIKE LOWER(CONCAT('%', :search, '%')))", nativeQuery = true)
     fun searchActive(search: String, pageable: Pageable): Page<User>
 
-    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    @Query(value = "SELECT * FROM users WHERE deleted_at IS NULL ORDER BY CASE WHEN 'superuser' = ANY(roles) THEN 0 WHEN 'admin' = ANY(roles) THEN 1 WHEN 'staff' = ANY(roles) THEN 2 WHEN 'editor' = ANY(roles) THEN 3 ELSE 4 END, username", countQuery = "SELECT count(*) FROM users WHERE deleted_at IS NULL", nativeQuery = true)
     fun findAllActive(pageable: Pageable): Page<User>
 
     /** Find all active users that have a given role in their roles array (PostgreSQL ANY) */
@@ -33,6 +34,11 @@ interface UserRepository : JpaRepository<User, String> {
 
     @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL AND u.id IN :ids")
     fun findAllActiveByIds(ids: Collection<String>): List<User>
+
+    /** Update lastLoginAt directly — bypasses @Version to avoid OptimisticLockException on concurrent login */
+    @Modifying
+    @Query("UPDATE User u SET u.lastLoginAt = :now WHERE u.id = :userId")
+    fun updateLastLoginAt(userId: String, now: Instant)
 }
 
 interface RefreshTokenRepository : JpaRepository<RefreshToken, String> {

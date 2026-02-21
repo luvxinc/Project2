@@ -120,7 +120,7 @@ function GroupCarousel({
 
   const formatLastLogin = (dateStr: string | null) => {
     if (!dateStr) return t('list.neverLogin');
-    return new Date(dateStr).toLocaleDateString('zh-CN', {
+    return new Date(dateStr).toLocaleDateString(undefined, {
       timeZone: 'America/Los_Angeles',
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
@@ -399,6 +399,8 @@ export default function UsersListPage() {
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
+  const [secCode, setSecCode] = useState('');
+  const [deleteSecCode, setDeleteSecCode] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -492,6 +494,8 @@ export default function UsersListPage() {
     setSecurityError(null);
     setNewPassword('');
     setDeleteReason('');
+    setSecCode('');
+    setDeleteSecCode('');
   };
 
   const handleSecurityConfirm = (code: string) => {
@@ -658,7 +662,8 @@ export default function UsersListPage() {
             
             <input
               type="password"
-              id="sec_code"
+              value={secCode}
+              onChange={(e) => setSecCode(e.target.value)}
               placeholder={tc('securityCode.placeholder')}
               style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
               className="w-full h-12 px-4 border rounded-xl text-[15px] focus:outline-none mb-4"
@@ -678,8 +683,7 @@ export default function UsersListPage() {
               </button>
               <button
                 onClick={() => {
-                  const code = (document.getElementById('sec_code') as HTMLInputElement)?.value;
-                  if (code && newPassword) handleSecurityConfirm(code);
+                  if (secCode && newPassword) handleSecurityConfirm(secCode);
                 }}
                 disabled={isActionLoading || !newPassword}
                 style={{ backgroundColor: colors.blue }}
@@ -758,7 +762,8 @@ export default function UsersListPage() {
               </div>
               <input
                 type="password"
-                id="delete_sec_code"
+                value={deleteSecCode}
+                onChange={(e) => setDeleteSecCode(e.target.value)}
                 placeholder={tc('securityCode.placeholder')}
                 style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
                 className="w-full h-12 px-4 border rounded-xl text-[15px] focus:outline-none"
@@ -779,9 +784,8 @@ export default function UsersListPage() {
               </button>
               <button
                 onClick={() => {
-                  const code = (document.getElementById('delete_sec_code') as HTMLInputElement)?.value;
-                  if (code && deleteReason.trim()) {
-                    deleteMutation.mutate({ id: selectedUser.id, code, reason: deleteReason.trim() });
+                  if (deleteSecCode && deleteReason.trim()) {
+                    deleteMutation.mutate({ id: selectedUser.id, code: deleteSecCode, reason: deleteReason.trim() });
                   } else if (!deleteReason.trim()) {
                     setSecurityError(t('form.deleteReason.required'));
                   }

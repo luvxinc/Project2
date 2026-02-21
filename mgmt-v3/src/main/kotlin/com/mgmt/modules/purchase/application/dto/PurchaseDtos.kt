@@ -602,3 +602,91 @@ data class PendingShipmentItemResponse(
     val sentQuantity: Int,
     val unitPrice: Double,
 )
+
+
+// ═══════════════════════════════════════════════
+// ABNORMAL (RECEIVE DIFF) MANAGEMENT DTOs
+// V1 parity: abnormal.py — list/detail/history/process/delete
+// ═══════════════════════════════════════════════
+
+/** V1: abnormal_list_api — grouped by (logisticNum, receiveDate) */
+data class AbnormalListResponse(
+    val logisticNum: String,
+    val receiveDate: String,
+    val status: String,                // pending | resolved | deleted
+    val skuCount: Int,
+    val totalDiff: Int,
+    val note: String?,
+)
+
+/** V1: abnormal_detail_api — per-SKU diff detail */
+data class AbnormalDetailItemResponse(
+    val id: Long,
+    val poNum: String,
+    val sku: String,
+    val poQuantity: Int,
+    val sentQuantity: Int,
+    val receiveQuantity: Int,
+    val diffQuantity: Int,
+    val status: String,                // pending | resolved
+    val resolutionNote: String?,
+    val unitPrice: Double?,            // V1: po_price from in_receive_final
+    val currency: String?,             // V1: from in_po_strategy
+)
+
+/** V1: abnormal_detail_api full response */
+data class AbnormalDetailResponse(
+    val logisticNum: String,
+    val receiveDate: String,
+    val overallStatus: String,         // pending | resolved
+    val items: List<AbnormalDetailItemResponse>,
+    val summary: AbnormalSummary,
+)
+
+data class AbnormalSummary(
+    val totalSkus: Int,
+    val totalDiff: Int,
+    val overReceived: Int,             // V1: negative diff (多收)
+    val underReceived: Int,            // V1: positive diff (少收)
+)
+
+/** V1: abnormal_history_api — per-diff audit record */
+data class AbnormalHistoryItemResponse(
+    val id: Long,
+    val poNum: String,
+    val sku: String,
+    val poQuantity: Int,
+    val sentQuantity: Int,
+    val receiveQuantity: Int,
+    val diffQuantity: Int,
+    val status: String,
+    val resolutionNote: String?,
+    val updatedBy: String?,
+    val updatedAt: String,
+    val createdAt: String,
+)
+
+// ═══════════════════════════════════════════════
+// ABNORMAL PROCESS / DELETE DTOs
+// ═══════════════════════════════════════════════
+
+/**
+ * V1: abnormal_process_api — process abnormal diffs by strategy.
+ * po_methods: { "PO订货单号": { "positive": 1, "negative": 2 } }
+ */
+data class ProcessAbnormalRequest(
+    val logisticNum: String,
+    val note: String? = null,
+    val delayDate: String? = null,
+    val poMethods: Map<String, PoMethodStrategy>,
+)
+
+data class PoMethodStrategy(
+    val positive: Int? = null,   // Strategy for shortage (diff > 0): 1/2/3/4
+    val negative: Int? = null,   // Strategy for overage  (diff < 0): 1/2/4
+)
+
+/** V1: abnormal_delete_api — delete resolved abnormal records */
+data class DeleteAbnormalRequest(
+    val logisticNum: String,
+)

@@ -47,6 +47,26 @@
 
 ---
 
+## 2.5 权限与安全规则 (Auth & Permission — 2026-02-21 审计修复)
+
+> **源自 Users 模块企业级审计。前端权限必须与后端对齐。**
+
+### 🔴 CRITICAL
+
+- [ ] **权限敏感页面必须有客户端守卫** — 检查 localStorage `user.permissions` 中是否有对应 `module.*` 前缀的 `true` 值
+- [ ] **所有 UI 文本必须 i18n** — 禁止任何语言的硬编码字符串（含中文）, 统一用 `useTranslations(namespace)`
+- [ ] **Access Denied 页面用 i18n** — 使用 `useTranslations('auth')` 的 `accessDenied.title/message` 键
+- [ ] **Security Code Dialog 标签 i18n** — 安全等级名称 (`L0`~`L4`) 使用 `auth.securityLevels.*` 键, 不得硬编码
+
+### 🟡 HIGH
+
+- [ ] **权限变更实时响应** — 组件须监听 `window.addEventListener('mgmt:user-updated', handler)`, 权限变更后立即重新计算
+- [ ] **角色显示名 i18n** — AppleNav / 用户详情中的角色名用 `nav.roleNames.*` 键, 不使用硬编码 roleMap
+- [ ] **日期格式化带时区** — `toLocaleDateString` 必须带 `{ timeZone: 'America/Los_Angeles' }` 选项
+- [ ] **不用 document.getElementById** — 用 React state 或 `useRef` (反模式 F4)
+
+---
+
 ## 3. 性能红线
 
 | 指标 | 红线 | 检测方式 |
@@ -88,5 +108,5 @@ grep -r "t('" src/ --include="*.tsx" | grep -oE "t\('[^']+'\)" | sort -u > /tmp/
 
 ---
 
-*Version: 1.1.0 — 新增 F11 过期闭包 + 不必要重渲染检查 + 过期闭包 Checklist (ECC 对齐)*
-*Created: 2026-02-15 | Updated: 2026-02-19*
+*Version: 1.2.0 — 新增 §2.5 权限与安全规则 (Users 模块审计修复)*
+*Created: 2026-02-15 | Updated: 2026-02-21*

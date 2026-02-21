@@ -3,5 +3,15 @@
   "signOut": "Sign Out",
   "viewProfile": "View Profile",
   "viewPermissions": "View Permissions",
-  "changePassword": "Change Password"
+  "changePassword": "Change Password",
+  "roleNames": {
+    "superuser": "Quản trị viên cao cấp",
+    "admin": "Quản trị viên",
+    "operator": "Nhân viên vận hành",
+    "manager": "Quản lý",
+    "staff": "Nhân viên",
+    "editor": "Biên tập viên",
+    "viewer": "Người xem",
+    "default": "Người dùng"
+  }
 }

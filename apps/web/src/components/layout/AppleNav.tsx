@@ -239,16 +239,10 @@ export function AppleNav({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
 
   // 获取角色显示文本
   const getRoleDisplay = (roles: string[]) => {
-    const roleMap: Record<string, Record<string, string>> = {
-      superuser: { zh: '超级管理员', en: 'Super Admin', vi: 'Quản trị viên cao cấp' },
-      admin:     { zh: '管理员', en: 'Admin', vi: 'Quản trị viên' },
-      operator:  { zh: '操作员', en: 'Operator', vi: 'Nhân viên vận hành' },
-    };
-    const fallback: Record<string, string> = { zh: '用户', en: 'User', vi: 'Người dùng' };
-    for (const role of ['superuser', 'admin', 'operator']) {
-      if (roles.includes(role)) return roleMap[role][locale] || roleMap[role].en;
+    for (const role of ['superuser', 'admin', 'operator', 'manager', 'staff', 'editor', 'viewer']) {
+      if (roles.includes(role)) return tNav(`roleNames.${role}`);
     }
-    return fallback[locale] || fallback.en;
+    return tNav('roleNames.default');
   };
 
   return (

@@ -90,6 +90,10 @@ class RoleService(
         if (role.name in SYSTEM_ROLES) {
             throw ForbiddenException("Cannot delete system role: ${role.name}")
         }
+        val usersWithRole = userRepo.findByRole(role.name)
+        if (usersWithRole.isNotEmpty()) {
+            throw BusinessException("角色 '${role.displayName}' 正在被 ${usersWithRole.size} 个用户使用，无法删除")
+        }
         role.isActive = false
         role.updatedAt = Instant.now()
         roleRepo.save(role)

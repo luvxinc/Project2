@@ -6,6 +6,7 @@ import com.mgmt.modules.purchase.domain.model.Receive
 import com.mgmt.modules.purchase.domain.model.ReceiveDiff
 import com.mgmt.modules.purchase.domain.model.Shipment
 import com.mgmt.modules.purchase.domain.repository.*
+import com.mgmt.domain.inventory.*
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -39,6 +40,9 @@ class ReceiveUseCase(
     private val shipmentRepo: ShipmentRepository,
     private val shipmentItemRepo: ShipmentItemRepository,
     private val poItemRepo: PurchaseOrderItemRepository,
+    private val fifoTranRepo: FifoTransactionRepository,
+    private val fifoLayerRepo: FifoLayerRepository,
+    private val landedPriceRepo: LandedPriceRepository,
 ) {
     private val log = LoggerFactory.getLogger(ReceiveUseCase::class.java)
 
@@ -867,22 +871,94 @@ class ReceiveUseCase(
             .sumOf { it.quantity }
 
     /**
-     * V1 parity submit.py L358-365: create_landed_price_records(log_num)
-     * Finance integration point — logs when finance module not yet migrated.
+     * V1 parity: submit.py L358-365 → create_landed_price_records(logistic_num)
+     *
+     * For each received SKU with qty > 0:
+     *   ① INSERT fifo_transactions (action=IN, tran_type=purchase)
+     *   ② INSERT fifo_layers (sku, unit_cost=unitPrice, qty_in=qty, qty_remaining=qty)
+     *   ③ INSERT landed_prices (logistic_num, po_num, sku, base_price, landed_price)
+     *
+     * Note: At initial creation, landed_price = unit_price (no freight apportioned yet).
+     * Finance module will call recalculateLandedPrices() to update with freight costs.
      */
     private fun triggerLandedPriceCreation(logisticNum: String) {
-        // TODO [FINANCE-INTEGRATION]: inject LandedPriceService when finance module is migrated.
-        // landedPriceService.createLandedPriceRecords(logisticNum)
-        log.info("[LandedPrice:CREATE] logisticNum=$logisticNum — finance module pending migration")
+        val receives = receiveRepo.findAllByLogisticNumOrderBySkuAsc(logisticNum)
+            .filter { it.deletedAt == null && it.receiveQuantity > 0 }
+
+        if (receives.isEmpty()) {
+            log.info("[LandedPrice:CREATE] logisticNum=$logisticNum — no active receives to process")
+            return
+        }
+
+        var createdCount = 0
+
+        for (recv in receives) {
+            val refKey = "receive_${logisticNum}_${recv.poNum}_${recv.sku}_${recv.unitPrice}"
+
+            // Idempotent guard — V1 parity: existing_tran check
+            if (fifoTranRepo.findByRefKey(refKey) != null) {
+                log.debug("[LandedPrice:CREATE] skip duplicate: $refKey")
+                continue
+            }
+
+            val unitPriceUsd = recv.unitPrice  // TODO [CURRENCY]: convert if non-USD via strategy
+
+            // ① fifo_transactions
+            val tran = fifoTranRepo.save(FifoTransaction(
+                transactionDate = recv.receiveDate
+                    ?.let { java.time.ZonedDateTime.of(it, java.time.LocalTime.NOON, java.time.ZoneId.of("America/Los_Angeles")).toInstant() }
+                    ?: Instant.now(),
+                sku = recv.sku,
+                poNum = recv.poNum,
+                unitPrice = unitPriceUsd,
+                quantity = recv.receiveQuantity,
+                action = "in",
+                tranType = "purchase",
+                refKey = refKey,
+                note = "入库_${logisticNum}",
+            ))
+
+            // ② fifo_layers
+            val layer = fifoLayerRepo.save(FifoLayer(
+                sku = recv.sku,
+                inTranId = tran.id,
+                inDate = tran.transactionDate,
+                poNum = recv.poNum,
+                unitCost = unitPriceUsd,
+                landedCost = unitPriceUsd,  // Initial: landed = unit (no freight yet)
+                qtyIn = recv.receiveQuantity,
+                qtyRemaining = recv.receiveQuantity,
+            ))
+
+            // ③ landed_prices
+            val existing = landedPriceRepo.findByLogisticNumAndPoNumAndSku(
+                logisticNum, recv.poNum, recv.sku
+            )
+            if (existing == null) {
+                landedPriceRepo.save(LandedPrice(
+                    fifoTranId = tran.id,
+                    fifoLayerId = layer.id,
+                    logisticNum = logisticNum,
+                    poNum = recv.poNum,
+                    sku = recv.sku,
+                    quantity = recv.receiveQuantity,
+                    basePriceUsd = unitPriceUsd,
+                    landedPriceUsd = unitPriceUsd,  // Initial: same as base
+                ))
+            }
+
+            createdCount++
+        }
+
+        log.info("[LandedPrice:CREATE] logisticNum=$logisticNum — created $createdCount FIFO records")
     }
 
     /**
      * V1 parity edit.py L438-443: recalculate_landed_prices(logistic_num=)
+     * TODO [FINANCE-INTEGRATION]: Full implementation when Finance module is migrated.
      */
     private fun triggerLandedPriceRecalculation(logisticNum: String) {
-        // TODO [FINANCE-INTEGRATION]: inject LandedPriceService when finance module is migrated.
-        // landedPriceService.recalculateLandedPrices(logisticNum)
-        log.info("[LandedPrice:RECALC] logisticNum=$logisticNum — finance module pending migration")
+        log.info("[LandedPrice:RECALC] logisticNum=$logisticNum — Finance module pending full implementation")
     }
 
     // ═══════════════════════════════════════════════════════

@@ -34,6 +34,9 @@ class SecurityConfig(
     @Value("\${mgmt.security.cors.allowed-origins:http://localhost:3000}")
     private lateinit var allowedOrigins: String
 
+    @Value("\${spring.profiles.active:prod}")
+    private lateinit var activeProfile: String
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -45,7 +48,7 @@ class SecurityConfig(
                     // CORS preflight — must be permitted before any auth check
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // Public endpoints (paths are relative to context-path /api/v1)
-                    .requestMatchers("/health", "/actuator/**").permitAll()
+                    .requestMatchers("/health", "/actuator/health").permitAll()
                     .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
                     // All other endpoints require authentication
@@ -98,10 +101,11 @@ class SecurityConfig(
         )
 
         // Use patterns (supports wildcards) instead of exact origins
-        config.allowedOriginPatterns = (explicitOrigins.map { origin ->
-            // Convert exact origins to patterns (e.g., http://localhost:3000 → http://localhost:3000)
-            origin
-        } + lanPatterns).distinct()
+        val patterns = explicitOrigins.toMutableList()
+        if (activeProfile == "dev") {
+            patterns.addAll(lanPatterns)
+        }
+        config.allowedOriginPatterns = patterns.distinct()
 
         config.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         config.allowedHeaders = listOf(

@@ -94,9 +94,8 @@ class AuthService(
             sessionService.cachePermissions(user.id, permKeys)
         }
 
-        // Update last login
-        user.lastLoginAt = Instant.now()
-        userRepo.save(user)
+        // Update last login (direct UPDATE bypasses @Version to avoid OptimisticLockException)
+        userRepo.updateLastLoginAt(user.id, Instant.now())
 
         log.info("Login success: user={}", user.username)
 

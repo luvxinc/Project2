@@ -323,13 +323,38 @@ function RoleModal({
   );
 }
 
+function useHasPermission(permPrefix: string): boolean {
+  const [allowed, setAllowed] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      try {
+        const stored = localStorage.getItem('user');
+        if (!stored) return;
+        const user = JSON.parse(stored);
+        const roles: string[] = user.roles || [];
+        if (roles.includes('superuser') || roles.includes('admin')) { setAllowed(true); return; }
+        const perms: Record<string, unknown> = user.permissions || {};
+        setAllowed(Object.keys(perms).some(k => k.startsWith(permPrefix) && perms[k] === true));
+      } catch { /* ignore */ }
+    };
+    check();
+    const handler = () => check();
+    window.addEventListener('mgmt:user-updated', handler);
+    return () => window.removeEventListener('mgmt:user-updated', handler);
+  }, [permPrefix]);
+  return allowed;
+}
+
 export default function CapabilitiesPage() {
   const t = useTranslations('users');
   const tc = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const { showPassword, showSuccess, showError } = useModal();
-  
+
+  const hasAccess = useHasPermission('module.user_admin.role_switches');
+
   // 状态
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleCapabilities, setRoleCapabilities] = useState<Record<string, Record<string, boolean>>>(DEFAULT_ROLE_CAPABILITIES);
@@ -573,6 +598,25 @@ export default function CapabilitiesPage() {
     if (level === 'warning') return 'orange';
     return 'green';
   };
+
+  if (!hasAccess) {
+    return (
+      <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div
+            style={{ backgroundColor: `${colors.red || '#ff3b30'}15` }}
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <svg className="w-10 h-10" fill="none" stroke={colors.red || '#ff3b30'} viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
+          <h1 style={{ color: colors.text }} className="text-[28px] font-semibold mb-3">{tAuth('accessDenied.title')}</h1>
+          <p style={{ color: colors.textSecondary }} className="text-[15px]">{tAuth('accessDenied.message')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen">

@@ -15,12 +15,12 @@ interface SecurityCodeDialogProps {
   error?: string | null;
 }
 
-const levelInfo = {
-  L0: { label: 'User Password', color: '#86868b' },
-  L1: { label: 'Query Code', color: '#30d158' },
-  L2: { label: 'Modify Code', color: '#ff9f0a' },
-  L3: { label: 'Database Code', color: '#ff453a' },
-  L4: { label: 'System Code', color: '#bf5af2' },
+const levelColors = {
+  L0: '#86868b',
+  L1: '#30d158',
+  L2: '#ff9f0a',
+  L3: '#ff453a',
+  L4: '#bf5af2',
 };
 
 export function SecurityCodeDialog(props: SecurityCodeDialogProps) {
@@ -38,6 +38,7 @@ function SecurityCodeDialogContent({
   error = null,
 }: Omit<SecurityCodeDialogProps, 'isOpen'>) {
   const t = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const [code, setCode] = useState('');
@@ -55,7 +56,7 @@ function SecurityCodeDialogContent({
     }
   };
 
-  const info = levelInfo[level];
+  const levelColor = levelColors[level];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -74,10 +75,10 @@ function SecurityCodeDialogContent({
 
         <form onSubmit={handleSubmit} className="px-6 pb-6">
           <div className="flex items-center gap-2 mb-4">
-            <span className="px-2 py-0.5 rounded text-[11px] font-medium" style={{ backgroundColor: `${info.color}20`, color: info.color }}>
+            <span className="px-2 py-0.5 rounded text-[11px] font-medium" style={{ backgroundColor: `${levelColor}20`, color: levelColor }}>
               {level}
             </span>
-            <span style={{ color: colors.textSecondary }} className="text-[12px]">{info.label}</span>
+            <span style={{ color: colors.textSecondary }} className="text-[12px]">{tAuth(`securityLevels.${level}`)}</span>
           </div>
 
           <div className="mb-4">

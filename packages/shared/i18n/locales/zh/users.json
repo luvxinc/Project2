@@ -57,6 +57,7 @@
     "desc": "描述",
     "saveAll": "保存全部",
     "securityLevels": "安全级别说明",
+    "unsavedChanges": "有未保存的更改",
     "auditNote": "修改配置后点击「保存全部」按钮即时生效，所有变更将被审计系统记录。",
     "levels": {
       "l0": "验证当前登录用户的账户密码。",
