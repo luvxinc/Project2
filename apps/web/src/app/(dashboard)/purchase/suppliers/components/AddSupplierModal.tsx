@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { PillNav } from '@/components/ui/pill-nav';
+import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
 // Types
@@ -283,28 +284,17 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
   // --- Success state ---
   if (success) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div
-          className="relative w-full max-w-lg rounded-2xl border shadow-2xl p-8 text-center"
-          style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-        >
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: `${colors.green}20` }}
-          >
+      <ModalShell isOpen={isOpen} onClose={onClose} title={t('add.success')} closable={false} showFooter={false}>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${colors.green}15` }}>
             <svg className="w-8 h-8" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>
-            {t('add.success')}
-          </h3>
-          <p className="text-sm" style={{ color: colors.textSecondary }}>
-            {formData.supplierCode} - {formData.supplierName}
-          </p>
+          <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>{t('add.success')}</h3>
+          <p className="text-sm" style={{ color: colors.textSecondary }}>{formData.supplierCode} - {formData.supplierName}</p>
         </div>
-      </div>
+      </ModalShell>
     );
   }
 
@@ -598,102 +588,43 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-        {/* Panel */}
-        <div
-          className="relative w-full max-w-lg rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
-          style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div
-            className="flex items-center justify-between px-6 pt-5 pb-4"
-            style={{ borderBottom: `1px solid ${colors.border}` }}
-          >
-            <h2 className="text-[17px] font-semibold" style={{ color: colors.text }}>
-              {t('add.title')}
-            </h2>
-            <button
-              onClick={onClose}
-              className="w-6 h-6 rounded-full flex items-center justify-center hover:opacity-70 transition-opacity"
-              style={{ backgroundColor: colors.bgTertiary }}
-            >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1 1L9 9M9 1L1 9" stroke={colors.textSecondary} strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+      <ModalShell
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t('add.title')}
+        footerLeft={
+          activeStep !== 'basic' ? (
+            <button type="button" onClick={handleBack} className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
+              {tCommon('back')}
             </button>
+          ) : undefined
+        }
+        footerRight={
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={onClose} className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
+              {tCommon('cancel')}
+            </button>
+            {activeStep === 'basic' ? (
+              <button type="button" onClick={handleNext} className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: colors.blue }}>
+                {tCommon('next')}
+              </button>
+            ) : (
+              <button type="button" onClick={handleSubmit} className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: colors.blue }}>
+                {t('add.submit')}
+              </button>
+            )}
           </div>
-
+        }
+      >
           {/* Pill Nav */}
-          <div className="flex justify-center px-6 pt-4 pb-2">
-            <PillNav
-              steps={pills}
-              activeStep={activeStep}
-              onStepChange={handleStepChange}
-              completedSteps={completedSteps}
-            />
+          <div className="flex justify-center mb-4">
+            <PillNav steps={pills} activeStep={activeStep} onStepChange={handleStepChange} completedSteps={completedSteps} />
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4 flex-1 overflow-y-auto" style={{ maxHeight: '400px' }}>
-            {activeStep === 'basic' && renderBasicPill()}
-            {activeStep === 'strategy' && renderStrategyPill()}
-          </div>
-
-          {/* Footer */}
-          <div
-            className="flex items-center justify-between px-6 py-4"
-            style={{ borderTop: `1px solid ${colors.border}` }}
-          >
-            <div>
-              {activeStep !== 'basic' && (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
-                  style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
-                >
-                  {tCommon('back')}
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
-                style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
-              >
-                {tCommon('cancel')}
-              </button>
-
-              {activeStep === 'basic' ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: colors.blue }}
-                >
-                  {tCommon('next')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: colors.blue }}
-                >
-                  {t('add.submit')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+          {activeStep === 'basic' && renderBasicPill()}
+          {activeStep === 'strategy' && renderStrategyPill()}
+      </ModalShell>
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog

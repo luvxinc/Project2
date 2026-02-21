@@ -6,7 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type SupplierWithStrategy, type SupplierStrategy } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
-import EditModalShell from '../../../purchase/components/EditModalShell';
+import ModalShell from '../../../purchase/components/ModalShell';
 
 interface EditStrategyModalProps {
   isOpen: boolean;
@@ -71,7 +71,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
   // Success state
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // ESC handled by EditModalShell
+  // ESC handled by ModalShell
 
   // Reset form when supplier changes or modal opens
   useEffect(() => {
@@ -228,7 +228,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
 
   return (
     <>
-      <EditModalShell
+      <ModalShell
         isOpen={isOpen}
         onClose={onClose}
         title={isEditMode ? t('edit.titleEdit') : t('edit.title')}
@@ -536,7 +536,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
               </div>
             </>
           )}
-      </EditModalShell>
+      </ModalShell>
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog

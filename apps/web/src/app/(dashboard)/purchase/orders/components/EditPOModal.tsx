@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api';
-import EditModalShell from '../../../purchase/components/EditModalShell';
+import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
 // Types
@@ -307,7 +307,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // --- Success state ---
   if (success) {
     return (
-      <EditModalShell isOpen={isOpen} onClose={onClose} title={t('orders.edit.success')} closable={false} showFooter={false}>
+      <ModalShell isOpen={isOpen} onClose={onClose} title={t('orders.edit.success')} closable={false} showFooter={false}>
         <div className="text-center py-16">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${colors.green}15` }}>
             <svg className="w-8 h-8" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -317,7 +317,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
           <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>{t('orders.edit.success')}</h3>
           <p className="text-sm" style={{ color: colors.textSecondary }}>{order.poNum}</p>
         </div>
-      </EditModalShell>
+      </ModalShell>
     );
   }
 
@@ -326,7 +326,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // ================================
 
   return (
-    <EditModalShell
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
       title={t('orders.edit.title')}
@@ -642,6 +642,6 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
             )}
           </div>
         </div>
-    </EditModalShell>
+    </ModalShell>
   );
 }
