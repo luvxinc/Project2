@@ -450,139 +450,96 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
           </div>
 
           {/* Items table */}
-          <div className="space-y-3">
-            {editItems.map((item) => {
-              if (item.removed) return null;
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-xl border p-3"
-                  style={{ borderColor: colors.border, backgroundColor: colors.bgTertiary }}
-                >
-                  {/* Row 1: SKU + Remove */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium mb-1" style={{ color: colors.textSecondary }}>
-                        {t('orders.detail.sku')}
-                      </label>
-                      <input
-                        type="text"
-                        list={item.isNew ? `edit-sku-list-${item.id}` : undefined}
-                        value={item.sku}
-                        onChange={(e) => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
-                        disabled={isCancelled || !item.isNew}
-                        placeholder={t('orders.create.skuPlaceholder')}
-                        className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
-                        style={{
-                          backgroundColor: !item.isNew ? `${colors.bgTertiary}80` : colors.bgSecondary,
-                          borderColor: errors[`${item.id}.sku`] ? colors.red : colors.border,
-                          color: colors.text,
-                        }}
-                      />
-                      {item.isNew && (
-                        <datalist id={`edit-sku-list-${item.id}`}>
-                          {skuList.map((s) => (
-                            <option key={s.sku} value={s.sku}>{s.name}</option>
-                          ))}
-                        </datalist>
-                      )}
-                      {errors[`${item.id}.sku`] && (
-                        <p className="mt-1 text-xs" style={{ color: colors.red }}>
-                          {errors[`${item.id}.sku`]}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Remove button */}
-                    <div className="pt-5">
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id)}
-                        disabled={isCancelled || activeItems.length <= 1}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity disabled:opacity-30"
-                        style={{ backgroundColor: `${colors.red}15` }}
-                        title={t('orders.edit.remove')}
-                      >
-                        <svg className="w-4 h-4" style={{ color: colors.red }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Quantity + Unit Price */}
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium mb-1" style={{ color: colors.textSecondary }}>
-                        {t('orders.detail.qty')}
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={item.quantity || ''}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          updateItem(item.id, 'quantity', isNaN(val) ? 0 : val);
-                        }}
-                        disabled={isCancelled}
-                        placeholder={t('orders.create.qtyPlaceholder')}
-                        className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
-                        style={{
-                          backgroundColor: colors.bgSecondary,
-                          borderColor: errors[`${item.id}.quantity`] ? colors.red : colors.border,
-                          color: colors.text,
-                        }}
-                      />
-                      {errors[`${item.id}.quantity`] && (
-                        <p className="mt-1 text-xs" style={{ color: colors.red }}>
-                          {errors[`${item.id}.quantity`]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium mb-1" style={{ color: colors.textSecondary }}>
-                        {t('orders.detail.unitPrice')}
-                      </label>
-                      <input
-                        type="number"
-                        min={0.01}
-                        step={0.01}
-                        value={item.unitPrice || ''}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value);
-                          updateItem(item.id, 'unitPrice', isNaN(val) ? 0 : val);
-                        }}
-                        disabled={isCancelled}
-                        placeholder={t('orders.create.pricePlaceholder')}
-                        className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
-                        style={{
-                          backgroundColor: colors.bgSecondary,
-                          borderColor: errors[`${item.id}.unitPrice`] ? colors.red : colors.border,
-                          color: colors.text,
-                        }}
-                      />
-                      {errors[`${item.id}.unitPrice`] && (
-                        <p className="mt-1 text-xs" style={{ color: colors.red }}>
-                          {errors[`${item.id}.unitPrice`]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Line amount */}
-                  {item.quantity > 0 && item.unitPrice > 0 && (
-                    <div className="mt-2 text-right">
-                      <span className="text-xs" style={{ color: colors.textSecondary }}>
-                        {t('orders.detail.amount')}:{' '}
-                      </span>
-                      <span className="text-sm font-medium" style={{ color: colors.text }}>
-                        {(item.quantity * item.unitPrice).toFixed(2)} {currency}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="rounded-xl overflow-hidden border" style={{ borderColor: colors.border }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: colors.bgTertiary }}>
+                  <th className="text-left px-3 py-2 font-medium text-xs" style={{ color: colors.textSecondary }}>SKU</th>
+                  <th className="text-right px-3 py-2 font-medium text-xs w-24" style={{ color: colors.textSecondary }}>{t('orders.detail.qty')}</th>
+                  <th className="text-right px-3 py-2 font-medium text-xs w-28" style={{ color: colors.textSecondary }}>{t('orders.detail.unitPrice')}</th>
+                  <th className="text-right px-3 py-2 font-medium text-xs w-28" style={{ color: colors.textSecondary }}>{t('orders.detail.amount')}</th>
+                  <th className="w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {editItems.map((item) => {
+                  if (item.removed) return null;
+                  const amt = item.quantity > 0 && item.unitPrice > 0 ? (item.quantity * item.unitPrice).toFixed(2) : '-';
+                  return (
+                    <tr key={item.id} style={{ borderTop: `1px solid ${colors.border}` }}>
+                      <td className="px-3 py-1.5 relative">
+                        <input
+                          type="text"
+                          list={item.isNew ? `edit-sku-list-${item.id}` : undefined}
+                          value={item.sku}
+                          onChange={(e) => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
+                          disabled={isCancelled || !item.isNew}
+                          placeholder={t('orders.create.skuPlaceholder')}
+                          className="w-full h-7 px-2 border rounded text-xs font-mono focus:outline-none disabled:opacity-50"
+                          style={{
+                            backgroundColor: !item.isNew ? `${colors.bgTertiary}80` : colors.bgSecondary,
+                            borderColor: errors[`${item.id}.sku`] ? colors.red : colors.border,
+                            color: colors.text,
+                          }}
+                        />
+                        {item.isNew && (
+                          <datalist id={`edit-sku-list-${item.id}`}>
+                            {skuList.map((s) => (
+                              <option key={s.sku} value={s.sku}>{s.name}</option>
+                            ))}
+                          </datalist>
+                        )}
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <input
+                          type="number" min={1}
+                          value={item.quantity || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            updateItem(item.id, 'quantity', isNaN(val) ? 0 : val);
+                          }}
+                          disabled={isCancelled}
+                          className="w-full h-7 px-2 border rounded text-xs text-right focus:outline-none disabled:opacity-50"
+                          style={{
+                            backgroundColor: colors.bgSecondary,
+                            borderColor: errors[`${item.id}.quantity`] ? colors.red : colors.border,
+                            color: colors.text,
+                          }}
+                        />
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <input
+                          type="number" min={0.01} step={0.01}
+                          value={item.unitPrice || ''}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            updateItem(item.id, 'unitPrice', isNaN(val) ? 0 : val);
+                          }}
+                          disabled={isCancelled}
+                          className="w-full h-7 px-2 border rounded text-xs text-right focus:outline-none disabled:opacity-50"
+                          style={{
+                            backgroundColor: colors.bgSecondary,
+                            borderColor: errors[`${item.id}.unitPrice`] ? colors.red : colors.border,
+                            color: colors.text,
+                          }}
+                        />
+                      </td>
+                      <td className="px-3 py-1.5 text-right font-mono text-xs" style={{ color: colors.text }}>
+                        {amt !== '-' ? `${amt} ${currency}` : '-'}
+                      </td>
+                      <td className="px-3 py-1.5 text-center">
+                        {activeItems.length > 1 && (
+                          <button type="button" onClick={() => removeItem(item.id)}
+                            disabled={isCancelled}
+                            className="text-xs hover:opacity-70 transition-opacity disabled:opacity-30"
+                            style={{ color: colors.red }}>✕</button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Add Item button */}
@@ -590,10 +547,13 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
             <button
               type="button"
               onClick={addItem}
-              className="w-full mt-3 h-10 border-2 border-dashed rounded-xl text-sm font-medium hover:opacity-70 transition-opacity"
-              style={{ borderColor: colors.border, color: colors.textSecondary }}
+              className="w-full mt-3 h-8 text-xs font-medium rounded-lg hover:opacity-80 transition-opacity flex items-center justify-center gap-1"
+              style={{ backgroundColor: colors.bgTertiary, color: colors.blue }}
             >
-              + {t('orders.edit.addItem')}
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              {t('orders.edit.addItem')}
             </button>
           )}
 

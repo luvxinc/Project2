@@ -679,52 +679,54 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
             </div>
           ) : (
             <div>
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {items.map((item, idx) => {
-                  const validSkuSet = new Set(skuList.map(s => s.sku.toUpperCase()));
-                  const skuInvalid = item.sku.trim() && validSkuSet.size > 0 && !validSkuSet.has(item.sku.trim().toUpperCase());
-                  return (
-                    <div key={item.id} className="p-3 rounded-lg border" style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>#{idx + 1}</span>
-                        {items.length > 1 && (
-                          <button type="button" onClick={() => removeItemRow(item.id)} className="text-xs hover:opacity-70 transition-opacity" style={{ color: colors.red }}>
-                            {t('orders.create.removeRow')}
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {/* SKU */}
-                        <div className="col-span-3 relative">
-                          <input type="text" list={`sku-list-${item.id}`} value={item.sku}
-                            onChange={e => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
-                            placeholder={t('orders.create.skuPlaceholder')}
-                            className={inputCls}
-                            style={{ ...baseStyle, backgroundColor: colors.bgSecondary, borderColor: skuInvalid ? colors.red : item.sku.trim() ? colors.border : colors.border }} />
-                          <datalist id={`sku-list-${item.id}`}>
-                            {skuList.map(s => (<option key={s.sku} value={s.sku}>{s.name}</option>))}
-                          </datalist>
-                          {skuInvalid && <p className="mt-0.5 text-[10px]" style={{ color: colors.red }}>{t('orders.errors.skuNotFound')}</p>}
-                        </div>
-                        {/* Qty */}
-                        <div>
-                          <input type="number" value={item.quantity || ''} placeholder={t('orders.create.qtyPlaceholder')}
-                            onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value, 10) || 0)}
-                            className={inputCls}
-                            style={{ ...baseStyle, backgroundColor: colors.bgSecondary, borderColor: item.quantity > 0 ? colors.border : colors.border }} />
-                        </div>
-                        {/* Price */}
-                        <div>
-                          <input type="number" step="0.01" value={item.unitPrice || ''} placeholder={t('orders.create.pricePlaceholder')}
-                            onChange={e => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            className={inputCls}
-                            style={{ ...baseStyle, backgroundColor: colors.bgSecondary }} />
-                        </div>
-
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="rounded-xl overflow-hidden border" style={{ borderColor: colors.border }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ backgroundColor: colors.bgTertiary }}>
+                      <th className="text-left px-3 py-2 font-medium text-xs" style={{ color: colors.textSecondary }}>SKU</th>
+                      <th className="text-right px-3 py-2 font-medium text-xs w-24" style={{ color: colors.textSecondary }}>{t('orders.create.qtyPlaceholder')}</th>
+                      <th className="text-right px-3 py-2 font-medium text-xs w-28" style={{ color: colors.textSecondary }}>{t('orders.create.pricePlaceholder')}</th>
+                      <th className="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => {
+                      const validSkuSet = new Set(skuList.map(s => s.sku.toUpperCase()));
+                      const skuInvalid = item.sku.trim() && validSkuSet.size > 0 && !validSkuSet.has(item.sku.trim().toUpperCase());
+                      return (
+                        <tr key={item.id} style={{ borderTop: `1px solid ${colors.border}` }}>
+                          <td className="px-3 py-1.5 relative">
+                            <input type="text" list={`sku-list-${item.id}`} value={item.sku}
+                              onChange={e => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
+                              placeholder={t('orders.create.skuPlaceholder')}
+                              className="w-full h-7 px-2 border rounded text-xs font-mono focus:outline-none"
+                              style={{ backgroundColor: colors.bgSecondary, borderColor: skuInvalid ? colors.red : colors.border, color: colors.text }} />
+                            <datalist id={`sku-list-${item.id}`}>
+                              {skuList.map(s => (<option key={s.sku} value={s.sku}>{s.name}</option>))}
+                            </datalist>
+                          </td>
+                          <td className="px-3 py-1.5">
+                            <input type="number" value={item.quantity || ''} placeholder="0"
+                              onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value, 10) || 0)}
+                              className="w-full h-7 px-2 border rounded text-xs text-right focus:outline-none"
+                              style={{ backgroundColor: colors.bgSecondary, borderColor: item.quantity > 0 ? colors.border : colors.red, color: colors.text }} />
+                          </td>
+                          <td className="px-3 py-1.5">
+                            <input type="number" step="0.01" value={item.unitPrice || ''} placeholder="0.00"
+                              onChange={e => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              className="w-full h-7 px-2 border rounded text-xs text-right focus:outline-none"
+                              style={{ backgroundColor: colors.bgSecondary, borderColor: item.unitPrice > 0 ? colors.border : colors.red, color: colors.text }} />
+                          </td>
+                          <td className="px-3 py-1.5 text-center">
+                            {items.length > 1 && (
+                              <button type="button" onClick={() => removeItemRow(item.id)} className="text-xs hover:opacity-70 transition-opacity" style={{ color: colors.red }}>✕</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
               <button type="button" onClick={addItemRow}
                 className="mt-3 w-full h-8 text-xs font-medium rounded-lg hover:opacity-80 transition-opacity flex items-center justify-center gap-1"
