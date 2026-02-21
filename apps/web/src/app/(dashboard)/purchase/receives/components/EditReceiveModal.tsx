@@ -6,7 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation } from '@tanstack/react-query';
 import { purchaseApi, type ReceiveManagementDetail, type EditReceiveItemInput, type ReceiveDetailItem } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
-import EditModalShell from '../../../purchase/components/EditModalShell';
+import ModalShell from '../../../purchase/components/ModalShell';
 
 interface EditReceiveModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
 
   return (
     <>
-      <EditModalShell
+      <ModalShell
         isOpen={isOpen}
         onClose={onClose}
         title={t('receives.edit.title')}
@@ -142,7 +142,7 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
             </tbody>
           </table>
         </div>
-      </EditModalShell>
+      </ModalShell>
 
       {/* Security Dialog */}
       <SecurityCodeDialog

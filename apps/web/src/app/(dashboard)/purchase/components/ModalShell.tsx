@@ -4,16 +4,16 @@ import { useEffect, useCallback, type ReactNode } from 'react';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 // ================================
-// Shared Edit Modal Shell
+// Shared Modal Shell — Purchase Module
 // ================================
-// Unified design for all purchase module Edit Modals.
+// Unified design for all purchase module Modals (Create / Edit / Add).
 // - Wide panel (max-w-4xl)
-// - No wizard step bar — full-area content
+// - Full-area content — no wizard step bar
 // - Consistent header (title + subtitle + close button)
 // - Consistent footer (left slot + right slot)
 // - Theme-aware, backdrop-blur, ESC to close
 
-export interface EditModalShellProps {
+export interface ModalShellProps {
   isOpen: boolean;
   onClose: () => void;
   /** Main title, e.g. "Edit Shipment" */
@@ -33,7 +33,7 @@ export interface EditModalShellProps {
   children: ReactNode;
 }
 
-export default function EditModalShell({
+export default function ModalShell({
   isOpen,
   onClose,
   title,
@@ -44,7 +44,7 @@ export default function EditModalShell({
   footerRight,
   showFooter = true,
   children,
-}: EditModalShellProps) {
+}: ModalShellProps) {
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
