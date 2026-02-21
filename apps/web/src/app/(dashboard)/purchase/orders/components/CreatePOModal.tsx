@@ -720,13 +720,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                             className={inputCls}
                             style={{ ...baseStyle, backgroundColor: colors.bgSecondary }} />
                         </div>
-                        {/* Note */}
-                        <div>
-                          <input type="text" value={item.note} placeholder={t('orders.create.notePlaceholder')}
-                            onChange={e => updateItem(item.id, 'note', e.target.value)}
-                            className={inputCls}
-                            style={{ ...baseStyle, backgroundColor: colors.bgSecondary }} />
-                        </div>
+
                       </div>
                     </div>
                   );
