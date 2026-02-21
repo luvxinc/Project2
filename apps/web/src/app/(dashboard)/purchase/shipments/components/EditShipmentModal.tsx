@@ -385,7 +385,7 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
                   <option value="">—</option>
                   {availableSkus.map(item => (
                     <option key={`${item.sku}-${item.unitPrice}`} value={item.sku}>
-                      {item.sku} (余{item.remainingQty})
+                      {item.sku} ({t('shipments.create.remaining')}: {item.remainingQty})
                     </option>
                   ))}
                 </select>
