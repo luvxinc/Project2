@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api';
+import EditModalShell from '../../../purchase/components/EditModalShell';
 
 // ================================
 // Types
@@ -306,28 +307,17 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // --- Success state ---
   if (success) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div
-          className="relative w-full max-w-2xl rounded-2xl border shadow-2xl p-8 text-center"
-          style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-        >
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: `${colors.green}20` }}
-          >
+      <EditModalShell isOpen={isOpen} onClose={onClose} title={t('orders.edit.success')} closable={false} showFooter={false}>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${colors.green}15` }}>
             <svg className="w-8 h-8" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>
-            {t('orders.edit.success')}
-          </h3>
-          <p className="text-sm" style={{ color: colors.textSecondary }}>
-            {order.poNum}
-          </p>
+          <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>{t('orders.edit.success')}</h3>
+          <p className="text-sm" style={{ color: colors.textSecondary }}>{order.poNum}</p>
         </div>
-      </div>
+      </EditModalShell>
     );
   }
 
@@ -336,42 +326,30 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // ================================
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Panel */}
-      <div
-        className="relative w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
-        style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 pt-5 pb-4"
-          style={{ borderBottom: `1px solid ${colors.border}` }}
-        >
-          <div>
-            <h2 className="text-[17px] font-semibold" style={{ color: colors.text }}>
-              {t('orders.edit.title')}
-            </h2>
-            <p className="text-sm font-mono mt-0.5" style={{ color: colors.textSecondary }}>
-              {order.poNum} &mdash; {order.supplierCode}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-6 h-6 rounded-full flex items-center justify-center hover:opacity-70 transition-opacity"
-            style={{ backgroundColor: colors.bgTertiary }}
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M1 1L9 9M9 1L1 9" stroke={colors.textSecondary} strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+    <EditModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('orders.edit.title')}
+      subtitle={`${order.poNum} — ${order.supplierCode}`}
+      footerLeft={
+        <div className="text-xs" style={{ color: hasChanges ? colors.orange : colors.textTertiary }}>
+          {hasChanges ? '' : t('orders.edit.noChanges')}
+        </div>
+      }
+      footerRight={
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={onClose} className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
+            {tCommon('cancel')}
+          </button>
+          <button type="button" onClick={handleSubmit} disabled={isCancelled || updateMutation.isPending || !hasChanges}
+            className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: hasChanges ? colors.blue : colors.textTertiary }}>
+            {updateMutation.isPending ? '...' : t('orders.edit.submit')}
           </button>
         </div>
-
-        {/* Content - scrollable */}
-        <div className="px-6 py-4 flex-1 overflow-y-auto" style={{ maxHeight: '500px' }}>
+      }
+    >
+        <div>
           {/* Global error */}
           {errors.global && (
             <div
@@ -664,37 +642,6 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderTop: `1px solid ${colors.border}` }}
-        >
-          {/* Dirty indicator */}
-          <div className="text-xs" style={{ color: hasChanges ? colors.orange : colors.textTertiary }}>
-            {hasChanges ? '' : t('orders.edit.noChanges')}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isCancelled || updateMutation.isPending || !hasChanges}
-              className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: hasChanges ? colors.blue : colors.textTertiary }}
-            >
-              {updateMutation.isPending ? '...' : t('orders.edit.submit')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </EditModalShell>
   );
 }

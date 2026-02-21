@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type SupplierWithStrategy, type SupplierStrategy } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import EditModalShell from '../../../purchase/components/EditModalShell';
 
 interface EditStrategyModalProps {
   isOpen: boolean;
@@ -70,15 +71,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
   // Success state
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // ESC to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  // ESC handled by EditModalShell
 
   // Reset form when supplier changes or modal opens
   useEffect(() => {
@@ -235,22 +228,39 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
-        onClick={onClose}
+      <EditModalShell
+        isOpen={isOpen}
+        onClose={onClose}
+        title={isEditMode ? t('edit.titleEdit') : t('edit.title')}
+        subtitle={`${supplier.supplierCode} — ${supplier.supplierName}`}
+        closable={!showSuccess}
+        showFooter={!showSuccess}
+        footerRight={
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
+              className="h-9 px-4 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              onClick={handleSubmitClick}
+              disabled={(hasConflict === true && !conflictOverride) || modifyMutation.isPending || isFieldsLocked}
+              style={{ backgroundColor: colors.blue }}
+              className="h-9 px-5 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {t('edit.submit')}
+            </button>
+          </div>
+        }
       >
-        <div
-          style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-          className="w-full max-w-lg max-h-[85vh] rounded-2xl border shadow-2xl overflow-y-auto"
-          onClick={e => e.stopPropagation()}
-        >
           {/* Success overlay */}
           {showSuccess && (
             <div className="flex flex-col items-center justify-center py-16">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-                style={{ backgroundColor: `${colors.green}20` }}
+                style={{ backgroundColor: `${colors.green}15` }}
               >
                 <svg className="w-6 h-6" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -264,31 +274,8 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
 
           {!showSuccess && (
             <>
-              {/* Header */}
-              <div className="px-6 pt-6 pb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <h2 style={{ color: colors.text }} className="text-lg font-semibold">
-                    {isEditMode ? t('edit.titleEdit') : t('edit.title')}
-                  </h2>
-                  <button
-                    onClick={onClose}
-                    style={{ color: colors.textSecondary }}
-                    className="text-xl hover:opacity-70 transition-opacity"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-                {/* Supplier code + name as sub-header */}
-                <p className="text-sm font-mono" style={{ color: colors.textSecondary }}>
-                  {supplier.supplierCode} &mdash; {supplier.supplierName}
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div style={{ borderColor: colors.border }} className="border-b" />
-
               {/* Single scrollable form */}
-              <div className="px-6 py-5 space-y-4">
+              <div className="space-y-4">
                 {/* Supplier Name */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: colors.text }}>
@@ -545,29 +532,11 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
                 </div>
                 </fieldset>
 
-                {/* Submit + Cancel buttons */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={onClose}
-                    style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
-                  >
-                    {tCommon('cancel')}
-                  </button>
-                  <button
-                    onClick={handleSubmitClick}
-                    disabled={(hasConflict === true && !conflictOverride) || modifyMutation.isPending || isFieldsLocked}
-                    style={{ backgroundColor: colors.blue }}
-                    className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    {t('edit.submit')}
-                  </button>
-                </div>
+                {/* Submit + Cancel buttons moved to footer */}
               </div>
             </>
           )}
-        </div>
-      </div>
+      </EditModalShell>
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog
