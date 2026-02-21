@@ -10,11 +10,19 @@ interface ShipmentRepository : JpaRepository<Shipment, Long>, JpaSpecificationEx
 
     fun findByLogisticNumAndDeletedAtIsNull(logisticNum: String): Shipment?
 
+    fun findByLogisticNum(logisticNum: String): Shipment?  // fallback: includes soft-deleted
+
     fun findByIdAndDeletedAtIsNull(id: Long): Shipment?
 
     fun findAllByDeletedAtIsNullOrderBySentDateDesc(): List<Shipment>
+
+    fun findAllByDeletedAtIsNull(): List<Shipment>
+
+    // Batch lookup: logisticNum → sentDate map for findForManagement
+    fun findAllByLogisticNumIn(logisticNums: Collection<String>): List<Shipment>
 
     fun existsByLogisticNumAndDeletedAtIsNull(logisticNum: String): Boolean
 
     fun countByDeletedAtIsNull(): Long
 }
+

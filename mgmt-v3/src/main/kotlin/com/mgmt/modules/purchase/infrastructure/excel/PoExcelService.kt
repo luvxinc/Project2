@@ -304,7 +304,8 @@ class PoExcelService(
             val redFont = wb.createFont().apply { bold = true; color = IndexedColors.RED.index; fontHeightInPoints = 14 }
             val redStyle = wb.createCellStyle().apply { setFont(redFont) }
             ws.createRow(0).createCell(1).apply {
-                setCellValue("订单被删除 删除日期 ${po.updatedAt}")
+                val deletedDate = po.updatedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+                setCellValue("订单被删除 删除日期 $deletedDate")
                 cellStyle = redStyle
             }
             o = 1
@@ -326,7 +327,8 @@ class PoExcelService(
         setCellValue(ws, 17 + o, 5, if (strategy?.requireDeposit == true) "${strategy.depositRatio}%" else "0%")  // F18
         setCellValue(ws, 19 + o, 5, "L${String.format("%02d", po.detailSeq)}")  // F20
         setCellValue(ws, 21 + o, 2, po.updatedBy ?: "-")              // C22
-        setCellValue(ws, 21 + o, 5, po.updatedAt.toString())          // F22
+        val updatedDate = po.updatedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+        setCellValue(ws, 21 + o, 5, updatedDate)          // F22
         setCellValue(ws, 23 + o, 2, "-")                              // C24
 
         // Total

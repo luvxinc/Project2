@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,7 +22,6 @@ interface EditItem {
   sku: string;
   quantity: number;
   unitPrice: number;
-  note: string;
   isNew: boolean;
   removed: boolean;
 }
@@ -39,7 +38,6 @@ function buildEditItems(order: PurchaseOrder): EditItem[] {
     sku: item.sku,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
-    note: item.note ?? '',
     isNew: false,
     removed: false,
   }));
@@ -52,7 +50,6 @@ function createEmptyItem(): EditItem {
     sku: '',
     quantity: 0,
     unitPrice: 0,
-    note: '',
     isNew: true,
     removed: false,
   };
@@ -70,14 +67,26 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   const queryClient = useQueryClient();
 
   // V1 parity: fetch SKU list for dropdown
-  const { data: skuList = [] } = useQuery({
+  const { data: rawSkuList = [] } = useQuery({
     queryKey: ['skuList'],
     queryFn: () => purchaseApi.getSkuList(),
     enabled: isOpen,
   });
 
+  // Deduplicate SKU list by sku value (fix: some backends return duplicates)
+  const skuList = useMemo(() => {
+    const seen = new Set<string>();
+    return (Array.isArray(rawSkuList) ? rawSkuList : []).filter((s) => {
+      const key = s.sku.toUpperCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [rawSkuList]);
+
   // --- State ---
   const [editItems, setEditItems] = useState<EditItem[]>([]);
+  const [orderNote, setOrderNote] = useState(''); // Order-level note
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   // V1 parity: strategy editing
@@ -88,21 +97,43 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   const [editDepositEnabled, setEditDepositEnabled] = useState(false);
   const [editDepositRatio, setEditDepositRatio] = useState(0);
 
-  // --- Reset on open (same pattern as AddSupplierModal) ---
+  // --- Snapshot of original state for dirty checking ---
+  const [originalSnapshot, setOriginalSnapshot] = useState('');
+
+  // --- Reset on open ---
   // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => {
     if (isOpen && order) {
-      setEditItems(buildEditItems(order));
+      const items = buildEditItems(order);
+      setEditItems(items);
+      setOrderNote('');
       setErrors({});
       setSuccess(false);
       // Initialize strategy editing state
       const s = order.strategy;
-      setEditCurrency(s?.currency || 'USD');
-      setEditExchangeRate(s?.exchangeRate || 7.0);
-      setEditFloatEnabled(s?.floatEnabled || false);
-      setEditFloatThreshold(s?.floatThreshold || 0);
-      setEditDepositEnabled(s?.requireDeposit || false);
-      setEditDepositRatio(s?.depositRatio || 0);
+      const initCurrency = s?.currency || 'USD';
+      const initRate = s?.exchangeRate || 7.0;
+      const initFloat = s?.floatEnabled || false;
+      const initFloatThreshold = s?.floatThreshold || 0;
+      const initDeposit = s?.requireDeposit || false;
+      const initDepositRatio = s?.depositRatio || 0;
+      setEditCurrency(initCurrency);
+      setEditExchangeRate(initRate);
+      setEditFloatEnabled(initFloat);
+      setEditFloatThreshold(initFloatThreshold);
+      setEditDepositEnabled(initDeposit);
+      setEditDepositRatio(initDepositRatio);
+      // Build snapshot for dirty checking
+      setOriginalSnapshot(JSON.stringify({
+        items: items.filter(i => !i.removed).map(i => ({ sku: i.sku, quantity: i.quantity, unitPrice: i.unitPrice })),
+        note: '',
+        currency: initCurrency,
+        exchangeRate: initRate,
+        floatEnabled: initFloat,
+        floatThreshold: initFloatThreshold,
+        depositEnabled: initDeposit,
+        depositRatio: initDepositRatio,
+      }));
     }
   }, [isOpen, order]);
 
@@ -125,6 +156,22 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
     };
   }, [isOpen, handleKeyDown]);
 
+  // --- Dirty check: has anything changed from original? ---
+  const currentSnapshot = useMemo(() => {
+    return JSON.stringify({
+      items: editItems.filter(i => !i.removed).map(i => ({ sku: i.sku, quantity: i.quantity, unitPrice: i.unitPrice })),
+      note: orderNote,
+      currency: editCurrency,
+      exchangeRate: editExchangeRate,
+      floatEnabled: editFloatEnabled,
+      floatThreshold: editFloatThreshold,
+      depositEnabled: editDepositEnabled,
+      depositRatio: editDepositRatio,
+    });
+  }, [editItems, orderNote, editCurrency, editExchangeRate, editFloatEnabled, editFloatThreshold, editDepositEnabled, editDepositRatio]);
+
+  const hasChanges = currentSnapshot !== originalSnapshot;
+
   // --- Mutation ---
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -137,7 +184,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
             unitPrice: i.unitPrice,
             currency: editCurrency,
             exchangeRate: editExchangeRate,
-            note: i.note || undefined,
+            note: orderNote || undefined,
           })),
         strategy: {
           strategyDate: order!.poDate,
@@ -148,6 +195,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
           floatThreshold: editFloatThreshold,
           requireDeposit: editDepositEnabled,
           depositRatio: editDepositRatio,
+          note: orderNote || undefined,
         },
       }),
     onSuccess: () => {
@@ -187,9 +235,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
     setEditItems((prev) => {
       const item = prev.find((i) => i.id === id);
       if (!item) return prev;
-      // If it's a new item, just filter it out
       if (item.isNew) return prev.filter((i) => i.id !== id);
-      // Otherwise mark as removed
       return prev.map((i) => (i.id === id ? { ...i, removed: true } : i));
     });
   };
@@ -210,18 +256,32 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
     const validSkuSet = new Set(skuList.map((s) => s.sku.toUpperCase()));
 
     activeItems.forEach((item) => {
+      // SKU is always required
       if (!item.sku.trim()) {
         newErrors[`${item.id}.sku`] = t('orders.errors.skuRequired');
       } else if (item.isNew && validSkuSet.size > 0 && !validSkuSet.has(item.sku.trim().toUpperCase())) {
         newErrors[`${item.id}.sku`] = t('orders.errors.skuNotFound');
       }
-      if (item.quantity <= 0) {
+      // Quantity must be > 0
+      if (!item.quantity || item.quantity <= 0) {
         newErrors[`${item.id}.quantity`] = t('orders.errors.qtyPositive');
       }
-      if (item.unitPrice <= 0) {
+      // Unit price must be > 0
+      if (!item.unitPrice || item.unitPrice <= 0) {
         newErrors[`${item.id}.unitPrice`] = t('orders.errors.pricePositive');
       }
     });
+
+    // Strategy validation
+    if (editExchangeRate <= 0) {
+      newErrors.exchangeRate = t('orders.errors.ratePositive');
+    }
+    if (editFloatEnabled && (editFloatThreshold <= 0 || editFloatThreshold > 10)) {
+      newErrors.floatThreshold = t('errors.floatThresholdInvalid');
+    }
+    if (editDepositEnabled && editDepositRatio <= 0) {
+      newErrors.depositRatio = t('errors.depositRatioInvalid');
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -236,7 +296,6 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // --- Computed values ---
   const activeItems = editItems.filter((i) => !i.removed);
   const totalAmount = activeItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
-  // V1 parity: use editable strategy values for totals calculation
   const currency = editCurrency;
   const exchangeRate = editExchangeRate;
   const isCancelled = order?.status === 'cancelled' || order?.isDeleted === true;
@@ -361,7 +420,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
                   disabled={isCancelled}
                   onChange={(e) => setEditExchangeRate(parseFloat(e.target.value) || 0)}
                   className="w-full h-8 px-2 border rounded text-sm focus:outline-none disabled:opacity-40"
-                  style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }}
+                  style={{ backgroundColor: colors.bg, borderColor: errors.exchangeRate ? colors.red : colors.border, color: colors.text }}
                 />
               </div>
               {/* Float */}
@@ -380,7 +439,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
               {editFloatEnabled && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: colors.textSecondary }}>{t('orders.detail.floatThreshold')} (%)</label>
-                  <input type="number" value={editFloatThreshold || ''} disabled={isCancelled} onChange={(e) => setEditFloatThreshold(parseFloat(e.target.value) || 0)} className="w-full h-8 px-2 border rounded text-sm focus:outline-none disabled:opacity-40" style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }} />
+                  <input type="number" value={editFloatThreshold || ''} disabled={isCancelled} onChange={(e) => setEditFloatThreshold(parseFloat(e.target.value) || 0)} className="w-full h-8 px-2 border rounded text-sm focus:outline-none disabled:opacity-40" style={{ backgroundColor: colors.bg, borderColor: errors.floatThreshold ? colors.red : colors.border, color: colors.text }} />
                 </div>
               )}
               {/* Deposit */}
@@ -399,7 +458,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
               {editDepositEnabled && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: colors.textSecondary }}>{t('orders.detail.depositRatio')} (%)</label>
-                  <input type="number" value={editDepositRatio || ''} disabled={isCancelled} onChange={(e) => setEditDepositRatio(parseFloat(e.target.value) || 0)} className="w-full h-8 px-2 border rounded text-sm focus:outline-none disabled:opacity-40" style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }} />
+                  <input type="number" value={editDepositRatio || ''} disabled={isCancelled} onChange={(e) => setEditDepositRatio(parseFloat(e.target.value) || 0)} className="w-full h-8 px-2 border rounded text-sm focus:outline-none disabled:opacity-40" style={{ backgroundColor: colors.bg, borderColor: errors.depositRatio ? colors.red : colors.border, color: colors.text }} />
                 </div>
               )}
             </div>
@@ -445,7 +504,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
                       {item.isNew && (
                         <datalist id={`edit-sku-list-${item.id}`}>
                           {skuList.map((s) => (
-                            <option key={s.sku} value={s.sku}>{s.sku} — {s.name}</option>
+                            <option key={s.sku} value={s.sku}>{s.name}</option>
                           ))}
                         </datalist>
                       )}
@@ -474,7 +533,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
                   </div>
 
                   {/* Row 2: Quantity + Unit Price */}
-                  <div className="flex items-start gap-2 mb-2">
+                  <div className="flex items-start gap-2">
                     <div className="flex-1">
                       <label className="block text-xs font-medium mb-1" style={{ color: colors.textSecondary }}>
                         {t('orders.detail.qty')}
@@ -532,26 +591,6 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
                     </div>
                   </div>
 
-                  {/* Row 3: Note */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: colors.textSecondary }}>
-                      {t('orders.detail.note')}
-                    </label>
-                    <input
-                      type="text"
-                      value={item.note}
-                      onChange={(e) => updateItem(item.id, 'note', e.target.value)}
-                      disabled={isCancelled}
-                      placeholder={t('orders.create.notePlaceholder')}
-                      className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
-                      style={{
-                        backgroundColor: colors.bgSecondary,
-                        borderColor: colors.border,
-                        color: colors.text,
-                      }}
-                    />
-                  </div>
-
                   {/* Line amount */}
                   {item.quantity > 0 && item.unitPrice > 0 && (
                     <div className="mt-2 text-right">
@@ -579,6 +618,26 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
               + {t('orders.edit.addItem')}
             </button>
           )}
+
+          {/* Order-level Note */}
+          <div className="mt-4">
+            <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>
+              {t('orders.detail.note')}
+            </label>
+            <input
+              type="text"
+              value={orderNote}
+              onChange={(e) => setOrderNote(e.target.value)}
+              disabled={isCancelled}
+              placeholder={t('orders.create.notePlaceholder')}
+              className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: colors.bgSecondary,
+                borderColor: colors.border,
+                color: colors.text,
+              }}
+            />
+          </div>
 
           {/* Totals */}
           <div
@@ -608,26 +667,32 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
 
         {/* Footer */}
         <div
-          className="flex items-center justify-end gap-3 px-6 py-4"
+          className="flex items-center justify-between px-6 py-4"
           style={{ borderTop: `1px solid ${colors.border}` }}
         >
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isCancelled || updateMutation.isPending}
-            className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: colors.blue }}
-          >
-            {updateMutation.isPending ? '...' : t('orders.edit.submit')}
-          </button>
+          {/* Dirty indicator */}
+          <div className="text-xs" style={{ color: hasChanges ? colors.orange : colors.textTertiary }}>
+            {hasChanges ? '' : t('orders.edit.noChanges')}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isCancelled || updateMutation.isPending || !hasChanges}
+              className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: hasChanges ? colors.blue : colors.textTertiary }}
+            >
+              {updateMutation.isPending ? '...' : t('orders.edit.submit')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

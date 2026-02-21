@@ -73,7 +73,6 @@ class SupplierUseCase(
             supplierId = saved.id,
             supplierCode = saved.supplierCode,
             category = dto.category,
-            type = dto.type,
             currency = dto.currency,
             floatCurrency = dto.floatCurrency,
             floatThreshold = dto.floatThreshold,
@@ -172,7 +171,6 @@ class SupplierUseCase(
         if (existing != null && dto.override) {
             // Update in-place
             existing.category = dto.category ?: existing.category
-            existing.type = dto.type ?: existing.type
             existing.currency = dto.currency ?: existing.currency
             existing.floatCurrency = floatCurrency
             existing.floatThreshold = floatThreshold
@@ -189,7 +187,6 @@ class SupplierUseCase(
             supplierId = supplier.id,
             supplierCode = supplier.supplierCode,
             category = dto.category ?: "E",
-            type = dto.type,
             currency = dto.currency ?: "USD",
             floatCurrency = floatCurrency,
             floatThreshold = floatThreshold,

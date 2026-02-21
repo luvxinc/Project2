@@ -27,8 +27,6 @@ class SupplierStrategy(
     @Column(length = 1, nullable = false)
     var category: String = "E",  // E=汽配, A=亚马逊
 
-    @Column(name = "type", length = 1)
-    var type: String? = null,  // A=电商货物, B=货物依赖品, C=耗材和其他
 
     @Column(length = 3, nullable = false, columnDefinition = "currency_code")
     var currency: String = "USD",

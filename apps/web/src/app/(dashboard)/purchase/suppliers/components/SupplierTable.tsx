@@ -10,9 +10,21 @@ interface SupplierTableProps {
   error: Error | null;
   onRetry: () => void;
   onRowClick: (supplier: SupplierWithStrategy) => void;
+  sortField: string;
+  sortOrder: 'asc' | 'desc';
+  onSort: (field: string) => void;
 }
 
-export default function SupplierTable({ suppliers, isLoading, error, onRetry, onRowClick }: SupplierTableProps) {
+export default function SupplierTable({
+  suppliers,
+  isLoading,
+  error,
+  onRetry,
+  onRowClick,
+  sortField,
+  sortOrder,
+  onSort,
+}: SupplierTableProps) {
   const t = useTranslations('purchase');
   const { theme } = useTheme();
   const colors = themeColors[theme];
@@ -53,38 +65,52 @@ export default function SupplierTable({ suppliers, isLoading, error, onRetry, on
     );
   }
 
+  const renderSortHeader = (field: string, label: string, align: string = 'text-left') => {
+    const isActive = sortField === field;
+    return (
+      <th
+        onClick={() => onSort(field)}
+        style={{ color: colors.textSecondary }}
+        className={`${align} py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap cursor-pointer select-none transition-opacity hover:opacity-70`}
+      >
+        <span className="inline-flex items-center gap-1">
+          {label}
+          <svg
+            className="w-3 h-3"
+            style={{ opacity: isActive ? 1 : 0.25, color: isActive ? colors.blue : colors.textSecondary }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+          >
+            {isActive && sortOrder === 'desc' ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+            )}
+          </svg>
+        </span>
+      </th>
+    );
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[900px]">
         <thead>
           <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.code')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.name')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.category')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.type')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.currency')}
-            </th>
+            {renderSortHeader('supplierCode', t('table.code'))}
+            {renderSortHeader('supplierName', t('table.name'))}
+            {renderSortHeader('category', t('table.category'))}
+            {renderSortHeader('currency', t('table.currency'))}
             <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
               {t('table.floatCurrency')}
             </th>
             <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
               {t('table.requireDeposit')}
             </th>
-            <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.status')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('table.effectiveDate')}
-            </th>
+            {renderSortHeader('status', t('table.status'), 'text-center')}
+            {renderSortHeader('effectiveDate', t('table.effectiveDate'))}
           </tr>
         </thead>
         <tbody>
@@ -106,11 +132,6 @@ export default function SupplierTable({ suppliers, isLoading, error, onRetry, on
                 <td className="py-3 px-4">
                   <span style={{ color: colors.textSecondary }} className="text-sm">
                     {strategy ? t(`category.${strategy.category}` as any) : '-'}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span style={{ color: colors.textSecondary }} className="text-sm">
-                    {strategy?.type ? t(`type.${strategy.type}` as any) : '-'}
                   </span>
                 </td>
                 <td className="py-3 px-4">

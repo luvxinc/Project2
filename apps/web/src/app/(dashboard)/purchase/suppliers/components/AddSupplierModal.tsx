@@ -22,7 +22,6 @@ interface FormData {
   supplierCode: string;
   supplierName: string;
   category: string;
-  type: string;
   currency: string;
   floatCurrency: boolean;
   floatThreshold: number;
@@ -41,7 +40,6 @@ const INITIAL_FORM: FormData = {
   supplierCode: '',
   supplierName: '',
   category: 'E',
-  type: 'A',
   currency: 'USD',
   floatCurrency: false,
   floatThreshold: 0,
@@ -163,7 +161,6 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
         supplierCode: formData.supplierCode,
         supplierName: formData.supplierName,
         category: formData.category,
-        type: formData.type,
         currency: formData.currency,
         floatCurrency: formData.floatCurrency,
         floatThreshold: formData.floatCurrency ? formData.floatThreshold : undefined,
@@ -536,17 +533,6 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
         options: [
           { value: 'E', label: t('category.E') },
           { value: 'A', label: t('category.A') },
-        ],
-      })}
-
-      {renderSelect({
-        label: t('add.field.type'),
-        value: formData.type,
-        onChange: (v) => updateField('type', v),
-        options: [
-          { value: 'A', label: t('type.A') },
-          { value: 'B', label: t('type.B') },
-          { value: 'C', label: t('type.C') },
         ],
       })}
 

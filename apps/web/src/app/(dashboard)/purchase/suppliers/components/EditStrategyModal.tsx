@@ -4,12 +4,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseApi, type SupplierWithStrategy } from '@/lib/api';
+import { purchaseApi, type SupplierWithStrategy, type SupplierStrategy } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 
 interface EditStrategyModalProps {
   isOpen: boolean;
   supplier: SupplierWithStrategy;
+  /** If provided, we are editing an existing strategy record (edit mode).
+   *  If undefined, we are creating a new strategy (new mode). */
+  editingStrategy?: SupplierStrategy;
+  /** Minimum allowed effective date for new strategies (>= latest strategy date). */
+  minEffectiveDate?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -18,7 +23,6 @@ interface FormData {
   supplierName: string;
   status: boolean;
   category: string;
-  type: string;
   currency: string;
   floatCurrency: boolean;
   floatThreshold: number;
@@ -36,7 +40,8 @@ function getToday(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess }: EditStrategyModalProps) {
+export default function EditStrategyModal({ isOpen, supplier, editingStrategy, minEffectiveDate, onClose, onSuccess }: EditStrategyModalProps) {
+  const isEditMode = !!editingStrategy;
   const t = useTranslations('purchase');
   const tCommon = useTranslations('common');
   const { theme } = useTheme();
@@ -45,6 +50,9 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
 
   // Form state
   const [form, setForm] = useState<FormData>(() => buildInitialForm(supplier));
+
+  // Inactive supplier lockdown: all fields except status toggle are disabled
+  const isFieldsLocked = !supplier.status && !form.status;
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,9 +93,9 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
     }
   }, [isOpen, supplier]);
 
-  // Debounced conflict check when effectiveDate changes
+  // Debounced conflict check when effectiveDate changes (skip in edit mode — date is locked)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isEditMode) return;
     if (!form.effectiveDate) {
       setHasConflict(null);
       return;
@@ -110,19 +118,19 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
   }, [form.effectiveDate, isOpen]);
 
   function buildInitialForm(s: SupplierWithStrategy): FormData {
-    const strat = s.latestStrategy;
+    // In edit mode, pre-fill from the specific strategy being edited
+    const strat = editingStrategy ?? s.latestStrategy;
     return {
       supplierName: s.supplierName ?? '',
       status: s.status ?? true,
       category: strat?.category ?? 'E',
-      type: strat?.type ?? 'A',
       currency: strat?.currency ?? 'USD',
       floatCurrency: strat?.floatCurrency ?? false,
       floatThreshold: strat?.floatThreshold ?? 0,
       requireDeposit: strat?.requireDeposit ?? false,
       depositRatio: strat?.depositRatio ?? 0,
-      effectiveDate: getToday(),
-      note: '',
+      effectiveDate: editingStrategy?.effectiveDate ?? getToday(),
+      note: editingStrategy?.note ?? '',
     };
   }
 
@@ -160,10 +168,14 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
     if (!form.effectiveDate) {
       newErrors.effectiveDate = t('errors.dateRequired');
     }
+    // New mode: enforce minimum effective date
+    if (!isEditMode && minEffectiveDate && form.effectiveDate && form.effectiveDate < minEffectiveDate) {
+      newErrors.effectiveDate = t('edit.dateTooEarly', { date: minEffectiveDate });
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [form, t]);
+  }, [form, t, isEditMode, minEffectiveDate]);
 
   // Mutation
   const modifyMutation = useMutation({
@@ -173,7 +185,6 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
         supplierName: form.supplierName,
         status: form.status,
         category: form.category,
-        type: form.type,
         currency: form.currency,
         floatCurrency: form.floatCurrency,
         floatThreshold: form.floatCurrency ? form.floatThreshold : undefined,
@@ -257,7 +268,7 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
               <div className="px-6 pt-6 pb-4">
                 <div className="flex items-center justify-between mb-1">
                   <h2 style={{ color: colors.text }} className="text-lg font-semibold">
-                    {t('edit.title')}
+                    {isEditMode ? t('edit.titleEdit') : t('edit.title')}
                   </h2>
                   <button
                     onClick={onClose}
@@ -318,13 +329,14 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
                       className="mt-2 text-xs px-2.5 py-1.5 rounded-lg"
                       style={{ backgroundColor: `${colors.orange}15`, color: colors.orange }}
                     >
-                      {t('status.inactive')}
+                      {isFieldsLocked ? t('status.inactiveWarning') : t('status.inactive')}
                     </p>
                   )}
                 </div>
 
-                {/* Divider */}
                 <div style={{ borderColor: colors.border }} className="border-b" />
+
+                <fieldset disabled={isFieldsLocked} style={isFieldsLocked ? { opacity: 0.5 } : {}}>
 
                 {/* Category */}
                 <div>
@@ -339,23 +351,6 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
                   >
                     <option value="E">{t('category.E')}</option>
                     <option value="A">{t('category.A')}</option>
-                  </select>
-                </div>
-
-                {/* Type */}
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: colors.text }}>
-                    {t('edit.typeLabel')}
-                  </label>
-                  <select
-                    value={form.type}
-                    onChange={e => setForm(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
-                    style={inputStyle}
-                  >
-                    <option value="A">{t('type.A')}</option>
-                    <option value="B">{t('type.B')}</option>
-                    <option value="C">{t('type.C')}</option>
                   </select>
                 </div>
 
@@ -471,7 +466,12 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
                     value={form.effectiveDate}
                     onChange={e => setForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-lg text-sm border outline-none"
-                    style={inputStyle}
+                    style={{
+                      ...inputStyle,
+                      ...(isEditMode ? { opacity: 0.6, cursor: 'not-allowed' } : {}),
+                    }}
+                    readOnly={isEditMode}
+                    min={!isEditMode ? minEffectiveDate : undefined}
                   />
                   {errors.effectiveDate && (
                     <p className="mt-1 text-xs" style={{ color: colors.red }}>{errors.effectiveDate}</p>
@@ -543,6 +543,7 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
                     style={inputStyle}
                   />
                 </div>
+                </fieldset>
 
                 {/* Submit + Cancel buttons */}
                 <div className="flex gap-3 pt-2">
@@ -555,7 +556,7 @@ export default function EditStrategyModal({ isOpen, supplier, onClose, onSuccess
                   </button>
                   <button
                     onClick={handleSubmitClick}
-                    disabled={(hasConflict === true && !conflictOverride) || modifyMutation.isPending}
+                    disabled={(hasConflict === true && !conflictOverride) || modifyMutation.isPending || isFieldsLocked}
                     style={{ backgroundColor: colors.blue }}
                     className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
