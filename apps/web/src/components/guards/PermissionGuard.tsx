@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
@@ -12,36 +12,52 @@ const ROUTE_TO_PERMISSION: Record<string, string> = {
   '/logs':     'module.audit',
 };
 
+function evaluatePermission(pathname: string): 'allowed' | 'denied' {
+  if (pathname === '/dashboard') return 'allowed';
+
+  try {
+    const stored = localStorage.getItem('user');
+    if (!stored) return 'allowed';
+
+    const user = JSON.parse(stored);
+    const roles: string[] = user.roles || [];
+    if (roles.includes('superuser') || roles.includes('admin')) return 'allowed';
+
+    const permissions: Record<string, unknown> = user.permissions || {};
+    const matchedRoute = Object.keys(ROUTE_TO_PERMISSION).find(route => pathname.startsWith(route));
+    if (!matchedRoute) return 'allowed';
+
+    const requiredPrefix = ROUTE_TO_PERMISSION[matchedRoute];
+    const hasPermission = Object.keys(permissions).some(
+      k => k.startsWith(requiredPrefix) && permissions[k] === true
+    );
+
+    return hasPermission ? 'allowed' : 'denied';
+  } catch {
+    return 'allowed';
+  }
+}
+
 export function PermissionGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
-  const status = useMemo<'allowed' | 'denied'>(() => {
-    if (pathname === '/dashboard') return 'allowed';
+  const [status, setStatus] = useState<'allowed' | 'denied'>(() => evaluatePermission(pathname));
 
-    try {
-      const stored = localStorage.getItem('user');
-      if (!stored) return 'allowed';
+  // Re-evaluate on pathname change
+  useEffect(() => {
+    setStatus(evaluatePermission(pathname));
+  }, [pathname]);
 
-      const user = JSON.parse(stored);
-      const roles: string[] = user.roles || [];
-      if (roles.includes('superuser') || roles.includes('admin')) return 'allowed';
-
-      const permissions: Record<string, unknown> = user.permissions || {};
-      const matchedRoute = Object.keys(ROUTE_TO_PERMISSION).find(route => pathname.startsWith(route));
-      if (!matchedRoute) return 'allowed';
-
-      const requiredPrefix = ROUTE_TO_PERMISSION[matchedRoute];
-      const hasPermission = Object.keys(permissions).some(
-        k => k.startsWith(requiredPrefix) && permissions[k] === true
-      );
-
-      return hasPermission ? 'allowed' : 'denied';
-    } catch {
-      return 'allowed';
-    }
+  // Re-evaluate when permissions are synced globally
+  useEffect(() => {
+    const handleUserUpdated = () => {
+      setStatus(evaluatePermission(pathname));
+    };
+    window.addEventListener('mgmt:user-updated', handleUserUpdated);
+    return () => window.removeEventListener('mgmt:user-updated', handleUserUpdated);
   }, [pathname]);
 
   useEffect(() => {

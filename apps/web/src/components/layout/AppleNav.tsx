@@ -122,6 +122,8 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'purchase.receive':            '/purchase/receives',
   'purchase.receive.goods':      '/purchase/receive-goods',
   'purchase.receive.manage':     '/purchase/receives',
+  'purchase.abnormal':           '/purchase/abnormal',
+  'purchase.abnormal.manage':    '/purchase/abnormal',
   'vma.truvalve':                '/vma/truvalve',
   'vma.p_valve.inventory':       '/vma/p-valve/inventory',
   'vma.p_valve.clinical_case':   '/vma/p-valve/clinical-case',
@@ -183,14 +185,23 @@ export function AppleNav({ locale }: { locale: 'zh' | 'en' | 'vi' }) {
 
   // Load user from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser) as User);
-      } catch {
-        // ignore
+    const readUser = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser) as User);
+        } catch {
+          // ignore
+        }
       }
-    }
+    };
+
+    readUser();
+
+    // Re-read when permissions are synced globally
+    const handleUserUpdated = () => readUser();
+    window.addEventListener('mgmt:user-updated', handleUserUpdated);
+    return () => window.removeEventListener('mgmt:user-updated', handleUserUpdated);
   }, []);
 
   // 权限检查: 判断用户是否有权访问某个模块
