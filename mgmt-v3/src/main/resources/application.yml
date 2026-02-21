@@ -97,7 +97,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,flyway
+        include: health
   endpoint:
     health:
       show-details: when-authorized

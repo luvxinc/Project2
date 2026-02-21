@@ -23,5 +23,10 @@ export {
   type EditReceiveDto, type EditReceiveItemInput,
   type ReceiveHistoryResponse, type ReceiveHistoryVersion,
   type ReceiveHistoryItem, type ReceiveDiffHistoryItem,
+  // Abnormal
+  abnormalApi,
+  type AbnormalListItem, type AbnormalDetailItem, type AbnormalDetail,
+  type AbnormalSummary, type AbnormalHistoryItem,
+  type PoMethodStrategy, type ProcessAbnormalRequest, type DeleteAbnormalRequest,
 } from './purchase';
 

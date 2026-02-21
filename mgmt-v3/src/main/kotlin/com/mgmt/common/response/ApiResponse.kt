@@ -8,9 +8,16 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class ApiResponse<T>(
     val success: Boolean = true,
     val data: T,
+    val message: String? = null,
 ) {
     companion object {
         fun <T> ok(data: T): ApiResponse<T> = ApiResponse(success = true, data = data)
+        @Suppress("UNCHECKED_CAST")
+        fun <T> error(msg: String): ApiResponse<T> = ApiResponse(
+            success = false,
+            data = null as T,
+            message = msg,
+        )
     }
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -208,36 +208,48 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
   const [hasChanges, setHasChanges] = useState(false);
 
   // 从 localStorage 动态获取当前登录用户的角色
-  const { isSuperuser, isAdmin } = useMemo(() => {
-    if (typeof window === 'undefined') return { isSuperuser: false, isAdmin: false };
+  const [isSuperuser, setIsSuperuser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem('user');
-      if (!stored) return { isSuperuser: false, isAdmin: false };
-      const currentUser = JSON.parse(stored);
-      const roles: string[] = currentUser.roles || [];
-      return {
-        isSuperuser: roles.includes('superuser'),
-        isAdmin: roles.includes('admin'),
-      };
-    } catch {
-      return { isSuperuser: false, isAdmin: false };
-    }
+      if (!stored) return;
+      const u = JSON.parse(stored);
+      const roles: string[] = u.roles || [];
+      setIsSuperuser(roles.includes('superuser'));
+      setIsAdmin(roles.includes('admin'));
+    } catch { /* ignore */ }
+
+    const handleUpdate = () => {
+      try {
+        const stored = localStorage.getItem('user');
+        if (!stored) return;
+        const u = JSON.parse(stored);
+        const roles: string[] = u.roles || [];
+        setIsSuperuser(roles.includes('superuser'));
+        setIsAdmin(roles.includes('admin'));
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('mgmt:user-updated', handleUpdate);
+    return () => window.removeEventListener('mgmt:user-updated', handleUpdate);
   }, []);
 
   // Admin 和 Superuser 可以配置所有模块的权限
   // 收集权限树中所有权限 key，admin/superuser 拥有完整配置权
-  const actorPerms = useMemo(() => {
+  const [actorPerms, setActorPerms] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
     if (isSuperuser || isAdmin) {
-      // admin/superuser: 可以配置所有权限
       const allPerms = new Set<string>();
       permissionTree.forEach(mod => {
         allPerms.add(mod.key);
         mod.children.forEach(child => allPerms.add(child.key));
       });
-      return allPerms;
+      setActorPerms(allPerms);
+    } else {
+      setActorPerms(new Set<string>());
     }
-    // 其他角色: 无配置权限 (不应到达此页面，后端有 Roles Guard)
-    return new Set<string>();
   }, [isSuperuser, isAdmin]);
 
   // Query
@@ -371,7 +383,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
           style={{ background: 'linear-gradient(135deg, rgba(220,53,69,0.2), rgba(255,193,7,0.2))', color: '#ffc107', border: '1px solid rgba(255,193,7,0.3)' }}>
           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" /></svg>
-          Super Admin
+          {t(`roleNames.${primaryRole}`)}
         </span>
       );
     }
@@ -380,7 +392,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
           style={{ backgroundColor: 'rgba(13,202,240,0.15)', color: '#0dcaf0', border: '1px solid rgba(13,202,240,0.25)' }}>
           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
-          Admin
+          {t(`roleNames.${primaryRole}`)}
         </span>
       );
     }
@@ -388,7 +400,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
         style={{ backgroundColor: 'rgba(108,117,125,0.15)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(108,117,125,0.25)' }}>
         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-        User
+        {t(`roleNames.${primaryRole}`)}
       </span>
     );
   };

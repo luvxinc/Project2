@@ -54,7 +54,7 @@ class User(
     // JSONB column
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    var settings: String = """{"language": "en", "timezone": "UTC"}""",
+    var settings: String = """{"language": "en", "timezone": "America/Los_Angeles"}""",
 
     @Column(name = "last_login_at")
     var lastLoginAt: Instant? = null,
@@ -67,6 +67,9 @@ class User(
 
     @Column(name = "deleted_at")
     var deletedAt: Instant? = null,
+
+    @Version
+    var version: Long = 0,
 )
 
 enum class UserStatus {

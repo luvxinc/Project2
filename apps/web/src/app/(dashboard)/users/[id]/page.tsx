@@ -219,8 +219,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
               {t('list.columns.lastLogin')}
             </label>
             <p style={{ color: colors.textTertiary }} className="text-[15px]">
-              {user.lastLoginAt 
-                ? new Date(user.lastLoginAt).toLocaleString()
+              {user.lastLoginAt
+                ? new Date(user.lastLoginAt).toLocaleString(undefined, { timeZone: 'America/Los_Angeles' })
                 : '-'
               }
             </p>
@@ -232,7 +232,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
               {t('list.columns.createdAt')}
             </label>
             <p style={{ color: colors.textTertiary }} className="text-[15px]">
-              {new Date(user.createdAt).toLocaleString()}
+              {new Date(user.createdAt).toLocaleString(undefined, { timeZone: 'America/Los_Angeles' })}
             </p>
           </div>
 
@@ -272,7 +272,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                   style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
                   className="flex-1 h-11 hover:opacity-80 text-[15px] font-medium rounded-full"
                 >
-                  Back
+                  {tc('back')}
                 </button>
                 <button
                   onClick={handleEdit}

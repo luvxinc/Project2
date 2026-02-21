@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 const ROUTE_TO_PERMISSION: Record<string, string> = {
@@ -41,6 +42,7 @@ function evaluatePermission(pathname: string): 'allowed' | 'denied' {
 export function PermissionGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations('auth');
   const { theme } = useTheme();
   const colors = themeColors[theme];
 
@@ -86,20 +88,19 @@ export function PermissionGuard({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
 
-          <h1 style={{ color: colors.text }} className="text-[28px] font-semibold mb-3">Access Denied</h1>
+          <h1 style={{ color: colors.text }} className="text-[28px] font-semibold mb-3">{t('accessDenied.title')}</h1>
           <p style={{ color: colors.textSecondary }} className="text-[15px] mb-6">
-            You do not have permission to access this module.
-            Contact your administrator if you believe this is an error.
+            {t('accessDenied.message')}
           </p>
           <p style={{ color: colors.textTertiary }} className="text-[13px] mb-8">
-            Redirecting to dashboard in 3 seconds...
+            {t('accessDenied.redirect')}
           </p>
           <button
             onClick={() => router.push('/dashboard')}
             style={{ backgroundColor: colors.blue }}
             className="text-white text-[14px] font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity"
           >
-            Go to Dashboard
+            {t('accessDenied.goToDashboard')}
           </button>
         </div>
       </div>

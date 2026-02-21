@@ -30,10 +30,10 @@ class FifoTransaction(
     @Column(nullable = false)
     var quantity: Int = 0,
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, columnDefinition = "fifo_action")
     var action: String = "in",
 
-    @Column(name = "tran_type", nullable = false, length = 20)
+    @Column(name = "tran_type", nullable = false, columnDefinition = "fifo_tran_type")
     var tranType: String = "purchase",
 
     @Column(name = "ref_key")
@@ -87,22 +87,68 @@ class FifoLayer(
     var createdAt: Instant = Instant.now(),
 )
 
+/**
+ * LandedPrice — maps to landed_prices table.
+ * V1 parity: in_dynamic_landed_price.
+ * Created by Purchase (receive submit), Updated by Finance (payment recalculation).
+ */
+@Entity
+@Table(name = "landed_prices")
+class LandedPrice(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0,
+
+    @Column(name = "fifo_tran_id")
+    var fifoTranId: Long? = null,
+
+    @Column(name = "fifo_layer_id")
+    var fifoLayerId: Long? = null,
+
+    @Column(name = "logistic_num", length = 50, nullable = false)
+    var logisticNum: String = "",
+
+    @Column(name = "po_num", length = 50, nullable = false)
+    var poNum: String = "",
+
+    @Column(length = 100, nullable = false)
+    var sku: String = "",
+
+    @Column(nullable = false)
+    var quantity: Int = 0,
+
+    @Column(name = "base_price_usd", precision = 12, scale = 5, nullable = false)
+    var basePriceUsd: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "landed_price_usd", precision = 12, scale = 5, nullable = false)
+    var landedPriceUsd: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "created_at", nullable = false)
+    var createdAt: Instant = Instant.now(),
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: Instant = Instant.now(),
+)
+
 // ─── Repositories ────────────────────────────────────────────
 
 interface FifoTransactionRepository : org.springframework.data.jpa.repository.JpaRepository<FifoTransaction, Long> {
     /**
      * Find INIT-type transactions for a given SKU.
-     * V1 parity: WHERE po_num IN ('INIT_20241231', 'INIT-2024') AND sku = :sku
-     * V3: more general — any po_num starting with 'INIT'
      */
     @org.springframework.data.jpa.repository.Query(
         "SELECT t FROM FifoTransaction t WHERE t.sku = :sku AND t.poNum LIKE 'INIT%'"
     )
     fun findInitTransactionsBySku(sku: String): List<FifoTransaction>
+
+    /** Check if a receive transaction already exists (idempotent guard, V1 parity) */
+    fun findByRefKey(refKey: String): FifoTransaction?
 }
 
 interface FifoLayerRepository : org.springframework.data.jpa.repository.JpaRepository<FifoLayer, Long> {
     fun findByInTranIdIn(tranIds: List<Long>): List<FifoLayer>
+
+    fun findByInTranId(tranId: Long): FifoLayer?
 
     /**
      * Bulk update init layers' costs when COGS changes.
@@ -113,3 +159,15 @@ interface FifoLayerRepository : org.springframework.data.jpa.repository.JpaRepos
     )
     fun updateCostByTranIds(tranIds: List<Long>, cost: java.math.BigDecimal): Int
 }
+
+interface LandedPriceRepository : org.springframework.data.jpa.repository.JpaRepository<LandedPrice, Long> {
+    /** Idempotent check — V1 parity: existing_price check before INSERT */
+    fun findByLogisticNumAndPoNumAndSku(logisticNum: String, poNum: String, sku: String): LandedPrice?
+
+    /** For Finance recalculation: find all landed prices for a PO */
+    fun findByPoNum(poNum: String): List<LandedPrice>
+
+    /** For Finance recalculation: find all landed prices for a logistic num */
+    fun findByLogisticNum(logisticNum: String): List<LandedPrice>
+}
+

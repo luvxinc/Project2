@@ -57,6 +57,7 @@
     "desc": "Description",
     "saveAll": "Save All",
     "securityLevels": "Security Level Guide",
+    "unsavedChanges": "Unsaved changes",
     "auditNote": "Click 'Save All' to apply changes immediately. All modifications will be recorded in the audit system.",
     "levels": {
       "l0": "Verify current user's account password.",

@@ -119,6 +119,7 @@ class UserController(
     }
 
     @GetMapping("/check-username")
+    @com.mgmt.common.security.RateLimit(key = "check-username", maxAttempts = 20, windowSeconds = 60)
     fun checkUsername(@RequestParam username: String): ApiResponse<Map<String, Any>> {
         val available = userService.isUsernameAvailable(username)
         return ApiResponse.ok(mapOf(

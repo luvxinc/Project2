@@ -114,16 +114,11 @@ class UserService(
             userRepo.findAllActive(pageable)
         }
 
-        // Sort by role weight (superuser=0 first) then username
-        val sorted = users.content
-            .map { mapToSummary(it) }
-            .sortedWith(compareBy<UserSummary> { getRoleWeight(it.roles) }.thenBy { it.username })
-
-        return org.springframework.data.domain.PageImpl(sorted, pageable, users.totalElements)
-    }
-
-    private fun getRoleWeight(roles: List<String>): Int {
-        return roles.mapNotNull { ROLE_HIERARCHY[it] }.minOrNull() ?: 999
+        return org.springframework.data.domain.PageImpl(
+            users.content.map { mapToSummary(it) },
+            pageable,
+            users.totalElements,
+        )
     }
 
     fun isUsernameAvailable(username: String): Boolean {
@@ -179,12 +174,15 @@ class UserService(
 
     @Transactional
     fun update(id: String, request: UpdateUserRequest, actorId: String, actorRoles: List<String>): UserSummary {
-        checkHierarchy(actorRoles, id, "update")
-        val user = findEntity(id)
+        val user = checkHierarchyAndGet(actorRoles, id, "update")
 
         request.email?.let { user.email = it }
         request.displayName?.let { user.displayName = it }
-        request.status?.let { user.status = UserStatus.valueOf(it) }
+        request.status?.let {
+            val newStatus = UserStatus.entries.find { s -> s.name == it }
+                ?: throw BadRequestException("Invalid status: $it")
+            user.status = newStatus
+        }
 
         val rolesChanged = request.roles != null && request.roles.toSet() != user.roles.toSet()
         request.roles?.let { user.roles = it.toTypedArray() }
@@ -206,10 +204,10 @@ class UserService(
     @Transactional
     fun delete(id: String, actorId: String, actorRoles: List<String>, reason: String?) {
         if (id == actorId) throw ForbiddenException("Cannot delete yourself")
-        checkProtectedUser(id)
-        checkHierarchy(actorRoles, id, "delete")
-
-        val user = findEntity(id)
+        val user = checkHierarchyAndGet(actorRoles, id, "delete")
+        if (user.roles.contains("superuser")) {
+            throw ForbiddenException("Cannot perform this action on SuperAdmin")
+        }
         user.deletedAt = Instant.now()
         user.updatedAt = Instant.now()
         userRepo.save(user)
@@ -226,10 +224,10 @@ class UserService(
     @Transactional
     fun lock(id: String, actorId: String, actorRoles: List<String>) {
         if (id == actorId) throw ForbiddenException("Cannot lock yourself")
-        checkProtectedUser(id)
-        checkHierarchy(actorRoles, id, "lock")
-
-        val user = findEntity(id)
+        val user = checkHierarchyAndGet(actorRoles, id, "lock")
+        if (user.roles.contains("superuser")) {
+            throw ForbiddenException("Cannot perform this action on SuperAdmin")
+        }
         user.status = UserStatus.LOCKED
         user.updatedAt = Instant.now()
         userRepo.save(user)
@@ -238,8 +236,7 @@ class UserService(
 
     @Transactional
     fun unlock(id: String, actorId: String, actorRoles: List<String>) {
-        checkHierarchy(actorRoles, id, "unlock")
-        val user = findEntity(id)
+        val user = checkHierarchyAndGet(actorRoles, id, "unlock")
         user.status = UserStatus.ACTIVE
         user.updatedAt = Instant.now()
         userRepo.save(user)
@@ -259,8 +256,8 @@ class UserService(
      */
     @Transactional
     fun updatePermissions(id: String, permissions: Map<String, Any>, actorId: String, actorRoles: List<String>) {
-        // Guard ③: Hierarchy check
-        checkHierarchy(actorRoles, id, "updatePermissions")
+        // Guard ③: Hierarchy check (also fetches user, reused below)
+        val user = checkHierarchyAndGet(actorRoles, id, "updatePermissions")
 
         // Guard ④: Whitelist — reject non-whitelisted permission keys
         val whitelist = getActiveWhitelist()
@@ -273,8 +270,6 @@ class UserService(
         if (!actorRoles.contains("superuser")) {
             validateInheritance(actorId, permissions)
         }
-
-        val user = findEntity(id)
 
         user.permissions = objectMapper.writeValueAsString(permissions)
         user.updatedAt = Instant.now()
@@ -321,10 +316,10 @@ class UserService(
     @Transactional
     fun resetPassword(id: String, newPassword: String, actorId: String, actorRoles: List<String>) {
         if (id == actorId) throw ForbiddenException("Use change-password for your own password")
-        checkProtectedUser(id)
-        checkHierarchy(actorRoles, id, "resetPassword")
-
-        val user = findEntity(id)
+        val user = checkHierarchyAndGet(actorRoles, id, "resetPassword")
+        if (user.roles.contains("superuser")) {
+            throw ForbiddenException("Cannot perform this action on SuperAdmin")
+        }
         user.passwordHash = passwordEncoder.encode(newPassword)
         user.updatedAt = Instant.now()
         userRepo.save(user)
@@ -355,26 +350,21 @@ class UserService(
 
     /**
      * Hierarchy check — actor must have higher role than target.
+     * Returns the target User entity to avoid duplicate DB queries.
      * USER-3 Fix: Actor roles come from JWT (parameter), not extra DB query.
      */
-    private fun checkHierarchy(actorRoles: List<String>, targetId: String, action: String) {
-        val actorLevel = getHighestRoleLevel(actorRoles)
+    private fun checkHierarchyAndGet(actorRoles: List<String>, targetId: String, action: String): User {
         val target = findEntity(targetId)
+        val actorLevel = getHighestRoleLevel(actorRoles)
         val targetLevel = getHighestRoleLevel(target.roles.toList())
         if (actorLevel >= targetLevel) {
             throw ForbiddenException("Cannot $action: insufficient role hierarchy")
         }
+        return target
     }
 
     private fun getHighestRoleLevel(roles: List<String>): Int {
         return roles.mapNotNull { ROLE_HIERARCHY[it] }.minOrNull() ?: 999
-    }
-
-    private fun checkProtectedUser(targetId: String) {
-        val target = userRepo.findById(targetId).orElseThrow { NotFoundException.forEntity("User", targetId) }
-        if (target.roles.contains("superuser")) {
-            throw ForbiddenException("Cannot perform this action on SuperAdmin")
-        }
     }
 
     private fun parseJsonField(json: String?): Any? {

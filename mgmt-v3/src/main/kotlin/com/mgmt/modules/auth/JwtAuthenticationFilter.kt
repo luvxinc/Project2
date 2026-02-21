@@ -30,7 +30,7 @@ class JwtAuthenticationFilter(
         val token = extractToken(request)
         if (token != null) {
             val claims = jwtTokenProvider.parseToken(token)
-            if (claims != null) {
+            if (claims != null && sessionService.isSessionActive(claims.userId)) {
                 val authorities = claims.roles.map { SimpleGrantedAuthority("ROLE_$it") }
                 val auth = UsernamePasswordAuthenticationToken(claims, null, authorities)
                 SecurityContextHolder.getContext().authentication = auth

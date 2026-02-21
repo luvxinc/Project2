@@ -3,5 +3,15 @@
   "signOut": "退出登录",
   "viewProfile": "查看个人资料",
   "viewPermissions": "查看职能权限",
-  "changePassword": "修改密码"
+  "changePassword": "修改密码",
+  "roleNames": {
+    "superuser": "超级管理员",
+    "admin": "管理员",
+    "operator": "操作员",
+    "manager": "经理",
+    "staff": "员工",
+    "editor": "编辑",
+    "viewer": "查看者",
+    "default": "用户"
+  }
 }

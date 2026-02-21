@@ -586,7 +586,7 @@ export default function PasswordPolicyPage() {
             </button>
             {hasChanges && (
               <div style={{ color: '#ff9f0a' }} className="text-[12px] text-center mb-3 font-medium">
-                ● 有未保存的更改
+                {t('password.unsavedChanges')}
               </div>
             )}
             

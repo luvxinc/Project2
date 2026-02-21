@@ -12,20 +12,21 @@ import {
 import { MoreHorizontal, Lock, Unlock, Key, Trash2, Edit } from 'lucide-react';
 import { User, UserStatus, UserRole } from '@/lib/api';
 
-// Status 徽章颜色映射
+// Status badge color mapping
 const statusVariant: Record<UserStatus, 'default' | 'secondary' | 'destructive'> = {
   ACTIVE: 'default',
   DISABLED: 'secondary',
   LOCKED: 'destructive',
 };
 
-const statusLabel: Record<UserStatus, string> = {
-  ACTIVE: '正常',
-  DISABLED: '已禁用',
-  LOCKED: '已锁定',
+// Status i18n key mapping
+const statusKey: Record<UserStatus, string> = {
+  ACTIVE: 'active',
+  DISABLED: 'disabled',
+  LOCKED: 'locked',
 };
 
-// Role 徽章颜色
+// Role badge color
 const roleVariant: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
   superuser: 'destructive' as 'default',
   admin: 'default',
@@ -35,110 +36,104 @@ const roleVariant: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
   viewer: 'outline',
 };
 
-const roleLabel: Record<UserRole, string> = {
-  superuser: '超级管理员',
-  admin: '管理员',
-  staff: '员工',
-  manager: '经理',
-  operator: '操作员',
-  viewer: '访客',
-};
+export function getUserColumns(t: (key: string) => string): ColumnDef<User>[] {
+  return [
+    {
+      accessorKey: 'username',
+      header: t('list.columns.username'),
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue('username')}</div>
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: t('list.columns.email'),
+    },
+    {
+      accessorKey: 'displayName',
+      header: t('list.columns.displayName'),
+      cell: ({ row }) => row.getValue('displayName') || '-',
+    },
+    {
+      accessorKey: 'status',
+      header: t('list.columns.status'),
+      cell: ({ row }) => {
+        const status = row.getValue('status') as UserStatus;
+        return (
+          <Badge variant={statusVariant[status]}>
+            {t(`status.${statusKey[status]}`)}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'roles',
+      header: t('list.columns.roles'),
+      cell: ({ row }) => {
+        const roles = row.getValue('roles') as UserRole[];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.map((role) => (
+              <Badge key={role} variant={roleVariant[role] || 'outline'}>
+                {t(`roleNames.${role}`)}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'lastLoginAt',
+      header: t('list.columns.lastLogin'),
+      cell: ({ row }) => {
+        const value = row.getValue('lastLoginAt') as string | null;
+        return value
+          ? new Date(value).toLocaleString(undefined, { timeZone: 'America/Los_Angeles' })
+          : t('list.neverLogin');
+      },
+    },
+    {
+      id: 'actions',
+      header: t('list.columns.actions'),
+      cell: ({ row }) => {
+        const user = row.original;
+        const isLocked = user.status === 'LOCKED';
 
-export const columns: ColumnDef<User>[] = [
-  {
-    accessorKey: 'username',
-    header: '用户名',
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue('username')}</div>
-    ),
-  },
-  {
-    accessorKey: 'email',
-    header: '邮箱',
-  },
-  {
-    accessorKey: 'displayName',
-    header: '显示名称',
-    cell: ({ row }) => row.getValue('displayName') || '-',
-  },
-  {
-    accessorKey: 'status',
-    header: '状态',
-    cell: ({ row }) => {
-      const status = row.getValue('status') as UserStatus;
-      return (
-        <Badge variant={statusVariant[status]}>
-          {statusLabel[status]}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: 'roles',
-    header: '角色',
-    cell: ({ row }) => {
-      const roles = row.getValue('roles') as UserRole[];
-      return (
-        <div className="flex flex-wrap gap-1">
-          {roles.map((role) => (
-            <Badge key={role} variant={roleVariant[role] || 'outline'}>
-              {roleLabel[role] || role}
-            </Badge>
-          ))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'lastLoginAt',
-    header: '最后登录',
-    cell: ({ row }) => {
-      const value = row.getValue('lastLoginAt') as string | null;
-      return value ? new Date(value).toLocaleString('zh-CN') : '从未登录';
-    },
-  },
-  {
-    id: 'actions',
-    header: '操作',
-    cell: ({ row }) => {
-      const user = row.original;
-      const isLocked = user.status === 'LOCKED';
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">打开菜单</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Edit className="mr-2 h-4 w-4" />
-              编辑
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Key className="mr-2 h-4 w-4" />
-              重置密码
-            </DropdownMenuItem>
-            {isLocked ? (
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem>
-                <Unlock className="mr-2 h-4 w-4" />
-                解锁
+                <Edit className="mr-2 h-4 w-4" />
+                {t('actions.update')}
               </DropdownMenuItem>
-            ) : (
               <DropdownMenuItem>
-                <Lock className="mr-2 h-4 w-4" />
-                锁定
+                <Key className="mr-2 h-4 w-4" />
+                {t('actions.resetPassword')}
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              删除
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+              {isLocked ? (
+                <DropdownMenuItem>
+                  <Unlock className="mr-2 h-4 w-4" />
+                  {t('actions.unlock')}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem>
+                  <Lock className="mr-2 h-4 w-4" />
+                  {t('actions.lock')}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('actions.delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
     },
-  },
-];
+  ];
+}

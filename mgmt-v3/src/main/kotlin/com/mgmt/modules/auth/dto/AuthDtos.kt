@@ -85,10 +85,10 @@ data class CreateUserRequest(
 )
 
 data class UpdateUserRequest(
-    val email: String? = null,
+    @field:Email val email: String? = null,
     val displayName: String? = null,
     val status: String? = null,
-    val roles: List<String>? = null,
+    @field:Size(min = 1, message = "At least one role is required") val roles: List<String>? = null,
 )
 
 data class UpdatePermissionsRequest(
@@ -97,7 +97,7 @@ data class UpdatePermissionsRequest(
 
 data class ResetPasswordRequest(
     @field:NotBlank
-    @field:Size(min = 6)
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
     val newPassword: String,
 )
 

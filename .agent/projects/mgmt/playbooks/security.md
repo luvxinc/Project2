@@ -519,6 +519,54 @@ CREATE TABLE security_codes (
 
 ---
 
-*Security Playbook v3.0 — 2026-02-16*
-*基于: V1 Django 真实代码审计 + V3 Spring Boot 已迁移代码验证*
+---
+
+## 9. 2026-02-21 Users 模块审计修复记录
+
+> **36 项发现 (2C + 6H + 16M + 12L), 全部修复。以下为关键变更摘要。**
+
+### 9.1 后端关键变更
+
+| 文件 | 变更 | 级别 |
+|------|------|------|
+| `User.kt` | 添加 `@Version var version: Long = 0` 乐观锁 | CRITICAL |
+| `AuthRepositories.kt` | 添加 `updateLastLoginAt()` @Modifying @Query, 用户排序改 native ORDER BY | HIGH |
+| `AuthService.kt` | login() 改用 `updateLastLoginAt()` 绕过 @Version | HIGH |
+| `RoleController.kt` | 全 8 个端点加 `@RequirePermission("module.user_admin.role_switches")` | HIGH |
+| `SecurityConfig.kt` | Actuator 限制为 `/actuator/health`; CORS LAN 仅 dev 环境 | MEDIUM |
+| `JwtAuthenticationFilter.kt` | 新增 Redis session 校验 `isSessionActive()` | MEDIUM |
+| `AuthDtos.kt` | ResetPasswordRequest min=6 → min=8; UpdateUserRequest 加 @Email | MEDIUM |
+| `RoleService.kt` | delete 前检查 `findByRole()` 引用 | MEDIUM |
+| `UserController.kt` | check-username 加 @RateLimit | MEDIUM |
+| `application.yml` | actuator include 改为仅 health | MEDIUM |
+| `V18__users_add_version.sql` | Flyway: `ALTER TABLE users ADD COLUMN version BIGINT NOT NULL DEFAULT 0` | — |
+
+### 9.2 前端关键变更
+
+| 文件 | 变更 | 级别 |
+|------|------|------|
+| `PermissionGuard.tsx` | Access Denied 页 hardcoded → `useTranslations('auth')` i18n | CRITICAL |
+| `security-code-dialog.tsx` | 安全等级标签 → `auth.securityLevels.*` i18n | HIGH |
+| `AppleNav.tsx` | roleMap hardcoded → `nav.roleNames.*` i18n; 监听 `mgmt:user-updated` | HIGH |
+| `columns.tsx` | `export const columns` → `export function getUserColumns(t)` 全 i18n | HIGH |
+| `list/page.tsx` | `document.getElementById` → React state | HIGH |
+| `capabilities/page.tsx` | 添加 `module.user_admin.role_switches` 权限守卫 | HIGH |
+| `permissions/page.tsx` | `useMemo` → `useState + useEffect` + `mgmt:user-updated` 监听 | MEDIUM |
+| `[id]/page.tsx` | Back 按钮 + 日期格式 i18n | MEDIUM |
+| `password/page.tsx` | "有未保存的更改" → i18n key | HIGH |
+
+### 9.3 权限同步机制 (AuthSessionGuard)
+
+| 组件 | 机制 |
+|------|------|
+| AuthSessionGuard | 60s 轮询 `/auth/me`, 对比 localStorage, 差异时 dispatch `CustomEvent('mgmt:user-updated')` |
+| AppleNav | 监听 `mgmt:user-updated` → 重读 localStorage → 重渲染导航锁 |
+| PermissionGuard | 监听 `mgmt:user-updated` → 重新评估路由权限 |
+| Dashboard | 监听 `mgmt:user-updated` → 更新模块卡片锁定状态 |
+| SessionService | `PERM_TTL = 5min` (Redis 权限缓存) |
+
+---
+
+*Security Playbook v3.1 — 2026-02-21*
+*基于: V1 Django 真实代码审计 + V3 Spring Boot 已迁移代码验证 + Users 模块企业级审计修复*
 *审计覆盖: action_registry.json (795行) + SecurityPolicyManager (188行) + SecurityInventory (291行) + SecurityLevelAspect (195行) + SecurityPolicyController (192行) + SessionService (256行) + UserService (365行) + 前端 password/page.tsx (637行) + capabilities/page.tsx (886行) + permissions/page.tsx (630行)*

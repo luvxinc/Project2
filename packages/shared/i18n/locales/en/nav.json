@@ -3,5 +3,15 @@
   "signOut": "Sign Out",
   "viewProfile": "View Profile",
   "viewPermissions": "View Permissions",
-  "changePassword": "Change Password"
+  "changePassword": "Change Password",
+  "roleNames": {
+    "superuser": "Super Admin",
+    "admin": "Admin",
+    "operator": "Operator",
+    "manager": "Manager",
+    "staff": "Staff",
+    "editor": "Editor",
+    "viewer": "Viewer",
+    "default": "User"
+  }
 }
