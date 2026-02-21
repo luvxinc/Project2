@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -593,43 +593,57 @@ export default function CreateShipmentModal({ isOpen, onClose, onSuccess }: Crea
                   <p className="text-sm" style={{ color: colors.textSecondary }}>{t('shipments.create.noPosAvailable')}</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {(() => {
-                    const grouped = new Map<string, SelectedItem[]>();
-                    selectedItems.forEach(item => {
-                      const group = grouped.get(item.poNum) || [];
-                      group.push(item);
-                      grouped.set(item.poNum, group);
-                    });
-                    return Array.from(grouped.entries()).map(([poNum, items]) => (
-                      <div key={poNum} className="rounded-lg border p-3" style={{ borderColor: colors.border, backgroundColor: colors.bgTertiary }}>
-                        <div className="mb-2">
-                          <span className="text-sm font-mono font-semibold" style={{ color: colors.blue }}>{poNum}</span>
-                        </div>
-                        <div className="space-y-2">
-                          {items.map(item => (
-                            <div key={`${item.poNum}-${item.sku}`} className="flex items-center gap-2">
-                              <span className="text-xs font-mono w-32 truncate" style={{ color: colors.text }}>{item.sku}</span>
-                              <span className="text-[10px] w-16 text-right" style={{ color: colors.textTertiary }}>
-                                {t('shipments.create.ordered')}: {item.orderedQty}
-                              </span>
-                              <span className="text-[10px] w-16 text-right" style={{ color: colors.orange }}>
-                                {t('shipments.create.remaining')}: {item.remainingQty}
-                              </span>
-                              <input type="number" min={0} value={item.sendQty || ''} placeholder={t('shipments.create.sendQty')}
-                                onChange={e => updateSendQty(item.poNum, item.sku, parseInt(e.target.value, 10) || 0)}
-                                className="w-20 h-7 px-2 border rounded text-xs text-right focus:outline-none"
-                                style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }} />
-                              <label className="flex items-center gap-1 text-[10px]" style={{ color: colors.textSecondary }}>
-                                <input type="checkbox" checked={item.isRounded} onChange={() => toggleRounded(item.poNum, item.sku)} className="w-3 h-3" />
-                                {t('shipments.create.isRounded')}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ));
-                  })()}
+                <div className="rounded-xl overflow-hidden border max-h-72 overflow-y-auto" style={{ borderColor: colors.border }}>
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 z-10">
+                      <tr style={{ backgroundColor: colors.bgTertiary }}>
+                        <th className="text-left px-2 py-2 font-medium whitespace-nowrap" style={{ color: colors.textSecondary }}>SKU</th>
+                        <th className="text-center px-2 py-2 font-medium whitespace-nowrap w-16" style={{ color: colors.textSecondary }}>{t('shipments.create.ordered')}</th>
+                        <th className="text-center px-2 py-2 font-medium whitespace-nowrap w-16" style={{ color: colors.textSecondary }}>{t('shipments.create.remaining')}</th>
+                        <th className="text-center px-2 py-2 font-medium whitespace-nowrap w-20" style={{ color: colors.textSecondary }}>{t('shipments.create.sendQty')}</th>
+                        <th className="text-center px-2 py-2 font-medium whitespace-nowrap w-16" style={{ color: colors.textSecondary }}>{t('shipments.create.isRounded')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const grouped = new Map<string, SelectedItem[]>();
+                        selectedItems.forEach(item => {
+                          const group = grouped.get(item.poNum) || [];
+                          group.push(item);
+                          grouped.set(item.poNum, group);
+                        });
+                        return Array.from(grouped.entries()).map(([poNum, items]) => (
+                          <React.Fragment key={poNum}>
+                            {/* PO group header */}
+                            <tr>
+                              <td colSpan={5} className="px-2 py-1.5 font-mono font-semibold text-xs" style={{ backgroundColor: `${colors.blue}08`, color: colors.blue, borderTop: `1px solid ${colors.border}` }}>
+                                {poNum}
+                              </td>
+                            </tr>
+                            {items.map(item => (
+                              <tr key={`${item.poNum}-${item.sku}`} style={{ borderTop: `1px solid ${colors.border}` }}>
+                                <td className="px-2 py-1.5 font-mono" style={{ color: colors.text }}>{item.sku}</td>
+                                <td className="px-2 py-1.5 text-center" style={{ color: colors.textSecondary }}>{item.orderedQty}</td>
+                                <td className="px-2 py-1.5 text-center font-medium" style={{ color: colors.orange }}>{item.remainingQty}</td>
+                                <td className="px-2 py-1.5 text-center">
+                                  <input type="number" min={0} value={item.sendQty || ''} placeholder="0"
+                                    onChange={e => updateSendQty(item.poNum, item.sku, parseInt(e.target.value, 10) || 0)}
+                                    className="w-16 h-6 px-1 border rounded text-xs text-center focus:outline-none"
+                                    style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }} />
+                                </td>
+                                <td className="px-2 py-1.5 text-center">
+                                  <input type="checkbox" checked={item.isRounded}
+                                    disabled={item.sendQty <= 0}
+                                    onChange={() => toggleRounded(item.poNum, item.sku)}
+                                    className="w-3.5 h-3.5 rounded accent-green-500 disabled:opacity-30" />
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
