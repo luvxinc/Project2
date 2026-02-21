@@ -92,47 +92,56 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
+    const readPermsFromStorage = () => {
+      try {
+        const stored = localStorage.getItem('user');
+        if (!stored) return;
+        const user = JSON.parse(stored);
+        const roles: string[] = user.roles || [];
+        setUserPerms({
+          isPrivileged: roles.includes('superuser') || roles.includes('admin'),
+          permissions: (typeof user.permissions === 'object' && user.permissions) ? user.permissions : {},
+        });
+      } catch {
+        // ignore
+      }
+    };
+
     // Immediately load from localStorage for fast render
-    try {
-      const stored = localStorage.getItem('user');
-      if (!stored) return;
-      const user = JSON.parse(stored);
-      const roles: string[] = user.roles || [];
-      setUserPerms({
-        isPrivileged: roles.includes('superuser') || roles.includes('admin'),
-        permissions: (typeof user.permissions === 'object' && user.permissions) ? user.permissions : {},
+    readPermsFromStorage();
+
+    // Then fetch fresh data from API for initial load
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      import('@/lib/api/client').then(({ api }) => {
+        api.get<{ id: string; username: string; roles: string[]; permissions?: Record<string, unknown> }>('/auth/me')
+          .then(freshUser => {
+            if (!freshUser) return;
+            const roles: string[] = freshUser.roles || [];
+            const perms = (typeof freshUser.permissions === 'object' && freshUser.permissions) ? freshUser.permissions : {};
+            setUserPerms({
+              isPrivileged: roles.includes('superuser') || roles.includes('admin'),
+              permissions: perms,
+            });
+            // Update localStorage so AppleNav also picks up fresh data
+            const stored = localStorage.getItem('user');
+            if (stored) {
+              try {
+                const existing = JSON.parse(stored);
+                existing.permissions = freshUser.permissions;
+                existing.roles = freshUser.roles;
+                localStorage.setItem('user', JSON.stringify(existing));
+              } catch { /* ignore */ }
+            }
+          })
+          .catch(() => { /* use cached data on error */ });
       });
-    } catch {
-      // ignore
     }
 
-    // Then fetch fresh data from API for real-time sync
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-    
-    import('@/lib/api/client').then(({ api }) => {
-      api.get<{ id: string; username: string; roles: string[]; permissions?: Record<string, unknown> }>('/auth/me')
-        .then(freshUser => {
-          if (!freshUser) return;
-          const roles: string[] = freshUser.roles || [];
-          const perms = (typeof freshUser.permissions === 'object' && freshUser.permissions) ? freshUser.permissions : {};
-          setUserPerms({
-            isPrivileged: roles.includes('superuser') || roles.includes('admin'),
-            permissions: perms,
-          });
-          // Update localStorage so AppleNav also picks up fresh data
-          const stored = localStorage.getItem('user');
-          if (stored) {
-            try {
-              const existing = JSON.parse(stored);
-              existing.permissions = freshUser.permissions;
-              existing.roles = freshUser.roles;
-              localStorage.setItem('user', JSON.stringify(existing));
-            } catch { /* ignore */ }
-          }
-        })
-        .catch(() => { /* use cached data on error */ });
-    });
+    // Listen for global permission sync events from AuthSessionGuard
+    const handleUserUpdated = () => readPermsFromStorage();
+    window.addEventListener('mgmt:user-updated', handleUserUpdated);
+    return () => window.removeEventListener('mgmt:user-updated', handleUserUpdated);
   }, []);
 
   const canAccessModule = (modKey: string): boolean => {

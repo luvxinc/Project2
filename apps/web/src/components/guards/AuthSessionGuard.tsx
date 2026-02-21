@@ -4,9 +4,9 @@ import { useEffect, useRef, useCallback } from 'react';
 import { getApiBaseUrl } from '@/lib/api-url';
 
 /**
- * AuthSessionGuard — Sliding Session + 401 Auto-Redirect
+ * AuthSessionGuard — Sliding Session + 401 Auto-Redirect + Permission Sync
  *
- * Two mechanisms:
+ * Three mechanisms:
  *
  * 1. **Proactive Refresh (sliding window):**
  *    Decodes the JWT's `exp` claim and schedules a silent refresh
@@ -17,9 +17,16 @@ import { getApiBaseUrl } from '@/lib/api-url';
  * 2. **Reactive 401 Interception:**
  *    Wraps `fetch` to catch 401 responses. On 401, attempts one refresh.
  *    If refresh fails → clears tokens, redirects to /login.
+ *
+ * 3. **Permission Sync (60s polling):**
+ *    Polls /auth/me every 60s. If roles/permissions differ from
+ *    localStorage, updates localStorage and dispatches
+ *    CustomEvent('mgmt:user-updated') so all components re-read.
+ *    Pauses when tab is hidden, resumes + syncs on tab re-focus.
  */
 export function AuthSessionGuard() {
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const permPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isRefreshingRef = useRef(false);
   const redirectingRef = useRef(false);
 
@@ -48,6 +55,48 @@ export function AuthSessionGuard() {
     window.location.href = '/login';
   }, []);
 
+  // Sync permissions from /auth/me and dispatch event if changed
+  const syncPermissions = useCallback(async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token || redirectingRef.current) return;
+
+    try {
+      const apiUrl = getApiUrl();
+      const res = await window._originalFetch(`${apiUrl}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const freshUser = json.data;
+      if (!freshUser) return;
+
+      const stored = localStorage.getItem('user');
+      if (!stored) return;
+
+      try {
+        const existing = JSON.parse(stored);
+        const rolesChanged = JSON.stringify(existing.roles) !== JSON.stringify(freshUser.roles);
+        const permsChanged = JSON.stringify(existing.permissions) !== JSON.stringify(freshUser.permissions);
+
+        if (rolesChanged || permsChanged) {
+          existing.roles = freshUser.roles;
+          existing.permissions = freshUser.permissions;
+          localStorage.setItem('user', JSON.stringify(existing));
+          window.dispatchEvent(new CustomEvent('mgmt:user-updated'));
+        }
+      } catch {
+        // ignore parse errors
+      }
+    } catch {
+      // network error — skip this cycle
+    }
+  }, [getApiUrl]);
+
   // Silent refresh
   const doRefresh = useCallback(async (): Promise<boolean> => {
     if (isRefreshingRef.current) return false;
@@ -74,6 +123,8 @@ export function AuthSessionGuard() {
           localStorage.setItem('accessToken', newAccessToken);
           scheduleRefresh(newAccessToken);
           isRefreshingRef.current = false;
+          // Sync permissions after successful token refresh
+          syncPermissions();
           return true;
         }
       }
@@ -84,7 +135,7 @@ export function AuthSessionGuard() {
     isRefreshingRef.current = false;
     return false;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getApiUrl]);
+  }, [getApiUrl, syncPermissions]);
 
   // Schedule proactive refresh ~2 min before expiry
   const scheduleRefresh = useCallback((token: string) => {
@@ -97,7 +148,7 @@ export function AuthSessionGuard() {
 
     const now = Math.floor(Date.now() / 1000);
     const refreshInSec = Math.max((exp - now) - 120, 10); // 2 min before expiry, min 10s
-    
+
     refreshTimerRef.current = setTimeout(async () => {
       const ok = await doRefresh();
       if (!ok) forceLogout();
@@ -117,6 +168,30 @@ export function AuthSessionGuard() {
     if (currentToken) {
       scheduleRefresh(currentToken);
     }
+
+    // --- Permission polling (60s) ---
+    const POLL_INTERVAL = 60_000;
+
+    // Start polling
+    permPollRef.current = setInterval(syncPermissions, POLL_INTERVAL);
+
+    // Pause/resume on visibility change + sync on re-focus
+    const handleVisibility = () => {
+      if (document.hidden) {
+        // Tab hidden — pause polling
+        if (permPollRef.current) {
+          clearInterval(permPollRef.current);
+          permPollRef.current = null;
+        }
+      } else {
+        // Tab visible — sync immediately + resume polling
+        syncPermissions();
+        if (!permPollRef.current) {
+          permPollRef.current = setInterval(syncPermissions, POLL_INTERVAL);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     // Wrap fetch to intercept 401
     window.fetch = async function (...args: Parameters<typeof fetch>) {
@@ -151,6 +226,8 @@ export function AuthSessionGuard() {
     return () => {
       window.fetch = originalFetch;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      if (permPollRef.current) clearInterval(permPollRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

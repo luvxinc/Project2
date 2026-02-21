@@ -32,7 +32,7 @@ class SessionService(
         private const val LOCK_PREFIX = "sec:lock:"
         private const val FAIL_PREFIX = "sec:fail:"
         private const val WHITELIST_KEY = "perm:whitelist"
-        private val PERM_TTL = Duration.ofMinutes(30)
+        private val PERM_TTL = Duration.ofMinutes(5)
         private val LOCK_TTL = Duration.ofMinutes(30)
         private const val MAX_SECURITY_FAILURES = 3
         /** Sliding session idle timeout — session expires after this duration of no interaction */
