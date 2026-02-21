@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api';
 import ModalShell from '../../../purchase/components/ModalShell';
+import SkuAutocomplete from '../../../purchase/components/SkuAutocomplete';
 
 // ================================
 // Types
@@ -467,27 +468,20 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
                   const amt = item.quantity > 0 && item.unitPrice > 0 ? (item.quantity * item.unitPrice).toFixed(2) : '-';
                   return (
                     <tr key={item.id} style={{ borderTop: `1px solid ${colors.border}` }}>
-                      <td className="px-3 py-1.5 relative">
-                        <input
-                          type="text"
-                          list={item.isNew ? `edit-sku-list-${item.id}` : undefined}
-                          value={item.sku}
-                          onChange={(e) => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
-                          disabled={isCancelled || !item.isNew}
-                          placeholder={t('orders.create.skuPlaceholder')}
-                          className="w-full h-7 px-2 border rounded text-xs font-mono focus:outline-none disabled:opacity-50"
-                          style={{
-                            backgroundColor: !item.isNew ? `${colors.bgTertiary}80` : colors.bgSecondary,
-                            borderColor: errors[`${item.id}.sku`] ? colors.red : colors.border,
-                            color: colors.text,
-                          }}
-                        />
-                        {item.isNew && (
-                          <datalist id={`edit-sku-list-${item.id}`}>
-                            {skuList.map((s) => (
-                              <option key={s.sku} value={s.sku}>{s.name}</option>
-                            ))}
-                          </datalist>
+                      <td className="px-3 py-1.5">
+                        {item.isNew ? (
+                          <SkuAutocomplete
+                            value={item.sku}
+                            onChange={v => updateItem(item.id, 'sku', v)}
+                            options={skuList}
+                            disabled={isCancelled}
+                            placeholder={t('orders.create.skuPlaceholder')}
+                            hasError={!!errors[`${item.id}.sku`]}
+                            className="w-full h-7 px-2 border rounded text-xs font-mono focus:outline-none"
+                            style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }}
+                          />
+                        ) : (
+                          <span className="text-xs font-mono" style={{ color: colors.text, opacity: 0.7 }}>{item.sku}</span>
                         )}
                       </td>
                       <td className="px-3 py-1.5">

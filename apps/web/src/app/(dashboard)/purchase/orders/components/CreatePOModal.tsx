@@ -9,6 +9,7 @@ import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import * as XLSX from 'xlsx';
 import ModalShell from '../../../purchase/components/ModalShell';
+import SkuAutocomplete from '../../../purchase/components/SkuAutocomplete';
 
 // ================================
 // Types
@@ -692,18 +693,19 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                   <tbody>
                     {items.map((item) => {
                       const validSkuSet = new Set(skuList.map(s => s.sku.toUpperCase()));
-                      const skuInvalid = item.sku.trim() && validSkuSet.size > 0 && !validSkuSet.has(item.sku.trim().toUpperCase());
+                      const skuInvalid = !!(item.sku.trim() && validSkuSet.size > 0 && !validSkuSet.has(item.sku.trim().toUpperCase()));
                       return (
                         <tr key={item.id} style={{ borderTop: `1px solid ${colors.border}` }}>
-                          <td className="px-3 py-1.5 relative">
-                            <input type="text" list={`sku-list-${item.id}`} value={item.sku}
-                              onChange={e => updateItem(item.id, 'sku', e.target.value.toUpperCase())}
+                          <td className="px-3 py-1.5">
+                            <SkuAutocomplete
+                              value={item.sku}
+                              onChange={v => updateItem(item.id, 'sku', v)}
+                              options={skuList}
                               placeholder={t('orders.create.skuPlaceholder')}
+                              hasError={skuInvalid}
                               className="w-full h-7 px-2 border rounded text-xs font-mono focus:outline-none"
-                              style={{ backgroundColor: colors.bgSecondary, borderColor: skuInvalid ? colors.red : colors.border, color: colors.text }} />
-                            <datalist id={`sku-list-${item.id}`}>
-                              {skuList.map(s => (<option key={s.sku} value={s.sku}>{s.name}</option>))}
-                            </datalist>
+                              style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }}
+                            />
                           </td>
                           <td className="px-3 py-1.5">
                             <input type="number" value={item.quantity || ''} placeholder="0"
