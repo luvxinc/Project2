@@ -225,7 +225,8 @@ class SessionService(
     @Transactional
     fun saveAllActionPolicies(policies: Map<String, List<String>>): Int {
         // 1. Persist to DB (write-through)
-        actionRegistryRepo.deleteAll()
+        actionRegistryRepo.deleteAllInBatch()
+        actionRegistryRepo.flush()   // Force DELETEs to DB before INSERTs (unique constraint on action_key)
         policies.forEach { (actionKey, tokens) ->
             actionRegistryRepo.save(ActionRegistryEntry(
                 id = java.util.UUID.randomUUID().toString(),

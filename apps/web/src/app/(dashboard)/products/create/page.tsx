@@ -8,6 +8,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 
 interface CurrentUser {
   id: string;
@@ -50,8 +51,6 @@ export default function CreateProductPage() {
     upc: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
-  const [securityError, setSecurityError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -71,21 +70,32 @@ export default function CreateProductPage() {
       productsApi.create(data),
     onSuccess: () => {
       setSuccess(true);
-      setShowSecurityDialog(false);
-      // 2秒后跳转到 COGS 页面
+      createSecurity.onCancel();
       setTimeout(() => {
         router.push('/products/cogs');
       }, 2000);
     },
     onError: (err: any) => {
-      // 检查是否是 SKU 已存在错误
       if (err?.message?.includes('skuExists') || err?.statusCode === 409) {
         setErrors({ sku: t('errors.skuExists') });
-        setShowSecurityDialog(false);
+        createSecurity.onCancel();
       } else {
-        setSecurityError(tCommon('securityCode.invalid'));
+        createSecurity.setError(tCommon('securityCode.invalid'));
       }
     },
+  });
+
+  const createSecurity = useSecurityAction({
+    actionKey: 'btn_product_create',
+    level: 'L2',
+    onExecute: (code) => createMutation.mutate({
+      sku: formData.sku.toUpperCase(),
+      name: formData.name || undefined,
+      category: formData.category || undefined,
+      cogs: formData.cogs ? parseFloat(formData.cogs) : 0,
+      upc: formData.upc || undefined,
+      sec_code_l2: code,
+    }),
   });
 
   // 验证 SKU 格式
@@ -144,23 +154,10 @@ export default function CreateProductPage() {
     }
   };
 
-  // 提交表单
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setShowSecurityDialog(true);
-  };
-
-  // 确认创建
-  const handleConfirm = (secCode: string) => {
-    createMutation.mutate({
-      sku: formData.sku.toUpperCase(),
-      name: formData.name || undefined,
-      category: formData.category || undefined,
-      cogs: formData.cogs ? parseFloat(formData.cogs) : 0,
-      upc: formData.upc || undefined,
-      sec_code_l2: secCode,
-    });
+    createSecurity.trigger();
   };
 
   if (!isClient) {
@@ -426,17 +423,14 @@ export default function CreateProductPage() {
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L2"
+        isOpen={createSecurity.isOpen}
+        level={createSecurity.level}
         title={t('actions.create')}
         description={t('security.requiresL2')}
-        onConfirm={handleConfirm}
-        onCancel={() => {
-          setShowSecurityDialog(false);
-          setSecurityError(null);
-        }}
+        onConfirm={createSecurity.onConfirm}
+        onCancel={createSecurity.onCancel}
         isLoading={createMutation.isPending}
-        error={securityError || undefined}
+        error={createSecurity.error}
       />
     </div>
   );

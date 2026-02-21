@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useModal } from '@/components/modal/GlobalModal';
-import api from '@/lib/api/client';
+import { api } from '@/lib/api';
+import { invalidateSecurityActionCache } from '@/hooks/useSecurityAction';
 
 /**
  * 安全等级定义 (L0-L4)
@@ -54,47 +55,49 @@ const actionRegistry = {
         {
           key: 'supplier',
           actions: [
-            { key: 'btn_add_supplier', tokens: ['modify'] },
-            { key: 'btn_modify_strategy', tokens: ['modify'] },
+            { key: 'btn_add_supplier', tokens: ['db'] },
+            { key: 'btn_delete_supplier', tokens: ['db'] },
+            { key: 'btn_modify_strategy', tokens: ['db'] },
           ],
         },
         {
           key: 'po_mgmt',
           actions: [
-            { key: 'btn_po_create', tokens: ['modify'] },
-            { key: 'btn_po_modify', tokens: ['modify'] },
-            { key: 'btn_po_delete', tokens: ['modify'] },
-            { key: 'btn_po_undelete', tokens: ['modify'] },
-            { key: 'btn_po_upload_invoice', tokens: [] },
-            { key: 'btn_po_delete_invoice', tokens: ['modify'] },
+            { key: 'btn_submit_po', tokens: ['db'] },
+            { key: 'btn_po_modify', tokens: ['db'] },
+            { key: 'btn_delete_po', tokens: ['db'] },
+            { key: 'btn_restore_po', tokens: ['modify'] },
           ],
         },
         {
           key: 'send_mgmt',
           actions: [
-            { key: 'send_order_create', tokens: ['modify'] },
-            { key: 'btn_send_modify', tokens: ['modify'] },
-            { key: 'btn_send_delete', tokens: ['modify'] },
-            { key: 'btn_send_undelete', tokens: ['modify'] },
-            { key: 'btn_send_upload_invoice', tokens: [] },
-            { key: 'btn_send_delete_invoice', tokens: ['modify'] },
+            { key: 'btn_submit_send', tokens: ['db'] },
+            { key: 'btn_edit_send', tokens: ['db'] },
+            { key: 'btn_delete_send', tokens: ['db'] },
           ],
         },
         {
           key: 'receive',
           actions: [
-            { key: 'btn_receive_confirm', tokens: ['modify'] },
-            { key: 'btn_receive_mgmt_edit', tokens: ['modify'] },
+            { key: 'btn_receive_confirm', tokens: ['db'] },
+            { key: 'btn_receive_mgmt_edit', tokens: ['db'] },
             { key: 'btn_receive_delete', tokens: ['db'] },
-            { key: 'btn_receive_undelete', tokens: ['modify'] },
-            { key: 'btn_receive_delete_file', tokens: ['modify'] },
+            { key: 'btn_receive_undelete', tokens: ['db'] },
           ],
         },
         {
           key: 'abnormal',
           actions: [
-            { key: 'btn_abnormal_process', tokens: ['modify'] },
+            { key: 'btn_abnormal_process', tokens: ['db'] },
             { key: 'btn_abnormal_delete', tokens: ['db'] },
+          ],
+        },
+        {
+          key: 'payment',
+          actions: [
+            { key: 'btn_add_payment', tokens: ['db'] },
+            { key: 'btn_delete_payment', tokens: ['db'] },
           ],
         },
       ],
@@ -160,14 +163,16 @@ const actionRegistry = {
         {
           key: 'catalog',
           actions: [
-            { key: 'btn_batch_update_cogs', tokens: ['modify'] },
-            { key: 'btn_create_skus', tokens: ['modify'] },
+            { key: 'btn_create_skus', tokens: ['db'] },
+            { key: 'btn_update_cogs', tokens: ['modify'] },
+            { key: 'btn_batch_update_cogs', tokens: ['db'] },
+            { key: 'btn_delete_product', tokens: ['db'] },
           ],
         },
         {
           key: 'barcode',
           actions: [
-            { key: 'btn_generate_barcode', tokens: [] },
+            { key: 'btn_generate_barcode', tokens: ['db'] },
           ],
         },
       ],
@@ -198,11 +203,11 @@ const actionRegistry = {
           key: 'users',
           actions: [
             { key: 'btn_create_user', tokens: ['modify'] },
+            { key: 'btn_update_user', tokens: ['modify'] },
             { key: 'btn_toggle_user_lock', tokens: ['modify'] },
-            { key: 'btn_change_user_role', tokens: ['modify'] },
-            { key: 'btn_reset_pwd', tokens: ['modify'] },
+            { key: 'btn_reset_pwd', tokens: ['db'] },
             { key: 'btn_update_perms', tokens: ['modify'] },
-            { key: 'btn_delete_user', tokens: ['db'] },
+            { key: 'btn_delete_user', tokens: ['system'] },
           ],
         },
       ],
@@ -379,8 +384,9 @@ export default function PasswordPolicyPage() {
         } finally {
           setSaving(false);
         }
-        // Update saved snapshot
+        // Update saved snapshot + invalidate frontend security action cache
         savedSnapshotRef.current = { ...actionTokens };
+        invalidateSecurityActionCache();
         setHasChanges(false);
         // Success feedback after modal auto-hides
         setTimeout(() => showSuccess({

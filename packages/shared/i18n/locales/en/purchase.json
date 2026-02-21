@@ -304,6 +304,7 @@
       "submit": "Save Changes",
       "success": "Order updated successfully",
       "noChanges": "No changes detected",
+      "securityTitle": "Edit Purchase Order",
       "securityDescription": "Editing a purchase order requires security verification"
     },
     "delete": {
@@ -494,7 +495,9 @@
       "submitFailed": "Submit Failed",
       "retry": "Retry",
       "backToPreview": "Back to Preview",
-      "continueEdit": "Continue Editing"
+      "continueEdit": "Continue Editing",
+      "securityTitle": "Edit Shipment",
+      "securityDescription": "Editing a shipment requires security verification"
     },
     "delete": {
       "title": "Delete Shipment",

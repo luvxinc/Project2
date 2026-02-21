@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { usersApi } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 /**
@@ -203,7 +204,6 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
 
   // State
   const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -335,7 +335,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
       usersApi.updatePermissions(userId, { permissions: data.permissions, sec_code_l2: data.sec_code_l2 }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', userId] });
-      setShowSecurityDialog(false);
+      permsSecurity.onCancel();
       setHasChanges(false);
     },
     onError: (err: Error) => {
@@ -343,20 +343,22 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
     },
   });
 
-  const handleSave = () => {
-    setShowSecurityDialog(true);
-    setError(null);
-  };
+  const permsSecurity = useSecurityAction({
+    actionKey: 'btn_user_permissions',
+    level: 'L2',
+    onExecute: (code) => {
+      const permsRecord: Record<string, boolean> = {};
+      selectedPerms.forEach(p => { permsRecord[p] = true; });
+      updateMutation.mutate({
+        permissions: permsRecord,
+        sec_code_l2: code,
+      });
+    },
+  });
 
-  const handleSecurityConfirm = (code: string) => {
-    // 将 Set<string> 转换为 Record<string, boolean>
-    const permsRecord: Record<string, boolean> = {};
-    selectedPerms.forEach(p => { permsRecord[p] = true; });
-    
-    updateMutation.mutate({
-      permissions: permsRecord,
-      sec_code_l2: code,
-    });
+  const handleSave = () => {
+    setError(null);
+    permsSecurity.trigger();
   };
 
   if (isLoading) {
@@ -639,14 +641,14 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
 
       {/* Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L2"
+        isOpen={permsSecurity.isOpen}
+        level={permsSecurity.level}
         title={t('permissions.title')}
         description={tc('securityCode.required')}
-        onConfirm={handleSecurityConfirm}
-        onCancel={() => setShowSecurityDialog(false)}
+        onConfirm={permsSecurity.onConfirm}
+        onCancel={permsSecurity.onCancel}
         isLoading={updateMutation.isPending}
-        error={error}
+        error={error || permsSecurity.error}
       />
     </div>
   );

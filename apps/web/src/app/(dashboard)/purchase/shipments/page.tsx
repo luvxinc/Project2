@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type Shipment } from '@/lib/api';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import ShipmentTable from './components/ShipmentTable';
 import ShipmentDetailPanel from './components/ShipmentDetailPanel';
@@ -52,11 +53,7 @@ export default function ShipmentsPage() {
 
   // ═══════════ Delete/Restore ═══════════
   const [deleteTarget, setDeleteTarget] = useState<Shipment | null>(null);
-  const [showDeleteSecurity, setShowDeleteSecurity] = useState(false);
-  const [deleteSecurityError, setDeleteSecurityError] = useState<string | undefined>(undefined);
   const [restoreTarget, setRestoreTarget] = useState<Shipment | null>(null);
-  const [showRestoreSecurity, setShowRestoreSecurity] = useState(false);
-  const [restoreSecurityError, setRestoreSecurityError] = useState<string | undefined>(undefined);
 
   // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => {
@@ -224,28 +221,29 @@ export default function ShipmentsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (secCode: string) =>
-      purchaseApi.deleteShipment(deleteTarget!.id, secCode),
+      purchaseApi.deleteShipment(deleteTarget!.id, secCode || undefined as unknown as string),
     onSuccess: () => {
-      setShowDeleteSecurity(false);
+      deleteSecurity.onCancel();
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       handleBack();
     },
     onError: () => {
-      setDeleteSecurityError(tCommon('securityCode.invalid'));
+      deleteSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const deleteSecurity = useSecurityAction({
+    actionKey: 'btn_delete_send',
+    level: 'L3',
+    onExecute: (code) => deleteMutation.mutate(code),
   });
 
   const handleDelete = () => {
     if (selectedShipment) {
       setDeleteTarget(selectedShipment);
-      setDeleteSecurityError(undefined);
-      setShowDeleteSecurity(true);
+      deleteSecurity.trigger();
     }
-  };
-
-  const handleDeleteConfirm = (code: string) => {
-    deleteMutation.mutate(code);
   };
 
   // ═══════════ Restore ═══════════
@@ -253,7 +251,7 @@ export default function ShipmentsPage() {
   const restoreMutation = useMutation({
     mutationFn: () => purchaseApi.restoreShipment(restoreTarget!.id),
     onSuccess: () => {
-      setShowRestoreSecurity(false);
+      restoreSecurity.onCancel();
       setRestoreTarget(null);
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       if (selectedShipment) {
@@ -261,21 +259,21 @@ export default function ShipmentsPage() {
       }
     },
     onError: () => {
-      setRestoreSecurityError(tCommon('securityCode.invalid'));
+      restoreSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const restoreSecurity = useSecurityAction({
+    actionKey: 'btn_restore_send',
+    level: 'L2',
+    onExecute: () => restoreMutation.mutate(),
   });
 
   const handleRestore = () => {
     if (selectedShipment) {
       setRestoreTarget(selectedShipment);
-      setRestoreSecurityError(undefined);
-      setShowRestoreSecurity(true);
+      restoreSecurity.trigger();
     }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleRestoreConfirm = (_code: string) => {
-    restoreMutation.mutate();
   };
 
   // ═══════════ Export Excel ═══════════
@@ -561,34 +559,26 @@ export default function ShipmentsPage() {
 
       {/* Delete Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showDeleteSecurity}
-        level="L3"
+        isOpen={deleteSecurity.isOpen}
+        level={deleteSecurity.level}
         title={t('shipments.delete.title')}
         description={t('shipments.delete.securityDescription')}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setShowDeleteSecurity(false);
-          setDeleteTarget(null);
-          setDeleteSecurityError(undefined);
-        }}
+        onConfirm={deleteSecurity.onConfirm}
+        onCancel={() => { deleteSecurity.onCancel(); setDeleteTarget(null); }}
         isLoading={deleteMutation.isPending}
-        error={deleteSecurityError}
+        error={deleteSecurity.error}
       />
 
-      {/* Restore Security Dialog (L2) */}
+      {/* Restore Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showRestoreSecurity}
-        level="L2"
+        isOpen={restoreSecurity.isOpen}
+        level={restoreSecurity.level}
         title={t('shipments.restore.title')}
         description={t('shipments.restore.securityDescription')}
-        onConfirm={handleRestoreConfirm}
-        onCancel={() => {
-          setShowRestoreSecurity(false);
-          setRestoreTarget(null);
-          setRestoreSecurityError(undefined);
-        }}
+        onConfirm={restoreSecurity.onConfirm}
+        onCancel={() => { restoreSecurity.onCancel(); setRestoreTarget(null); }}
         isLoading={restoreMutation.isPending}
-        error={restoreSecurityError}
+        error={restoreSecurity.error}
       />
     </div>
   );

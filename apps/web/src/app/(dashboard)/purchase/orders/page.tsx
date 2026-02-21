@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import * as XLSX from 'xlsx';
 import POTable from './components/POTable';
@@ -55,11 +56,7 @@ export default function OrdersPage() {
 
   // ═══════════ Delete/Restore ═══════════
   const [deleteTarget, setDeleteTarget] = useState<PurchaseOrder | null>(null);
-  const [showDeleteSecurity, setShowDeleteSecurity] = useState(false);
-  const [deleteSecurityError, setDeleteSecurityError] = useState<string | undefined>(undefined);
   const [restoreTarget, setRestoreTarget] = useState<PurchaseOrder | null>(null);
-  const [showRestoreSecurity, setShowRestoreSecurity] = useState(false);
-  const [restoreSecurityError, setRestoreSecurityError] = useState<string | undefined>(undefined);
 
   // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => {
@@ -244,37 +241,37 @@ export default function OrdersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (secCode: string) =>
-      purchaseApi.deleteOrder(deleteTarget!.id, secCode),
+      purchaseApi.deleteOrder(deleteTarget!.id, secCode || undefined as unknown as string),
     onSuccess: () => {
-      setShowDeleteSecurity(false);
+      deleteSecurity.onCancel();
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      // Go back to list
       handleBack();
     },
     onError: () => {
-      setDeleteSecurityError(tCommon('securityCode.invalid'));
+      deleteSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const deleteSecurity = useSecurityAction({
+    actionKey: 'btn_delete_po',
+    level: 'L3',
+    onExecute: (code) => deleteMutation.mutate(code),
   });
 
   const handleDelete = () => {
     if (selectedOrder) {
       setDeleteTarget(selectedOrder);
-      setDeleteSecurityError(undefined);
-      setShowDeleteSecurity(true);
+      deleteSecurity.trigger();
     }
   };
 
-  const handleDeleteConfirm = (code: string) => {
-    deleteMutation.mutate(code);
-  };
-
-  // ═══════════ Restore (V1 parity: requires L2 security code) ═══════════
+  // ═══════════ Restore ═══════════
 
   const restoreMutation = useMutation({
-    mutationFn: (secCode: string) => purchaseApi.restoreOrder(restoreTarget!.id, secCode),
+    mutationFn: (secCode: string) => purchaseApi.restoreOrder(restoreTarget!.id, secCode || undefined as unknown as string),
     onSuccess: () => {
-      setShowRestoreSecurity(false);
+      restoreSecurity.onCancel();
       setRestoreTarget(null);
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       if (selectedOrder) {
@@ -282,20 +279,21 @@ export default function OrdersPage() {
       }
     },
     onError: () => {
-      setRestoreSecurityError(tCommon('securityCode.invalid'));
+      restoreSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const restoreSecurity = useSecurityAction({
+    actionKey: 'btn_restore_po',
+    level: 'L2',
+    onExecute: (code) => restoreMutation.mutate(code),
   });
 
   const handleRestore = () => {
     if (selectedOrder) {
       setRestoreTarget(selectedOrder);
-      setRestoreSecurityError(undefined);
-      setShowRestoreSecurity(true);
+      restoreSecurity.trigger();
     }
-  };
-
-  const handleRestoreConfirm = (code: string) => {
-    restoreMutation.mutate(code);
   };
 
   // ═══════════ Export Excel ═══════════
@@ -642,34 +640,26 @@ export default function OrdersPage() {
 
       {/* Delete Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showDeleteSecurity}
-        level="L3"
+        isOpen={deleteSecurity.isOpen}
+        level={deleteSecurity.level}
         title={t('orders.delete.title')}
         description={t('orders.delete.securityDescription')}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setShowDeleteSecurity(false);
-          setDeleteTarget(null);
-          setDeleteSecurityError(undefined);
-        }}
+        onConfirm={deleteSecurity.onConfirm}
+        onCancel={() => { deleteSecurity.onCancel(); setDeleteTarget(null); }}
         isLoading={deleteMutation.isPending}
-        error={deleteSecurityError}
+        error={deleteSecurity.error}
       />
 
-      {/* Restore Security Dialog (V1 parity: L2) */}
+      {/* Restore Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showRestoreSecurity}
-        level="L2"
+        isOpen={restoreSecurity.isOpen}
+        level={restoreSecurity.level}
         title={t('orders.restore.title')}
         description={t('orders.restore.securityDescription')}
-        onConfirm={handleRestoreConfirm}
-        onCancel={() => {
-          setShowRestoreSecurity(false);
-          setRestoreTarget(null);
-          setRestoreSecurityError(undefined);
-        }}
+        onConfirm={restoreSecurity.onConfirm}
+        onCancel={() => { restoreSecurity.onCancel(); setRestoreTarget(null); }}
         isLoading={restoreMutation.isPending}
-        error={restoreSecurityError}
+        error={restoreSecurity.error}
       />
     </div>
   );

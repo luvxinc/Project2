@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PendingShipment, type SubmitReceiveDto, type SubmitReceiveItemInput, type ShipmentItem } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 
 interface ReceiveRow extends SubmitReceiveItemInput {
   logisticNum: string;
@@ -29,8 +30,6 @@ export default function ReceiveGoodsPage() {
   const [selectedShipments, setSelectedShipments] = useState<Set<string>>(new Set());
 
   // Security
-  const [showSecurity, setShowSecurity] = useState(false);
-  const [securityError, setSecurityError] = useState<string | undefined>();
   const [submitTarget, setSubmitTarget] = useState<PendingShipment | null>(null);
 
   // Success feedback
@@ -79,7 +78,7 @@ export default function ReceiveGoodsPage() {
       return purchaseApi.submitReceive({ logisticNum: submitTarget.logisticNum, items });
     },
     onSuccess: () => {
-      setShowSecurity(false);
+      submitSecurity.onCancel();
       setSubmitTarget(null);
       setSuccessMsg(t('receiveGoods.submitSuccess'));
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -87,14 +86,19 @@ export default function ReceiveGoodsPage() {
       queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
     },
     onError: () => {
-      setSecurityError(tCommon('securityCode.invalid'));
+      submitSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const submitSecurity = useSecurityAction({
+    actionKey: 'btn_receive_submit',
+    level: 'L3',
+    onExecute: () => submitMutation.mutate(),
   });
 
   const handleSubmitShipment = (shipment: PendingShipment) => {
     setSubmitTarget(shipment);
-    setSecurityError(undefined);
-    setShowSecurity(true);
+    submitSecurity.trigger();
   };
 
   if (!isClient) return null;
@@ -308,14 +312,14 @@ export default function ReceiveGoodsPage() {
 
       {/* Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurity}
-        level="L3"
+        isOpen={submitSecurity.isOpen}
+        level={submitSecurity.level}
         title={t('receiveGoods.confirmTitle')}
         description={t('receiveGoods.securityDescription')}
         onConfirm={() => submitMutation.mutate()}
-        onCancel={() => { setShowSecurity(false); setSubmitTarget(null); setSecurityError(undefined); }}
+        onCancel={() => { submitSecurity.onCancel(); setSubmitTarget(null); }}
         isLoading={submitMutation.isPending}
-        error={securityError}
+        error={submitSecurity.error}
       />
     </div>
   );

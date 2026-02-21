@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type ShipmentAvailablePo } from '@/lib/api';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import * as XLSX from 'xlsx';
 import ModalShell from '../../../purchase/components/ModalShell';
 
@@ -76,8 +77,6 @@ export default function CreateShipmentModal({ isOpen, onClose, onSuccess }: Crea
   const [itemEntryMode, setItemEntryMode] = useState<ItemEntryMode>('manual');
   const [excelParseMessage, setExcelParseMessage] = useState('');
   const [excelParseError, setExcelParseError] = useState(false);
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
-  const [securityError, setSecurityError] = useState<string | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -108,8 +107,7 @@ export default function CreateShipmentModal({ isOpen, onClose, onSuccess }: Crea
       setItemEntryMode('manual');
       setExcelParseMessage('');
       setExcelParseError(false);
-      setShowSecurityDialog(false);
-      setSecurityError(undefined);
+      createSecurity.onCancel();
       setSuccess(false);
     }
   }, [isOpen]);
@@ -210,24 +208,25 @@ export default function CreateShipmentModal({ isOpen, onClose, onSuccess }: Crea
       });
     },
     onSuccess: () => {
-      setShowSecurityDialog(false);
+      createSecurity.onCancel();
       setSuccess(true);
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       setTimeout(() => { onSuccess(); onClose(); }, 1200);
     },
     onError: () => {
-      setSecurityError(tCommon('securityCode.invalid'));
+      createSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const createSecurity = useSecurityAction({
+    actionKey: 'btn_submit_send',
+    level: 'L3',
+    onExecute: (code) => createMutation.mutate(code),
   });
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    setSecurityError(undefined);
-    setShowSecurityDialog(true);
-  };
-
-  const handleSecurityConfirm = (code: string) => {
-    createMutation.mutate(code);
+    createSecurity.trigger();
   };
 
   // --- Items manipulation ---
@@ -654,14 +653,14 @@ export default function CreateShipmentModal({ isOpen, onClose, onSuccess }: Crea
       </ModalShell>
 
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L3"
+        isOpen={createSecurity.isOpen}
+        level={createSecurity.level}
         title={t('shipments.create.title')}
         description={t('shipments.create.securityDescription')}
-        onConfirm={handleSecurityConfirm}
-        onCancel={() => { setShowSecurityDialog(false); setSecurityError(undefined); }}
+        onConfirm={createSecurity.onConfirm}
+        onCancel={createSecurity.onCancel}
         isLoading={createMutation.isPending}
-        error={securityError}
+        error={createSecurity.error}
       />
     </>
   );

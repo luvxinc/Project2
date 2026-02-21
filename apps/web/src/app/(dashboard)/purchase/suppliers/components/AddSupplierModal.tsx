@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
@@ -57,8 +58,6 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [codeExists, setCodeExists] = useState<boolean | null>(null);
   const [codeCheckLoading, setCodeCheckLoading] = useState(false);
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
-  const [securityError, setSecurityError] = useState<string | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   // Debounce timer ref for code check
@@ -70,8 +69,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
       setFormData(INITIAL_FORM);
       setCodeExists(null);
       setCodeCheckLoading(false);
-      setShowSecurityDialog(false);
-      setSecurityError(undefined);
+      createSecurity.onCancel();
       setSuccess(false);
     }
   }, [isOpen]);
@@ -140,7 +138,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
         sec_code_l3: secCode,
       }),
     onSuccess: () => {
-      setShowSecurityDialog(false);
+      createSecurity.onCancel();
       setSuccess(true);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       setTimeout(() => { onSuccess(); onClose(); }, 1200);
@@ -148,21 +146,22 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
     onError: (err: any) => {
       if (err?.statusCode === 409) {
         setCodeExists(true);
-        setShowSecurityDialog(false);
+        createSecurity.onCancel();
       } else {
-        setSecurityError(tCommon('securityCode.invalid'));
+        createSecurity.setError(tCommon('securityCode.invalid'));
       }
     },
   });
 
+  const createSecurity = useSecurityAction({
+    actionKey: 'btn_add_supplier',
+    level: 'L3',
+    onExecute: (code) => createMutation.mutate(code),
+  });
+
   const handleSubmit = () => {
     if (!canSubmit) return;
-    setSecurityError(undefined);
-    setShowSecurityDialog(true);
-  };
-
-  const handleSecurityConfirm = (code: string) => {
-    createMutation.mutate(code);
+    createSecurity.trigger();
   };
 
   // --- Early return ---
@@ -350,14 +349,14 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L3"
+        isOpen={createSecurity.isOpen}
+        level={createSecurity.level}
         title={t('add.title')}
         description={t('add.securityDescription')}
-        onConfirm={handleSecurityConfirm}
-        onCancel={() => { setShowSecurityDialog(false); setSecurityError(undefined); }}
+        onConfirm={createSecurity.onConfirm}
+        onCancel={createSecurity.onCancel}
         isLoading={createMutation.isPending}
-        error={securityError}
+        error={createSecurity.error}
       />
     </>
   );

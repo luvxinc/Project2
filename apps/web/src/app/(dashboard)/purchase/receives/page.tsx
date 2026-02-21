@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type ReceiveManagementItem, type ReceiveManagementDetail } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import ReceiveTable from './components/ReceiveTable';
 import ReceiveDetailPanel from './components/ReceiveDetailPanel';
@@ -37,14 +38,10 @@ export default function ReceivingManagementPage() {
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [showDeleteSecurity, setShowDeleteSecurity] = useState(false);
   const [deleteNote, setDeleteNote] = useState('');
-  const [deleteSecurityError, setDeleteSecurityError] = useState<string | undefined>();
 
   // Restore
   const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
-  const [showRestoreSecurity, setShowRestoreSecurity] = useState(false);
-  const [restoreSecurityError, setRestoreSecurityError] = useState<string | undefined>();
 
   useEffect(() => {
     setIsClient(true);
@@ -140,31 +137,35 @@ export default function ReceivingManagementPage() {
   // ═══════════ Delete ═══════════
 
   const deleteMutation = useMutation({
-    mutationFn: () => {
-      // V1 parity P0-7: note is required
+    mutationFn: (secCode: string) => {
       if (!deleteNote.trim()) {
         throw new Error(t('receives.delete.noteRequired'));
       }
-      return purchaseApi.deleteReceive(deleteTarget!, deleteNote.trim());
+      return purchaseApi.deleteReceive(deleteTarget!, deleteNote.trim(), secCode || undefined);
     },
     onSuccess: () => {
-      setShowDeleteSecurity(false);
+      deleteSecurity.onCancel();
       setDeleteTarget(null);
       setDeleteNote('');
       queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
       handleBack();
     },
     onError: () => {
-      setDeleteSecurityError(tCommon('securityCode.invalid'));
+      deleteSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const deleteSecurity = useSecurityAction({
+    actionKey: 'btn_receive_delete',
+    level: 'L3',
+    onExecute: (code) => deleteMutation.mutate(code),
   });
 
   const handleDelete = () => {
     if (selectedItem) {
       setDeleteTarget(selectedItem.logisticNum);
       setDeleteNote('');
-      setDeleteSecurityError(undefined);
-      setShowDeleteSecurity(true);
+      deleteSecurity.trigger();
     }
   };
 
@@ -172,23 +173,28 @@ export default function ReceivingManagementPage() {
   // ═══════════ Restore ═══════════
 
   const restoreMutation = useMutation({
-    mutationFn: () => purchaseApi.restoreReceive(restoreTarget!),
+    mutationFn: (secCode: string) => purchaseApi.restoreReceive(restoreTarget!, secCode || undefined),
     onSuccess: () => {
-      setShowRestoreSecurity(false);
+      restoreSecurity.onCancel();
       setRestoreTarget(null);
       queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
       if (selectedItem) handleRowClick(selectedItem);
     },
     onError: () => {
-      setRestoreSecurityError(tCommon('securityCode.invalid'));
+      restoreSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const restoreSecurity = useSecurityAction({
+    actionKey: 'btn_receive_restore',
+    level: 'L3',
+    onExecute: (code) => restoreMutation.mutate(code),
   });
 
   const handleRestore = () => {
     if (selectedItem) {
       setRestoreTarget(selectedItem.logisticNum);
-      setRestoreSecurityError(undefined);
-      setShowRestoreSecurity(true);
+      restoreSecurity.trigger();
     }
   };
 
@@ -343,26 +349,26 @@ export default function ReceivingManagementPage() {
 
       {/* Delete Dialog */}
       <SecurityCodeDialog
-        isOpen={showDeleteSecurity}
-        level="L3"
+        isOpen={deleteSecurity.isOpen}
+        level={deleteSecurity.level}
         title={t('receives.delete.title')}
         description={t('receives.delete.securityDescription')}
-        onConfirm={() => deleteMutation.mutate()}
-        onCancel={() => { setShowDeleteSecurity(false); setDeleteTarget(null); setDeleteSecurityError(undefined); }}
+        onConfirm={deleteSecurity.onConfirm}
+        onCancel={() => { deleteSecurity.onCancel(); setDeleteTarget(null); }}
         isLoading={deleteMutation.isPending}
-        error={deleteSecurityError}
+        error={deleteSecurity.error}
       />
 
       {/* Restore Dialog */}
       <SecurityCodeDialog
-        isOpen={showRestoreSecurity}
-        level="L3"
+        isOpen={restoreSecurity.isOpen}
+        level={restoreSecurity.level}
         title={t('receives.restore.title')}
         description={t('receives.restore.securityDescription')}
-        onConfirm={() => restoreMutation.mutate()}
-        onCancel={() => { setShowRestoreSecurity(false); setRestoreTarget(null); setRestoreSecurityError(undefined); }}
+        onConfirm={restoreSecurity.onConfirm}
+        onCancel={() => { restoreSecurity.onCancel(); setRestoreTarget(null); }}
         isLoading={restoreMutation.isPending}
-        error={restoreSecurityError}
+        error={restoreSecurity.error}
       />
 
       {/* 货物入库 Drawer */}

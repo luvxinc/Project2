@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type Shipment, type ShipmentItemDetail, type ShipmentAvailablePo, type ShipmentAvailablePoItem } from '@/lib/api';
+import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
@@ -222,11 +224,12 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
 
   // --- Mutation ---
   const updateMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: (secCode: string) => {
       const payload: Parameters<typeof purchaseApi.updateShipment>[1] = {
         etaDate: etaDate || undefined,
         pallets, totalWeight, priceKg, exchangeRate,
         note: note || undefined,
+        sec_code_l3: secCode,
       };
       if (hasItemChanges) {
         payload.items = activeItems.map(i => ({
@@ -243,11 +246,25 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       setSuccess(true);
+      editSecurity.onCancel();
       setTimeout(() => { onSuccess(); onClose(); }, 1200);
+    },
+    onError: () => {
+      editSecurity.setError(tCommon('securityCode.invalid'));
     },
   });
 
-  const handleSubmit = () => { if (canSubmit) updateMutation.mutate(); };
+  const editSecurity = useSecurityAction({
+    actionKey: 'btn_edit_send',
+    level: 'L3',
+    onExecute: (code) => updateMutation.mutate(code),
+  });
+
+  const handleSubmit = () => {
+    if (canSubmit) {
+      editSecurity.trigger();
+    }
+  };
 
   if (!isOpen || !shipment) return null;
 
@@ -272,6 +289,7 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
   const inputStyle = { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text };
 
   return (
+    <>
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
@@ -535,5 +553,18 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
           style={{ backgroundColor: colors.bgSecondary, borderColor: note.trim() ? colors.border : colors.red, color: colors.text }} />
       </div>
     </ModalShell>
+
+      {/* Security Code Dialog */}
+      <SecurityCodeDialog
+        isOpen={editSecurity.isOpen}
+        level={editSecurity.level}
+        title={t('shipments.edit.securityTitle')}
+        description={t('shipments.edit.securityDescription')}
+        onConfirm={editSecurity.onConfirm}
+        onCancel={editSecurity.onCancel}
+        isLoading={updateMutation.isPending}
+        error={editSecurity.error}
+      />
+    </>
   );
 }
