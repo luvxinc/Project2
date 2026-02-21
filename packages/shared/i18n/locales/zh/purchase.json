@@ -459,6 +459,8 @@
       "logistics": "物流参数",
       "items": "货物明细",
       "itemsReadOnly": "只读",
+      "activeItems": "有效",
+      "itemsModified": "明细已修改",
       "totalWeight": "总重量 (kg)",
       "priceKg": "每公斤单价 (RMB)",
       "submit": "保存修改",

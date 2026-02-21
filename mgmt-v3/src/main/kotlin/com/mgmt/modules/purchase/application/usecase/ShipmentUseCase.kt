@@ -117,9 +117,10 @@ class ShipmentUseCase(
     // ═══════════ Update ═══════════
 
     /**
-     * V1 parity: edit.py — logistics-only modification.
-     * Creates a new version (event seq S##). Does NOT modify items.
-     * Editable: etaDate, pallets, totalWeight, priceKg, exchangeRate, note.
+     * V1 parity: edit.py + edit_items/ — logistics + items modification.
+     * Creates a new version event. Supports both params and item editing in one call.
+     * Editable params: etaDate, pallets, totalWeight, priceKg, exchangeRate, note.
+     * Editable items: quantity, poChange. Can add new items and soft-delete removed ones.
      * logisticsCost is recomputed: ceil(totalWeight) * priceKg, rounded to 5 decimals.
      *
      * Guard: edits are BLOCKED once any receiving has been submitted (total receiveQty > 0).
@@ -192,6 +193,68 @@ class ShipmentUseCase(
         if (logisticsChanges.isNotEmpty()) {
             recordEvent(saved.id, saved.logisticNum, "UPDATE_LOGISTICS",
                 objectMapper.writeValueAsString(logisticsChanges), null, username)
+        }
+
+        // ── V1 parity: item-level editing (send_mgmt/edit_items) ──
+        dto.items?.let { incomingItems ->
+            val existing = shipmentItemRepo.findAllByShipmentIdAndDeletedAtIsNullOrderBySkuAsc(saved.id)
+            val existingById = existing.associateBy { it.id }
+            val incomingIds = incomingItems.mapNotNull { it.id }.toSet()
+            val itemChanges = mutableListOf<Map<String, Any?>>()
+
+            // Soft-delete items not in incoming list
+            existing.filter { it.id !in incomingIds }.forEach { removed ->
+                removed.deletedAt = Instant.now()
+                removed.updatedBy = username
+                shipmentItemRepo.save(removed)
+                itemChanges.add(mapOf("action" to "DELETE", "poNum" to removed.poNum, "sku" to removed.sku, "quantity" to removed.quantity))
+            }
+
+            // Update existing + add new
+            incomingItems.forEach { itemDto ->
+                if (itemDto.id != null && existingById.containsKey(itemDto.id)) {
+                    // Update existing item
+                    val item = existingById[itemDto.id]!!
+                    val changed = mutableMapOf<String, Any?>()
+                    if (item.quantity != itemDto.quantity) {
+                        changed["quantity"] = mapOf("before" to item.quantity, "after" to itemDto.quantity)
+                        item.quantity = itemDto.quantity
+                    }
+                    if (item.poChange != itemDto.poChange) {
+                        changed["poChange"] = mapOf("before" to item.poChange, "after" to itemDto.poChange)
+                        item.poChange = itemDto.poChange
+                    }
+                    if (changed.isNotEmpty()) {
+                        item.updatedAt = Instant.now()
+                        item.updatedBy = username
+                        shipmentItemRepo.save(item)
+                        itemChanges.add(mapOf("action" to "UPDATE", "poNum" to item.poNum, "sku" to item.sku) + changed)
+                    }
+                } else {
+                    // New item
+                    val po = poRepo.findByPoNumAndDeletedAtIsNull(itemDto.poNum)
+                        ?: throw NotFoundException("purchase.errors.poNotFound: ${itemDto.poNum}")
+                    val newItem = ShipmentItem(
+                        shipmentId = saved.id,
+                        logisticNum = saved.logisticNum,
+                        poId = po.id,
+                        poNum = po.poNum,
+                        sku = itemDto.sku.trim().uppercase(),
+                        quantity = itemDto.quantity,
+                        unitPrice = itemDto.unitPrice,
+                        poChange = itemDto.poChange,
+                        createdBy = username,
+                        updatedBy = username,
+                    )
+                    shipmentItemRepo.save(newItem)
+                    itemChanges.add(mapOf("action" to "ADD", "poNum" to newItem.poNum, "sku" to newItem.sku, "quantity" to newItem.quantity, "unitPrice" to newItem.unitPrice.toDouble()))
+                }
+            }
+
+            if (itemChanges.isNotEmpty()) {
+                recordEvent(saved.id, saved.logisticNum, "UPDATE_ITEMS",
+                    objectMapper.writeValueAsString(itemChanges), null, username)
+            }
         }
 
         return saved
