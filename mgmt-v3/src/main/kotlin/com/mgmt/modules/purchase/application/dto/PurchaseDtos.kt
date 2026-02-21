@@ -223,6 +223,10 @@ data class ShipmentItemResponse(
     val unitPrice: Double,
     val poChange: Boolean,
     val note: String?,
+    /** V1 parity: ordered qty from PO for this (poNum, sku, unitPrice) */
+    val orderedQty: Int? = null,
+    /** V1 parity: total shipped across ALL shipments for this (poNum, sku) */
+    val totalShipped: Int? = null,
 )
 
 /**

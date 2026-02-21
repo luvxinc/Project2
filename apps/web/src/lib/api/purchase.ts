@@ -210,6 +210,10 @@ export interface ShipmentItemDetail {
   unitPrice: number;
   poChange: boolean;
   note: string | null;
+  /** V1 parity: ordered qty from PO */
+  orderedQty?: number;
+  /** V1 parity: total shipped across ALL shipments for this (poNum, sku) */
+  totalShipped?: number;
 }
 
 export interface ShipmentListResponse {

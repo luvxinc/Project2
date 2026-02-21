@@ -11,6 +11,7 @@ import com.mgmt.modules.purchase.application.dto.*
 import com.mgmt.modules.purchase.application.usecase.ShipmentUseCase
 import com.mgmt.modules.purchase.domain.model.Shipment
 import com.mgmt.modules.purchase.domain.model.ShipmentItem
+import com.mgmt.modules.purchase.domain.repository.PurchaseOrderItemRepository
 import com.mgmt.modules.purchase.domain.repository.ReceiveDiffRepository
 import com.mgmt.modules.purchase.domain.repository.ReceiveRepository
 import com.mgmt.modules.purchase.domain.repository.ShipmentItemRepository
@@ -31,6 +32,7 @@ import java.time.LocalDate
 class ShipmentController(
     private val shipmentUseCase: ShipmentUseCase,
     private val shipmentItemRepo: ShipmentItemRepository,
+    private val poItemRepo: PurchaseOrderItemRepository,
     private val receiveRepo: ReceiveRepository,
     private val receiveDiffRepo: ReceiveDiffRepository,
     private val shipmentExcelService: ShipmentExcelService,
@@ -207,11 +209,23 @@ class ShipmentController(
         )
     }
 
-    private fun toItemResponse(item: ShipmentItem) = ShipmentItemResponse(
-        id = item.id, poNum = item.poNum, sku = item.sku,
-        quantity = item.quantity, unitPrice = item.unitPrice.toDouble(),
-        poChange = item.poChange, note = item.note,
-    )
+    private fun toItemResponse(item: ShipmentItem): ShipmentItemResponse {
+        // Look up ordered qty from PO items
+        val poItems = poItemRepo.findAllByPoNumAndDeletedAtIsNull(item.poNum)
+        val matchingPoItem = poItems.find { it.sku == item.sku && it.unitPrice.toDouble() == item.unitPrice.toDouble() }
+        val orderedQty = matchingPoItem?.quantity ?: 0
+
+        // Total shipped across ALL shipments for this (poNum, sku)
+        val totalShipped = shipmentItemRepo.sumSentByPoNumAndSku(item.poNum, item.sku)
+
+        return ShipmentItemResponse(
+            id = item.id, poNum = item.poNum, sku = item.sku,
+            quantity = item.quantity, unitPrice = item.unitPrice.toDouble(),
+            poChange = item.poChange, note = item.note,
+            orderedQty = orderedQty,
+            totalShipped = totalShipped,
+        )
+    }
 
     private fun excelResponse(bytes: ByteArray, filename: String): ResponseEntity<ByteArray> {
         return ResponseEntity.ok()
