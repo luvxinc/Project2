@@ -304,6 +304,7 @@
       "submit": "保存修改",
       "success": "订单更新成功",
       "noChanges": "未检测到更改",
+      "securityTitle": "编辑采购订单",
       "securityDescription": "编辑采购订单需要安全验证"
     },
     "delete": {
@@ -494,7 +495,9 @@
       "submitFailed": "提交失败",
       "retry": "重试",
       "backToPreview": "返回预览",
-      "continueEdit": "继续编辑"
+      "continueEdit": "继续编辑",
+      "securityTitle": "编辑发货单",
+      "securityDescription": "编辑发货单需要安全验证"
     },
     "delete": {
       "title": "删除发货单",

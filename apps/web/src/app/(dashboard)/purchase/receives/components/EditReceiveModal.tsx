@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation } from '@tanstack/react-query';
 import { purchaseApi, type ReceiveManagementDetail, type EditReceiveItemInput, type ReceiveDetailItem } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 interface EditReceiveModalProps {
@@ -33,10 +34,6 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
   );
   const [note, setNote] = useState('');
 
-  // Security
-  const [showSecurity, setShowSecurity] = useState(false);
-  const [securityError, setSecurityError] = useState<string | undefined>();
-
   const editMutation = useMutation({
     mutationFn: () =>
       purchaseApi.editReceive(logisticNum, {
@@ -44,12 +41,18 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
         items: items.map(({ poNum, sku, receiveQuantity }) => ({ poNum, sku, receiveQuantity })),
       }),
     onSuccess: () => {
-      setShowSecurity(false);
+      editSecurity.onCancel();
       onSuccess();
     },
     onError: () => {
-      setSecurityError(tCommon('securityCode.invalid'));
+      editSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const editSecurity = useSecurityAction({
+    actionKey: 'btn_receive_edit',
+    level: 'L3',
+    onExecute: () => editMutation.mutate(),
   });
 
   const handleQtyChange = (idx: number, value: string) => {
@@ -58,8 +61,7 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
   };
 
   const handleSubmit = () => {
-    setSecurityError(undefined);
-    setShowSecurity(true);
+    editSecurity.trigger();
   };
 
   if (!isOpen) return null;
@@ -146,14 +148,14 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
 
       {/* Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurity}
-        level="L3"
+        isOpen={editSecurity.isOpen}
+        level={editSecurity.level}
         title={t('receives.edit.title')}
         description={t('receives.edit.securityDescription')}
         onConfirm={() => editMutation.mutate()}
-        onCancel={() => { setShowSecurity(false); setSecurityError(undefined); }}
+        onCancel={editSecurity.onCancel}
         isLoading={editMutation.isPending}
-        error={securityError}
+        error={editSecurity.error}
       />
     </>
   );

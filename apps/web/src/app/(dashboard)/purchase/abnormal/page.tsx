@@ -12,6 +12,7 @@ import {
   type PoMethodStrategy,
 } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import AbnormalTable from './components/AbnormalTable';
 import AbnormalDetailPanel from './components/AbnormalDetailPanel';
@@ -40,15 +41,9 @@ export default function AbnormalPage() {
 
   // Process wizard state
   const [showProcessWizard, setShowProcessWizard] = useState(false);
-  const [showProcessSecurity, setShowProcessSecurity] = useState(false);
-  const [processSecurityError, setProcessSecurityError] = useState<string | undefined>();
   const [pendingProcess, setPendingProcess] = useState<{
     poMethods: Record<string, PoMethodStrategy>; note: string; delayDate?: string;
   } | null>(null);
-
-  // Delete state
-  const [showDeleteSecurity, setShowDeleteSecurity] = useState(false);
-  const [deleteSecurityError, setDeleteSecurityError] = useState<string | undefined>();
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -157,18 +152,24 @@ export default function AbnormalPage() {
         note: pendingProcess?.note || undefined,
         delayDate: pendingProcess?.delayDate,
         poMethods: pendingProcess!.poMethods,
-        sec_code_l3: secCode,
+        sec_code_l3: secCode || undefined,
       }),
     onSuccess: () => {
-      setShowProcessSecurity(false);
+      processSecurity.onCancel();
       setShowProcessWizard(false);
       setPendingProcess(null);
       queryClient.invalidateQueries({ queryKey: ['abnormalList'] });
       if (selectedItem) handleRowClick(selectedItem);
     },
     onError: () => {
-      setProcessSecurityError(tCommon('securityCode.invalid'));
+      processSecurity.setError(tCommon('securityCode.invalid'));
     },
+  });
+
+  const processSecurity = useSecurityAction({
+    actionKey: 'btn_abnormal_process',
+    level: 'L3',
+    onExecute: (code) => processMutation.mutate(code),
   });
 
   const handleProcess = () => {
@@ -181,8 +182,7 @@ export default function AbnormalPage() {
     delayDate?: string,
   ) => {
     setPendingProcess({ poMethods, note, delayDate });
-    setProcessSecurityError(undefined);
-    setShowProcessSecurity(true);
+    processSecurity.trigger();
   };
 
   // ========== Delete ==========
@@ -191,21 +191,26 @@ export default function AbnormalPage() {
     mutationFn: (secCode: string) =>
       abnormalApi.delete({
         logisticNum: selectedItem!.logisticNum,
-        sec_code_l3: secCode,
+        sec_code_l3: secCode || undefined,
       }),
     onSuccess: () => {
-      setShowDeleteSecurity(false);
+      deleteSecurity.onCancel();
       queryClient.invalidateQueries({ queryKey: ['abnormalList'] });
       handleBack();
     },
     onError: () => {
-      setDeleteSecurityError(tCommon('securityCode.invalid'));
+      deleteSecurity.setError(tCommon('securityCode.invalid'));
     },
   });
 
+  const deleteSecurity = useSecurityAction({
+    actionKey: 'btn_abnormal_delete',
+    level: 'L3',
+    onExecute: (code) => deleteMutation.mutate(code),
+  });
+
   const handleDelete = () => {
-    setDeleteSecurityError(undefined);
-    setShowDeleteSecurity(true);
+    deleteSecurity.trigger();
   };
 
   if (!isClient) return null;
@@ -354,26 +359,26 @@ export default function AbnormalPage() {
 
       {/* Process Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showProcessSecurity}
-        level="L3"
+        isOpen={processSecurity.isOpen}
+        level={processSecurity.level}
         title={t('abnormal.processAbnormal')}
         description={t('abnormal.process.description')}
-        onConfirm={(code) => processMutation.mutate(code)}
-        onCancel={() => { setShowProcessSecurity(false); setProcessSecurityError(undefined); }}
+        onConfirm={processSecurity.onConfirm}
+        onCancel={processSecurity.onCancel}
         isLoading={processMutation.isPending}
-        error={processSecurityError}
+        error={processSecurity.error}
       />
 
       {/* Delete Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showDeleteSecurity}
-        level="L3"
+        isOpen={deleteSecurity.isOpen}
+        level={deleteSecurity.level}
         title={t('abnormal.deleteRecord')}
         description={t('abnormal.process.deleteConfirm')}
-        onConfirm={(code) => deleteMutation.mutate(code)}
-        onCancel={() => { setShowDeleteSecurity(false); setDeleteSecurityError(undefined); }}
+        onConfirm={deleteSecurity.onConfirm}
+        onCancel={deleteSecurity.onCancel}
         isLoading={deleteMutation.isPending}
-        error={deleteSecurityError}
+        error={deleteSecurity.error}
       />
     </div>
   );

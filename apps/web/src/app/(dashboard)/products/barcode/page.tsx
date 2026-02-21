@@ -7,8 +7,8 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
-import { api } from '@/lib/api/client';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate, stagger } from 'animejs';
 
 interface CurrentUser {
@@ -44,8 +44,6 @@ export default function BarcodePage() {
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
-  const [securityError, setSecurityError] = useState<string | null>(null);
 
   // V1 wizard: input rows
   const [rows, setRows] = useState<BarcodeRow[]>(() => [createEmptyRow()]);
@@ -88,35 +86,7 @@ export default function BarcodePage() {
     enabled: isClient && !!currentUser,
   });
 
-  // V1 parity: dynamic security policy check
-  const { data: actionPolicy } = useQuery({
-    queryKey: ['action-policy', 'btn_generate_barcode'],
-    queryFn: () => api.get<{ actionKey: string; requiredTokens: string[]; requiresSecurityCode: boolean }>(
-      '/auth/security-policies/action/btn_generate_barcode'
-    ),
-    enabled: isClient && !!currentUser,
-    staleTime: 30_000,
-  });
 
-  const getSecurityLevel = (): 'L0' | 'L1' | 'L2' | 'L3' | 'L4' => {
-    const tokens = actionPolicy?.requiredTokens || [];
-    const levelMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
-      user: 'L0', query: 'L1', modify: 'L2', db: 'L3', system: 'L4',
-    };
-    const secCodeKeyMap: Record<string, 'L0' | 'L1' | 'L2' | 'L3' | 'L4'> = {
-      sec_code_l0: 'L0', sec_code_l1: 'L1', sec_code_l2: 'L2', sec_code_l3: 'L3', sec_code_l4: 'L4',
-    };
-    for (const t of tokens) {
-      if (levelMap[t]) return levelMap[t];
-      if (secCodeKeyMap[t]) return secCodeKeyMap[t];
-    }
-    return 'L3';
-  };
-
-  const getSecCodeKey = (): string => {
-    const level = getSecurityLevel();
-    return `sec_code_${level.toLowerCase()}`;
-  };
 
   // === Row management ===
   const addRow = () => {
@@ -192,41 +162,34 @@ export default function BarcodePage() {
       return blob;
     },
     onSuccess: () => {
-      setShowSecurityDialog(false);
-      setSecurityError(null);
+      barcodeSecurity.onCancel();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     },
     onError: (error: any) => {
       console.error('[Barcode] Generation failed:', error);
       const message = error?.message || tCommon('securityCode.invalid');
-      if (showSecurityDialog) {
-        setSecurityError(message);
-      } else {
-        alert(`${t('barcode.generateError')} — ${message}`);
-      }
+      barcodeSecurity.setError(message);
     },
   });
 
-  const handleGenerate = (secCode?: string) => {
-    const payload: Record<string, unknown> = {
-      items: getValidItems(),
-    };
-    if (secCode) {
-      payload[getSecCodeKey()] = secCode;
-    }
-    generateMutation.mutate(payload);
-  };
+  const barcodeSecurity = useSecurityAction({
+    actionKey: 'btn_generate_barcode',
+    level: 'L3',
+    onExecute: (code) => {
+      const payload: Record<string, unknown> = {
+        items: getValidItems(),
+      };
+      if (code) {
+        payload.sec_code_l3 = code;
+      }
+      generateMutation.mutate(payload);
+    },
+  });
 
   const handleGenerateClick = () => {
     if (!validateRows()) return;
-
-    const requiresSecurity = actionPolicy?.requiresSecurityCode ?? true;
-    if (requiresSecurity) {
-      setShowSecurityDialog(true);
-    } else {
-      handleGenerate();
-    }
+    barcodeSecurity.trigger();
   };
 
   // === Render ===
@@ -614,17 +577,14 @@ export default function BarcodePage() {
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level={getSecurityLevel()}
+        isOpen={barcodeSecurity.isOpen}
+        level={barcodeSecurity.level}
         title={t('barcode.generate')}
         description={t('security.requiresL3')}
-        onConfirm={handleGenerate}
-        onCancel={() => {
-          setShowSecurityDialog(false);
-          setSecurityError(null);
-        }}
+        onConfirm={barcodeSecurity.onConfirm}
+        onCancel={barcodeSecurity.onCancel}
         isLoading={generateMutation.isPending}
-        error={securityError || undefined}
+        error={barcodeSecurity.error}
       />
     </div>
   );

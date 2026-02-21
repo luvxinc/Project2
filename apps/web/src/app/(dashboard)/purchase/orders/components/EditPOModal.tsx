@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api';
+import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import ModalShell from '../../../purchase/components/ModalShell';
 import SkuAutocomplete from '../../../purchase/components/SkuAutocomplete';
 
@@ -176,7 +178,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
 
   // --- Mutation ---
   const updateMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (secCode: string) =>
       purchaseApi.updateOrder(order!.id, {
         items: editItems
           .filter((i) => !i.removed)
@@ -199,15 +201,26 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
           depositRatio: editDepositRatio,
           note: orderNote || undefined,
         },
+        sec_code_l3: secCode,
       }),
     onSuccess: () => {
       setSuccess(true);
+      editSecurity.onCancel();
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 1200);
     },
+    onError: () => {
+      editSecurity.setError(tCommon('securityCode.invalid'));
+    },
+  });
+
+  const editSecurity = useSecurityAction({
+    actionKey: 'btn_edit_po',
+    level: 'L3',
+    onExecute: (code) => updateMutation.mutate(code),
   });
 
   // --- Item operations ---
@@ -292,7 +305,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // --- Submit ---
   const handleSubmit = () => {
     if (!validate()) return;
-    updateMutation.mutate();
+    editSecurity.trigger();
   };
 
   // --- Computed values ---
@@ -327,6 +340,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   // ================================
 
   return (
+    <>
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
@@ -597,5 +611,18 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
           </div>
         </div>
     </ModalShell>
+
+      {/* Security Code Dialog */}
+      <SecurityCodeDialog
+        isOpen={editSecurity.isOpen}
+        level={editSecurity.level}
+        title={t('orders.edit.securityTitle')}
+        description={t('orders.edit.securityDescription')}
+        onConfirm={editSecurity.onConfirm}
+        onCancel={editSecurity.onCancel}
+        isLoading={updateMutation.isPending}
+        error={editSecurity.error}
+      />
+    </>
   );
 }

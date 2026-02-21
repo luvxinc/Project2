@@ -162,6 +162,7 @@ export interface UpdatePORequest {
   status?: string;
   items?: CreatePOItemInput[];
   strategy?: CreatePOStrategyInput;
+  sec_code_l3?: string;
 }
 
 export interface POListParams {
@@ -267,6 +268,7 @@ export interface UpdateShipmentRequest {
   note?: string;
   /** V1 parity: optional item edits — full replacement of items list */
   items?: UpdateShipmentItemRequest[];
+  sec_code_l3?: string;
 }
 
 export interface UpdateShipmentItemRequest {
@@ -499,16 +501,16 @@ export const purchaseApi = {
    * V1: submit_receive_delete_api — Soft-delete all receive records for a logistic_num.
    * V1 parity P0-7: note is REQUIRED (blank note → 400).
    */
-  deleteReceive: (logisticNum: string, note: string) =>
-    api.delete<{ success: boolean }>(`/purchase/receives/management/${encodeURIComponent(logisticNum)}`, { note }),
+  deleteReceive: (logisticNum: string, note: string, sec_code_l3?: string) =>
+    api.delete<{ success: boolean }>(`/purchase/receives/management/${encodeURIComponent(logisticNum)}`, { note, ...(sec_code_l3 ? { sec_code_l3 } : {}) }),
 
 
   /**
    * V1: submit_receive_undelete_api
    * Restore soft-deleted receive records.
    */
-  restoreReceive: (logisticNum: string) =>
-    api.post<{ success: boolean }>(`/purchase/receives/management/${encodeURIComponent(logisticNum)}/restore`, {}),
+  restoreReceive: (logisticNum: string, sec_code_l3?: string) =>
+    api.post<{ success: boolean }>(`/purchase/receives/management/${encodeURIComponent(logisticNum)}/restore`, { ...(sec_code_l3 ? { sec_code_l3 } : {}) }),
 
   /**
    * V1: get_receive_history_api

@@ -197,7 +197,12 @@ function GlobalModal() {
       setPasswords({});
       hide();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Operation failed');
+      const msg = err instanceof Error
+        ? err.message
+        : (typeof err === 'object' && err !== null && 'message' in err)
+          ? (err as { message: string }).message
+          : 'Operation failed';
+      setError(msg);
     } finally {
       setLoading(false);
     }

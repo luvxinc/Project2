@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi, type SupplierWithStrategy, type SupplierStrategy } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 interface EditStrategyModalProps {
@@ -64,10 +65,6 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
   const [conflictOverride, setConflictOverride] = useState(false);
   const conflictDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Security dialog
-  const [showSecurity, setShowSecurity] = useState(false);
-  const [securityError, setSecurityError] = useState<string | undefined>(undefined);
-
   // Success state
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -80,8 +77,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
       setErrors({});
       setHasConflict(null);
       setConflictOverride(false);
-      setShowSecurity(false);
-      setSecurityError(undefined);
+      modifySecurity.onCancel();
       setShowSuccess(false);
     }
   }, [isOpen, supplier]);
@@ -189,7 +185,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
         sec_code_l3: secCode,
       }),
     onSuccess: () => {
-      setShowSecurity(false);
+      modifySecurity.onCancel();
       setShowSuccess(true);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       setTimeout(() => {
@@ -198,24 +194,24 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
     },
     onError: (err: any) => {
       if (err?.statusCode === 409 && !conflictOverride) {
-        setShowSecurity(false);
+        modifySecurity.onCancel();
         setHasConflict(true);
       } else {
-        setSecurityError(tCommon('securityCode.invalid'));
+        modifySecurity.setError(tCommon('securityCode.invalid'));
       }
     },
+  });
+
+  const modifySecurity = useSecurityAction({
+    actionKey: 'btn_edit_strategy',
+    level: 'L3',
+    onExecute: (code) => modifyMutation.mutate(code),
   });
 
   const handleSubmitClick = () => {
     if (!validate()) return;
     if (hasConflict && !conflictOverride) return;
-    setSecurityError(undefined);
-    setShowSecurity(true);
-  };
-
-  const handleSecurityConfirm = (code: string) => {
-    setSecurityError(undefined);
-    modifyMutation.mutate(code);
+    modifySecurity.trigger();
   };
 
   if (!isOpen) return null;
@@ -540,14 +536,14 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
 
       {/* Security Code Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurity}
-        level="L3"
+        isOpen={modifySecurity.isOpen}
+        level={modifySecurity.level}
         title={t('edit.title')}
         description={t('security.requiresL3')}
-        onConfirm={handleSecurityConfirm}
-        onCancel={() => setShowSecurity(false)}
+        onConfirm={modifySecurity.onConfirm}
+        onCancel={modifySecurity.onCancel}
         isLoading={modifyMutation.isPending}
-        error={securityError}
+        error={modifySecurity.error}
       />
     </>
   );

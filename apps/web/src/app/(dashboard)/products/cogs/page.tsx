@@ -8,6 +8,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi, Product, CategoryHierarchy } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 
 interface CurrentUser {
   id: string;
@@ -58,14 +59,10 @@ export default function CogsPage() {
     category: false, subcategory: false, type: false,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
-  const [securityError, setSecurityError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Create modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showCreateSecurityDialog, setShowCreateSecurityDialog] = useState(false);
-  const [createSecurityError, setCreateSecurityError] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState<EditForm & { sku: string }>({
     sku: '', category: '', subcategory: '', type: '',
     cost: '0.00', freight: '0.00', weight: '0',
@@ -190,8 +187,7 @@ export default function CogsPage() {
       productsApi.updateProduct(data.id, data.payload as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setShowSecurityDialog(false);
-      setSecurityError(null);
+      editSecurity.onCancel();
       setSaveSuccess(true);
       setTimeout(() => {
         setSaveSuccess(false);
@@ -199,7 +195,7 @@ export default function CogsPage() {
       }, 1200);
     },
     onError: () => {
-      setSecurityError(tCommon('securityCode.invalid'));
+      editSecurity.setError(tCommon('securityCode.invalid'));
     },
   });
 
@@ -209,8 +205,7 @@ export default function CogsPage() {
       productsApi.create(data as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setShowCreateSecurityDialog(false);
-      setCreateSecurityError(null);
+      createSecurity.onCancel();
       setCreateSuccess(true);
       setTimeout(() => {
         setCreateSuccess(false);
@@ -219,9 +214,46 @@ export default function CogsPage() {
       }, 1500);
     },
     onError: () => {
-      setCreateSecurityError(tCommon('securityCode.invalid'));
+      createSecurity.setError(tCommon('securityCode.invalid'));
     },
   });
+
+  const editSecurity = useSecurityAction({
+    actionKey: 'btn_cogs_edit',
+    level: 'L2',
+    onExecute: (code) => {
+      if (!editingProduct) return;
+      const payload: Record<string, any> = {
+        category: editForm.category || null,
+        subcategory: editForm.subcategory || null,
+        type: editForm.type || null,
+        cost: parseFloat(editForm.cost),
+        freight: parseFloat(editForm.freight),
+        weight: parseInt(editForm.weight),
+        sec_code_l2: code,
+      };
+      updateMutation.mutate({ id: editingProduct.id, payload });
+    },
+  });
+
+  const createSecurity = useSecurityAction({
+    actionKey: 'btn_cogs_create',
+    level: 'L2',
+    onExecute: (code) => {
+      createMutation.mutate({
+        sku: createForm.sku.toUpperCase(),
+        category: createForm.category || undefined,
+        subcategory: createForm.subcategory || undefined,
+        type: createForm.type || undefined,
+        cost: parseFloat(createForm.cost),
+        freight: parseFloat(createForm.freight),
+        weight: parseInt(createForm.weight),
+        sec_code_l2: code,
+      });
+    },
+  });
+
+
 
   // Reset create form
   const resetCreateForm = useCallback(() => {
@@ -255,7 +287,6 @@ export default function CogsPage() {
     setCustomInput({ category: false, subcategory: false, type: false });
     setFormErrors({});
     setSaveSuccess(false);
-    setSecurityError(null);
   }, []);
 
   // Shared validation helper for cost/freight/weight
@@ -293,41 +324,14 @@ export default function CogsPage() {
     return Object.keys(errors).length === 0;
   }, [createForm, validateNumericFields, existingSkus, t]);
 
-  // Handle save (edit)
-  const handleSaveConfirm = useCallback((secCode: string) => {
-    if (!editingProduct) return;
-    const payload: Record<string, any> = {
-      category: editForm.category || null,
-      subcategory: editForm.subcategory || null,
-      type: editForm.type || null,
-      cost: parseFloat(editForm.cost),
-      freight: parseFloat(editForm.freight),
-      weight: parseInt(editForm.weight),
-      sec_code_l2: secCode,
-    };
-    updateMutation.mutate({ id: editingProduct.id, payload });
-  }, [editingProduct, editForm, updateMutation]);
-
-  // Handle create confirm
-  const handleCreateConfirm = useCallback((secCode: string) => {
-    createMutation.mutate({
-      sku: createForm.sku.toUpperCase(),
-      category: createForm.category || undefined,
-      subcategory: createForm.subcategory || undefined,
-      type: createForm.type || undefined,
-      cost: parseFloat(createForm.cost),
-      freight: parseFloat(createForm.freight),
-      weight: parseInt(createForm.weight),
-      sec_code_l2: secCode,
-    });
-  }, [createForm, createMutation]);
-
-  // Handle create submit (triggers security dialog)
+  // Handle create submit (triggers security action)
   const handleCreateSubmit = useCallback(() => {
     if (validateCreateForm()) {
-      setShowCreateSecurityDialog(true);
+      createSecurity.trigger();
     }
   }, [validateCreateForm]);
+
+
 
   // Handle category change for EDIT (cascading: reset sub + type)
   const handleCategoryChange = useCallback((value: string) => {
@@ -1044,7 +1048,7 @@ export default function CogsPage() {
                   <button
                     onClick={() => {
                       if (validateForm()) {
-                        setShowSecurityDialog(true);
+                        editSecurity.trigger();
                       }
                     }}
                     disabled={updateMutation.isPending}
@@ -1062,32 +1066,26 @@ export default function CogsPage() {
 
       {/* Security Code Dialog (Edit) */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L2"
+        isOpen={editSecurity.isOpen}
+        level={editSecurity.level}
         title={t('cogs.modal.title')}
         description={t('security.requiresL2')}
-        onConfirm={handleSaveConfirm}
-        onCancel={() => {
-          setShowSecurityDialog(false);
-          setSecurityError(null);
-        }}
+        onConfirm={editSecurity.onConfirm}
+        onCancel={editSecurity.onCancel}
         isLoading={updateMutation.isPending}
-        error={securityError || undefined}
+        error={editSecurity.error}
       />
 
       {/* Security Code Dialog (Create) */}
       <SecurityCodeDialog
-        isOpen={showCreateSecurityDialog}
-        level="L2"
+        isOpen={createSecurity.isOpen}
+        level={createSecurity.level}
         title={t('actions.create')}
         description={t('security.requiresL2')}
-        onConfirm={handleCreateConfirm}
-        onCancel={() => {
-          setShowCreateSecurityDialog(false);
-          setCreateSecurityError(null);
-        }}
+        onConfirm={createSecurity.onConfirm}
+        onCancel={createSecurity.onCancel}
         isLoading={createMutation.isPending}
-        error={createSecurityError || undefined}
+        error={createSecurity.error}
       />
 
       {/* Create Product Modal */}

@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { usersApi, User, UserRole } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 const statusColor: Record<string, string> = {
@@ -36,7 +37,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     roles: [] as UserRole[],
   });
   const [secCode, setSecCode] = useState('');
-  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Query
@@ -52,11 +52,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       queryClient.invalidateQueries({ queryKey: ['user', userId] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setIsEditing(false);
-      setShowSecurityDialog(false);
+      saveSecurity.onCancel();
     },
     onError: (err: Error) => {
       setError(err.message || tc('error'));
     },
+  });
+
+  const saveSecurity = useSecurityAction({
+    actionKey: 'btn_user_update',
+    level: 'L2',
+    onExecute: (code) => updateMutation.mutate({
+      displayName: formData.displayName || undefined,
+      email: formData.email,
+      sec_code_l2: code,
+    }),
   });
 
   const handleEdit = () => {
@@ -72,15 +82,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   const handleSave = () => {
-    setShowSecurityDialog(true);
-  };
-
-  const handleSecurityConfirm = (code: string) => {
-    updateMutation.mutate({
-      displayName: formData.displayName || undefined,
-      email: formData.email,
-      sec_code_l2: code,
-    });
+    saveSecurity.trigger();
   };
 
   if (isLoading) {
@@ -289,14 +291,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
       {/* Security Dialog */}
       <SecurityCodeDialog
-        isOpen={showSecurityDialog}
-        level="L2"
+        isOpen={saveSecurity.isOpen}
+        level={saveSecurity.level}
         title={t('form.updateTitle')}
         description={tc('securityCode.required')}
-        onConfirm={handleSecurityConfirm}
-        onCancel={() => setShowSecurityDialog(false)}
+        onConfirm={saveSecurity.onConfirm}
+        onCancel={saveSecurity.onCancel}
         isLoading={updateMutation.isPending}
-        error={error}
+        error={error || saveSecurity.error}
       />
     </div>
   );
