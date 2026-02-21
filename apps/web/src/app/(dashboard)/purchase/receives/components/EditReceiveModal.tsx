@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation } from '@tanstack/react-query';
-import { purchaseApi, type ReceiveManagementDetail, type EditReceiveDto, type EditReceiveItemInput, type ReceiveDetailItem } from '@/lib/api';
+import { purchaseApi, type ReceiveManagementDetail, type EditReceiveItemInput, type ReceiveDetailItem } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
+import EditModalShell from '../../../purchase/components/EditModalShell';
 
 interface EditReceiveModalProps {
   isOpen: boolean;
@@ -65,83 +66,13 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-        <div
-          className="relative w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
-          style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}
-        >
-          {/* Header */}
-          <div className="px-6 py-5" style={{ borderBottom: `1px solid ${colors.border}` }}>
-            <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
-              {t('receives.edit.title')}
-            </h2>
-            <p className="text-sm mt-0.5" style={{ color: colors.textSecondary }}>
-              {logisticNum}
-            </p>
-          </div>
-
-          {/* Body */}
-          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
-            {/* Note */}
-            <div className="mb-4">
-              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>
-                {t('receives.edit.note')}
-              </label>
-              <input
-                type="text"
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                placeholder={t('receives.edit.notePlaceholder')}
-                className="w-full h-9 px-3 border rounded-lg text-sm focus:outline-none"
-                style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }}
-              />
-            </div>
-
-            {/* Items table */}
-            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${colors.border}` }}>
-              <table className="w-full">
-                <thead>
-                  <tr style={{ backgroundColor: colors.bgSecondary, borderBottom: `1px solid ${colors.border}` }}>
-                    {['poNum', 'sku', 'sent', 'receive'].map(col => (
-                      <th key={col} className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: colors.textTertiary }}>
-                        {t(`receives.edit.col_${col}`)}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? `1px solid ${colors.border}` : undefined }}>
-                      <td className="px-3 py-2.5 text-sm" style={{ color: colors.textSecondary }}>{row.poNum}</td>
-                      <td className="px-3 py-2.5 text-sm font-mono font-medium" style={{ color: colors.text }}>{row.sku}</td>
-                      <td className="px-3 py-2.5 text-sm text-right" style={{ color: colors.textSecondary }}>{row.sentQuantity}</td>
-                      <td className="px-3 py-2.5">
-                        <input
-                          type="number"
-                          min={0}
-                          value={row.receiveQuantity}
-                          onChange={e => handleQtyChange(idx, e.target.value)}
-                          className="w-20 h-8 px-2 border rounded text-sm text-right focus:outline-none focus:ring-1"
-                          style={{
-                            backgroundColor: colors.bgTertiary,
-                            borderColor: row.receiveQuantity !== row.sentQuantity ? '#ff453a' : colors.border,
-                            color: colors.text,
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div
-            className="flex items-center justify-end gap-3 px-6 py-4"
-            style={{ borderTop: `1px solid ${colors.border}` }}
-          >
+      <EditModalShell
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t('receives.edit.title')}
+        subtitle={logisticNum}
+        footerRight={
+          <div className="flex items-center gap-3">
             <button
               onClick={onClose}
               className="h-9 px-4 text-sm font-medium rounded-lg transition-opacity hover:opacity-80"
@@ -151,14 +82,67 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
             </button>
             <button
               onClick={handleSubmit}
-              className="h-9 px-5 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: '#30d158', color: '#ffffff' }}
+              className="h-9 px-5 text-sm font-medium rounded-lg transition-all hover:opacity-90 text-white"
+              style={{ backgroundColor: '#30d158' }}
             >
               {t('receives.edit.submit')}
             </button>
           </div>
+        }
+      >
+        {/* Note */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>
+            {t('receives.edit.note')}
+          </label>
+          <input
+            type="text"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder={t('receives.edit.notePlaceholder')}
+            className="w-full h-9 px-3 border rounded-lg text-sm focus:outline-none"
+            style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }}
+          />
         </div>
-      </div>
+
+        {/* Items table */}
+        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${colors.border}` }}>
+          <table className="w-full">
+            <thead>
+              <tr style={{ backgroundColor: colors.bgSecondary, borderBottom: `1px solid ${colors.border}` }}>
+                {['poNum', 'sku', 'sent', 'receive'].map(col => (
+                  <th key={col} className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: colors.textTertiary }}>
+                    {t(`receives.edit.col_${col}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((row, idx) => (
+                <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? `1px solid ${colors.border}` : undefined }}>
+                  <td className="px-3 py-2.5 text-sm" style={{ color: colors.textSecondary }}>{row.poNum}</td>
+                  <td className="px-3 py-2.5 text-sm font-mono font-medium" style={{ color: colors.text }}>{row.sku}</td>
+                  <td className="px-3 py-2.5 text-sm text-right" style={{ color: colors.textSecondary }}>{row.sentQuantity}</td>
+                  <td className="px-3 py-2.5">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.receiveQuantity}
+                      onChange={e => handleQtyChange(idx, e.target.value)}
+                      className="w-20 h-8 px-2 border rounded text-sm text-right focus:outline-none focus:ring-1"
+                      style={{
+                        backgroundColor: colors.bgTertiary,
+                        borderColor: row.receiveQuantity !== row.sentQuantity ? '#ff453a' : colors.border,
+                        color: colors.text,
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </EditModalShell>
 
       {/* Security Dialog */}
       <SecurityCodeDialog
