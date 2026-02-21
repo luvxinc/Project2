@@ -136,7 +136,7 @@ class SupplierController(
 
     private fun toStrategyResponse(s: SupplierStrategy) = SupplierStrategyResponse(
         id = s.id, supplierId = s.supplierId, supplierCode = s.supplierCode,
-        category = s.category, type = s.type, currency = s.currency,
+        category = s.category, currency = s.currency,
         floatCurrency = s.floatCurrency, floatThreshold = s.floatThreshold.toDouble(),
         requireDeposit = s.requireDeposit, depositRatio = s.depositRatio.toDouble(),
         effectiveDate = s.effectiveDate, note = s.note, contractFile = s.contractFile,

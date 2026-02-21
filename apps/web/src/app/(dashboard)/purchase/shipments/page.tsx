@@ -4,15 +4,14 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseApi, type PurchaseOrder } from '@/lib/api';
+import { purchaseApi, type Shipment } from '@/lib/api';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { animate } from 'animejs';
-import * as XLSX from 'xlsx';
-import POTable from './components/POTable';
-import PODetailPanel from './components/PODetailPanel';
-import CreatePOModal from './components/CreatePOModal';
-import EditPOModal from './components/EditPOModal';
+import ShipmentTable from './components/ShipmentTable';
+import ShipmentDetailPanel from './components/ShipmentDetailPanel';
+import CreateShipmentModal from './components/CreateShipmentModal';
+import EditShipmentModal from './components/EditShipmentModal';
 
 interface CurrentUser {
   id: string;
@@ -20,7 +19,7 @@ interface CurrentUser {
   roles: string[];
 }
 
-export default function OrdersPage() {
+export default function ShipmentsPage() {
   const t = useTranslations('purchase');
   const tCommon = useTranslations('common');
   const { theme } = useTheme();
@@ -32,18 +31,16 @@ export default function OrdersPage() {
 
   // ═══════════ Filters ═══════════
   const [search, setSearch] = useState('');
-  const [filterSupplier, setFilterSupplier] = useState('');
   const [filterYear, setFilterYear] = useState('');
-  // Sort controlled by table headers
-  const [sortField, setSortField] = useState('poDate');
+  const [sortField, setSortField] = useState('sentDate');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [page, setPage] = useState(1);
   const LIMIT = 20;
 
   // ═══════════ Slide-over state ═══════════
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
-  const [orderDetail, setOrderDetail] = useState<PurchaseOrder | null>(null);
-  const [orderHistory, setOrderHistory] = useState<{ id: number; eventType: string; eventSeq: number; changes: string; note: string | null; operator: string; createdAt: string }[]>([]);
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [shipmentDetail, setShipmentDetail] = useState<Shipment | null>(null);
+  const [shipmentHistory, setShipmentHistory] = useState<{ id: number; shipmentId: number; logisticNum: string; eventType: string; eventSeq: number; changes: string; note: string | null; operator: string; createdAt: string }[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const frontRef = useRef<HTMLDivElement>(null);
@@ -51,13 +48,13 @@ export default function OrdersPage() {
 
   // ═══════════ Modal state ═══════════
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
+  const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
 
   // ═══════════ Delete/Restore ═══════════
-  const [deleteTarget, setDeleteTarget] = useState<PurchaseOrder | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Shipment | null>(null);
   const [showDeleteSecurity, setShowDeleteSecurity] = useState(false);
   const [deleteSecurityError, setDeleteSecurityError] = useState<string | undefined>(undefined);
-  const [restoreTarget, setRestoreTarget] = useState<PurchaseOrder | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Shipment | null>(null);
   const [showRestoreSecurity, setShowRestoreSecurity] = useState(false);
   const [restoreSecurityError, setRestoreSecurityError] = useState<string | undefined>(undefined);
 
@@ -76,75 +73,59 @@ export default function OrdersPage() {
 
   // ═══════════ Data Fetching ═══════════
 
-  const { data: ordersData, isLoading, error, refetch } = useQuery({
-    queryKey: ['purchaseOrders', page, search, filterSupplier, filterYear],
+  const { data: shipmentsData, isLoading, error, refetch } = useQuery({
+    queryKey: ['shipments', page, search, filterYear],
     queryFn: () =>
-      purchaseApi.getOrders({
+      purchaseApi.getShipments({
         page,
         limit: LIMIT,
         search: search || undefined,
-        supplierCode: filterSupplier || undefined,
         dateFrom: filterYear ? `${filterYear}-01-01` : undefined,
         dateTo: filterYear ? `${filterYear}-12-31` : undefined,
       }),
     enabled: isClient && !!currentUser,
   });
 
-  // The API returns PagedResponse which has { data, meta } structure
-  // but the client unwraps ApiResponse, so for paginated endpoints we get the raw object
-  const orders: PurchaseOrder[] = useMemo(() => {
-    let list: PurchaseOrder[] = [];
-    if (!ordersData) return list;
-    if (Array.isArray(ordersData)) list = ordersData;
-    else if (typeof ordersData === 'object' && 'data' in ordersData && Array.isArray((ordersData as any).data)) {
-      list = (ordersData as any).data;
+  const shipments: Shipment[] = useMemo(() => {
+    let list: Shipment[] = [];
+    if (!shipmentsData) return list;
+    if (Array.isArray(shipmentsData)) list = shipmentsData;
+    else if (typeof shipmentsData === 'object' && 'data' in shipmentsData && Array.isArray((shipmentsData as any).data)) {
+      list = (shipmentsData as any).data;
     }
-    // Client-side sort via table header clicks
     return [...list].sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
-        case 'poNum': cmp = a.poNum.localeCompare(b.poNum); break;
-        case 'supplierCode': cmp = a.supplierCode.localeCompare(b.supplierCode); break;
-        case 'poDate': cmp = a.poDate.localeCompare(b.poDate); break;
-        case 'totalRmb': cmp = (a.totalRmb ?? 0) - (b.totalRmb ?? 0); break;
-        case 'totalUsd': cmp = (a.totalUsd ?? 0) - (b.totalUsd ?? 0); break;
-        case 'shippingStatus': cmp = (a.shippingStatus ?? '').localeCompare(b.shippingStatus ?? ''); break;
-        default: cmp = a.poDate.localeCompare(b.poDate);
+        case 'logisticNum': cmp = a.logisticNum.localeCompare(b.logisticNum); break;
+        case 'sentDate': cmp = a.sentDate.localeCompare(b.sentDate); break;
+        case 'etaDate': cmp = (a.etaDate ?? '').localeCompare(b.etaDate ?? ''); break;
+        case 'pallets': cmp = (a.pallets ?? 0) - (b.pallets ?? 0); break;
+        case 'logisticsCost': cmp = (a.logisticsCost ?? 0) - (b.logisticsCost ?? 0); break;
+        case 'totalValue': cmp = (a.totalValue ?? 0) - (b.totalValue ?? 0); break;
+        case 'receiveStatus': cmp = (a.receiveStatus ?? '').localeCompare(b.receiveStatus ?? ''); break;
+        default: cmp = a.sentDate.localeCompare(b.sentDate);
       }
       return sortOrder === 'asc' ? cmp : -cmp;
     });
-  }, [ordersData, sortField, sortOrder]);
+  }, [shipmentsData, sortField, sortOrder]);
 
-  const totalOrders = useMemo(() => {
-    if (!ordersData) return 0;
-    if (typeof ordersData === 'object' && 'meta' in ordersData) {
-      return (ordersData as any).meta?.total ?? 0;
+  const totalShipments = useMemo(() => {
+    if (!shipmentsData) return 0;
+    if (typeof shipmentsData === 'object' && 'meta' in shipmentsData) {
+      return (shipmentsData as any).meta?.total ?? 0;
     }
-    return orders.length;
-  }, [ordersData, orders.length]);
+    return shipments.length;
+  }, [shipmentsData, shipments.length]);
 
   const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(totalOrders / LIMIT));
-  }, [totalOrders]);
-
-  // Fetch unique supplier codes for filter dropdown
-  const { data: suppliersData } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => purchaseApi.getSuppliers(),
-    enabled: isClient && !!currentUser,
-  });
-
-  const supplierCodes: string[] = useMemo(() => {
-    if (!suppliersData) return [];
-    const list = Array.isArray(suppliersData) ? suppliersData : (suppliersData as any)?.data ?? [];
-    return list.map((s: any) => s.supplierCode).sort();
-  }, [suppliersData]);
+    return Math.max(1, Math.ceil(totalShipments / LIMIT));
+  }, [totalShipments]);
 
   // ═══════════ Slide-over Animation ═══════════
 
-  const handleRowClick = useCallback(async (order: PurchaseOrder) => {
-    setSelectedOrder(order);
-    setOrderDetail(null);
+  const handleRowClick = useCallback(async (shipment: Shipment) => {
+    setSelectedShipment(shipment);
+    setShipmentDetail(null);
     setLoadingDetail(true);
 
     const slideOut = frontRef.current
@@ -174,14 +155,14 @@ export default function OrdersPage() {
 
     try {
       const [detail, history] = await Promise.all([
-        purchaseApi.getOrder(order.id),
-        purchaseApi.getHistory(order.id).catch(() => []),
+        purchaseApi.getShipment(shipment.id),
+        purchaseApi.getShipmentHistory(shipment.id).catch(() => []),
       ]);
-      setOrderDetail(detail);
-      setOrderHistory(Array.isArray(history) ? history : []);
+      setShipmentDetail(detail);
+      setShipmentHistory(Array.isArray(history) ? history : []);
     } catch {
-      setOrderDetail(null);
-      setOrderHistory([]);
+      setShipmentDetail(null);
+      setShipmentHistory([]);
     }
     setLoadingDetail(false);
   }, []);
@@ -201,9 +182,9 @@ export default function OrdersPage() {
 
     setTimeout(() => {
       setIsFlipped(false);
-      setSelectedOrder(null);
-      setOrderDetail(null);
-      setOrderHistory([]);
+      setSelectedShipment(null);
+      setShipmentDetail(null);
+      setShipmentHistory([]);
       requestAnimationFrame(() => {
         if (frontRef.current) {
           animate(frontRef.current, {
@@ -220,23 +201,22 @@ export default function OrdersPage() {
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
-    queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    queryClient.invalidateQueries({ queryKey: ['shipments'] });
   };
 
   // ═══════════ Edit Modal ═══════════
 
   const handleEdit = () => {
-    if (orderDetail) {
-      setEditingOrder(orderDetail);
+    if (shipmentDetail) {
+      setEditingShipment(shipmentDetail);
     }
   };
 
   const handleEditSuccess = () => {
-    setEditingOrder(null);
-    queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-    // Refresh detail panel
-    if (selectedOrder) {
-      handleRowClick(selectedOrder);
+    setEditingShipment(null);
+    queryClient.invalidateQueries({ queryKey: ['shipments'] });
+    if (selectedShipment) {
+      handleRowClick(selectedShipment);
     }
   };
 
@@ -244,12 +224,11 @@ export default function OrdersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (secCode: string) =>
-      purchaseApi.deleteOrder(deleteTarget!.id, secCode),
+      purchaseApi.deleteShipment(deleteTarget!.id, secCode),
     onSuccess: () => {
       setShowDeleteSecurity(false);
       setDeleteTarget(null);
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      // Go back to list
+      queryClient.invalidateQueries({ queryKey: ['shipments'] });
       handleBack();
     },
     onError: () => {
@@ -258,8 +237,8 @@ export default function OrdersPage() {
   });
 
   const handleDelete = () => {
-    if (selectedOrder) {
-      setDeleteTarget(selectedOrder);
+    if (selectedShipment) {
+      setDeleteTarget(selectedShipment);
       setDeleteSecurityError(undefined);
       setShowDeleteSecurity(true);
     }
@@ -269,16 +248,16 @@ export default function OrdersPage() {
     deleteMutation.mutate(code);
   };
 
-  // ═══════════ Restore (V1 parity: requires L2 security code) ═══════════
+  // ═══════════ Restore ═══════════
 
   const restoreMutation = useMutation({
-    mutationFn: (secCode: string) => purchaseApi.restoreOrder(restoreTarget!.id, secCode),
+    mutationFn: () => purchaseApi.restoreShipment(restoreTarget!.id),
     onSuccess: () => {
       setShowRestoreSecurity(false);
       setRestoreTarget(null);
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      if (selectedOrder) {
-        handleRowClick(selectedOrder);
+      queryClient.invalidateQueries({ queryKey: ['shipments'] });
+      if (selectedShipment) {
+        handleRowClick(selectedShipment);
       }
     },
     onError: () => {
@@ -287,27 +266,24 @@ export default function OrdersPage() {
   });
 
   const handleRestore = () => {
-    if (selectedOrder) {
-      setRestoreTarget(selectedOrder);
+    if (selectedShipment) {
+      setRestoreTarget(selectedShipment);
       setRestoreSecurityError(undefined);
       setShowRestoreSecurity(true);
     }
   };
 
-  const handleRestoreConfirm = (code: string) => {
-    restoreMutation.mutate(code);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleRestoreConfirm = (_code: string) => {
+    restoreMutation.mutate();
   };
 
   // ═══════════ Export Excel ═══════════
 
-  /**
-   * V1 parity: export PO via backend (Apache POI with full formatting).
-   * Falls back to client-side XLSX if backend unavailable.
-   */
-  const handleExport = () => {
-    if (!orderDetail) return;
+  const handleExport = (type: 'mgmt' | 'warehouse') => {
+    if (!shipmentDetail) return;
 
-    const url = purchaseApi.getExportUrl(orderDetail.id);
+    const url = purchaseApi.getShipmentExportUrl(shipmentDetail.id, type);
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const baseUrl = getApiBaseUrlCached();
 
@@ -321,48 +297,12 @@ export default function OrdersPage() {
       .then((blob) => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `${orderDetail.poNum}_current.xlsx`;
+        a.download = `${shipmentDetail.logisticNum}_${type}.xlsx`;
         a.click();
         URL.revokeObjectURL(a.href);
       })
       .catch(() => {
-        // Fallback: client-side export
-        const items = orderDetail.items || [];
-        const strategy = orderDetail.strategy;
-        const currency = strategy?.currency || 'USD';
-        const exchangeRate = strategy?.exchangeRate || 1;
-
-        const wsData: (string | number | null)[][] = [
-          [null, null, '采购订单详情'],
-          [],
-          [null, null, orderDetail.supplierCode, null, null, orderDetail.poDate],
-          [],
-          [null, null, orderDetail.poNum],
-          [],
-          [null, null, null, null, null, orderDetail.strategySeq || 'V01'],
-          [], [], [],
-          [null, null, currency, null, null, exchangeRate],
-          [],
-          [null, null, strategy?.floatEnabled ? '是' : '否', null, null, strategy?.floatEnabled ? `${strategy.floatThreshold}%` : '0%'],
-          [],
-          [null, null, strategy?.requireDeposit ? '是' : '否', null, null, strategy?.requireDeposit ? `${strategy.depositRatio}%` : '0%'],
-          [], [], [], [], [],
-        ];
-
-        let total = 0;
-        items.forEach(i => { total += i.quantity * i.unitPrice; });
-        wsData.push([null, null, `${currency} ${total.toFixed(2)}`]);
-        wsData.push([]);
-        wsData.push([null, 'SKU', '数量', '货币', '单价', '小计']);
-        items.forEach(i => {
-          wsData.push([null, i.sku, i.quantity, currency, i.unitPrice, Math.round(i.quantity * i.unitPrice * 100000) / 100000]);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws['!cols'] = [{ wch: 3 }, { wch: 25 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 16 }];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, t('orders.export.sheetName'));
-        XLSX.writeFile(wb, `${orderDetail.poNum}_current.xlsx`);
+        // Export failed silently
       });
   };
 
@@ -375,23 +315,21 @@ export default function OrdersPage() {
 
   const handleClearFilters = () => {
     setSearch('');
-    setFilterSupplier('');
     setFilterYear('');
     setPage(1);
   };
 
-  const hasFilters = search || filterSupplier || filterYear;
+  const hasFilters = search || filterYear;
 
   const handleSort = useCallback((field: string) => {
     if (sortField === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortOrder(field === 'poDate' ? 'desc' : 'asc');
+      setSortOrder(field === 'sentDate' ? 'desc' : 'asc');
     }
   }, [sortField]);
 
-  // Generate available years from order data (current year + recent years)
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const years: number[] = [];
@@ -436,17 +374,17 @@ export default function OrdersPage() {
             style={{ color: colors.text }}
             className="text-2xl font-semibold tracking-tight"
           >
-            {t('orders.title')}
+            {t('shipments.title')}
           </h1>
         </div>
         {!isFlipped && (
           <>
             <p style={{ color: colors.textSecondary }} className="text-sm">
-              {t('orders.description')}
+              {t('shipments.description')}
             </p>
             <div className="mt-3">
               <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('orders.table.count', { count: totalOrders })}
+                {t('shipments.table.count', { count: totalShipments })}
               </span>
             </div>
           </>
@@ -463,7 +401,7 @@ export default function OrdersPage() {
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={t('orders.table.search')}
+                placeholder={t('shipments.table.search')}
                 className="w-full h-9 pl-9 pr-3 border rounded-lg text-sm focus:outline-none transition-colors"
                 style={{
                   backgroundColor: colors.bgSecondary,
@@ -482,24 +420,6 @@ export default function OrdersPage() {
               </svg>
             </div>
 
-            {/* Supplier Filter */}
-            <select
-              value={filterSupplier}
-              onChange={(e) => { setFilterSupplier(e.target.value); setPage(1); }}
-              className="h-9 px-3 border rounded-lg text-sm focus:outline-none appearance-none"
-              style={{
-                backgroundColor: colors.bgSecondary,
-                borderColor: colors.border,
-                color: colors.text,
-                minWidth: '140px',
-              }}
-            >
-              <option value="">{t('orders.table.allSuppliers')}</option>
-              {supplierCodes.map((code) => (
-                <option key={code} value={code}>{code}</option>
-              ))}
-            </select>
-
             {/* Year Filter */}
             <select
               value={filterYear}
@@ -512,7 +432,7 @@ export default function OrdersPage() {
                 minWidth: '120px',
               }}
             >
-              <option value="">{t('orders.table.allYears')}</option>
+              <option value="">{t('shipments.table.allYears')}</option>
               {availableYears.map((year) => (
                 <option key={year} value={String(year)}>{year}</option>
               ))}
@@ -525,11 +445,11 @@ export default function OrdersPage() {
                 className="h-9 px-3 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
                 style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
               >
-                {t('orders.table.clearFilters')}
+                {t('shipments.table.clearFilters')}
               </button>
             )}
 
-            {/* Create PO — right-most (aligned like suppliers page) */}
+            {/* 新建发货单 — right-most in filter bar (aligns with receives page) */}
             <button
               onClick={() => setShowCreateModal(true)}
               style={{ backgroundColor: '#30d158', color: '#ffffff' }}
@@ -538,7 +458,7 @@ export default function OrdersPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {t('orders.createPO')}
+              {t('shipments.createShipment')}
             </button>
           </div>
         </section>
@@ -546,7 +466,6 @@ export default function OrdersPage() {
 
       {/* Content Area */}
       <section className="max-w-[1400px] mx-auto px-6 relative">
-        {/* Click-outside overlay for slide-over */}
         {isFlipped && (
           <div
             className="fixed inset-0 z-10"
@@ -555,7 +474,7 @@ export default function OrdersPage() {
         )}
 
         <div className="relative z-20">
-          {/* FRONT: Order Table */}
+          {/* FRONT: Shipment Table */}
           {!isFlipped && (
             <div ref={frontRef}>
               <div
@@ -565,8 +484,8 @@ export default function OrdersPage() {
                 }}
                 className="rounded-xl border overflow-hidden"
               >
-                <POTable
-                  orders={orders}
+                <ShipmentTable
+                  shipments={shipments}
                   isLoading={isLoading}
                   error={error as Error | null}
                   onRetry={() => refetch()}
@@ -605,37 +524,37 @@ export default function OrdersPage() {
           )}
 
           {/* BACK: Detail Panel */}
-          {isFlipped && selectedOrder && (
+          {isFlipped && selectedShipment && (
             <div ref={backRef}>
-              <PODetailPanel
-                order={selectedOrder}
-                detail={orderDetail}
+              <ShipmentDetailPanel
+                shipment={selectedShipment}
+                detail={shipmentDetail}
                 isLoading={loadingDetail}
-                history={orderHistory}
+                history={shipmentHistory}
+                onBack={handleBack}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onRestore={handleRestore}
                 onExport={handleExport}
-                onBack={handleBack}
               />
             </div>
           )}
         </div>
       </section>
 
-      {/* Create PO Modal */}
-      <CreatePOModal
+      {/* Create Shipment Modal */}
+      <CreateShipmentModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Edit PO Modal */}
-      {editingOrder && (
-        <EditPOModal
-          isOpen={!!editingOrder}
-          order={editingOrder}
-          onClose={() => setEditingOrder(null)}
+      {/* Edit Shipment Modal */}
+      {editingShipment && (
+        <EditShipmentModal
+          isOpen={!!editingShipment}
+          shipment={editingShipment}
+          onClose={() => setEditingShipment(null)}
           onSuccess={handleEditSuccess}
         />
       )}
@@ -644,8 +563,8 @@ export default function OrdersPage() {
       <SecurityCodeDialog
         isOpen={showDeleteSecurity}
         level="L3"
-        title={t('orders.delete.title')}
-        description={t('orders.delete.securityDescription')}
+        title={t('shipments.delete.title')}
+        description={t('shipments.delete.securityDescription')}
         onConfirm={handleDeleteConfirm}
         onCancel={() => {
           setShowDeleteSecurity(false);
@@ -656,12 +575,12 @@ export default function OrdersPage() {
         error={deleteSecurityError}
       />
 
-      {/* Restore Security Dialog (V1 parity: L2) */}
+      {/* Restore Security Dialog (L2) */}
       <SecurityCodeDialog
         isOpen={showRestoreSecurity}
         level="L2"
-        title={t('orders.restore.title')}
-        description={t('orders.restore.securityDescription')}
+        title={t('shipments.restore.title')}
+        description={t('shipments.restore.securityDescription')}
         onConfirm={handleRestoreConfirm}
         onCancel={() => {
           setShowRestoreSecurity(false);

@@ -38,6 +38,12 @@ export default function SuppliersPage() {
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierWithStrategy | null>(null);
+  const [editingStrategy, setEditingStrategy] = useState<SupplierStrategy | undefined>(undefined);
+
+  // ═══════════ Filter & Sort ═══════════
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState<string>('supplierCode');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     setIsClient(true);
@@ -64,6 +70,49 @@ export default function SuppliersPage() {
     if (typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) return (data as any).data;
     return [];
   }, [data]);
+
+  // ═══════════ Client-side Filter & Sort ═══════════
+  const filteredSuppliers = useMemo(() => {
+    let list = [...suppliers];
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(s =>
+        s.supplierCode.toLowerCase().includes(q) ||
+        s.supplierName.toLowerCase().includes(q)
+      );
+    }
+    list.sort((a, b) => {
+      let aVal: string | number = '';
+      let bVal: string | number = '';
+      switch (sortField) {
+        case 'supplierCode': aVal = a.supplierCode; bVal = b.supplierCode; break;
+        case 'supplierName': aVal = a.supplierName; bVal = b.supplierName; break;
+        case 'category': aVal = a.latestStrategy?.category ?? ''; bVal = b.latestStrategy?.category ?? ''; break;
+        case 'currency': aVal = a.latestStrategy?.currency ?? ''; bVal = b.latestStrategy?.currency ?? ''; break;
+        case 'status': aVal = a.status ? 1 : 0; bVal = b.status ? 1 : 0; break;
+        case 'effectiveDate': aVal = a.latestStrategy?.effectiveDate ?? ''; bVal = b.latestStrategy?.effectiveDate ?? ''; break;
+        default: aVal = a.supplierCode; bVal = b.supplierCode;
+      }
+      const cmp = typeof aVal === 'number' ? aVal - (bVal as number) : String(aVal).localeCompare(String(bVal));
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [suppliers, search, sortField, sortOrder]);
+
+  const handleSort = useCallback((field: string) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  }, [sortField]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const hasFilters = !!search;
 
   // ═══════════ Slide-over Animation ═══════════
 
@@ -142,12 +191,23 @@ export default function SuppliersPage() {
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
   };
 
-  const handleEditStrategy = (supplier: SupplierWithStrategy) => {
-    setEditingSupplier(supplier);
+  const handleNewStrategy = () => {
+    if (selectedSupplier) {
+      setEditingSupplier(selectedSupplier);
+      setEditingStrategy(undefined); // new mode — no specific strategy
+    }
+  };
+
+  const handleEditStrategyRow = (strategy: SupplierStrategy) => {
+    if (selectedSupplier) {
+      setEditingSupplier(selectedSupplier);
+      setEditingStrategy(strategy); // edit mode — specific strategy
+    }
   };
 
   const handleEditSuccess = () => {
     setEditingSupplier(null);
+    setEditingStrategy(undefined);
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     // Refresh the detail panel if it's open
     if (selectedSupplier) {
@@ -190,18 +250,7 @@ export default function SuppliersPage() {
           >
             {t('title')}
           </h1>
-          {!isFlipped && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              style={{ backgroundColor: '#30d158', color: '#ffffff' }}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t('actions.addSupplier')}
-            </button>
-          )}
+
         </div>
         {!isFlipped && (
           <>
@@ -210,12 +259,67 @@ export default function SuppliersPage() {
             </p>
             <div className="mt-3">
               <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('table.total', { count: suppliers.length })}
+                {t('table.total', { count: filteredSuppliers.length })}
               </span>
             </div>
           </>
         )}
       </section>
+
+      {/* Filter Bar */}
+      {!isFlipped && (
+        <section className="max-w-[1400px] mx-auto px-6 pb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('table.search')}
+                className="w-full h-9 pl-9 pr-3 border rounded-lg text-sm focus:outline-none transition-colors"
+                style={{
+                  backgroundColor: colors.bgSecondary,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                style={{ color: colors.textTertiary }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            {/* Clear */}
+            {hasFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="h-9 px-3 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: colors.bgTertiary, color: colors.textSecondary }}
+              >
+                {t('table.clearFilters')}
+              </button>
+            )}
+
+            {/* Add Supplier — right-most (aligned like shipments) */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{ backgroundColor: '#30d158', color: '#ffffff' }}
+              className="ml-auto h-9 px-4 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95 flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {t('actions.addSupplier')}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Content Area */}
       <section className="max-w-[1400px] mx-auto px-6 relative">
@@ -239,11 +343,14 @@ export default function SuppliersPage() {
                 className="rounded-xl border overflow-hidden"
               >
                 <SupplierTable
-                  suppliers={suppliers}
+                  suppliers={filteredSuppliers}
                   isLoading={isLoading}
                   error={error as Error | null}
                   onRetry={() => refetch()}
                   onRowClick={handleRowClick}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
                 />
               </div>
             </div>
@@ -256,7 +363,9 @@ export default function SuppliersPage() {
                 supplier={selectedSupplier}
                 strategies={strategies}
                 isLoading={loadingStrategies}
-                onEditStrategy={handleEditStrategy}
+                onNewStrategy={handleNewStrategy}
+                onEditStrategy={handleEditStrategyRow}
+                onBack={handleBack}
               />
             </div>
           )}
@@ -270,12 +379,14 @@ export default function SuppliersPage() {
         onSuccess={handleAddSuccess}
       />
 
-      {/* Edit Strategy Modal */}
+      {/* Edit/New Strategy Modal */}
       {editingSupplier && (
         <EditStrategyModal
           isOpen={!!editingSupplier}
           supplier={editingSupplier}
-          onClose={() => setEditingSupplier(null)}
+          editingStrategy={editingStrategy}
+          minEffectiveDate={strategies.length > 0 ? strategies[0].effectiveDate : undefined}
+          onClose={() => { setEditingSupplier(null); setEditingStrategy(undefined); }}
           onSuccess={handleEditSuccess}
         />
       )}

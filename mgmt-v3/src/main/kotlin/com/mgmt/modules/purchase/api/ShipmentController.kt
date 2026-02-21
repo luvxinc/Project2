@@ -11,10 +11,15 @@ import com.mgmt.modules.purchase.application.dto.*
 import com.mgmt.modules.purchase.application.usecase.ShipmentUseCase
 import com.mgmt.modules.purchase.domain.model.Shipment
 import com.mgmt.modules.purchase.domain.model.ShipmentItem
+import com.mgmt.modules.purchase.domain.repository.ReceiveDiffRepository
+import com.mgmt.modules.purchase.domain.repository.ReceiveRepository
+import com.mgmt.modules.purchase.domain.repository.ShipmentItemRepository
+import com.mgmt.modules.purchase.infrastructure.excel.ShipmentExcelService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 
 /**
  * ShipmentController — Logistics shipment REST API.
@@ -25,6 +30,10 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/purchase/shipments")
 class ShipmentController(
     private val shipmentUseCase: ShipmentUseCase,
+    private val shipmentItemRepo: ShipmentItemRepository,
+    private val receiveRepo: ReceiveRepository,
+    private val receiveDiffRepo: ReceiveDiffRepository,
+    private val shipmentExcelService: ShipmentExcelService,
 ) {
 
     @GetMapping
@@ -34,13 +43,19 @@ class ShipmentController(
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) status: String?,
+        @RequestParam(required = false) dateFrom: LocalDate?,
+        @RequestParam(required = false) dateTo: LocalDate?,
+        @RequestParam(defaultValue = "false") includeDeleted: Boolean,
     ): ResponseEntity<Any> {
-        val params = ShipmentQueryParams(page = page, limit = limit, search = search, status = status)
+        val params = ShipmentQueryParams(
+            page = page, limit = limit, search = search, status = status,
+            dateFrom = dateFrom, dateTo = dateTo, includeDeleted = includeDeleted,
+        )
         val (shipments, total) = shipmentUseCase.findAll(params)
         val effectiveLimit = maxOf(1, minOf(limit, 100))
 
         return ResponseEntity.ok(PagedResponse(
-            data = shipments.map { toResponse(it) },
+            data = shipments.map { toListResponse(it) },
             meta = PageMeta.of(page, effectiveLimit, total),
         ))
     }
@@ -59,7 +74,14 @@ class ShipmentController(
     @AuditLog(module = "PURCHASE", action = "CREATE_SHIPMENT", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreateShipmentRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(toResponse(shipmentUseCase.create(dto, currentUsername()))))
+            .body(ApiResponse.ok(toListResponse(shipmentUseCase.create(dto, currentUsername()))))
+
+    @PatchMapping("/{id}")
+    @RequirePermission("module.purchase.shipment.update")
+    @SecurityLevel(level = "L3", actionKey = "btn_edit_send")
+    @AuditLog(module = "PURCHASE", action = "UPDATE_SHIPMENT", riskLevel = "HIGH")
+    fun update(@PathVariable id: Long, @RequestBody dto: UpdateShipmentRequest): ResponseEntity<Any> =
+        ResponseEntity.ok(ApiResponse.ok(toListResponse(shipmentUseCase.update(id, dto, currentUsername()))))
 
     @DeleteMapping("/{id}")
     @RequirePermission("module.purchase.shipment.delete")
@@ -72,32 +94,131 @@ class ShipmentController(
     @RequirePermission("module.purchase.shipment.update")
     @AuditLog(module = "PURCHASE", action = "RESTORE_SHIPMENT", riskLevel = "MEDIUM")
     fun restore(@PathVariable id: Long): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(toResponse(shipmentUseCase.restore(id, currentUsername()))))
+        ResponseEntity.ok(ApiResponse.ok(toListResponse(shipmentUseCase.restore(id, currentUsername()))))
+
+    @GetMapping("/available-pos")
+    @RequirePermission("module.purchase.shipment.view")
+    fun getAvailablePos(@RequestParam(required = false) sentDate: LocalDate?): ResponseEntity<Any> =
+        ResponseEntity.ok(ApiResponse.ok(shipmentUseCase.getAvailablePos(sentDate)))
+
+    @GetMapping("/template")
+    @RequirePermission("module.purchase.shipment.view")
+    fun downloadTemplate(@RequestParam sentDate: LocalDate): ResponseEntity<ByteArray> {
+        val availablePos = shipmentUseCase.getAvailablePos(sentDate)
+        val bytes = shipmentExcelService.generateTemplate(sentDate, availablePos)
+        return excelResponse(bytes, "shipment_template_$sentDate.xlsx")
+    }
+
+    @GetMapping("/{id}/export")
+    @RequirePermission("module.purchase.shipment.view")
+    fun exportShipment(
+        @PathVariable id: Long,
+        @RequestParam(defaultValue = "mgmt") type: String,
+    ): ResponseEntity<ByteArray> {
+        val shipment = shipmentUseCase.findOne(id)
+        val itemContexts = shipmentUseCase.prepareExportContexts(id)
+        val latestEvent = shipmentUseCase.getLatestEvent(id)
+        val bytes = shipmentExcelService.exportShipment(shipment, itemContexts, latestEvent, type)
+        return excelResponse(bytes, "shipment_${shipment.logisticNum}_$type.xlsx")
+    }
+
+    @GetMapping("/{id}/history")
+    @RequirePermission("module.purchase.shipment.view")
+    fun getHistory(@PathVariable id: Long): ResponseEntity<Any> {
+        val events = shipmentUseCase.getHistory(id)
+        return ResponseEntity.ok(ApiResponse.ok(events.map { e ->
+            ShipmentEventResponse(
+                id = e.id,
+                shipmentId = e.shipmentId,
+                logisticNum = e.logisticNum,
+                eventType = e.eventType,
+                eventSeq = e.eventSeq,
+                changes = e.changes,
+                note = e.note,
+                operator = e.operator,
+                createdAt = e.createdAt,
+            )
+        }))
+    }
 
     // ═══════════ Helpers ═══════════
 
-    private fun toResponse(s: Shipment) = ShipmentResponse(
-        id = s.id, logisticNum = s.logisticNum, sentDate = s.sentDate,
-        etaDate = s.etaDate, pallets = s.pallets,
-        logisticsCost = s.logisticsCost.toDouble(), exchangeRate = s.exchangeRate.toDouble(),
-        status = s.status, note = s.note,
-        createdAt = s.createdAt, updatedAt = s.updatedAt,
-    )
+    /**
+     * V1 parity: compute receive status from receives + diffs.
+     * IN_TRANSIT       — no active receives or all receiveQty = 0
+     * ALL_RECEIVED     — sentQty == receivedQty across all rows
+     * DIFF_UNRESOLVED  — mismatch && any diff is pending
+     * DIFF_RESOLVED    — mismatch && all diffs resolved
+     */
+    private fun computeReceiveStatus(logisticNum: String): String {
+        val receives = receiveRepo.findByLogisticNumAndDeletedAtIsNull(logisticNum)
+        val receivedQty = receives.sumOf { it.receiveQuantity }
+        if (receives.isEmpty() || receivedQty == 0) return "IN_TRANSIT"
 
-    private fun toDetailResponse(s: Shipment, items: List<ShipmentItem>) = ShipmentResponse(
-        id = s.id, logisticNum = s.logisticNum, sentDate = s.sentDate,
-        etaDate = s.etaDate, pallets = s.pallets,
-        logisticsCost = s.logisticsCost.toDouble(), exchangeRate = s.exchangeRate.toDouble(),
-        status = s.status, note = s.note,
-        items = items.map { toItemResponse(it) },
-        createdAt = s.createdAt, updatedAt = s.updatedAt,
-    )
+        val sentQty = receives.sumOf { it.sentQuantity }
+        if (sentQty == receivedQty) return "ALL_RECEIVED"
+
+        // Has discrepancy — check diffs
+        val diffs = receiveDiffRepo.findAllByLogisticNum(logisticNum)
+        return if (diffs.any { it.status == "pending" }) "DIFF_UNRESOLVED" else "DIFF_RESOLVED"
+    }
+
+    private fun toListResponse(s: Shipment): ShipmentResponse {
+        val itemCount = shipmentItemRepo.countByShipmentId(s.id)
+        val totalValue = shipmentItemRepo.sumValueByShipmentId(s.id)?.toDouble()
+            ?.let { Math.round(it * 100000.0) / 100000.0 } ?: 0.0
+        val receiveStatus = if (s.deletedAt != null) "IN_TRANSIT" else computeReceiveStatus(s.logisticNum)
+        return ShipmentResponse(
+            id = s.id, logisticNum = s.logisticNum, sentDate = s.sentDate,
+            etaDate = s.etaDate, pallets = s.pallets,
+            totalWeight = s.totalWeight.toDouble(), priceKg = s.priceKg.toDouble(),
+            logisticsCost = s.logisticsCost.toDouble(), exchangeRate = s.exchangeRate.toDouble(),
+            rateMode = s.rateMode,
+            status = s.status, note = s.note,
+            itemCount = itemCount,
+            totalValue = totalValue,
+            isDeleted = s.deletedAt != null,
+            createdBy = s.createdBy,
+            updatedBy = s.updatedBy,
+            createdAt = s.createdAt, updatedAt = s.updatedAt,
+            receiveStatus = receiveStatus,
+        )
+    }
+
+    private fun toDetailResponse(s: Shipment, items: List<ShipmentItem>): ShipmentResponse {
+        val totalValue = items.sumOf { it.quantity * it.unitPrice.toDouble() }
+            .let { Math.round(it * 100000.0) / 100000.0 }
+        val receiveStatus = if (s.deletedAt != null) "IN_TRANSIT" else computeReceiveStatus(s.logisticNum)
+        return ShipmentResponse(
+            id = s.id, logisticNum = s.logisticNum, sentDate = s.sentDate,
+            etaDate = s.etaDate, pallets = s.pallets,
+            totalWeight = s.totalWeight.toDouble(), priceKg = s.priceKg.toDouble(),
+            logisticsCost = s.logisticsCost.toDouble(), exchangeRate = s.exchangeRate.toDouble(),
+            rateMode = s.rateMode,
+            status = s.status, note = s.note,
+            items = items.map { toItemResponse(it) },
+            itemCount = items.size,
+            totalValue = totalValue,
+            isDeleted = s.deletedAt != null,
+            createdBy = s.createdBy,
+            updatedBy = s.updatedBy,
+            createdAt = s.createdAt, updatedAt = s.updatedAt,
+            receiveStatus = receiveStatus,
+        )
+    }
 
     private fun toItemResponse(item: ShipmentItem) = ShipmentItemResponse(
         id = item.id, poNum = item.poNum, sku = item.sku,
         quantity = item.quantity, unitPrice = item.unitPrice.toDouble(),
         poChange = item.poChange, note = item.note,
     )
+
+    private fun excelResponse(bytes: ByteArray, filename: String): ResponseEntity<ByteArray> {
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=\"$filename\"")
+            .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            .body(bytes)
+    }
 
     private fun currentUsername(): String {
         val auth = SecurityContextHolder.getContext().authentication

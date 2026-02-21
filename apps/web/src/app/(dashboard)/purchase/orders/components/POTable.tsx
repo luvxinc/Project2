@@ -10,13 +10,17 @@ interface POTableProps {
   error: Error | null;
   onRetry: () => void;
   onRowClick: (order: PurchaseOrder) => void;
+  sortField: string;
+  sortOrder: 'asc' | 'desc';
+  onSort: (field: string) => void;
 }
 
 /**
  * V1 parity: po_mgmt list table.
  * Columns: PO# (+shipping badge), Supplier, Date, Total (RMB + USD dual), Status
+ * All headers are sortable.
  */
-export default function POTable({ orders, isLoading, error, onRetry, onRowClick }: POTableProps) {
+export default function POTable({ orders, isLoading, error, onRetry, onRowClick, sortField, sortOrder, onSort }: POTableProps) {
   const t = useTranslations('purchase');
   const { theme } = useTheme();
   const colors = themeColors[theme];
@@ -78,38 +82,55 @@ export default function POTable({ orders, isLoading, error, onRetry, onRowClick 
     return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const renderSortHeader = (field: string, label: string, align: string = 'text-left') => {
+    const isActive = sortField === field;
+    return (
+      <th
+        onClick={() => onSort(field)}
+        style={{ color: colors.textSecondary }}
+        className={`${align} py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap cursor-pointer select-none transition-opacity hover:opacity-70`}
+      >
+        <span className="inline-flex items-center gap-1">
+          {label}
+          <svg
+            className="w-3 h-3"
+            style={{ opacity: isActive ? 1 : 0.25, color: isActive ? colors.blue : colors.textSecondary }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+          >
+            {isActive && sortOrder === 'desc' ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+            )}
+          </svg>
+        </span>
+      </th>
+    );
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[1100px]">
         <thead>
           <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.poNum')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.supplier')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.orderDate')}
+            {renderSortHeader('poNum', t('orders.table.poNum'))}
+            {renderSortHeader('supplierCode', t('orders.table.supplier'))}
+            {renderSortHeader('poDate', t('orders.table.orderDate'))}
+            <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
+              {t('orders.table.strategyVer')}
             </th>
             <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              V##
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              L##
+              {t('orders.table.detailVer')}
             </th>
             <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
               {t('orders.detail.currency')}
             </th>
-            <th style={{ color: colors.textSecondary }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.totalRmb')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.totalUsd')}
-            </th>
-            <th style={{ color: colors.textSecondary }} className="text-center py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-              {t('orders.table.status')}
-            </th>
+            {renderSortHeader('totalRmb', t('orders.table.totalRmb'), 'text-right')}
+            {renderSortHeader('totalUsd', t('orders.table.totalUsd'), 'text-right')}
+            {renderSortHeader('shippingStatus', t('orders.table.status'), 'text-center')}
           </tr>
         </thead>
         <tbody>

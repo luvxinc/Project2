@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -122,11 +122,22 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
   });
 
   // V1 parity: fetch SKU list for dropdown (from Data_COGS / products table)
-  const { data: skuList = [] } = useQuery({
+  const { data: rawSkuList = [] } = useQuery({
     queryKey: ['skuList'],
     queryFn: () => purchaseApi.getSkuList(),
     enabled: isOpen,
   });
+
+  // Deduplicate SKU list by sku value
+  const skuList = useMemo(() => {
+    const seen = new Set<string>();
+    return (Array.isArray(rawSkuList) ? rawSkuList : []).filter((s) => {
+      const key = s.sku.toUpperCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [rawSkuList]);
 
   // --- Reset on open/close ---
   useEffect(() => {
@@ -1377,7 +1388,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                       <datalist id={`sku-list-${item.id}`}>
                         {skuList.map((s) => (
                           <option key={s.sku} value={s.sku}>
-                            {s.sku} — {s.name}
+                            {s.name}
                           </option>
                         ))}
                       </datalist>

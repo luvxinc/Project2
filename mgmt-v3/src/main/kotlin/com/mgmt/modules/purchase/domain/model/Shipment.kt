@@ -30,11 +30,21 @@ class Shipment(
     @Column(nullable = false)
     var pallets: Int = 0,
 
+    @Column(name = "total_weight", precision = 12, scale = 2, nullable = false)
+    var totalWeight: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "price_kg", precision = 12, scale = 5, nullable = false)
+    var priceKg: BigDecimal = BigDecimal.ZERO,
+
     @Column(name = "logistics_cost", precision = 12, scale = 2, nullable = false)
     var logisticsCost: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "exchange_rate", precision = 10, scale = 4, nullable = false)
     var exchangeRate: BigDecimal = BigDecimal("7.0"),
+
+    /** V1 parity: in_send.mode — 'A' = auto (API-fetched), 'M' = manual (user-entered) */
+    @Column(name = "rate_mode", length = 1, nullable = false)
+    var rateMode: String = "M",
 
     @Column(length = 20, nullable = false, columnDefinition = "shipment_status")
     var status: String = "pending",  // pending / in_transit / delivered / cancelled
