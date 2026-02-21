@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseApi, type Shipment } from '@/lib/api';
+import { purchaseApi, type Shipment, type ShipmentItemDetail } from '@/lib/api';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
@@ -18,10 +18,21 @@ interface EditShipmentModalProps {
   onSuccess: () => void;
 }
 
+interface EditableItem {
+  /** DB id — null for newly added items */
+  id: number | null;
+  poNum: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  poChange: boolean;
+  /** true = marked for deletion */
+  _deleted: boolean;
+}
+
 // ================================
 // Component — Single-page edit form
-// Pre-fills with existing values. Validates on submit.
-// Sections: Logistics Info → Items (read-only) → Note
+// Sections: Logistics Info → Items (editable) → Note
 // ================================
 
 export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess }: EditShipmentModalProps) {
@@ -31,13 +42,16 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
   const colors = themeColors[theme];
   const queryClient = useQueryClient();
 
-  // --- Editable state ---
+  // --- Editable state: logistics ---
   const [etaDate, setEtaDate] = useState('');
   const [pallets, setPallets] = useState<number>(0);
   const [totalWeight, setTotalWeight] = useState<number>(0);
   const [priceKg, setPriceKg] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [note, setNote] = useState('');
+
+  // --- Editable state: items ---
+  const [editableItems, setEditableItems] = useState<EditableItem[]>([]);
 
   // --- UI state ---
   const [success, setSuccess] = useState(false);
@@ -51,22 +65,46 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
       setPriceKg(shipment.priceKg || 0);
       setExchangeRate(shipment.exchangeRate || 0);
       setNote(shipment.note || '');
+      setEditableItems(
+        (shipment.items ?? []).map((item: ShipmentItemDetail) => ({
+          id: item.id,
+          poNum: item.poNum,
+          sku: item.sku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          poChange: item.poChange,
+          _deleted: false,
+        }))
+      );
       setSuccess(false);
     }
   }, [isOpen, shipment]);
 
   // --- Computed ---
   const logisticsCost = Math.round(Math.ceil(totalWeight) * priceKg * 100000) / 100000;
-  const items = shipment?.items ?? [];
   const isDisabled = shipment?.isDeleted === true || shipment?.status === 'cancelled';
+  const activeItems = editableItems.filter(i => !i._deleted);
 
   const fmt = (v: number | undefined | null, decimals = 2) => {
     if (v === undefined || v === null || isNaN(v)) return '-';
     return parseFloat(v.toFixed(decimals)).toString();
   };
 
+  // --- Item edit helpers ---
+  const updateItem = useCallback((index: number, field: keyof EditableItem, value: unknown) => {
+    setEditableItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  }, []);
+
+  const deleteItem = useCallback((index: number) => {
+    setEditableItems(prev => prev.map((item, i) => i === index ? { ...item, _deleted: true } : item));
+  }, []);
+
+  const restoreItem = useCallback((index: number) => {
+    setEditableItems(prev => prev.map((item, i) => i === index ? { ...item, _deleted: false } : item));
+  }, []);
+
   // --- Dirty check ---
-  const hasChanges = useMemo(() => {
+  const hasLogisticsChanges = useMemo(() => {
     if (!shipment) return false;
     return (
       etaDate !== (shipment.etaDate || '') ||
@@ -78,6 +116,25 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
     );
   }, [shipment, etaDate, pallets, totalWeight, priceKg, exchangeRate, note]);
 
+  const hasItemChanges = useMemo(() => {
+    if (!shipment) return false;
+    const originalItems = shipment.items ?? [];
+    // Check if any items were deleted
+    if (editableItems.some(i => i._deleted && i.id !== null)) return true;
+    // Check if any items were added (id === null and not deleted)
+    if (editableItems.some(i => i.id === null && !i._deleted)) return true;
+    // Check if any existing items were modified
+    for (const ei of editableItems) {
+      if (ei._deleted || ei.id === null) continue;
+      const orig = originalItems.find((o: ShipmentItemDetail) => o.id === ei.id);
+      if (!orig) return true;
+      if (ei.quantity !== orig.quantity || ei.poChange !== orig.poChange) return true;
+    }
+    return false;
+  }, [shipment, editableItems]);
+
+  const hasChanges = hasLogisticsChanges || hasItemChanges;
+
   // --- Real-time validation → drives submit button ---
   const isValid = useMemo(() => {
     if (!etaDate) return false;
@@ -86,19 +143,35 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
     if (priceKg <= 0) return false;
     if (exchangeRate <= 0) return false;
     if (!note.trim()) return false;
+    // Items: at least 1 active item with qty > 0
+    if (activeItems.length === 0) return false;
+    if (activeItems.some(i => i.quantity <= 0)) return false;
     return true;
-  }, [etaDate, totalWeight, priceKg, exchangeRate, note, shipment]);
+  }, [etaDate, totalWeight, priceKg, exchangeRate, note, shipment, activeItems]);
 
   const canSubmit = isValid && hasChanges && !isDisabled;
 
   // --- Mutation ---
   const updateMutation = useMutation({
-    mutationFn: () =>
-      purchaseApi.updateShipment(shipment!.id, {
+    mutationFn: () => {
+      const payload: Parameters<typeof purchaseApi.updateShipment>[1] = {
         etaDate: etaDate || undefined,
         pallets, totalWeight, priceKg, exchangeRate,
         note: note || undefined,
-      }),
+      };
+      // Only send items if they changed
+      if (hasItemChanges) {
+        payload.items = activeItems.map(i => ({
+          id: i.id ?? undefined,
+          poNum: i.poNum,
+          sku: i.sku,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          poChange: i.poChange,
+        }));
+      }
+      return purchaseApi.updateShipment(shipment!.id, payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       setSuccess(true);
@@ -212,40 +285,104 @@ export default function EditShipmentModal({ isOpen, shipment, onClose, onSuccess
         </div>
       </div>
 
-      {/* Section: Items (read-only) */}
-      {items.length > 0 && (
-        <div className="mb-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: colors.textSecondary }}>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            {t('shipments.edit.items')}
-            <span className="text-[10px] font-normal normal-case opacity-60">({t('shipments.edit.itemsReadOnly')})</span>
-          </h3>
-          <div className="rounded-xl overflow-hidden border" style={{ borderColor: colors.border }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ backgroundColor: colors.bgTertiary }}>
-                  <th className="text-left px-4 py-2.5 font-medium" style={{ color: colors.textSecondary }}>PO#</th>
-                  <th className="text-left px-4 py-2.5 font-medium" style={{ color: colors.textSecondary }}>SKU</th>
-                  <th className="text-right px-4 py-2.5 font-medium" style={{ color: colors.textSecondary }}>{t('shipments.detail.qty')}</th>
-                  <th className="text-right px-4 py-2.5 font-medium" style={{ color: colors.textSecondary }}>{t('shipments.detail.unitPrice')}</th>
+      {/* Section: Items (editable) */}
+      <div className="mb-5">
+        <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: colors.textSecondary }}>
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          {t('shipments.edit.items')}
+          <span className="text-[10px] font-normal normal-case" style={{ color: colors.textTertiary }}>
+            ({activeItems.length} {t('shipments.edit.activeItems')})
+          </span>
+        </h3>
+
+        <div className="rounded-xl overflow-hidden border" style={{ borderColor: colors.border }}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ backgroundColor: colors.bgTertiary }}>
+                <th className="text-left px-3 py-2.5 font-medium" style={{ color: colors.textSecondary }}>PO#</th>
+                <th className="text-left px-3 py-2.5 font-medium" style={{ color: colors.textSecondary }}>SKU</th>
+                <th className="text-right px-3 py-2.5 font-medium w-24" style={{ color: colors.textSecondary }}>{t('shipments.detail.qty')}</th>
+                <th className="text-right px-3 py-2.5 font-medium" style={{ color: colors.textSecondary }}>{t('shipments.detail.unitPrice')}</th>
+                <th className="text-center px-3 py-2.5 font-medium w-16" style={{ color: colors.textSecondary }}>{t('shipments.create.isRounded')}</th>
+                <th className="w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {editableItems.map((item, idx) => (
+                <tr key={item.id ?? `new-${idx}`}
+                  style={{
+                    borderTop: `1px solid ${colors.border}`,
+                    opacity: item._deleted ? 0.35 : 1,
+                    textDecoration: item._deleted ? 'line-through' : 'none',
+                  }}>
+                  <td className="px-3 py-2" style={{ color: colors.blue }}>{item.poNum}</td>
+                  <td className="px-3 py-2 font-mono text-xs" style={{ color: colors.text }}>{item.sku}</td>
+                  <td className="px-3 py-2 text-right">
+                    {item._deleted ? (
+                      <span style={{ color: colors.textTertiary }}>{item.quantity}</span>
+                    ) : (
+                      <input type="number" min={0} value={item.quantity || ''}
+                        disabled={isDisabled}
+                        onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 0)}
+                        className="w-20 h-7 px-2 border rounded text-sm text-right focus:outline-none"
+                        style={{
+                          backgroundColor: colors.bgSecondary,
+                          borderColor: item.quantity > 0 ? colors.border : colors.red,
+                          color: colors.text,
+                        }} />
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: colors.text }}>
+                    ${item.unitPrice.toFixed(2)}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {item._deleted ? (
+                      <span style={{ color: colors.textTertiary }}>-</span>
+                    ) : (
+                      <input type="checkbox" checked={item.poChange}
+                        disabled={isDisabled}
+                        onChange={e => updateItem(idx, 'poChange', e.target.checked)}
+                        className="w-4 h-4 rounded accent-blue-500" />
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {item._deleted ? (
+                      <button type="button" onClick={() => restoreItem(idx)} disabled={isDisabled}
+                        className="text-xs font-medium px-2 py-1 rounded hover:opacity-80 transition-opacity"
+                        style={{ color: colors.green }}>
+                        ↩
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => deleteItem(idx)} disabled={isDisabled}
+                        className="text-xs font-medium px-2 py-1 rounded hover:opacity-80 transition-opacity"
+                        style={{ color: colors.red }}>
+                        ✕
+                      </button>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {items.map(item => (
-                  <tr key={`${item.poNum}-${item.sku}`} style={{ borderTop: `1px solid ${colors.border}` }}>
-                    <td className="px-4 py-2.5" style={{ color: colors.blue }}>{item.poNum}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs" style={{ color: colors.text }}>{item.sku}</td>
-                    <td className="px-4 py-2.5 text-right" style={{ color: colors.text }}>{item.quantity}</td>
-                    <td className="px-4 py-2.5 text-right" style={{ color: colors.text }}>${item.unitPrice.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Item summary */}
+        <div className="mt-2 flex items-center justify-between text-xs" style={{ color: colors.textTertiary }}>
+          <span>
+            {activeItems.length > 0 && (
+              <>
+                {activeItems.reduce((sum, i) => sum + i.quantity, 0)} pcs ·
+                ${activeItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </>
+            )}
+          </span>
+          {hasItemChanges && (
+            <span style={{ color: colors.orange }}>{t('shipments.edit.itemsModified')}</span>
+          )}
+        </div>
+      </div>
 
       {/* Section: Note (required) */}
       <div>

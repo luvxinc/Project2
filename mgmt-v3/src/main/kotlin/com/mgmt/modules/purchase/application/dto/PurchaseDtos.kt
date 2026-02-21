@@ -269,6 +269,23 @@ data class UpdateShipmentRequest(
     val priceKg: BigDecimal? = null,
     val exchangeRate: BigDecimal? = null,
     val note: String? = null,
+    /** V1 parity: optional item edits — full replacement of items list */
+    val items: List<UpdateShipmentItemRequest>? = null,
+)
+
+/**
+ * Item-level edit within an update-shipment request.
+ * If `id` is present → update existing item.
+ * If `id` is null → new item to add.
+ * Items NOT in the list are soft-deleted (removed).
+ */
+data class UpdateShipmentItemRequest(
+    val id: Long? = null,
+    val poNum: String,
+    val sku: String,
+    val quantity: Int,
+    val unitPrice: BigDecimal,
+    val poChange: Boolean = false,
 )
 
 data class ShipmentAvailablePo(

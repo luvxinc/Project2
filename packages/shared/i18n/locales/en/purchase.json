@@ -459,6 +459,8 @@
       "logistics": "Logistics Parameters",
       "items": "Cargo Items",
       "itemsReadOnly": "read-only",
+      "activeItems": "active",
+      "itemsModified": "Items modified",
       "totalWeight": "Total Weight (kg)",
       "priceKg": "Price per kg (RMB)",
       "submit": "Save Changes",

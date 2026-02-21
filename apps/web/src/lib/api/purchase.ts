@@ -261,6 +261,17 @@ export interface UpdateShipmentRequest {
   priceKg?: number;
   exchangeRate?: number;
   note?: string;
+  /** V1 parity: optional item edits — full replacement of items list */
+  items?: UpdateShipmentItemRequest[];
+}
+
+export interface UpdateShipmentItemRequest {
+  id?: number;
+  poNum: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  poChange?: boolean;
 }
 
 export interface ShipmentAvailablePo {
