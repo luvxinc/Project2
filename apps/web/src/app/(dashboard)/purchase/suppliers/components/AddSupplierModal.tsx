@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseApi } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
-import { PillNav } from '@/components/ui/pill-nav';
 import ModalShell from '../../../purchase/components/ModalShell';
 
 // ================================
@@ -30,13 +29,6 @@ interface FormData {
   depositRatio: number;
 }
 
-interface FormErrors {
-  supplierCode?: string;
-  supplierName?: string;
-  floatThreshold?: string;
-  depositRatio?: string;
-}
-
 const INITIAL_FORM: FormData = {
   supplierCode: '',
   supplierName: '',
@@ -48,13 +40,10 @@ const INITIAL_FORM: FormData = {
   depositRatio: 0,
 };
 
-const PILLS = [
-  { key: 'basic', label: '' },
-  { key: 'strategy', label: '' },
-];
-
 // ================================
-// Component
+// Component — Single-page form
+// Sections: Basic Info + Strategy
+// Validation: inline (borders) + submit button disabled
 // ================================
 
 export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupplierModalProps) {
@@ -65,10 +54,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
   const queryClient = useQueryClient();
 
   // --- State ---
-  const [activeStep, setActiveStep] = useState('basic');
-  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [errors, setErrors] = useState<FormErrors>({});
   const [codeExists, setCodeExists] = useState<boolean | null>(null);
   const [codeCheckLoading, setCodeCheckLoading] = useState(false);
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
@@ -78,19 +64,10 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
   // Debounce timer ref for code check
   const codeCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Populate pill labels from i18n
-  const pills = PILLS.map((p) => ({
-    ...p,
-    label: t(`add.pill.${p.key}`),
-  }));
-
-  // --- Reset on open/close ---
+  // --- Reset on open ---
   useEffect(() => {
     if (isOpen) {
-      setActiveStep('basic');
-      setCompletedSteps([]);
       setFormData(INITIAL_FORM);
-      setErrors({});
       setCodeExists(null);
       setCodeCheckLoading(false);
       setShowSecurityDialog(false);
@@ -99,40 +76,17 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
     }
   }, [isOpen]);
 
-  // --- ESC to close ---
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !showSecurityDialog) onClose();
-    },
-    [onClose, showSecurityDialog],
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, handleKeyDown]);
-
   // --- Inline code existence check (debounced 500ms) ---
   const checkCodeInline = useCallback((code: string) => {
-    // Clear any pending timer
     if (codeCheckTimer.current) {
       clearTimeout(codeCheckTimer.current);
       codeCheckTimer.current = null;
     }
-
-    // Reset if not 2 chars
     if (code.length !== 2) {
       setCodeExists(null);
       setCodeCheckLoading(false);
       return;
     }
-
     setCodeCheckLoading(true);
     codeCheckTimer.current = setTimeout(async () => {
       try {
@@ -146,14 +100,30 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
     }, 500);
   }, []);
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (codeCheckTimer.current) {
-        clearTimeout(codeCheckTimer.current);
-      }
+      if (codeCheckTimer.current) clearTimeout(codeCheckTimer.current);
     };
   }, []);
+
+  // --- Field updater ---
+  const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // --- Real-time validation → drives submit button ---
+  const isValid = useMemo(() => {
+    // Basic info
+    if (!/^[A-Z]{2}$/.test(formData.supplierCode)) return false;
+    if (codeExists === true) return false;
+    if (!formData.supplierName.trim()) return false;
+    // Strategy
+    if (formData.floatCurrency && (formData.floatThreshold <= 0 || formData.floatThreshold > 10)) return false;
+    if (formData.requireDeposit && formData.depositRatio <= 0) return false;
+    return true;
+  }, [formData, codeExists]);
+
+  const canSubmit = isValid && !codeCheckLoading;
 
   // --- Mutation ---
   const createMutation = useMutation({
@@ -173,103 +143,20 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
       setShowSecurityDialog(false);
       setSuccess(true);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 1200);
+      setTimeout(() => { onSuccess(); onClose(); }, 1200);
     },
     onError: (err: any) => {
       if (err?.statusCode === 409) {
         setCodeExists(true);
         setShowSecurityDialog(false);
-        setActiveStep('basic');
-        setErrors({ supplierCode: t('add.errors.codeExists') });
       } else {
         setSecurityError(tCommon('securityCode.invalid'));
       }
     },
   });
 
-  // --- Validation ---
-  const validateBasic = (): boolean => {
-    const newErrors: FormErrors = {};
-    if (!/^[A-Z]{2}$/.test(formData.supplierCode)) {
-      newErrors.supplierCode = t('add.errors.codeFormat');
-    } else if (codeExists === true) {
-      newErrors.supplierCode = t('add.errors.codeExists');
-    }
-    if (!formData.supplierName.trim()) {
-      newErrors.supplierName = t('add.errors.nameRequired');
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateStrategy = (): boolean => {
-    const newErrors: FormErrors = {};
-    if (formData.floatCurrency) {
-      if (formData.floatThreshold <= 0 || formData.floatThreshold > 10) {
-        newErrors.floatThreshold = t('add.errors.floatRange');
-      }
-    }
-    if (formData.requireDeposit) {
-      if (formData.depositRatio <= 0) {
-        newErrors.depositRatio = t('add.errors.depositPositive');
-      }
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // --- Navigation ---
-  const handleStepChange = (key: string) => {
-    const stepOrder = ['basic', 'strategy'];
-    const currentIdx = stepOrder.indexOf(activeStep);
-    const targetIdx = stepOrder.indexOf(key);
-
-    // Going forward — validate current step
-    if (targetIdx > currentIdx) {
-      if (activeStep === 'basic' && !validateBasic()) return;
-    }
-
-    // Mark current as completed when moving forward
-    if (targetIdx > currentIdx) {
-      setCompletedSteps((prev) => {
-        const updated = new Set(prev);
-        for (let i = 0; i <= currentIdx; i++) {
-          updated.add(stepOrder[i]);
-        }
-        return Array.from(updated);
-      });
-    }
-
-    setErrors({});
-    setActiveStep(key);
-  };
-
-  const handleNext = () => {
-    if (activeStep === 'basic') handleStepChange('strategy');
-  };
-
-  const handleBack = () => {
-    if (activeStep === 'strategy') setActiveStep('basic');
-  };
-
-  // --- Field change ---
-  const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-    if (errors[key as keyof FormErrors]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[key as keyof FormErrors];
-        return next;
-      });
-    }
-  };
-
-  // --- Submit ---
   const handleSubmit = () => {
-    if (!validateStrategy()) return;
+    if (!canSubmit) return;
     setSecurityError(undefined);
     setShowSecurityDialog(true);
   };
@@ -298,293 +185,33 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
     );
   }
 
-  // --- Render helpers ---
-  const renderInput = (opts: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    error?: string;
-    placeholder?: string;
-    maxLength?: number;
-    type?: string;
-    disabled?: boolean;
-    suffix?: React.ReactNode;
-  }) => (
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1.5" style={{ color: colors.text }}>
-        {opts.label}
-      </label>
-      <div className="relative">
-        <input
-          type={opts.type || 'text'}
-          value={opts.value}
-          onChange={(e) => opts.onChange(e.target.value)}
-          placeholder={opts.placeholder}
-          maxLength={opts.maxLength}
-          disabled={opts.disabled}
-          className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50"
-          style={{
-            backgroundColor: colors.bgTertiary,
-            borderColor: opts.error ? colors.red : colors.border,
-            color: colors.text,
-            paddingRight: opts.suffix ? '36px' : undefined,
-          }}
-        />
-        {opts.suffix && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-            {opts.suffix}
-          </div>
-        )}
-      </div>
-      {opts.error && (
-        <p className="mt-1 text-xs" style={{ color: colors.red }}>
-          {opts.error}
-        </p>
-      )}
-    </div>
-  );
+  // --- Input helpers ---
+  const inputCls = "w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50";
+  const selectCls = "w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors appearance-none";
+  const baseStyle = { backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text };
 
-  const renderSelect = (opts: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    options: { value: string; label: string }[];
-  }) => (
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1.5" style={{ color: colors.text }}>
-        {opts.label}
-      </label>
-      <select
-        value={opts.value}
-        onChange={(e) => opts.onChange(e.target.value)}
-        className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors appearance-none"
-        style={{
-          backgroundColor: colors.bgTertiary,
-          borderColor: colors.border,
-          color: colors.text,
-        }}
-      >
-        {opts.options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+  // --- Code border color ---
+  const codeBorderColor = (() => {
+    if (codeExists === true) return colors.red;
+    if (formData.supplierCode.length === 2 && codeExists === false) return colors.green;
+    if (formData.supplierCode.length > 0 && !/^[A-Z]{2}$/.test(formData.supplierCode)) return colors.red;
+    return colors.border;
+  })();
 
-  const renderToggle = (opts: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
-    <div className="flex items-center justify-between mb-4">
-      <label className="text-sm font-medium" style={{ color: colors.text }}>
-        {opts.label}
-      </label>
-      <button
-        type="button"
-        onClick={() => opts.onChange(!opts.checked)}
-        className="relative w-11 h-6 rounded-full transition-colors"
-        style={{
-          backgroundColor: opts.checked ? colors.green : colors.bgTertiary,
-        }}
-      >
-        <span
-          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-          style={{
-            transform: opts.checked ? 'translateX(20px)' : 'translateX(0)',
-          }}
-        />
-      </button>
-    </div>
-  );
-
-  // --- Code availability inline indicator ---
-  const renderCodeSuffix = () => {
+  // --- Code suffix icon ---
+  const codeSuffix = (() => {
     if (formData.supplierCode.length !== 2) return null;
-
     if (codeCheckLoading) {
-      return (
-        <div
-          className="w-4 h-4 border-2 rounded-full animate-spin"
-          style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }}
-          title={t('add.checking')}
-        />
-      );
+      return <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }} />;
     }
-
     if (codeExists === false) {
-      return (
-        <svg className="w-4 h-4" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      );
+      return <svg className="w-4 h-4" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
     }
-
     if (codeExists === true) {
-      return (
-        <svg className="w-4 h-4" style={{ color: colors.red }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      );
+      return <svg className="w-4 h-4" style={{ color: colors.red }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
     }
-
     return null;
-  };
-
-  // --- Code availability status text ---
-  const renderCodeStatus = () => {
-    if (formData.supplierCode.length !== 2) return null;
-
-    if (codeCheckLoading) {
-      return (
-        <p className="mt-1 text-xs" style={{ color: colors.blue }}>
-          {t('add.checking')}
-        </p>
-      );
-    }
-
-    if (codeExists === false) {
-      return (
-        <p className="mt-1 text-xs" style={{ color: colors.green }}>
-          {t('add.codeAvailable')}
-        </p>
-      );
-    }
-
-    if (codeExists === true) {
-      return (
-        <p className="mt-1 text-xs" style={{ color: colors.red }}>
-          {t('add.codeUnavailable')}
-        </p>
-      );
-    }
-
-    return null;
-  };
-
-  // ================================
-  // Pill Content
-  // ================================
-
-  const renderBasicPill = () => (
-    <div>
-      {/* Supplier Code with inline availability check */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1.5" style={{ color: colors.text }}>
-          {t('add.field.supplierCode')}
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={formData.supplierCode}
-            onChange={(e) => {
-              const cleaned = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
-              updateField('supplierCode', cleaned);
-              // Reset code exists state and trigger check
-              setCodeExists(null);
-              checkCodeInline(cleaned);
-            }}
-            placeholder={t('add.placeholder.code')}
-            maxLength={2}
-            className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none transition-colors"
-            style={{
-              backgroundColor: colors.bgTertiary,
-              borderColor: errors.supplierCode ? colors.red : codeExists === true ? colors.red : codeExists === false ? colors.green : colors.border,
-              color: colors.text,
-              paddingRight: '36px',
-            }}
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-            {renderCodeSuffix()}
-          </div>
-        </div>
-        {errors.supplierCode && (
-          <p className="mt-1 text-xs" style={{ color: colors.red }}>
-            {errors.supplierCode}
-          </p>
-        )}
-        {!errors.supplierCode && renderCodeStatus()}
-      </div>
-
-      {renderInput({
-        label: t('add.field.supplierName'),
-        value: formData.supplierName,
-        onChange: (v) => updateField('supplierName', v),
-        error: errors.supplierName,
-        placeholder: t('add.placeholder.name'),
-      })}
-    </div>
-  );
-
-  const renderStrategyPill = () => (
-    <div>
-      {renderSelect({
-        label: t('add.field.category'),
-        value: formData.category,
-        onChange: (v) => updateField('category', v),
-        options: [
-          { value: 'E', label: t('category.E') },
-          { value: 'A', label: t('category.A') },
-        ],
-      })}
-
-      {renderSelect({
-        label: t('add.field.currency'),
-        value: formData.currency,
-        onChange: (v) => updateField('currency', v),
-        options: [
-          { value: 'USD', label: 'USD' },
-          { value: 'RMB', label: 'RMB' },
-        ],
-      })}
-
-      {renderToggle({
-        label: t('add.field.floatCurrency'),
-        checked: formData.floatCurrency,
-        onChange: (v) => {
-          updateField('floatCurrency', v);
-          if (!v) updateField('floatThreshold', 0);
-        },
-      })}
-
-      {formData.floatCurrency &&
-        renderInput({
-          label: t('add.field.floatThreshold'),
-          value: formData.floatThreshold ? String(formData.floatThreshold) : '',
-          onChange: (v) => {
-            const num = parseFloat(v);
-            updateField('floatThreshold', isNaN(num) ? 0 : num);
-          },
-          error: errors.floatThreshold,
-          placeholder: '1-10',
-          type: 'number',
-        })}
-
-      {renderToggle({
-        label: t('add.field.requireDeposit'),
-        checked: formData.requireDeposit,
-        onChange: (v) => {
-          updateField('requireDeposit', v);
-          if (!v) updateField('depositRatio', 0);
-        },
-      })}
-
-      {formData.requireDeposit &&
-        renderInput({
-          label: t('add.field.depositRatio'),
-          value: formData.depositRatio ? String(formData.depositRatio) : '',
-          onChange: (v) => {
-            const num = parseFloat(v);
-            updateField('depositRatio', isNaN(num) ? 0 : num);
-          },
-          error: errors.depositRatio,
-          placeholder: '>0',
-          type: 'number',
-        })}
-    </div>
-  );
-
-  // ================================
-  // Main render
-  // ================================
+  })();
 
   return (
     <>
@@ -592,38 +219,133 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
         isOpen={isOpen}
         onClose={onClose}
         title={t('add.title')}
-        footerLeft={
-          activeStep !== 'basic' ? (
-            <button type="button" onClick={handleBack} className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
-              {tCommon('back')}
-            </button>
-          ) : undefined
-        }
         footerRight={
           <div className="flex items-center gap-3">
             <button type="button" onClick={onClose} className="h-9 px-4 text-sm font-medium rounded-lg hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
               {tCommon('cancel')}
             </button>
-            {activeStep === 'basic' ? (
-              <button type="button" onClick={handleNext} className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: colors.blue }}>
-                {tCommon('next')}
-              </button>
-            ) : (
-              <button type="button" onClick={handleSubmit} className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: colors.blue }}>
-                {t('add.submit')}
-              </button>
-            )}
+            <button type="button" onClick={handleSubmit} disabled={!canSubmit}
+              className="h-9 px-5 text-sm font-medium rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: canSubmit ? colors.blue : colors.textTertiary }}>
+              {t('add.submit')}
+            </button>
           </div>
         }
       >
-          {/* Pill Nav */}
-          <div className="flex justify-center mb-4">
-            <PillNav steps={pills} activeStep={activeStep} onStepChange={handleStepChange} completedSteps={completedSteps} />
+        {/* ===== Section: Basic Info ===== */}
+        <div className="mb-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: colors.textSecondary }}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            {t('add.pill.basic')}
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Supplier Code */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.supplierCode')}</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.supplierCode}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+                    updateField('supplierCode', cleaned);
+                    setCodeExists(null);
+                    checkCodeInline(cleaned);
+                  }}
+                  placeholder={t('add.placeholder.code')}
+                  maxLength={2}
+                  className={inputCls}
+                  style={{ ...baseStyle, borderColor: codeBorderColor, paddingRight: '36px' }}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">{codeSuffix}</div>
+              </div>
+              {codeExists === true && <p className="mt-1 text-xs" style={{ color: colors.red }}>{t('add.codeUnavailable')}</p>}
+              {codeExists === false && <p className="mt-1 text-xs" style={{ color: colors.green }}>{t('add.codeAvailable')}</p>}
+            </div>
+
+            {/* Supplier Name */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.supplierName')}</label>
+              <input
+                type="text"
+                value={formData.supplierName}
+                onChange={(e) => updateField('supplierName', e.target.value)}
+                placeholder={t('add.placeholder.name')}
+                className={inputCls}
+                style={{ ...baseStyle, borderColor: formData.supplierName.trim() ? colors.border : formData.supplierName !== '' ? colors.red : colors.border }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Section: Strategy ===== */}
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: colors.textSecondary }}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {t('add.pill.strategy')}
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Category */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.category')}</label>
+              <select value={formData.category} onChange={e => updateField('category', e.target.value)} className={selectCls} style={baseStyle}>
+                <option value="E">{t('category.E')}</option>
+                <option value="A">{t('category.A')}</option>
+              </select>
+            </div>
+            {/* Currency */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.currency')}</label>
+              <select value={formData.currency} onChange={e => updateField('currency', e.target.value)} className={selectCls} style={baseStyle}>
+                <option value="USD">USD</option>
+                <option value="RMB">RMB</option>
+              </select>
+            </div>
           </div>
 
-          {/* Content */}
-          {activeStep === 'basic' && renderBasicPill()}
-          {activeStep === 'strategy' && renderStrategyPill()}
+          {/* Float Currency toggle + threshold */}
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-sm font-medium" style={{ color: colors.text }}>{t('add.field.floatCurrency')}</label>
+            <button type="button" onClick={() => { updateField('floatCurrency', !formData.floatCurrency); if (formData.floatCurrency) updateField('floatThreshold', 0); }}
+              className="relative w-11 h-6 rounded-full transition-colors" style={{ backgroundColor: formData.floatCurrency ? colors.green : colors.bgTertiary }}>
+              <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform" style={{ transform: formData.floatCurrency ? 'translateX(20px)' : 'translateX(0)' }} />
+            </button>
+          </div>
+          {formData.floatCurrency && (
+            <div className="mb-4 pl-2">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.floatThreshold')} (%)</label>
+              <input type="number" value={formData.floatThreshold || ''} placeholder="1-10"
+                onChange={e => updateField('floatThreshold', parseFloat(e.target.value) || 0)}
+                className={inputCls}
+                style={{ ...baseStyle, borderColor: formData.floatThreshold > 0 && formData.floatThreshold <= 10 ? colors.border : colors.red }} />
+            </div>
+          )}
+
+          {/* Deposit toggle + ratio */}
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-sm font-medium" style={{ color: colors.text }}>{t('add.field.requireDeposit')}</label>
+            <button type="button" onClick={() => { updateField('requireDeposit', !formData.requireDeposit); if (formData.requireDeposit) updateField('depositRatio', 0); }}
+              className="relative w-11 h-6 rounded-full transition-colors" style={{ backgroundColor: formData.requireDeposit ? colors.green : colors.bgTertiary }}>
+              <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform" style={{ transform: formData.requireDeposit ? 'translateX(20px)' : 'translateX(0)' }} />
+            </button>
+          </div>
+          {formData.requireDeposit && (
+            <div className="mb-4 pl-2">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('add.field.depositRatio')} (%)</label>
+              <input type="number" value={formData.depositRatio || ''} placeholder=">0"
+                onChange={e => updateField('depositRatio', parseFloat(e.target.value) || 0)}
+                className={inputCls}
+                style={{ ...baseStyle, borderColor: formData.depositRatio > 0 ? colors.border : colors.red }} />
+            </div>
+          )}
+        </div>
       </ModalShell>
 
       {/* Security Code Dialog */}
@@ -633,10 +355,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSuccess }: AddSupp
         title={t('add.title')}
         description={t('add.securityDescription')}
         onConfirm={handleSecurityConfirm}
-        onCancel={() => {
-          setShowSecurityDialog(false);
-          setSecurityError(undefined);
-        }}
+        onCancel={() => { setShowSecurityDialog(false); setSecurityError(undefined); }}
         isLoading={createMutation.isPending}
         error={securityError}
       />
