@@ -10,6 +10,7 @@ import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import ShipmentTable from './components/ShipmentTable';
+import PurchaseTabSelector from '../components/PurchaseTabSelector';
 import ShipmentDetailPanel from './components/ShipmentDetailPanel';
 import CreateShipmentModal from './components/CreateShipmentModal';
 import EditShipmentModal from './components/EditShipmentModal';
@@ -365,29 +366,23 @@ export default function ShipmentsPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Header */}
-      <section className="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h1
-            style={{ color: colors.text }}
-            className="text-2xl font-semibold tracking-tight"
-          >
-            {t('shipments.title')}
-          </h1>
-        </div>
-        {!isFlipped && (
-          <>
-            <p style={{ color: colors.textSecondary }} className="text-sm">
-              {t('shipments.description')}
-            </p>
-            <div className="mt-3">
-              <span style={{ color: colors.textTertiary }} className="text-sm">
-                {t('shipments.table.count', { count: totalShipments })}
-              </span>
-            </div>
-          </>
-        )}
-      </section>
+      {/* Apple Pill Tab Selector */}
+      {!isFlipped && (
+        <section className="pt-12 pb-6 px-6">
+          <div className="max-w-[1400px] mx-auto">
+            <PurchaseTabSelector />
+          </div>
+        </section>
+      )}
+
+      {/* Count Bar */}
+      {!isFlipped && (
+        <section className="max-w-[1400px] mx-auto px-6 pb-4">
+          <span style={{ color: colors.textTertiary }} className="text-sm">
+            {t('shipments.table.count', { count: totalShipments })}
+          </span>
+        </section>
+      )}
 
       {/* Filters */}
       {!isFlipped && (

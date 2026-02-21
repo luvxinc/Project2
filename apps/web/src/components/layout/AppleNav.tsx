@@ -22,7 +22,7 @@ const modules = [
   {
     key: 'purchase',
     enabled: true,
-    href: '/purchase/suppliers',
+    href: '/purchase',
     groups: [
       { key: 'supplier', items: ['add', 'strategy'] },
       { key: 'po', items: ['create', 'manage'] },

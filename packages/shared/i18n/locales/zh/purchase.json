@@ -1,6 +1,44 @@
 {
   "title": "供应商管理",
   "description": "管理供应商及采购策略",
+  "hub": {
+    "suppliers": {
+      "title": "供应商管理",
+      "navTitle": "供应商",
+      "description": "管理供应商合作关系与采购策略",
+      "cta": "管理供应商"
+    },
+    "orders": {
+      "title": "采购订单",
+      "navTitle": "订单",
+      "description": "创建、跟踪和管理端到端采购订单",
+      "cta": "管理订单"
+    },
+    "shipments": {
+      "title": "发货管理",
+      "navTitle": "发货单",
+      "description": "实时追踪物流发货单和配送状态",
+      "cta": "查看发货"
+    },
+    "receives": {
+      "title": "入库管理",
+      "navTitle": "入库",
+      "description": "管理货物入库记录并核对数量",
+      "cta": "查看记录"
+    },
+    "receiveGoods": {
+      "title": "货物入库",
+      "navTitle": "货物入库",
+      "description": "处理入库发货单并记录实收数量",
+      "cta": "货物入库"
+    },
+    "abnormal": {
+      "title": "异常处理",
+      "navTitle": "异常",
+      "description": "处理入库差异 — 少收和多收记录",
+      "cta": "处理异常"
+    }
+  },
   "table": {
     "code": "代号",
     "name": "名称",
@@ -754,6 +792,7 @@
       "panelM2": "M2 — 修正发货单+订单",
       "panelM3": "M3 — 延迟发货",
       "panelM4": "M4 — 厂商过错",
+      "panelRB": "撤销记录",
       "panelOTHER": "其他事件"
     },
     "process": {
@@ -770,7 +809,7 @@
       "notePlaceholder": "输入处理备注...",
       "confirm": "确认处理",
       "cancel": "取消",
-      "deleteConfirm": "输入安全码以删除此已处理异常记录。此操作遵循审计追踪规则。"
+      "deleteConfirm": "输入安全码以撤销此异常处理记录。所有修改将被回滚，记录将恢复为待处理状态以便重新处理。"
     }
   }
 }

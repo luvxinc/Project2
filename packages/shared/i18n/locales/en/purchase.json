@@ -1,6 +1,44 @@
 {
   "title": "Supplier Management",
   "description": "Manage suppliers and procurement strategies",
+  "hub": {
+    "suppliers": {
+      "title": "Suppliers",
+      "navTitle": "Suppliers",
+      "description": "Manage supplier partnerships and procurement strategies",
+      "cta": "Manage Suppliers"
+    },
+    "orders": {
+      "title": "Purchase Orders",
+      "navTitle": "Orders",
+      "description": "Create, track, and manage purchase orders end-to-end",
+      "cta": "Manage Orders"
+    },
+    "shipments": {
+      "title": "Shipments",
+      "navTitle": "Shipments",
+      "description": "Track logistics and shipment deliveries in real time",
+      "cta": "View Shipments"
+    },
+    "receives": {
+      "title": "Receiving",
+      "navTitle": "Receiving",
+      "description": "Manage inbound goods and verify receipt quantities",
+      "cta": "View Records"
+    },
+    "receiveGoods": {
+      "title": "Receive Goods",
+      "navTitle": "Receive Goods",
+      "description": "Process inbound shipments and record received quantities",
+      "cta": "Receive Goods"
+    },
+    "abnormal": {
+      "title": "Exceptions",
+      "navTitle": "Exceptions",
+      "description": "Handle receiving discrepancies — shortages and overages",
+      "cta": "Handle Exceptions"
+    }
+  },
   "table": {
     "code": "Code",
     "name": "Name",
@@ -754,6 +792,7 @@
       "panelM2": "M2 — Fix Shipment + PO",
       "panelM3": "M3 — Delay Shipment",
       "panelM4": "M4 — Vendor Error",
+      "panelRB": "Rollback",
       "panelOTHER": "Other Events"
     },
     "process": {
@@ -770,7 +809,7 @@
       "notePlaceholder": "Enter note for this processing action...",
       "confirm": "Confirm & Process",
       "cancel": "Cancel",
-      "deleteConfirm": "Enter security code to delete this resolved abnormal record. This action follows audit trail rules."
+      "deleteConfirm": "Enter security code to rollback this resolved abnormal record. All changes will be reverted and the record will return to pending status for reprocessing."
     }
   }
 }
