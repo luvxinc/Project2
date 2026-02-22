@@ -707,7 +707,12 @@
       "submitting": "提交中...",
       "submitError": "入库提交失败",
       "fillAllPrompt": "请填写所有入库数量后再提交",
-      "col_receiveQty": "入库数量 *"
+      "col_receiveQty": "入库数量 *",
+      "qtyPlaceholder": "数量",
+      "summaryFilled": "已填写",
+      "summaryDiffs": "差异项",
+      "summarySent": "发货总量",
+      "summaryReceived": "入库总量"
     }
   },
   "receiveGoods": {

@@ -464,7 +464,7 @@ export const purchaseApi = {
    * Items for a given logistic_num (grouped by po_num + sku).
    */
   getShipmentItems: (logisticNum: string) =>
-    api.get<ShipmentItem[]>(`/purchase/receives/shipment-items?logisticNum=${encodeURIComponent(logisticNum)}`),
+    api.get<ShipmentItemGrouped[]>(`/purchase/receives/shipment-items?logisticNum=${encodeURIComponent(logisticNum)}`),
 
   /**
    * V1: submit_receive_api

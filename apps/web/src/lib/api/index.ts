@@ -17,7 +17,7 @@ export {
   type ShipmentEvent,
   // Receive
   type ReceiveRecord, type ReceiveDiff,
-  type PendingShipment, type ShipmentItem,
+  type PendingShipment, type ShipmentItem, type ShipmentItemGrouped,
   type SubmitReceiveDto, type SubmitReceiveItemInput,
   type ReceiveManagementItem, type ReceiveManagementDetail, type ReceiveDetailItem,
   type EditReceiveDto, type EditReceiveItemInput,

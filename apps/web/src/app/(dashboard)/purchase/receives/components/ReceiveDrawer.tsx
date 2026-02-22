@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseApi, type PendingShipment, type ShipmentItem } from '@/lib/api';
+import { purchaseApi, type PendingShipment, type ShipmentItemGrouped } from '@/lib/api';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -137,11 +137,11 @@ function ReceiveFormPanel({ shipment, onBack, onSuccess, onClose, colors, t }: R
   useEffect(() => {
     if (itemsData && Array.isArray(itemsData)) {
       setRows(
-        itemsData.map((item: ShipmentItem) => ({
+        itemsData.map((item: ShipmentItemGrouped) => ({
           poNum: item.poNum,
           sku: item.sku,
           unitPrice: item.unitPrice,
-          sentQuantity: item.quantity,
+          sentQuantity: item.sentQuantity,
           receiveQuantity: '',  // intentionally blank — user must fill
         }))
       );

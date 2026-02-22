@@ -707,7 +707,12 @@
       "submitting": "Submitting...",
       "submitError": "Failed to submit receive",
       "fillAllPrompt": "Please fill in all receive quantities before submitting",
-      "col_receiveQty": "Receive Qty*"
+      "col_receiveQty": "Receive Qty*",
+      "qtyPlaceholder": "Qty",
+      "summaryFilled": "Filled",
+      "summaryDiffs": "Discrepancies",
+      "summarySent": "Total Sent",
+      "summaryReceived": "Total Received"
     }
   },
   "receiveGoods": {

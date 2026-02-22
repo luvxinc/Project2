@@ -12,7 +12,7 @@ import ReceiveTable from './components/ReceiveTable';
 import PurchaseTabSelector from '../components/PurchaseTabSelector';
 import ReceiveDetailPanel from './components/ReceiveDetailPanel';
 import EditReceiveModal from './components/EditReceiveModal';
-import ReceiveDrawer from './components/ReceiveDrawer';
+import ReceivePendingPanel from './components/ReceivePendingPanel';
 
 export default function ReceivingManagementPage() {
   const t = useTranslations('purchase');
@@ -24,7 +24,9 @@ export default function ReceivingManagementPage() {
   const [isClient, setIsClient] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // receiveMode: 'list' = normal list view, 'receive' = slide-in pending panel
+  const [receiveMode, setReceiveMode] = useState<'list' | 'receive'>('list');
+  const receiveRef = useRef<HTMLDivElement>(null);
 
   // Slide-over state
   const [selectedItem, setSelectedItem] = useState<ReceiveManagementItem | null>(null);
@@ -65,19 +67,15 @@ export default function ReceivingManagementPage() {
     });
   })();
 
-  // ═══════════ Slide-over Animation ═══════════
+  // ═══════════ Slide-over Animation (shared) ═══════════
 
-  const handleRowClick = useCallback(async (item: ReceiveManagementItem) => {
-    setSelectedItem(item);
-    setItemDetail(null);
-    setLoadingDetail(true);
-
-    const slideOut = frontRef.current
-      ? frontRef.current.getBoundingClientRect().right
+  const slideForward = useCallback((outRef: React.RefObject<HTMLDivElement | null>, inRef: React.RefObject<HTMLDivElement | null>, onFlip: () => void) => {
+    const slideOut = outRef.current
+      ? outRef.current.getBoundingClientRect().right
       : window.innerWidth;
 
-    if (frontRef.current) {
-      animate(frontRef.current, {
+    if (outRef.current) {
+      animate(outRef.current, {
         translateX: [0, -slideOut],
         duration: 450,
         ease: 'inOut(3)',
@@ -85,10 +83,10 @@ export default function ReceivingManagementPage() {
     }
 
     setTimeout(() => {
-      setIsFlipped(true);
+      onFlip();
       requestAnimationFrame(() => {
-        if (backRef.current) {
-          animate(backRef.current, {
+        if (inRef.current) {
+          animate(inRef.current, {
             translateX: [window.innerWidth, 0],
             duration: 450,
             ease: 'inOut(3)',
@@ -96,23 +94,15 @@ export default function ReceivingManagementPage() {
         }
       });
     }, 400);
-
-    try {
-      const detail = await purchaseApi.getReceiveManagementDetail(item.logisticNum);
-      setItemDetail(detail);
-    } catch {
-      setItemDetail(null);
-    }
-    setLoadingDetail(false);
   }, []);
 
-  const handleBack = useCallback(() => {
-    const slideOut = backRef.current
-      ? window.innerWidth - backRef.current.getBoundingClientRect().left
+  const slideBack = useCallback((outRef: React.RefObject<HTMLDivElement | null>, inRef: React.RefObject<HTMLDivElement | null>, onFlip: () => void) => {
+    const slideOut = outRef.current
+      ? window.innerWidth - outRef.current.getBoundingClientRect().left
       : window.innerWidth;
 
-    if (backRef.current) {
-      animate(backRef.current, {
+    if (outRef.current) {
+      animate(outRef.current, {
         translateX: [0, slideOut],
         duration: 450,
         ease: 'inOut(3)',
@@ -120,12 +110,10 @@ export default function ReceivingManagementPage() {
     }
 
     setTimeout(() => {
-      setIsFlipped(false);
-      setSelectedItem(null);
-      setItemDetail(null);
+      onFlip();
       requestAnimationFrame(() => {
-        if (frontRef.current) {
-          animate(frontRef.current, {
+        if (inRef.current) {
+          animate(inRef.current, {
             translateX: [-window.innerWidth, 0],
             duration: 450,
             ease: 'inOut(3)',
@@ -134,6 +122,40 @@ export default function ReceivingManagementPage() {
       });
     }, 400);
   }, []);
+
+  const handleRowClick = useCallback(async (item: ReceiveManagementItem) => {
+    setSelectedItem(item);
+    setItemDetail(null);
+    setLoadingDetail(true);
+
+    slideForward(frontRef, backRef, () => setIsFlipped(true));
+
+    try {
+      const detail = await purchaseApi.getReceiveManagementDetail(item.logisticNum);
+      setItemDetail(detail);
+    } catch {
+      setItemDetail(null);
+    }
+    setLoadingDetail(false);
+  }, [slideForward]);
+
+  const handleBack = useCallback(() => {
+    slideBack(backRef, frontRef, () => {
+      setIsFlipped(false);
+      setSelectedItem(null);
+      setItemDetail(null);
+    });
+  }, [slideBack]);
+
+  // ═══════════ Receive Mode Slide ═══════════
+
+  const handleOpenReceive = useCallback(() => {
+    slideForward(frontRef, receiveRef, () => setReceiveMode('receive'));
+  }, [slideForward]);
+
+  const handleCloseReceive = useCallback(() => {
+    slideBack(receiveRef, frontRef, () => setReceiveMode('list'));
+  }, [slideBack]);
 
   // ═══════════ Delete ═══════════
 
@@ -218,7 +240,7 @@ export default function ReceivingManagementPage() {
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
       {/* Apple Pill Tab Selector */}
-      {!isFlipped && (
+      {!isFlipped && receiveMode === 'list' && (
         <section className="pt-12 pb-6 px-6">
           <div className="max-w-[1400px] mx-auto">
             <PurchaseTabSelector />
@@ -227,7 +249,7 @@ export default function ReceivingManagementPage() {
       )}
 
       {/* Count Bar */}
-      {!isFlipped && (
+      {!isFlipped && receiveMode === 'list' && (
         <section className="max-w-[1400px] mx-auto px-6 pb-4">
           <span style={{ color: colors.textTertiary }} className="text-sm">
             {t('receives.table.count', { count: items.length })}
@@ -236,7 +258,7 @@ export default function ReceivingManagementPage() {
       )}
 
       {/* Filters */}
-      {!isFlipped && (
+      {!isFlipped && receiveMode === 'list' && (
         <section className="max-w-[1400px] mx-auto px-6 pb-4">
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
@@ -279,7 +301,7 @@ export default function ReceivingManagementPage() {
 
             {/* 货物入库 — right-most in filter bar */}
             <button
-              onClick={() => setDrawerOpen(true)}
+              onClick={handleOpenReceive}
               className="ml-auto flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
               style={{ backgroundColor: colors.blue, color: '#fff' }}
             >
@@ -300,7 +322,7 @@ export default function ReceivingManagementPage() {
         )}
         <div className="relative z-20">
           {/* FRONT: List */}
-          {!isFlipped && (
+          {!isFlipped && receiveMode === 'list' && (
             <div ref={frontRef}>
               <div
                 style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
@@ -328,6 +350,19 @@ export default function ReceivingManagementPage() {
                 onDelete={handleDelete}
                 onRestore={handleRestore}
                 onBack={handleBack}
+              />
+            </div>
+          )}
+
+          {/* RECEIVE: Pending Panel (slide-in like detail) */}
+          {receiveMode === 'receive' && !isFlipped && (
+            <div ref={receiveRef}>
+              <ReceivePendingPanel
+                onBack={handleCloseReceive}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
+                  handleCloseReceive();
+                }}
               />
             </div>
           )}
@@ -369,14 +404,7 @@ export default function ReceivingManagementPage() {
         error={restoreSecurity.error}
       />
 
-      {/* 货物入库 Drawer */}
-      <ReceiveDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
-        }}
-      />
+
     </div>
   );
 }
