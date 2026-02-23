@@ -9,14 +9,13 @@ interface Props {
   isLoading: boolean;
   selectedCode: string | null;
   onSelect: (supplier: SupplierBalance) => void;
-  onAddNew: () => void;
 }
 
 /**
  * SupplierBalanceList — Left panel showing supplier prepayment balances.
  * V1 parity: prepay.html left column with supplier cards
  */
-export default function SupplierBalanceList({ balances, isLoading, selectedCode, onSelect, onAddNew }: Props) {
+export default function SupplierBalanceList({ balances, isLoading, selectedCode, onSelect }: Props) {
   const t = useTranslations('finance');
   const { theme } = useTheme();
   const colors = themeColors[theme];
@@ -32,16 +31,6 @@ export default function SupplierBalanceList({ balances, isLoading, selectedCode,
         <h2 style={{ color: colors.text }} className="text-sm font-semibold">
           {t('prepay.supplierList')}
         </h2>
-        <button
-          onClick={onAddNew}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80 active:scale-95"
-          style={{ backgroundColor: colors.blue, color: '#fff' }}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {t('prepay.addNew')}
-        </button>
       </div>
 
       {/* Count */}

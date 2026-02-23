@@ -212,7 +212,6 @@ export default function PrepaymentPage() {
               isLoading={loadingBalances}
               selectedCode={selectedSupplier?.supplierCode || null}
               onSelect={handleSelectSupplier}
-              onAddNew={() => setShowWizard(true)}
             />
           </div>
 
