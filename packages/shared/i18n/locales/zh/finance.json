@@ -1,5 +1,37 @@
 {
   "title": "财务管理",
+  "hub": {
+    "prepay": {
+      "title": "供应商预付",
+      "navTitle": "预付款",
+      "description": "管理供应商预付款充值与余额变动",
+      "cta": "管理预付"
+    },
+    "deposit": {
+      "title": "定金管理",
+      "navTitle": "定金",
+      "description": "跟踪订单定金支付与核销状态",
+      "cta": "管理定金"
+    },
+    "poPayment": {
+      "title": "订单付款",
+      "navTitle": "订单付款",
+      "description": "管理采购订单尾款支付流程",
+      "cta": "管理付款"
+    },
+    "logistic": {
+      "title": "物流费用",
+      "navTitle": "物流费用",
+      "description": "追踪物流运费结算与费用分摊",
+      "cta": "查看费用"
+    },
+    "flow": {
+      "title": "资金总览",
+      "navTitle": "总览",
+      "description": "定发收全链路资金流水概览",
+      "cta": "查看总览"
+    }
+  },
   "prepay": {
     "title": "厂商预付款管理",
     "subtitle": "管理供应商预付款充值记录和余额变动",

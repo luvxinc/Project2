@@ -42,7 +42,8 @@ const modules = [
   },
   {
     key: 'finance',
-    enabled: false,
+    enabled: true,
+    href: '/finance',
     groups: [
       { key: 'flow', items: ['overview'] },
       { key: 'logistic', items: ['manage'] },
@@ -134,6 +135,17 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'vma.training':                '/vma/training',
   'vma.training_sop':            '/vma/training-sop',
   'vma.training_records':        '/vma/training-records',
+  // Finance module
+  'finance.flow':                '/finance/flow',
+  'finance.flow.overview':       '/finance/flow',
+  'finance.logistic':            '/finance/logistic',
+  'finance.logistic.manage':     '/finance/logistic',
+  'finance.prepay':              '/finance/prepay',
+  'finance.prepay.manage':       '/finance/prepay',
+  'finance.deposit':             '/finance/deposit',
+  'finance.deposit.manage':      '/finance/deposit',
+  'finance.po_payment':          '/finance/po-payment',
+  'finance.po_payment.manage':   '/finance/po-payment',
 };
 
 

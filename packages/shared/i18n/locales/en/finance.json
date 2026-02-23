@@ -1,5 +1,37 @@
 {
   "title": "Finance",
+  "hub": {
+    "prepay": {
+      "title": "Vendor Prepayments",
+      "navTitle": "Prepay",
+      "description": "Manage supplier prepayment deposits and balance changes",
+      "cta": "Manage Prepay"
+    },
+    "deposit": {
+      "title": "Deposits",
+      "navTitle": "Deposits",
+      "description": "Track order deposit payments and settlement status",
+      "cta": "Manage Deposits"
+    },
+    "poPayment": {
+      "title": "PO Payments",
+      "navTitle": "PO Payments",
+      "description": "Manage purchase order balance payments",
+      "cta": "Manage Payments"
+    },
+    "logistic": {
+      "title": "Logistics Cost",
+      "navTitle": "Logistics",
+      "description": "Track shipping costs and freight allocation",
+      "cta": "View Costs"
+    },
+    "flow": {
+      "title": "Cash Flow",
+      "navTitle": "Overview",
+      "description": "End-to-end cash flow overview across all finance modules",
+      "cta": "View Overview"
+    }
+  },
   "prepay": {
     "title": "Vendor Prepayment Management",
     "subtitle": "Manage supplier prepayment deposits and track balance changes",
