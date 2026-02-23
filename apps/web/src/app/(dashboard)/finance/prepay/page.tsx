@@ -114,7 +114,7 @@ export default function PrepaymentPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (secCode: string) =>
-      financeApi.deletePrepayment(deleteTarget!.id, secCode || undefined),
+      financeApi.deletePrepayment(deleteTarget!.id, secCode || undefined as unknown as string),
     onSuccess: () => {
       deleteSecurity.onCancel();
       setDeleteTarget(null);
@@ -141,7 +141,7 @@ export default function PrepaymentPage() {
 
   const restoreMutation = useMutation({
     mutationFn: (secCode: string) =>
-      financeApi.restorePrepayment(restoreTarget!.id, secCode || undefined),
+      financeApi.restorePrepayment(restoreTarget!.id, secCode || undefined as unknown as string),
     onSuccess: () => {
       restoreSecurity.onCancel();
       setRestoreTarget(null);

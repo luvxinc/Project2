@@ -157,11 +157,11 @@ export const financeApi = {
   },
 
   // 3. Create new prepayment (JSON)
-  // Security: L2 = sec_code_l2 (modify token)
-  createPrepayment: (data: CreatePrepaymentRequest, sec_code_l2?: string) =>
+  // Security: L2 (modify) — matches Purchase createOrder pattern
+  createPrepayment: (data: CreatePrepaymentRequest, sec_code_l2: string) =>
     api.post<CreatePrepaymentResponse>('/finance/prepayments', {
       ...data,
-      ...(sec_code_l2 ? { sec_code_l2 } : {}),
+      sec_code_l2,
     }),
 
   // 4. History (3-column layout)
@@ -169,16 +169,14 @@ export const financeApi = {
     api.get<PrepaymentHistoryResponse>(`/finance/prepayments/${encodeURIComponent(paymentNo)}/history`),
 
   // 5. Soft delete
-  // Security: L3 = sec_code_l3 (db token)
-  deletePrepayment: (id: number, sec_code_l3?: string) =>
-    api.delete<{ success: boolean; message: string }>(`/finance/prepayments/${id}`, 
-      sec_code_l3 ? { sec_code_l3 } : undefined),
+  // Security: L3 (db) — matches Purchase deleteOrder pattern
+  deletePrepayment: (id: number, sec_code_l3: string) =>
+    api.delete<{ success: boolean; message: string }>(`/finance/prepayments/${id}`, { sec_code_l3 }),
 
   // 6. Restore
-  // Security: L2 = sec_code_l2 (modify token)
-  restorePrepayment: (id: number, sec_code_l2?: string) =>
-    api.post<{ success: boolean; message: string }>(`/finance/prepayments/${id}/restore`,
-      sec_code_l2 ? { sec_code_l2 } : undefined),
+  // Security: L2 (modify) — matches Purchase restoreOrder pattern
+  restorePrepayment: (id: number, sec_code_l2: string) =>
+    api.post<{ success: boolean; message: string }>(`/finance/prepayments/${id}/restore`, { sec_code_l2 }),
 
   // 7. File info
   getFileInfo: (paymentNo: string) =>
@@ -189,11 +187,11 @@ export const financeApi = {
     `/finance/prepayments/${encodeURIComponent(paymentNo)}/files/${encodeURIComponent(filename)}`,
 
   // 9. Delete file
-  // Security: L2 = sec_code_l2 (modify token)
-  deleteFile: (paymentNo: string, filename: string, sec_code_l2?: string) =>
+  // Security: L2 (modify) — matches Purchase deleteSupplier pattern
+  deleteFile: (paymentNo: string, filename: string, sec_code_l2: string) =>
     api.delete<{ message: string }>(
       `/finance/prepayments/${encodeURIComponent(paymentNo)}/files/${encodeURIComponent(filename)}`,
-      sec_code_l2 ? { sec_code_l2 } : undefined
+      { sec_code_l2 }
     ),
 
   // 10. Exchange rate
