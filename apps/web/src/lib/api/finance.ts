@@ -398,6 +398,110 @@ export interface DepositOrdersResponse {
 }
 
 // ═══════════════════════════════════════════════
+// PO PAYMENT TYPES
+// V1 parity: po_payment/api.py
+// ═══════════════════════════════════════════════
+
+export interface POPaymentDetail {
+  pmtNo: string;
+  poDate: string;
+  poCur: string;
+  poPaid: number;
+  poPaidCur: number;
+  poCurMode: string;
+  poPrepayAmount: number;
+  poOverride: number;
+  extraAmount: number;
+  extraCur: string;
+}
+
+export interface POPaymentListItem {
+  poNum: string;
+  poDate: string;
+  skuCount: number;
+  totalAmount: number;
+  totalAmountUsd: number;
+  totalAmountRmb: number;
+  curCurrency: string;
+  curUsdRmb: number;
+  rateSource: string;
+  rateSourceCode: string;
+  // Deposit info
+  depositPar: number;
+  depositAmount: number;
+  depositPaid: number;
+  depositPaidUsd: number;
+  depositStatus: string;
+  // PO payment info
+  poPaid: number;
+  poPaidUsd: number;
+  balanceRemaining: number;
+  balanceRemainingUsd: number;
+  // Float
+  floatEnabled: boolean;
+  floatThreshold: number;
+  todayRate: number;
+  fluctuationTriggered: boolean;
+  adjustedBalance: number;
+  adjustedBalanceUsd: number;
+  // Diff blocking
+  hasUnresolvedDiff: boolean;
+  diffCount: number;
+  paymentBlocked: boolean;
+  // Payment status
+  paymentStatus: string;
+  isPaid: boolean;
+  supplierCode: string;
+  supplierName: string;
+  latestPaymentDate: string;
+  extraFeesUsd: number;
+  extraFeesRmb: number;
+  paymentDetails: POPaymentDetail[];
+}
+
+export interface POPaymentListResponse {
+  data: POPaymentListItem[];
+  count: number;
+}
+
+export interface POPaymentItemRequest {
+  poNum: string;
+  paymentMode: string;
+  customCurrency?: string;
+  customAmount?: number;
+  prepayAmount?: number;
+  coverStandard?: boolean;
+}
+
+export interface SubmitPOPaymentRequest {
+  poNums: string[];
+  paymentDate: string;
+  usePaymentDateRate: boolean;
+  settlementRate?: number;
+  items: POPaymentItemRequest[];
+  extraFee?: number;
+  extraFeeCurrency?: string;
+  extraFeeNote?: string;
+}
+
+export interface SubmitPOPaymentResponse {
+  pmtNos: string[];
+  count: number;
+  prepayCount: number;
+  message: string;
+}
+
+export interface POPaymentHistoryResponse {
+  strategyVersions: DepositStrategyVersion[];
+  depositPaymentVersions: DepositPaymentVersion[];
+  poPaymentVersions: DepositPaymentVersion[];
+}
+
+export interface POPaymentOrdersResponse {
+  orders: DepositOrderDetail[];
+}
+
+// ═══════════════════════════════════════════════
 // API FUNCTIONS
 // ═══════════════════════════════════════════════
 
@@ -660,4 +764,96 @@ export const financeApi = {
   // 32. Serve deposit file (returns URL)
   serveDepositPaymentFile: (pmtNo: string, filename: string) =>
     `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
+
+  // ═══════════════════════════════════════════════
+  // PO PAYMENT API
+  // V1 parity: po_payment/api.py (10 endpoints)
+  // ═══════════════════════════════════════════════
+
+  // 33. PO payment list
+  getPOPaymentList: (params?: { sortBy?: string; sortOrder?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.sortBy) query.set('sortBy', params.sortBy);
+    if (params?.sortOrder) query.set('sortOrder', params.sortOrder);
+    const qs = query.toString();
+    return api.get<POPaymentListResponse>(`/finance/po-payments${qs ? `?${qs}` : ''}`);
+  },
+
+  // 34. Submit PO payment
+  // Security: L2 (modify)
+  submitPOPayment: (data: SubmitPOPaymentRequest, sec_code_l2: string) =>
+    api.post<SubmitPOPaymentResponse>('/finance/po-payments/payments', {
+      ...data,
+      sec_code_l2,
+    }),
+
+  // 35. Delete PO payment
+  // Security: L3 (db)
+  deletePOPayment: (pmtNo: string, sec_code_l3: string) =>
+    api.delete<{ pmtNo: string; affectedCount: number; message: string }>(
+      `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}`,
+      { sec_code_l3 }
+    ),
+
+  // 36. Vendor balance for PO payments
+  getPOPaymentVendorBalance: (supplierCode: string, paymentDate?: string) => {
+    const query = new URLSearchParams({ supplierCode });
+    if (paymentDate) query.set('paymentDate', paymentDate);
+    return api.get<VendorBalanceResponse>(`/finance/po-payments/vendor-balance?${query}`);
+  },
+
+  // 37. PO payment history
+  getPOPaymentHistory: (pmtNo: string, poNum: string) =>
+    api.get<POPaymentHistoryResponse>(
+      `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/history?poNum=${encodeURIComponent(poNum)}`
+    ),
+
+  // 38. PO payment orders
+  getPOPaymentOrders: (pmtNo: string) =>
+    api.get<POPaymentOrdersResponse>(
+      `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/orders`
+    ),
+
+  // 39. PO payment files
+  getPOPaymentFiles: (pmtNo: string) =>
+    api.get<FileInfoResponse>(
+      `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/files`
+    ),
+
+  // 40. Upload PO payment file
+  // Security: L2 (modify)
+  uploadPOPaymentFile: async (pmtNo: string, file: File, sec_code_l2: string) => {
+    const { getApiBaseUrlCached } = await import('@/lib/api-url');
+    const base = getApiBaseUrlCached();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(
+      `${base}/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/files`,
+      {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'X-Security-Code': sec_code_l2,
+          'X-Security-Level': 'L2',
+        },
+        body: formData,
+      }
+    );
+    if (!res.ok) throw await res.json();
+    const json = await res.json();
+    return json.data || json;
+  },
+
+  // 41. Delete PO payment file
+  // Security: L2 (modify)
+  deletePOPaymentFile: (pmtNo: string, filename: string, sec_code_l2: string) =>
+    api.delete<{ message: string }>(
+      `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
+      { sec_code_l2 }
+    ),
+
+  // 42. Serve PO payment file (returns URL)
+  servePOPaymentFile: (pmtNo: string, filename: string) =>
+    `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
 };

@@ -427,8 +427,18 @@ class ShipmentUseCase(
         }
 
         if (params.search != null) {
-            spec = spec.and { root, _, cb ->
-                cb.like(cb.lower(root.get("logisticNum")), "%${params.search.lowercase()}%")
+            spec = spec.and { root, query, cb ->
+                val logisticMatch = cb.like(cb.lower(root.get("logisticNum")), "%${params.search.lowercase()}%")
+                // Also match ShipmentItem.poNum so PO detail panels can find related shipments
+                val subquery = query!!.subquery(Long::class.java)
+                val item = subquery.from(ShipmentItem::class.java)
+                subquery.select(item.get("shipmentId"))
+                subquery.where(
+                    cb.like(cb.lower(item.get("poNum")), "%${params.search.lowercase()}%"),
+                    cb.isNull(item.get<Instant>("deletedAt")),
+                )
+                val poNumMatch = root.get<Long>("id").`in`(subquery)
+                cb.or(logisticMatch, poNumMatch)
             }
         }
         if (params.status != null) {

@@ -16,5 +16,7 @@ interface ReceiveDiffRepository : JpaRepository<ReceiveDiff, Long> {
     fun findAllByReceiveIdIn(receiveIds: List<Long>): List<ReceiveDiff>
 
     fun countByStatus(status: String): Long
+
+    fun findAllByPoNumInAndStatus(poNums: List<String>, status: String): List<ReceiveDiff>
 }
 

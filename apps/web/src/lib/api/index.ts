@@ -47,4 +47,9 @@ export {
   type DepositPaymentItemRequest, type VendorBalanceResponse,
   type DepositHistoryResponse, type DepositStrategyVersion, type DepositPaymentVersion,
   type DepositOrdersResponse, type DepositOrderDetail, type DepositOrderItem,
+  // PO Payments
+  type POPaymentListItem, type POPaymentDetail, type POPaymentListResponse,
+  type SubmitPOPaymentRequest, type SubmitPOPaymentResponse,
+  type POPaymentItemRequest, type POPaymentHistoryResponse,
+  type POPaymentOrdersResponse,
 } from './finance';
