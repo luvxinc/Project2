@@ -80,23 +80,33 @@ export default function PrepayWizard({ isOpen, supplier, onClose, onSuccess }: P
     enabled: isOpen,
   });
 
-  // --- Fetch exchange rate (multi-source, PO pattern) ---
+  // --- Fetch exchange rate (multi-source with timeout, PO pattern) ---
   const fetchExchangeRate = useCallback(async (date: string) => {
     if (isFutureDate(date)) { setRateMode('manual'); setRateFetchFailed(false); setRateSource(''); return; }
     setRateFetching(true); setRateFetchFailed(false); setRateSource('');
+
+    const fetchWithTimeout = (url: string, ms = 3000) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ms);
+      return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+    };
+
+    // Source 1: open.er-api (most reliable — latest rates, no date-specific endpoint)
     try {
-      const res = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1/currencies/usd.json`);
-      if (res.ok) { const data = await res.json(); const rate = data?.usd?.cny; if (rate && rate > 0) { setExchangeRate(parseFloat(Number(rate).toFixed(4))); setRateSource('fawazahmed0/currency-api'); setRateFetching(false); return; } }
-    } catch { /* fall through */ }
-    try {
-      const res = await fetch(`https://api.frankfurter.app/${date}?from=USD&to=CNY`);
-      if (res.ok) { const data = await res.json(); const rate = data?.rates?.CNY; if (rate && rate > 0) { setExchangeRate(parseFloat(Number(rate).toFixed(4))); setRateSource('frankfurter.app'); setRateFetching(false); return; } }
-    } catch { /* fall through */ }
-    try {
-      const res = await fetch(`https://open.er-api.com/v6/latest/USD`);
+      const res = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD');
       if (res.ok) { const data = await res.json(); const rate = data?.rates?.CNY; if (rate && rate > 0) { setExchangeRate(parseFloat(Number(rate).toFixed(4))); setRateSource('open.er-api.com'); setRateFetching(false); return; } }
     } catch { /* fall through */ }
-    // Fallback to backend auto rate
+    // Source 2: fawazahmed0 (date-specific, may not have future dates)
+    try {
+      const res = await fetchWithTimeout(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1/currencies/usd.json`);
+      if (res.ok) { const data = await res.json(); const rate = data?.usd?.cny; if (rate && rate > 0) { setExchangeRate(parseFloat(Number(rate).toFixed(4))); setRateSource('fawazahmed0/currency-api'); setRateFetching(false); return; } }
+    } catch { /* fall through */ }
+    // Source 3: frankfurter (date-specific)
+    try {
+      const res = await fetchWithTimeout(`https://api.frankfurter.app/${date}?from=USD&to=CNY`);
+      if (res.ok) { const data = await res.json(); const rate = data?.rates?.CNY; if (rate && rate > 0) { setExchangeRate(parseFloat(Number(rate).toFixed(4))); setRateSource('frankfurter.app'); setRateFetching(false); return; } }
+    } catch { /* fall through */ }
+    // Fallback: backend auto rate
     if (autoRateData && autoRateData.rate > 0) {
       setExchangeRate(autoRateData.rate);
       setRateSource(autoRateData.source || 'backend');
@@ -106,11 +116,11 @@ export default function PrepayWizard({ isOpen, supplier, onClose, onSuccess }: P
     setRateFetchFailed(true); setRateMode('manual'); setRateFetching(false);
   }, [autoRateData]);
 
-  // Auto-fetch rate on date change (when mode is auto)
+  // Auto-fetch rate on date change OR when switching to auto mode
   useEffect(() => {
     if (isOpen && tranDate && rateMode === 'auto') fetchExchangeRate(tranDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, tranDate]);
+  }, [isOpen, tranDate, rateMode]);
 
   // --- Real-time validation → computed canSubmit ---
   const canSubmit = useMemo(() => {
@@ -288,7 +298,7 @@ export default function PrepayWizard({ isOpen, supplier, onClose, onSuccess }: P
 
           {!future && (
             <div className="flex gap-2 mb-3">
-              <button type="button" onClick={() => { setRateMode('auto'); if (exchangeRate === 0 || rateFetchFailed) fetchExchangeRate(tranDate); }}
+              <button type="button" onClick={() => { setRateMode('auto'); fetchExchangeRate(tranDate); }}
                 className="flex-1 h-8 text-xs font-medium rounded-lg transition-colors"
                 style={{ backgroundColor: rateMode === 'auto' ? colors.blue : colors.bgTertiary, color: rateMode === 'auto' ? '#fff' : colors.text }}>
                 {t('prepay.wizard.step2.auto')}
