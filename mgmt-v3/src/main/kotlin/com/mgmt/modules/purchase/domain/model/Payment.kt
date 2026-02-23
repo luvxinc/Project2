@@ -80,6 +80,9 @@ class Payment(
     @Column(name = "prepay_tran_type", columnDefinition = "prepay_tran_type")
     var prepayTranType: String? = null,
 
+    @Column(name = "tran_curr_req", length = 3)
+    var tranCurrReq: String? = null,  // V1: tran_curr_req — supplier required currency (prepay only)
+
     // Deposit specific
     @Column(name = "deposit_override")
     var depositOverride: Boolean? = false,

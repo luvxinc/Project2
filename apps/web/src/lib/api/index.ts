@@ -29,4 +29,11 @@ export {
   type AbnormalSummary, type AbnormalHistoryItem,
   type PoMethodStrategy, type ProcessAbnormalRequest, type DeleteAbnormalRequest,
 } from './purchase';
-
+export {
+  financeApi,
+  type SupplierBalance, type TransactionItem, type TransactionListResponse,
+  type CreatePrepaymentRequest, type CreatePrepaymentResponse,
+  type PrepaymentHistoryResponse, type StrategyVersionItem,
+  type RateVersionItem, type AmountVersionItem, type FieldChange,
+  type FileInfoResponse, type FileItem, type ExchangeRateResponse,
+} from './finance';

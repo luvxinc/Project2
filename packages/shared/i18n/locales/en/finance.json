@@ -1,0 +1,116 @@
+{
+  "title": "Finance",
+  "prepay": {
+    "title": "Vendor Prepayment Management",
+    "subtitle": "Manage supplier prepayment deposits and track balance changes",
+    "selectSupplier": "Select a Supplier",
+    "selectSupplierHint": "Click a supplier on the left to view their prepayment transactions",
+    "supplierList": "Suppliers",
+    "supplierCount": "{active} active / {total} total",
+    "addNew": "Add New",
+    "addDeposit": "Add Deposit",
+    "balance": "Balance",
+    "noSuppliers": "No suppliers found",
+    "zeroBalanceSuppliers": "{count} suppliers with zero balance",
+    "settlementCurrency": "Settlement Currency",
+    "beginningBalance": "Beginning Balance",
+    "noTransactions": "No transactions for this supplier",
+    "transactionCount": "{count} transactions",
+
+    "filter": {
+      "all": "All",
+      "6m": "6 Months",
+      "1y": "1 Year",
+      "2y": "2 Years"
+    },
+
+    "tranType": {
+      "deposit": "Deposit",
+      "usage": "Usage",
+      "refund": "Refund",
+      "withdraw": "Withdraw",
+      "rate": "Rate Adj."
+    },
+
+    "table": {
+      "date": "Date",
+      "tranNum": "Transaction #",
+      "type": "Type",
+      "currReq": "Req. Currency",
+      "currUse": "Pay Currency",
+      "rate": "Rate",
+      "amount": "Amount",
+      "converted": "Converted",
+      "balance": "Balance",
+      "actions": "Actions"
+    },
+
+    "actions": {
+      "delete": "Delete",
+      "restore": "Restore"
+    },
+
+    "delete": {
+      "title": "Delete Prepayment",
+      "description": "This will soft-delete the prepayment record. The balance will be recalculated."
+    },
+
+    "restore": {
+      "title": "Restore Prepayment",
+      "description": "This will restore the deleted prepayment record. The balance will be recalculated."
+    },
+
+    "wizard": {
+      "title": "New Prepayment Deposit",
+      "submit": "Submit Payment",
+      "securityTitle": "Confirm Payment",
+      "securityDescription": "Enter your security code to submit this prepayment.",
+
+      "step1": {
+        "description": "You are about to add a prepayment deposit for this supplier.",
+        "supplier": "Supplier",
+        "currency": "Settlement Currency",
+        "currentBalance": "Current Balance"
+      },
+
+      "step2": {
+        "date": "Payment Date",
+        "currency": "Payment Currency",
+        "currencyWarning": "Payment currency ({from}) differs from settlement currency ({to}). Conversion will be applied.",
+        "exchangeRate": "Exchange Rate (USD/RMB)",
+        "auto": "Auto",
+        "manual": "Manual",
+        "amount": "Amount",
+        "note": "Note"
+      },
+
+      "step3": {
+        "title": "Please confirm the following details:"
+      },
+
+      "step4": {
+        "title": "Payment Submitted",
+        "description": "The prepayment deposit has been recorded successfully."
+      }
+    },
+
+    "history": {
+      "title": "Transaction History",
+      "strategyColumn": "Supplier Strategy",
+      "rateColumn": "Rate / Currency",
+      "amountColumn": "Amount",
+      "initialCurrency": "Currency",
+      "rate": "Rate",
+      "currency": "Currency",
+      "noStrategyChanges": "No strategy changes",
+      "noRateChanges": "No rate changes",
+      "noAmountChanges": "No amount changes",
+      "noData": "No history data",
+      "eventCreate": "Created",
+      "eventDelete": "Deleted",
+      "eventRestore": "Restored",
+      "eventRateChange": "Rate Changed",
+      "eventAmountChange": "Amount Changed"
+    }
+  }
+}

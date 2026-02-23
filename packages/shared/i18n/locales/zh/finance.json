@@ -1,0 +1,116 @@
+{
+  "title": "财务管理",
+  "prepay": {
+    "title": "厂商预付款管理",
+    "subtitle": "管理供应商预付款充值记录和余额变动",
+    "selectSupplier": "请选择供应商",
+    "selectSupplierHint": "点击左侧供应商卡片查看预付款交易记录",
+    "supplierList": "供应商列表",
+    "supplierCount": "{active} 个有余额 / 共 {total} 个",
+    "addNew": "新增充值",
+    "addDeposit": "新增充值",
+    "balance": "余额",
+    "noSuppliers": "暂无供应商数据",
+    "zeroBalanceSuppliers": "{count} 个零余额供应商",
+    "settlementCurrency": "结算货币",
+    "beginningBalance": "期初余额",
+    "noTransactions": "该供应商暂无交易记录",
+    "transactionCount": "共 {count} 条记录",
+
+    "filter": {
+      "all": "全部",
+      "6m": "6个月",
+      "1y": "12个月",
+      "2y": "24个月"
+    },
+
+    "tranType": {
+      "deposit": "充值",
+      "usage": "使用",
+      "refund": "退回",
+      "withdraw": "提现",
+      "rate": "汇率调整"
+    },
+
+    "table": {
+      "date": "日期",
+      "tranNum": "流水号",
+      "type": "类型",
+      "currReq": "要求货币",
+      "currUse": "操作货币",
+      "rate": "汇率",
+      "amount": "金额",
+      "converted": "折算金额",
+      "balance": "余额",
+      "actions": "操作"
+    },
+
+    "actions": {
+      "delete": "删除",
+      "restore": "恢复"
+    },
+
+    "delete": {
+      "title": "删除预付款记录",
+      "description": "此操作将软删除该预付款记录。余额将重新计算。"
+    },
+
+    "restore": {
+      "title": "恢复预付款记录",
+      "description": "此操作将恢复已删除的预付款记录。余额将重新计算。"
+    },
+
+    "wizard": {
+      "title": "新增预付款充值",
+      "submit": "提交付款",
+      "securityTitle": "确认付款",
+      "securityDescription": "请输入安全码以确认此预付款操作。",
+
+      "step1": {
+        "description": "您即将为该供应商新增一笔预付款充值。",
+        "supplier": "供应商",
+        "currency": "结算货币",
+        "currentBalance": "当前余额"
+      },
+
+      "step2": {
+        "date": "付款日期",
+        "currency": "操作货币",
+        "currencyWarning": "操作货币 ({from}) 与结算货币 ({to}) 不一致，金额将按汇率折算。",
+        "exchangeRate": "汇率 (USD/RMB)",
+        "auto": "自动",
+        "manual": "手动",
+        "amount": "金额",
+        "note": "备注"
+      },
+
+      "step3": {
+        "title": "请确认以下付款信息："
+      },
+
+      "step4": {
+        "title": "付款已提交",
+        "description": "预付款充值记录已成功创建。"
+      }
+    },
+
+    "history": {
+      "title": "交易历史",
+      "strategyColumn": "厂商策略修改",
+      "rateColumn": "汇率 / 货币修改",
+      "amountColumn": "金额修订",
+      "initialCurrency": "货币",
+      "rate": "汇率",
+      "currency": "货币",
+      "noStrategyChanges": "暂无策略变更",
+      "noRateChanges": "暂无汇率变更",
+      "noAmountChanges": "暂无金额变更",
+      "noData": "暂无历史数据",
+      "eventCreate": "创建",
+      "eventDelete": "删除",
+      "eventRestore": "恢复",
+      "eventRateChange": "汇率变更",
+      "eventAmountChange": "金额变更"
+    }
+  }
+}
