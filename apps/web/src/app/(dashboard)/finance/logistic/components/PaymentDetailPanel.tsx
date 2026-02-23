@@ -19,6 +19,9 @@ interface Props {
 const fmtNum = (val: number, decimals = 2) =>
   val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
+/** Currency code → symbol */
+const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+
 /**
  * PaymentDetailPanel — Detail view for a payment batch (grouped by pmtNo).
  * Shows payment summary, shipment list, history + orders tabs.
@@ -142,7 +145,7 @@ export default function PaymentDetailPanel({
           <FieldBlock label={t('logistic.card.freight')} value={`¥${fmtNum(group.totalPaidRmb)}`} colors={colors} mono />
           <FieldBlock
             label={t('logistic.card.extraFee')}
-            value={hasExtra ? `${fmtNum(group.extraPaid)} ${group.extraCurrency}` : '—'}
+            value={hasExtra ? `${curSym(group.extraCurrency)}${fmtNum(group.extraPaid)}` : '—'}
             colors={colors}
             mono
           />
@@ -436,7 +439,7 @@ function VersionCard({ type, version: v, idx, colors, fmtNum }: {
             { label: t('logistic.table.usdRmb'), value: fmtNum((v as LogisticPaymentVersion).usdRmb, 4) },
             { label: t('logistic.table.paymentDate'), value: (v as LogisticPaymentVersion).paymentDate },
             ...((v as LogisticPaymentVersion).extraPaid > 0
-              ? [{ label: t('logistic.table.extraPaid'), value: `${fmtNum((v as LogisticPaymentVersion).extraPaid)} ${(v as LogisticPaymentVersion).extraCurrency}` }]
+              ? [{ label: t('logistic.table.extraPaid'), value: `${curSym((v as LogisticPaymentVersion).extraCurrency)}${fmtNum((v as LogisticPaymentVersion).extraPaid)}` }]
               : []),
           ].map((f) => (
             <div key={f.label} className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: colors.bgTertiary }}>

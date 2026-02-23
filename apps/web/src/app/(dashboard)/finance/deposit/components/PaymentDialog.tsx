@@ -22,7 +22,7 @@ interface PaymentDialogProps {
   theme: string;
 }
 
-type RateOption = 'original' | 'paymentDate' | 'manual';
+type RateOption = 'actual' | 'original' | 'paymentDate';
 type PaymentMode = 'original' | 'custom';
 
 interface PerOrderConfig {
@@ -76,6 +76,9 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
 
   const [perOrderConfig, setPerOrderConfig] = useState<Record<string, PerOrderConfig>>({});
   const [success, setSuccess] = useState(false);
+  // Actual payment state
+  const [actualCurrency, setActualCurrency] = useState('USD');
+  const [actualAmount, setActualAmount] = useState<number>(0);
 
   // Unique vendor for balance query (deposit is always same vendor in batch)
   const vendorCode = selectedItems[0]?.supplierCode ?? '';
@@ -84,7 +87,7 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
   useEffect(() => {
     if (open) {
       setPaymentDate(formatDate(new Date()));
-      setRateOption('original');
+      setRateOption('actual');
       setSettlementRate(0);
       setRateFetching(false);
       setRateFetchSource('');
@@ -94,6 +97,8 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
       setExtraCurrency('RMB');
       setExtraNote('');
       setSuccess(false);
+      setActualCurrency('USD');
+      setActualAmount(0);
       submitSecurity.onCancel();
 
       // Init per-order config
@@ -192,7 +197,6 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
     }
 
     setRateFetchFailed(true);
-    setRateOption('manual');
     setRateFetching(false);
   }, [autoRateData]);
 
@@ -203,6 +207,32 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, rateOption, paymentDate]);
+
+  // Auto-fetch rate when actualCurrency is RMB
+  useEffect(() => {
+    if (open && rateOption === 'actual' && actualCurrency === 'RMB' && paymentDate) {
+      fetchExchangeRate(paymentDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, rateOption, actualCurrency, paymentDate]);
+
+  // Auto-fetch rate when actual + USD (use payment date rate)
+  useEffect(() => {
+    if (open && rateOption === 'actual' && actualCurrency === 'USD' && paymentDate) {
+      fetchExchangeRate(paymentDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, rateOption, actualCurrency, paymentDate]);
+
+  // Total pending USD for selected items (for actual payment reverse calc)
+  const totalPendingUsd = useMemo(() => {
+    return selectedItems.reduce((sum, item) => {
+      const cfg = perOrderConfig[item.poNum];
+      if (!cfg) return sum;
+      const remaining = cfg.paymentMode === 'custom' ? cfg.customAmount : round5(item.depositAmountUsd - item.actualPaidUsd);
+      return sum + remaining;
+    }, 0);
+  }, [selectedItems, perOrderConfig]);
 
   // --- Per-order updater ---
   const updateOrder = useCallback((poNum: string, patch: Partial<PerOrderConfig>) => {
@@ -222,6 +252,11 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
 
     const extraPerOrder = selectedItems.length > 0 && showExtraFee && extraAmount > 0
       ? round5(extraAmount / selectedItems.length)
+      : 0;
+
+    // When in actual mode, distribute the entered amount evenly across orders
+    const actualCashPerOrder = rateOption === 'actual' && actualAmount > 0 && selectedItems.length > 0
+      ? round5(actualAmount / selectedItems.length)
       : 0;
 
     selectedItems.forEach((item) => {
@@ -246,19 +281,29 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
 
       prepayDeduction += prepay;
       cashPayment += cash + (extraCurrency === 'USD' ? extra : 0);
-      pendingAfter += round5(deposit - paid - remaining);
+
+      // pendingAfter per-order: max(0, deposit - paid - prepay - actualCash)
+      // If coverStandard checked → force 0
+      if (cfg.coverStandard) {
+        // marked as fully paid — no pending
+        pendingAfter += 0;
+      } else {
+        const cashForThisOrder = actualCashPerOrder > 0 ? actualCashPerOrder : cash;
+        const orderPending = round5(deposit - paid - prepay - cashForThisOrder);
+        pendingAfter += Math.max(0, orderPending);
+      }
     });
 
     return { depositTotal, alreadyPaid, prepayDeduction, cashPayment, pendingAfter };
-  }, [selectedItems, perOrderConfig, showExtraFee, extraAmount, extraCurrency]);
+  }, [selectedItems, perOrderConfig, showExtraFee, extraAmount, extraCurrency, rateOption, actualAmount]);
 
   // --- Validation ---
   const canSubmit = useMemo(() => {
     if (selectedItems.length === 0) return false;
     if (!paymentDate) return false;
+    if (rateOption === 'actual' && (rateFetching || settlementRate <= 0)) return false;
     if (rateOption === 'paymentDate' && (!settlementRate || settlementRate <= 0)) return false;
-    if (rateOption === 'manual' && (!settlementRate || settlementRate <= 0)) return false;
-    if (rateFetching) return false;
+    if (rateFetching && rateOption !== 'original') return false;
     if (showExtraFee && extraAmount > 0 && !extraNote.trim()) return false;
     return true;
   }, [selectedItems, paymentDate, rateOption, settlementRate, rateFetching, showExtraFee, extraAmount, extraNote]);
@@ -379,27 +424,32 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
           /* Bottom summary bar */
           <div className="flex items-center gap-4 text-[11px] tabular-nums" style={{ color: colors.textSecondary }}>
             <span>
-              <span style={{ color: colors.textTertiary }}>Deposit </span>
+              <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryDeposit')} </span>
               <span className="font-medium" style={{ color: colors.text }}>${fmt(summary.depositTotal)}</span>
             </span>
             <span style={{ color: colors.border }}>|</span>
             <span>
-              <span style={{ color: colors.textTertiary }}>Paid </span>
+              <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryPaid')} </span>
               <span className="font-medium" style={{ color: colors.green }}>${fmt(summary.alreadyPaid)}</span>
             </span>
             <span style={{ color: colors.border }}>|</span>
             <span>
-              <span style={{ color: colors.textTertiary }}>Prepay </span>
+              <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryPrepay')} </span>
               <span className="font-medium" style={{ color: colors.blue }}>-${fmt(summary.prepayDeduction)}</span>
             </span>
             <span style={{ color: colors.border }}>|</span>
             <span>
-              <span style={{ color: colors.textTertiary }}>Cash </span>
-              <span className="font-semibold" style={{ color: colors.orange }}>${fmt(summary.cashPayment)}</span>
+              <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryCash')} </span>
+              <span className="font-semibold" style={{ color: colors.orange }}>
+                {rateOption === 'actual' && actualAmount > 0
+                  ? `${actualCurrency === 'USD' ? '$' : '¥'}${fmt(actualAmount)}`
+                  : `$${fmt(summary.cashPayment)}`
+                }
+              </span>
             </span>
             <span style={{ color: colors.border }}>|</span>
             <span>
-              <span style={{ color: colors.textTertiary }}>Pending </span>
+              <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryPending')} </span>
               <span className="font-medium" style={{ color: summary.pendingAfter > 0 ? colors.red : colors.green }}>${fmt(summary.pendingAfter)}</span>
             </span>
           </div>
@@ -433,7 +483,17 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
               {selectedItems.map((item) => {
                 const cfg = perOrderConfig[item.poNum];
                 if (!cfg) return null;
-                const remaining = round5(item.depositAmountUsd - item.actualPaidUsd);
+                const originalRemaining = round5(item.depositAmountUsd - item.actualPaidUsd);
+                const thisPayment = cfg.paymentMode === 'custom' ? cfg.customAmount : originalRemaining;
+                const prepay = cfg.usePrepay ? cfg.prepayAmount : 0;
+                const cash = round5(Math.max(0, thisPayment - prepay));
+                const actualCashPerOrder = rateOption === 'actual' && actualAmount > 0
+                  ? round5(actualAmount / selectedItems.length) : 0;
+                const cashForDisplay = actualCashPerOrder > 0 ? actualCashPerOrder : cash;
+                const pendingAfterThis = cfg.coverStandard
+                  ? 0
+                  : Math.max(0, round5(item.depositAmountUsd - item.actualPaidUsd - prepay - cashForDisplay));
+                const hasBalance = (vendorBalance?.balanceUsd ?? 0) > 0;
 
                 return (
                   <div key={item.poNum} className="p-3 rounded-lg border" style={{ backgroundColor: `${colors.bgTertiary}80`, borderColor: colors.border }}>
@@ -451,16 +511,37 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                     {/* Summary row */}
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                       <div>
-                        <span style={{ color: colors.textTertiary }}>Deposit: </span>
+                        <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryDeposit')}: </span>
                         <span className="font-mono tabular-nums" style={{ color: colors.text }}>${fmt(item.depositAmountUsd)}</span>
                       </div>
                       <div>
-                        <span style={{ color: colors.textTertiary }}>Paid: </span>
+                        <span style={{ color: colors.textTertiary }}>{t('deposit.payment.summaryPaid')}: </span>
                         <span className="font-mono tabular-nums" style={{ color: colors.green }}>${fmt(item.actualPaidUsd)}</span>
                       </div>
+                      <div>
+                        <span style={{ color: colors.textTertiary }}>{t('deposit.payment.orderRemaining')}: </span>
+                        <span className="font-mono tabular-nums font-medium" style={{ color: originalRemaining > 0 ? colors.orange : colors.green }}>${fmt(originalRemaining)}</span>
+                      </div>
+                      <div>
+                        <span style={{ color: colors.textTertiary }}>{t('deposit.payment.orderThisPay')}: </span>
+                        <span className="font-mono tabular-nums font-medium" style={{ color: colors.blue }}>
+                          {rateOption === 'actual' && actualAmount > 0
+                            ? `${actualCurrency === 'USD' ? '$' : '¥'}${fmt(actualAmount / selectedItems.length)}`
+                            : `$${fmt(cash)}`
+                          }
+                          {prepay > 0 ? ` (+$${fmt(prepay)} ${t('deposit.payment.prepayLabel')})` : ''}
+                        </span>
+                      </div>
                       <div className="col-span-2">
-                        <span style={{ color: colors.textTertiary }}>Pending: </span>
-                        <span className="font-mono tabular-nums font-medium" style={{ color: remaining > 0 ? colors.orange : colors.green }}>${fmt(remaining)}</span>
+                        <span style={{ color: colors.textTertiary }}>{t('deposit.payment.orderAfter')}: </span>
+                        <span className="font-mono tabular-nums font-medium" style={{
+                          color: cfg.coverStandard ? colors.green : pendingAfterThis > 0 ? colors.red : colors.green
+                        }}>
+                          {cfg.coverStandard
+                            ? `$0.00 ✓ ${t('deposit.payment.markAsPaid')}`
+                            : `$${fmt(pendingAfterThis)}`
+                          }
+                        </span>
                       </div>
                     </div>
 
@@ -506,25 +587,36 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                       )}
 
                       {/* Prepay toggle */}
-                      <label className="flex items-center gap-1.5 cursor-pointer">
+                      <label className={`flex items-center gap-1.5 ${hasBalance ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}`}>
                         <input
                           type="checkbox"
                           checked={cfg.usePrepay}
+                          disabled={!hasBalance}
                           onChange={(e) => updateOrder(item.poNum, { usePrepay: e.target.checked })}
                           className="w-3 h-3 rounded"
                         />
                         <span className="text-[10px]" style={{ color: colors.textSecondary }}>{t('deposit.payment.usePrepay')}</span>
                       </label>
                       {cfg.usePrepay && (
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={cfg.prepayAmount || ''}
-                          placeholder="0.00"
-                          onChange={(e) => updateOrder(item.poNum, { prepayAmount: parseFloat(e.target.value) || 0 })}
-                          className="w-full h-7 px-2 border rounded text-xs font-mono tabular-nums focus:outline-none"
-                          style={{ ...baseStyle, fontSize: '11px' }}
-                        />
+                        <div>
+                          <input
+                            type="number"
+                            step="0.01"
+                            max={vendorBalance?.balanceUsd ?? 0}
+                            value={cfg.prepayAmount || ''}
+                            placeholder="0.00"
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              const maxBal = vendorBalance?.balanceUsd ?? 0;
+                              updateOrder(item.poNum, { prepayAmount: Math.min(val, maxBal) });
+                            }}
+                            className="w-full h-7 px-2 border rounded text-xs font-mono tabular-nums focus:outline-none"
+                            style={{ ...baseStyle, fontSize: '11px' }}
+                          />
+                          <p className="text-[9px] mt-0.5 font-mono" style={{ color: colors.textTertiary }}>
+                            max: ${fmt(vendorBalance?.balanceUsd ?? 0)}
+                          </p>
+                        </div>
                       )}
 
                       {/* Override deposit standard */}
@@ -535,7 +627,7 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                           onChange={(e) => updateOrder(item.poNum, { coverStandard: e.target.checked })}
                           className="w-3 h-3 rounded"
                         />
-                        <span className="text-[10px]" style={{ color: colors.textSecondary }}>{t('deposit.payment.overrideStandard')}</span>
+                      <span className="text-[10px]" style={{ color: colors.textSecondary }}>{t('deposit.payment.markAsPaid')}</span>
                       </label>
                     </div>
                   </div>
@@ -570,49 +662,140 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
               />
 
               <div className="grid grid-cols-3 gap-2 mb-4">
-                {(['original', 'paymentDate', 'manual'] as const).map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => {
-                      setRateOption(opt);
-                      if (opt === 'original') {
-                        setSettlementRate(0);
-                        setRateFetchSource('');
-                        setRateFetchFailed(false);
-                      }
-                    }}
-                    className="p-2.5 rounded-lg border text-left transition-all"
-                    style={{
-                      borderColor: rateOption === opt ? colors.blue : colors.border,
-                      backgroundColor: rateOption === opt ? `${colors.blue}08` : colors.bgTertiary,
-                    }}
-                  >
-                    <p className="text-xs font-medium" style={{ color: colors.text }}>
-                      {t(`deposit.payment.rate.${opt}`)}
-                    </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: colors.textTertiary }}>
-                      {t(`deposit.payment.rate.${opt}Desc`)}
-                    </p>
-                  </button>
-                ))}
+                {/* Actual Payment */}
+                <button
+                  type="button"
+                  onClick={() => setRateOption('actual')}
+                  className="p-2.5 rounded-lg border text-left transition-all"
+                  style={{
+                    borderColor: rateOption === 'actual' ? colors.blue : colors.border,
+                    backgroundColor: rateOption === 'actual' ? `${colors.blue}08` : colors.bgTertiary,
+                  }}
+                >
+                  <p className="text-xs font-medium" style={{ color: colors.text }}>{t('deposit.payment.rate.actual')}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: colors.textTertiary }}>{t('deposit.payment.rate.actualDesc')}</p>
+                </button>
+
+                {/* Original Rate */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRateOption('original');
+                    setSettlementRate(0);
+                    setRateFetchSource('');
+                    setRateFetchFailed(false);
+                  }}
+                  className="p-2.5 rounded-lg border text-left transition-all"
+                  style={{
+                    borderColor: rateOption === 'original' ? colors.blue : colors.border,
+                    backgroundColor: rateOption === 'original' ? `${colors.blue}08` : colors.bgTertiary,
+                  }}
+                >
+                  <p className="text-xs font-medium" style={{ color: colors.text }}>{t('deposit.payment.rate.original')}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: colors.textTertiary }}>{t('deposit.payment.rate.originalDesc')}</p>
+                </button>
+
+                {/* Payment Date Rate */}
+                <button
+                  type="button"
+                  onClick={() => setRateOption('paymentDate')}
+                  className="p-2.5 rounded-lg border text-left transition-all"
+                  style={{
+                    borderColor: rateOption === 'paymentDate' ? colors.blue : colors.border,
+                    backgroundColor: rateOption === 'paymentDate' ? `${colors.blue}08` : colors.bgTertiary,
+                  }}
+                >
+                  <p className="text-xs font-medium" style={{ color: colors.text }}>{t('deposit.payment.rate.paymentDate')}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: colors.textTertiary }}>{t('deposit.payment.rate.paymentDateDesc')}</p>
+                </button>
               </div>
 
-              {/* Rate status & input (paymentDate or manual) */}
-              {rateOption !== 'original' && (
+              {/* ── Actual Payment input ── */}
+              {rateOption === 'actual' && (
                 <div>
-                  {rateOption === 'paymentDate' && rateFetching && (
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    {/* Currency selector */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('deposit.payment.rate.actualCurrency')}</label>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => { setActualCurrency('USD'); setActualAmount(0); }}
+                          className="flex-1 h-9 text-sm font-medium rounded-lg transition-colors"
+                          style={{ backgroundColor: actualCurrency === 'USD' ? colors.blue : colors.bgTertiary, color: actualCurrency === 'USD' ? '#fff' : colors.text }}>
+                          $ USD
+                        </button>
+                        <button type="button" onClick={() => { setActualCurrency('RMB'); setActualAmount(0); }}
+                          className="flex-1 h-9 text-sm font-medium rounded-lg transition-colors"
+                          style={{ backgroundColor: actualCurrency === 'RMB' ? colors.blue : colors.bgTertiary, color: actualCurrency === 'RMB' ? '#fff' : colors.text }}>
+                          ¥ RMB
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Amount input — always shown */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('deposit.payment.rate.actualAmount')}</label>
+                      <div className="relative">
+                        <input type="number" step="0.01" value={actualAmount || ''} placeholder="0.00"
+                          onChange={e => { const val = parseFloat(e.target.value); setActualAmount(isNaN(val) ? 0 : val); }}
+                          className={`${inputCls} tabular-nums`}
+                          style={{ ...baseStyle, paddingRight: '40px' }} />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <span className="text-xs" style={{ color: colors.textSecondary }}>{actualCurrency}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pending total reference */}
+                  <div className="p-2.5 rounded-lg mb-3" style={{ backgroundColor: colors.bgTertiary }}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span style={{ color: colors.textSecondary }}>{t('deposit.payment.pendingTotal')}</span>
+                      <span className="font-mono font-medium" style={{ color: colors.text }}>${fmt(totalPendingUsd)}</span>
+                    </div>
+                  </div>
+
+                  {/* Rate fetch status */}
+                  {rateFetching && (
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }} />
                       <span className="text-xs" style={{ color: colors.textSecondary }}>Fetching rate...</span>
                     </div>
                   )}
-                  {rateOption === 'paymentDate' && rateFetchSource && !rateFetching && (
+                  {rateFetchSource && !rateFetching && (
+                    <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: `${colors.green}10` }}>
+                      <p className="text-xs" style={{ color: colors.green }}>Rate: {settlementRate.toFixed(4)} USD/CNY ({rateFetchSource})</p>
+                    </div>
+                  )}
+
+                  {/* Rate display */}
+                  {settlementRate > 0 && !rateFetching && (
+                    <div className="p-2.5 rounded-lg" style={{ backgroundColor: `${colors.blue}08`, border: `1px solid ${colors.blue}25` }}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span style={{ color: colors.textSecondary }}>{t('deposit.payment.rate.calculatedRate')}</span>
+                        <span className="font-mono font-semibold text-sm" style={{ color: colors.blue }}>
+                          {settlementRate.toFixed(4)} <span className="text-[10px] font-normal" style={{ color: colors.textTertiary }}>USD/CNY</span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Rate status & input (paymentDate) */}
+              {rateOption === 'paymentDate' && (
+                <div>
+                  {rateFetching && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }} />
+                      <span className="text-xs" style={{ color: colors.textSecondary }}>Fetching rate...</span>
+                    </div>
+                  )}
+                  {rateFetchSource && !rateFetching && (
                     <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: `${colors.green}10` }}>
                       <p className="text-xs" style={{ color: colors.green }}>Rate source: {rateFetchSource}</p>
                     </div>
                   )}
-                  {rateOption === 'paymentDate' && rateFetchFailed && !rateFetching && (
+                  {rateFetchFailed && !rateFetching && (
                     <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: `${colors.red}10` }}>
                       <p className="text-xs" style={{ color: colors.red }}>Auto rate unavailable -- enter manually</p>
                     </div>
@@ -628,8 +811,8 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                         const val = parseFloat(e.target.value);
                         setSettlementRate(isNaN(val) ? 0 : val);
                       }}
-                      disabled={rateOption === 'paymentDate' && rateFetching}
-                      readOnly={rateOption === 'paymentDate' && !rateFetchFailed && !rateFetching && settlementRate > 0}
+                      disabled={rateFetching}
+                      readOnly={!rateFetchFailed && !rateFetching && settlementRate > 0}
                       className={`${inputCls} disabled:opacity-50`}
                       style={{ ...baseStyle, borderColor: settlementRate > 0 ? colors.border : colors.red, paddingRight: '60px' }}
                     />
@@ -637,6 +820,44 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                       <span className="text-xs" style={{ color: colors.textSecondary }}>USD/CNY</span>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Always-visible: Actual Payment Highlight ── */}
+            <div
+              className="mb-6 p-4 rounded-xl"
+              style={{
+                backgroundColor: `${colors.green}08`,
+                border: `1px solid ${colors.green}20`,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.green }}>
+                    {t('deposit.payment.actualPayment')}
+                  </p>
+                  <p className="text-xl font-mono font-bold tabular-nums" style={{ color: colors.text }}>
+                    ${fmt(summary.cashPayment)}
+                  </p>
+                </div>
+                {settlementRate > 0 && (
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>
+                      {t('deposit.payment.actualPaymentRmb')}
+                    </p>
+                    <p className="text-base font-mono font-semibold tabular-nums" style={{ color: colors.textSecondary }}>
+                      ¥{fmt(round5(summary.cashPayment * settlementRate))}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {summary.prepayDeduction > 0 && (
+                <div className="mt-2 pt-2 flex items-center gap-4 text-xs" style={{ borderTop: `1px solid ${colors.green}15` }}>
+                  <span style={{ color: colors.textTertiary }}>{t('deposit.payment.prepayLabel')}: <span className="font-mono font-medium" style={{ color: colors.blue }}>-${fmt(summary.prepayDeduction)}</span></span>
+                  {showExtraFee && extraAmount > 0 && (
+                    <span style={{ color: colors.textTertiary }}>{t('deposit.payment.extraLabel')}: <span className="font-mono font-medium" style={{ color: colors.orange }}>{extraCurrency === 'USD' ? '$' : '¥'}{fmt(extraAmount)}</span></span>
+                  )}
                 </div>
               )}
             </div>
@@ -655,9 +876,14 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
                   </div>
                   <div className="px-3 py-2 rounded-lg text-center" style={{ backgroundColor: colors.bgTertiary }}>
                     <p className="text-[10px] uppercase" style={{ color: colors.textSecondary }}>{t('deposit.payment.prepayBalance')}</p>
-                    <p className="text-sm font-bold tabular-nums" style={{ color: vendorBalance.balanceUsd >= 0 ? colors.green : colors.red }}>
-                      ${fmt(vendorBalance.balanceUsd)}
+                    <p className="text-sm font-bold tabular-nums" style={{ color: (vendorBalance.balanceUsd - summary.prepayDeduction) >= 0 ? colors.green : colors.red }}>
+                      ${fmt(vendorBalance.balanceUsd - summary.prepayDeduction)}
                     </p>
+                    {summary.prepayDeduction > 0 && (
+                      <p className="text-[9px] font-mono mt-0.5" style={{ color: colors.textTertiary }}>
+                        ({t('deposit.payment.summaryPrepay')}: -${fmt(summary.prepayDeduction)})
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

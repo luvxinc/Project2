@@ -13,9 +13,16 @@ interface DepositTableProps {
   onSelectionChange: (poNums: string[]) => void;
   onViewDetail: (item: DepositListItem, pmtNo: string) => void;
   onDeletePayment: (pmtNo: string) => void;
+  onPoRowClick?: (poNum: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
   theme: string;
+  isLoading?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 interface SupplierGroup {
@@ -29,6 +36,8 @@ interface SupplierGroup {
 const fmtAmt = (val: number) =>
   val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 });
 
+/** Currency code → symbol */
+const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
 function groupBySupplier(items: DepositListItem[]): SupplierGroup[] {
   const map = new Map<string, SupplierGroup>();
   for (const item of items) {
@@ -111,13 +120,26 @@ function DualAmount({ usd, rmb }: { usd: number; rmb: number }) {
 
 // ── Static Table Header ──────────────────────────
 
-function TH({ children, align = 'text-left', color }: { children: React.ReactNode; align?: string; color: string }) {
+function TH({ children, align = 'text-left', color, sortable, sorted, sortOrder, onClick }: {
+  children: React.ReactNode; align?: string; color: string;
+  sortable?: boolean; sorted?: boolean; sortOrder?: 'asc' | 'desc'; onClick?: () => void;
+}) {
   return (
     <th
       style={{ color }}
-      className={`${align} py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap`}
+      className={`${align} py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap ${sortable ? 'cursor-pointer select-none hover:opacity-80 transition-opacity' : ''}`}
+      onClick={sortable ? onClick : undefined}
     >
-      {children}
+      <span className="inline-flex items-center gap-1">
+        {children}
+        {sortable && sorted && (
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {sortOrder === 'asc'
+              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              : <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />}
+          </svg>
+        )}
+      </span>
     </th>
   );
 }
@@ -128,10 +150,50 @@ function TH({ children, align = 'text-left', color }: { children: React.ReactNod
 
 export default function DepositTable({
   items, mode, selectedPoNums, onSelectionChange,
-  onViewDetail, onDeletePayment, t, theme,
+  onViewDetail, onDeletePayment, onPoRowClick, t, theme,
+  isLoading, error, onRetry,
+  sortField, sortOrder, onSort,
 }: DepositTableProps) {
   const colors = themeColors[theme as keyof typeof themeColors] ?? themeColors.dark;
   const groups = useMemo(() => groupBySupplier(items), [items]);
+
+  // Loading state — match POTable skeleton pattern
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div
+          className="w-7 h-7 border-2 rounded-full animate-spin"
+          style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }}
+        />
+        <p className="text-sm" style={{ color: colors.textSecondary }}>
+          {t('deposit.loading')}
+        </p>
+      </div>
+    );
+  }
+
+  // Error state — match POTable retry pattern
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <svg className="w-8 h-8" style={{ color: colors.red }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <p className="text-sm" style={{ color: colors.textSecondary }}>
+          {error.message || 'Failed to load deposit data'}
+        </p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="h-8 px-4 text-xs font-medium rounded-lg transition-opacity hover:opacity-80"
+            style={{ backgroundColor: colors.blue, color: '#fff' }}
+          >
+            {t('deposit.retry')}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -142,7 +204,19 @@ export default function DepositTable({
   }
 
   if (mode === 'unpaid') {
-    return <UnpaidView groups={groups} colors={colors} selectedPoNums={selectedPoNums} onSelectionChange={onSelectionChange} t={t} />;
+    return (
+      <UnpaidView
+        groups={groups}
+        colors={colors}
+        selectedPoNums={selectedPoNums}
+        onSelectionChange={onSelectionChange}
+        onPoRowClick={onPoRowClick}
+        t={t}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSort={onSort}
+      />
+    );
   }
 
   return (
@@ -151,6 +225,7 @@ export default function DepositTable({
       colors={colors}
       onViewDetail={onViewDetail}
       onDeletePayment={onDeletePayment}
+      onPoRowClick={onPoRowClick}
       t={t}
     />
   );
@@ -165,10 +240,14 @@ interface UnpaidViewProps {
   colors: (typeof themeColors)['dark'];
   selectedPoNums: string[];
   onSelectionChange: (poNums: string[]) => void;
+  onPoRowClick?: (poNum: string) => void;
   t: DepositTableProps['t'];
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
-function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: UnpaidViewProps) {
+function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRowClick, t, sortField, sortOrder, onSort }: UnpaidViewProps) {
   // Determine which supplier is currently selected (only one at a time)
   const selectedSupplier = useMemo(() => {
     if (selectedPoNums.length === 0) return null;
@@ -244,7 +323,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
 
             {/* ── Table ── */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1400px]">
+              <table className="w-full min-w-[1100px]">
                 <thead>
                   <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}50` }} className="border-b">
                     <th className="py-3 px-3 text-center w-10">
@@ -257,12 +336,10 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                         style={{ accentColor: colors.blue }}
                       />
                     </th>
-                    <TH color={colors.textSecondary}>{t('deposit.table.poNum')}</TH>
-                    <TH color={colors.textSecondary}>{t('deposit.table.poDate')}</TH>
+                    <TH color={colors.textSecondary} sortable sorted={sortField === 'po_num'} sortOrder={sortOrder} onClick={() => onSort?.('po_num')}>{t('deposit.table.poNum')}</TH>
+                    <TH color={colors.textSecondary} sortable sorted={sortField === 'po_date'} sortOrder={sortOrder} onClick={() => onSort?.('po_date')}>{t('deposit.table.poDate')}</TH>
                     <TH color={colors.textSecondary} align="text-center">{t('deposit.table.skuCount')}</TH>
-                    <TH color={colors.textSecondary} align="text-right">{t('deposit.table.totalAmount')}</TH>
-                    <TH color={colors.textSecondary} align="text-right">{t('deposit.table.settlementRate')}</TH>
-                    <TH color={colors.textSecondary} align="text-center">{t('deposit.table.rateSource')}</TH>
+                    <TH color={colors.textSecondary} align="text-right" sortable sorted={sortField === 'total_amount'} sortOrder={sortOrder} onClick={() => onSort?.('total_amount')}>{t('deposit.table.totalAmount')}</TH>
                     <TH color={colors.textSecondary} align="text-right">{t('deposit.table.depositRate')}</TH>
                     <TH color={colors.textSecondary} align="text-right">{t('deposit.table.depositAmount')}</TH>
                     <TH color={colors.textSecondary} align="text-right">{t('deposit.table.paidDeposit')}</TH>
@@ -272,15 +349,19 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                 </thead>
                 <tbody>
                   {group.items.map((item, idx) => {
-                    const badge = statusBadge(item.paymentStatus, t);
                     const isSelectable = !item.isPaid && (item.paymentStatus === 'unpaid' || item.paymentStatus === 'partial');
                     const isSelected = selectedPoNums.includes(item.poNum);
 
                     return (
                       <tr
                         key={item.poNum}
-                        style={{ borderColor: colors.border }}
+                        style={{ borderColor: colors.border, cursor: 'pointer' }}
                         className={`${idx !== group.items.length - 1 ? 'border-b' : ''} transition-colors hover:opacity-80`}
+                        onClick={(e) => {
+                          // Don't trigger row click if clicking checkbox
+                          if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+                          onPoRowClick?.(item.poNum);
+                        }}
                       >
                         {/* Checkbox */}
                         <td className="py-3 px-3 text-center w-10">
@@ -296,27 +377,11 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                           )}
                         </td>
 
-                        {/* PO Num + Status */}
+                        {/* PO Num */}
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <span style={{ color: colors.blue }} className="font-mono text-sm font-semibold">
-                              {item.poNum}
-                            </span>
-                            <span
-                              className="inline-flex items-center gap-1 pl-1.5 pr-2 py-0.5 rounded-full text-[10px] font-semibold tracking-tight"
-                              style={{
-                                backgroundColor: badge.bg,
-                                color: badge.color,
-                                boxShadow: `0 0 0 1px ${badge.ring}`,
-                              }}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${badge.pulse ? 'animate-pulse' : ''}`}
-                                style={{ backgroundColor: badge.dot }}
-                              />
-                              {badge.label}
-                            </span>
-                          </div>
+                          <span style={{ color: colors.blue }} className="font-mono text-sm font-semibold">
+                            {item.poNum}
+                          </span>
                         </td>
 
                         {/* PO Date */}
@@ -329,20 +394,14 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                           {item.skuCount}
                         </td>
 
-                        {/* Total Amount (dual currency) */}
+                        {/* Total Amount (USD only) */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <DualAmount usd={item.totalAmountUsd} rmb={item.totalAmountRmb} />
+                          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                            ${fmtAmt(item.totalAmountUsd)}
+                          </span>
                         </td>
 
-                        {/* Settlement Rate */}
-                        <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono text-right whitespace-nowrap tabular-nums">
-                          {fmtAmt(item.curUsdRmb)}
-                        </td>
 
-                        {/* Rate Source */}
-                        <td className="py-3 px-4 text-center whitespace-nowrap">
-                          <RateSourceBadge code={item.rateSourceCode} label={item.rateSource} />
-                        </td>
 
                         {/* Deposit Rate % */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -354,7 +413,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                         {/* Deposit Amount */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span style={{ color: colors.text }} className="text-sm font-mono font-medium tabular-nums">
-                            {fmtAmt(item.depositAmount)} {item.curCurrency}
+                            {curSym(item.curCurrency)}{fmtAmt(item.depositAmount)}
                           </span>
                         </td>
 
@@ -364,7 +423,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                             style={{ color: item.actualPaid > 0 ? '#30d158' : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
-                            {item.actualPaid > 0 ? fmtAmt(item.actualPaid) : '—'}
+                            {item.actualPaid > 0 ? `$${fmtAmt(item.actualPaid)}` : '—'}
                           </span>
                         </td>
 
@@ -374,14 +433,14 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, t }: Un
                             style={{ color: item.depositPending > 0 ? '#ff9f0a' : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
-                            {item.depositPending > 0 ? fmtAmt(item.depositPending) : '—'}
+                            {item.depositPending > 0 ? `$${fmtAmt(item.depositPending)}` : '—'}
                           </span>
                         </td>
 
                         {/* Balance Remaining */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span style={{ color: colors.textSecondary }} className="text-sm font-mono tabular-nums">
-                            {fmtAmt(item.balanceRemaining)}
+                            ${fmtAmt(item.balanceRemaining)}
                           </span>
                         </td>
                       </tr>
@@ -406,10 +465,11 @@ interface PaidViewProps {
   colors: (typeof themeColors)['dark'];
   onViewDetail: (item: DepositListItem, pmtNo: string) => void;
   onDeletePayment: (pmtNo: string) => void;
+  onPoRowClick?: (poNum: string) => void;
   t: DepositTableProps['t'];
 }
 
-function PaidView({ groups, colors, onViewDetail, onDeletePayment, t }: PaidViewProps) {
+function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick, t }: PaidViewProps) {
   const [activeSupplier, setActiveSupplier] = useState<string>(groups[0]?.supplierCode ?? '');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -525,6 +585,7 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, t }: PaidView
                     onToggle={() => toggleExpand(item.poNum)}
                     onViewDetail={onViewDetail}
                     onDeletePayment={onDeletePayment}
+                    onPoRowClick={onPoRowClick}
                   />
                 );
               })}
@@ -548,18 +609,19 @@ interface PaidRowProps {
   onToggle: () => void;
   onViewDetail: (item: DepositListItem, pmtNo: string) => void;
   onDeletePayment: (pmtNo: string) => void;
+  onPoRowClick?: (poNum: string) => void;
 }
 
-function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewDetail, onDeletePayment }: PaidRowProps) {
+function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewDetail, onDeletePayment, onPoRowClick }: PaidRowProps) {
   const hasDetails = item.paymentDetails.length > 0;
   const hasExtra = item.extraFeesUsd > 0 || item.extraFeesRmb > 0;
 
   return (
     <>
       <tr
-        style={{ borderColor: colors.border }}
-        className={`${!isLast || isExpanded ? 'border-b' : ''} transition-colors hover:opacity-80 cursor-pointer`}
-        onClick={hasDetails ? onToggle : undefined}
+        style={{ borderColor: colors.border, cursor: 'pointer' }}
+        className={`${!isLast || isExpanded ? 'border-b' : ''} transition-colors hover:opacity-80`}
+        onClick={() => onPoRowClick?.(item.poNum)}
       >
         {/* PO Num + Chevron */}
         <td className="py-3 px-4 whitespace-nowrap">
@@ -569,6 +631,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                 className={`w-3 h-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                 style={{ color: colors.textTertiary }}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                onClick={(e) => { e.stopPropagation(); onToggle(); }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
@@ -589,22 +652,24 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
           {item.skuCount}
         </td>
 
-        {/* Total Amount */}
+        {/* Total Amount (USD only) */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
-          <DualAmount usd={item.totalAmountUsd} rmb={item.totalAmountRmb} />
+          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+            ${fmtAmt(item.totalAmountUsd)}
+          </span>
         </td>
 
         {/* Deposit Amount */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
           <span style={{ color: colors.text }} className="text-sm font-mono font-medium tabular-nums">
-            {fmtAmt(item.depositAmount)} {item.curCurrency}
+            {curSym(item.curCurrency)}{fmtAmt(item.depositAmount)}
           </span>
         </td>
 
         {/* Actual Paid */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
           <span style={{ color: '#30d158' }} className="text-sm font-mono font-medium tabular-nums">
-            {fmtAmt(item.actualPaid)}
+            ${fmtAmt(item.actualPaid)}
           </span>
         </td>
 
@@ -616,7 +681,9 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
         {/* Extra Fees */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
           {hasExtra ? (
-            <DualAmount usd={item.extraFeesUsd} rmb={item.extraFeesRmb} />
+            <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+              ${fmtAmt(item.extraFeesUsd)}
+            </span>
           ) : (
             <span style={{ color: colors.textTertiary }} className="text-sm">—</span>
           )}
@@ -707,23 +774,23 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                             color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a',
                           }}
                         >
-                          {det.depCur}
+                          {curSym(det.depCur)}
                         </span>
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">
                         <span style={{ color: colors.text }} className="font-mono text-xs tabular-nums">
-                          {fmtAmt(det.depPaid)}
+                          {curSym(det.depCur)}{fmtAmt(det.depPaid)}
                         </span>
                       </td>
                       <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono text-right whitespace-nowrap tabular-nums">
-                        {fmtAmt(det.depPaidCur)}
+                        {curSym(det.depCur)}{fmtAmt(det.depPaidCur)}
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">
                         <span
                           style={{ color: det.depPrepayAmount > 0 ? colors.purple : colors.textTertiary }}
                           className="font-mono text-xs tabular-nums"
                         >
-                          {det.depPrepayAmount > 0 ? fmtAmt(det.depPrepayAmount) : '—'}
+                          {det.depPrepayAmount > 0 ? `$${fmtAmt(det.depPrepayAmount)}` : '—'}
                         </span>
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
@@ -741,7 +808,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                       <td className="py-2 px-4 text-right whitespace-nowrap">
                         {det.extraAmount > 0 ? (
                           <span className="font-mono text-xs tabular-nums" style={{ color: colors.orange }}>
-                            {fmtAmt(det.extraAmount)} {det.extraCur}
+                            {curSym(det.extraCur)}{fmtAmt(det.extraAmount)}
                           </span>
                         ) : (
                           <span style={{ color: colors.textTertiary }} className="text-xs">—</span>

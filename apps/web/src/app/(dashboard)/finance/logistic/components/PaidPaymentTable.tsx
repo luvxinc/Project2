@@ -13,6 +13,9 @@ interface Props {
 const fmtNum = (val: number, decimals = 2) =>
   val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
+/** Currency code → symbol */
+const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+
 /**
  * PaidPaymentTable — Apple-style table listing payment groups.
  * Each row represents one pmtNo batch. Click → PaymentDetailPanel.
@@ -56,7 +59,6 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
         <thead>
           <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
             {renderHeader(t('logistic.table.pmtNo'))}
-            {renderHeader(t('logistic.table.paymentStatus'), 'text-center')}
             {renderHeader(t('logistic.table.paymentDate'))}
             {renderHeader(t('logistic.card.shipmentCount', { count: '' }).trim(), 'text-center')}
             {renderHeader(t('logistic.table.totalPriceRmb'), 'text-right')}
@@ -88,21 +90,6 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
                   </span>
                 </td>
 
-                {/* Status */}
-                <td className="py-3 px-4 text-center">
-                  <span
-                    className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-[11px] font-semibold tracking-tight"
-                    style={{
-                      backgroundColor: badge.bg,
-                      color: badge.color,
-                      boxShadow: `0 0 0 1px ${badge.ring}`,
-                    }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: badge.dot }} />
-                    {badge.label}
-                  </span>
-                </td>
-
                 {/* Payment Date */}
                 <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
                   {group.paymentDate || '—'}
@@ -130,7 +117,7 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
                 {/* Extra */}
                 <td className="py-3 px-4 text-right whitespace-nowrap">
                   <span style={{ color: colors.textSecondary }} className="text-sm font-mono tabular-nums">
-                    {group.extraPaid > 0 ? `${fmtNum(group.extraPaid)} ${group.extraCurrency}` : '—'}
+                    {group.extraPaid > 0 ? `${curSym(group.extraCurrency)}${fmtNum(group.extraPaid)}` : '—'}
                   </span>
                 </td>
 

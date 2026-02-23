@@ -1,5 +1,8 @@
 {
   "title": "Finance",
+  "common": {
+    "cancel": "Cancel"
+  },
   "hub": {
     "prepay": {
       "title": "Vendor Prepayments",
@@ -15,7 +18,7 @@
     },
     "poPayment": {
       "title": "PO Payments",
-      "navTitle": "PO Payments",
+      "navTitle": "Purchase",
       "description": "Manage purchase order balance payments",
       "cta": "Manage Payments"
     },
@@ -150,6 +153,8 @@
     "title": "Deposit Payment Management",
     "subtitle": "Manage purchase order deposit payments and settlement status",
     "noData": "No deposit records found",
+    "loading": "Loading deposit data...",
+    "retry": "Retry",
     "recordCount": "{count} records",
     "submitPayment": "Submit Payment",
     "sectionUnpaid": "Unpaid Deposits",
@@ -198,7 +203,7 @@
 
     "payment": {
       "title": "Submit Deposit Payment",
-      "selectedOrders": "{count} orders selected",
+      "selectedOrders": "Selected Orders",
       "paymentDate": "Payment Date",
       "rateOption": "Exchange Rate Option",
       "rateOriginal": "Original Rate",
@@ -230,9 +235,34 @@
       "summaryPrepay": "Prepay Deduction",
       "summaryCash": "Cash Payment",
       "summaryPending": "Pending After",
+      "orderRemaining": "Remaining",
+      "orderThisPay": "This Pay",
+      "orderAfter": "After",
+      "orderOver": "over",
+      "prepayLabel": "Prepay",
+      "extraLabel": "Extra",
+      "pendingTotal": "Pending Total (USD)",
       "usePrepay": "Enable prepay deduction",
-      "overrideStandard": "Override deposit standard",
-      "vendorBalance": "Vendor Balance"
+      "markAsPaid": "Mark as deposit paid",
+      "markAsPaidDesc": "Force mark as paid regardless of amount",
+      "vendorBalance": "Vendor Balance",
+      "exchangeRate": "Exchange Rate",
+      "selectedCount": "{count} orders selected",
+      "rate": {
+        "actual": "Payment Date Rate (Custom Currency)",
+        "actualDesc": "Uses payment date rate, select payment currency",
+        "actualCurrency": "Payment Currency",
+        "actualAmount": "Payment Amount",
+        "calculatedRate": "Payment Date Rate",
+        "original": "Original Rate",
+        "originalDesc": "Use each PO's original exchange rate",
+        "paymentDate": "Payment Date Rate",
+        "paymentDateDesc": "Fetch latest rate for the selected date"
+      },
+      "actualPayment": "Payment Required",
+      "actualPaymentRmb": "RMB Equivalent",
+      "surcharge": "Surcharge (overpayment)",
+      "discount": "Discount (underpayment)"
     },
 
     "actions": {
@@ -255,7 +285,8 @@
       "paymentColumn": "Payment Versions",
       "noStrategyVersions": "No strategy changes",
       "noPaymentVersions": "No payment changes",
-      "noData": "No history data"
+      "noData": "No history data",
+      "initial": "Initial"
     },
 
     "orders": {
@@ -277,7 +308,8 @@
       "valueRmb": "Value (RMB)",
       "valueUsd": "Value (USD)",
       "totalRmb": "Total (RMB)",
-      "totalUsd": "Total (USD)"
+      "totalUsd": "Total (USD)",
+      "paymentDate": "Payment Date"
     },
 
     "detail": {
@@ -293,7 +325,24 @@
       "rateAuto": "Auto",
       "rateManual": "Manual",
       "depositPercent": "Deposit %",
-      "prepayDeducted": "Prepay Deducted"
+      "prepayDeducted": "Prepay Deducted",
+      "poDate": "PO Date",
+      "currency": "Currency",
+      "exchangeRate": "Exchange Rate",
+      "totalAmount": "Total Amount",
+      "actualPaid": "Actual Paid",
+      "balanceRemaining": "Balance Remaining",
+      "depositPending": "Deposit Pending",
+      "extraFees": "Extra Fees",
+      "paymentDate": "Payment Date",
+      "pmtNo": "Payment #",
+      "depDate": "Date",
+      "depCur": "Currency",
+      "depPaid": "Deposit Paid",
+      "depPaidCur": "Paid (Currency)",
+      "depPrepayAmount": "Prepay Used",
+      "depOverride": "Override",
+      "extraAmount": "Extra Amount"
     },
 
     "sidebar": {
@@ -306,7 +355,10 @@
       "deleteTitle": "Delete File",
       "deleteDesc": "This file will be permanently deleted",
       "download": "Download",
-      "delete": "Delete"
+      "delete": "Delete",
+      "upload": "Upload",
+      "noFiles": "No files uploaded",
+      "count": "{count} files"
     },
 
     "messages": {
@@ -368,6 +420,17 @@
       "extraCurrency": "Currency",
       "extraNote": "Note",
       "submit": "Submit Payment",
+      "actualPayment": "Payment Required",
+      "actualPaymentUsd": "USD Equivalent",
+      "rateActual": "Actual Payment",
+      "rateActualDesc": "Enter actual payment, uses payment date rate",
+      "actualCurrency": "Payment Currency",
+      "actualAmount": "Actual Payment Amount",
+      "calculatedRate": "Payment Date Rate",
+      "surcharge": "Surcharge (overpayment)",
+      "discount": "Discount (underpayment)",
+      "fullPayment": "Full Payment",
+      "partialPayment": "Partial Payment",
       "securityTitle": "Confirm Payment",
       "securityDescription": "Enter your security code to submit this logistics payment.",
       "successTitle": "Payment Submitted",

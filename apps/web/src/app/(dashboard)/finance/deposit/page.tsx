@@ -5,12 +5,15 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi, type DepositListItem } from '@/lib/api/finance';
+import { purchaseApi, type PurchaseOrder } from '@/lib/api/purchase';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { animate } from 'animejs';
 import DepositTable from './components/DepositTable';
 import DepositDetailPanel from './components/DepositDetailPanel';
 import PaymentDialog from './components/PaymentDialog';
+import DepositPODetailPanel from './components/DepositPODetailPanel';
+import FinanceTabSelector from '../components/FinanceTabSelector';
 
 interface CurrentUser {
   id: string;
@@ -117,7 +120,7 @@ function groupPaidByPayment(items: DepositListItem[]): DepositPaymentGroup[] {
  * View modes for 2-level navigation:
  *   list → detail (click on paid payment group)
  */
-type ViewMode = 'list' | 'detail';
+type ViewMode = 'list' | 'detail' | 'poDetail';
 
 /**
  * Deposit Payment Management Page
@@ -151,6 +154,12 @@ export default function DepositPage() {
   const [selectedPaymentGroup, setSelectedPaymentGroup] = useState<DepositPaymentGroup | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // ═══════════ PO Detail state (slide-in from deposit rows) ═══════════
+  const [poDetailOrder, setPoDetailOrder] = useState<PurchaseOrder | null>(null);
+  const [poDetailFull, setPoDetailFull] = useState<PurchaseOrder | null>(null);
+  const [poDetailHistory, setPoDetailHistory] = useState<{ id: number; eventType: string; eventSeq: number; changes: string; note: string | null; operator: string; createdAt: string }[]>([]);
+  const [poDetailLoading, setPoDetailLoading] = useState(false);
+
   // ═══════════ Delete state ═══════════
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
@@ -169,7 +178,7 @@ export default function DepositPage() {
 
   // ═══════════ Data Fetching ═══════════
 
-  const { data: depositData, isLoading } = useQuery({
+  const { data: depositData, isLoading, error, refetch } = useQuery({
     queryKey: ['depositList', sortField, sortOrder],
     queryFn: () => financeApi.getDepositList({ sortBy: sortField, sortOrder }),
     enabled: isClient && !!currentUser,
@@ -280,8 +289,59 @@ export default function DepositPage() {
     slideBack(() => {
       setViewMode('list');
       setSelectedPaymentGroup(null);
+      setPoDetailOrder(null);
+      setPoDetailFull(null);
+      setPoDetailHistory([]);
     });
   }, [slideBack]);
+
+  // ═══════════ PO Detail Navigation ═══════════
+
+  const handlePoRowClick = useCallback(async (poNum: string) => {
+    // Start slide animation immediately
+    slideForward(() => {
+      setViewMode('poDetail');
+    });
+
+    setPoDetailLoading(true);
+    setPoDetailFull(null);
+    setPoDetailHistory([]);
+
+    try {
+      // Step 1: Find PO by poNum via search
+      const ordersResult = await purchaseApi.getOrders({ search: poNum, limit: 5 });
+      let orders: PurchaseOrder[] = [];
+      if (ordersResult && typeof ordersResult === 'object' && 'data' in ordersResult) {
+        orders = (ordersResult as any).data ?? [];
+      } else if (Array.isArray(ordersResult)) {
+        orders = ordersResult;
+      }
+
+      // Find exact match
+      const matchedOrder = orders.find(o => o.poNum === poNum);
+      if (!matchedOrder) {
+        // Create a minimal placeholder
+        setPoDetailOrder({ id: 0, poNum, supplierCode: '', supplierId: 0, poDate: '', status: 'ACTIVE', createdAt: '', updatedAt: '' } as PurchaseOrder);
+        setPoDetailLoading(false);
+        return;
+      }
+
+      setPoDetailOrder(matchedOrder);
+
+      // Step 2: Fetch full detail + history
+      const [detail, history] = await Promise.all([
+        purchaseApi.getOrder(matchedOrder.id),
+        purchaseApi.getHistory(matchedOrder.id).catch(() => []),
+      ]);
+
+      setPoDetailFull(detail);
+      setPoDetailHistory(Array.isArray(history) ? history : []);
+    } catch {
+      // Set minimal placeholder if nothing was set before the error
+      setPoDetailOrder(prev => prev ?? { id: 0, poNum, supplierCode: '', supplierId: 0, poDate: '', status: 'ACTIVE', createdAt: '', updatedAt: '' } as PurchaseOrder);
+    }
+    setPoDetailLoading(false);
+  }, [slideForward]);
 
   // ═══════════ Batch Payment ═══════════
 
@@ -361,16 +421,11 @@ export default function DepositPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Page Title — only on list view */}
+      {/* Apple Pill Tab Selector — only on list view */}
       {viewMode === 'list' && (
         <section className="pt-12 pb-6 px-6">
           <div className="max-w-[1400px] mx-auto">
-            <h1 style={{ color: colors.text }} className="text-2xl font-bold">
-              {t('deposit.title')}
-            </h1>
-            <p style={{ color: colors.textTertiary }} className="text-sm mt-1">
-              {t('deposit.subtitle')}
-            </p>
+            <FinanceTabSelector />
           </div>
         </section>
       )}
@@ -487,8 +542,15 @@ export default function DepositPage() {
                     onSelectionChange={setSelectedItems}
                     onViewDetail={() => {}}
                     onDeletePayment={() => {}}
+                    onPoRowClick={handlePoRowClick}
                     t={t}
                     theme={theme}
+                    isLoading={isLoading}
+                    error={error as Error | null}
+                    onRetry={() => refetch()}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
                   />
                 </div>
               </div>
@@ -524,8 +586,12 @@ export default function DepositPage() {
                         if (group) handlePaymentRowClick(group);
                       }}
                       onDeletePayment={handleDeletePayment}
+                      onPoRowClick={handlePoRowClick}
                       t={t}
                       theme={theme}
+                      isLoading={isLoading}
+                      error={error as Error | null}
+                      onRetry={() => refetch()}
                     />
                   </div>
                 </div>
@@ -542,6 +608,17 @@ export default function DepositPage() {
               onBack={handleBackToList}
               t={t}
               theme={theme}
+            />
+          )}
+
+          {/* ── Level 3: PO Detail (read-only, deposit-specific) ── */}
+          {viewMode === 'poDetail' && poDetailOrder && (
+            <DepositPODetailPanel
+              order={poDetailOrder}
+              detail={poDetailFull}
+              isLoading={poDetailLoading}
+              history={poDetailHistory}
+              onBack={handleBackToList}
             />
           )}
         </div>

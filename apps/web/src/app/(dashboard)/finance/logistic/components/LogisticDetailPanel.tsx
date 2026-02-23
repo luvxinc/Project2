@@ -59,6 +59,9 @@ export default function LogisticDetailPanel({
   const fmtNum = (val: number, decimals = 2) =>
     val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
+  /** Currency code → symbol */
+  const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+
   const sendVersions = historyData?.sendVersions ?? [];
   const paymentVersions = historyData?.paymentVersions ?? [];
   const orders = ordersData?.orders ?? [];
@@ -172,7 +175,7 @@ export default function LogisticDetailPanel({
           <DetailField label={t('logistic.table.pmtNo')} value={item.pmtNo || '—'} colors={colors} mono />
           <DetailField
             label={t('logistic.table.extraPaid')}
-            value={item.extraPaid > 0 ? `${fmtNum(item.extraPaid)} ${item.extraCurrency}` : '—'}
+            value={item.extraPaid > 0 ? `${curSym(item.extraCurrency)}${fmtNum(item.extraPaid)}` : '—'}
             colors={colors}
             mono
           />
@@ -497,7 +500,7 @@ function PaymentVersionCard({ version: v, idx, colors }: {
             { label: t('logistic.table.logisticPaid'), value: `¥${fmtNum(v.logisticPaid)}` },
             { label: t('logistic.table.usdRmb'), value: fmtNum(v.usdRmb, 4) },
             { label: t('logistic.table.paymentDate'), value: v.paymentDate },
-            ...(v.extraPaid > 0 ? [{ label: t('logistic.table.extraPaid'), value: `${fmtNum(v.extraPaid)} ${v.extraCurrency}` }] : []),
+            ...(v.extraPaid > 0 ? [{ label: t('logistic.table.extraPaid'), value: `${((c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$')(v.extraCurrency)}${fmtNum(v.extraPaid)}` }] : []),
           ].map((f) => (
             <div key={f.label} className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: colors.bgTertiary }}>
               <span className="w-24 shrink-0 font-medium" style={{ color: colors.textTertiary }}>{f.label}</span>
@@ -623,7 +626,7 @@ function OrdersTabContent({ orders, isLoading, colors }: {
                   <td className="px-4 py-2 font-mono" style={{ color: colors.text }}>{item.sku}</td>
                   <td className="px-3 py-2 text-right tabular-nums" style={{ color: colors.text }}>{item.qty}</td>
                   <td className="px-3 py-2 text-right tabular-nums" style={{ color: colors.textSecondary }}>
-                    {item.currency} {fmtNum(item.unitPrice, 5)}
+                    {((c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$')(item.currency)}{fmtNum(item.unitPrice, 5)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums" style={{ color: colors.textSecondary }}>
                     ¥{fmtNum(item.valueRmb, 5)}

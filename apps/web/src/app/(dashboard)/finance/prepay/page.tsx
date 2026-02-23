@@ -11,6 +11,7 @@ import SupplierBalanceList from './components/SupplierBalanceList';
 import TransactionTable from './components/TransactionTable';
 import PrepayWizard from './components/PrepayWizard';
 import HistoryPanel from './components/HistoryPanel';
+import FinanceTabSelector from '../components/FinanceTabSelector';
 
 interface CurrentUser {
   id: string;
@@ -190,15 +191,10 @@ export default function PrepaymentPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Page title */}
+      {/* Apple Pill Tab Selector */}
       <section className="pt-12 pb-4 px-6">
         <div className="max-w-[1400px] mx-auto">
-          <h1 style={{ color: colors.text }} className="text-2xl font-bold">
-            {t('prepay.title')}
-          </h1>
-          <p style={{ color: colors.textTertiary }} className="text-sm mt-1">
-            {t('prepay.subtitle')}
-          </p>
+          <FinanceTabSelector />
         </div>
       </section>
 

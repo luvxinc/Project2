@@ -14,6 +14,7 @@ import PaymentDialog from './components/PaymentDialog';
 import PaidPaymentTable from './components/PaidPaymentTable';
 import PaymentDetailPanel from './components/PaymentDetailPanel';
 import { groupByPaymentNo, type PaymentGroup } from './components/PaidPaymentCard';
+import FinanceTabSelector from '../components/FinanceTabSelector';
 
 interface CurrentUser {
   id: string;
@@ -112,6 +113,13 @@ export default function LogisticPage() {
 
   // Group paid items by pmtNo for table display
   const paymentGroups = useMemo(() => groupByPaymentNo(paidData), [paidData]);
+
+  // Total RMB freight for selected unpaid items (needed for Actual Payment rate calc)
+  const selectedFreightRmb = useMemo(() => {
+    return unpaidData
+      .filter(item => selectedItems.includes(item.logisticNum))
+      .reduce((sum, item) => sum + item.totalPriceRmb, 0);
+  }, [unpaidData, selectedItems]);
 
   const totalCount = logisticData?.data?.length ?? 0;
 
@@ -325,16 +333,11 @@ export default function LogisticPage() {
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
-      {/* Page Title — only on list view */}
+      {/* Apple Pill Tab Selector — only on list view */}
       {viewMode === 'list' && (
         <section className="pt-12 pb-6 px-6">
           <div className="max-w-[1400px] mx-auto">
-            <h1 style={{ color: colors.text }} className="text-2xl font-bold">
-              {t('logistic.title')}
-            </h1>
-            <p style={{ color: colors.textTertiary }} className="text-sm mt-1">
-              {t('logistic.subtitle')}
-            </p>
+            <FinanceTabSelector />
           </div>
         </section>
       )}
@@ -529,6 +532,7 @@ export default function LogisticPage() {
         <PaymentDialog
           isOpen={showPaymentDialog}
           selectedLogisticNums={selectedItems}
+          totalFreightRmb={selectedFreightRmb}
           onClose={() => setShowPaymentDialog(false)}
           onSuccess={handlePaymentSuccess}
         />

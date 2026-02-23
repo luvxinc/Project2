@@ -12,11 +12,12 @@ import ModalShell from '../../../purchase/components/ModalShell';
 interface Props {
   isOpen: boolean;
   selectedLogisticNums: string[];
+  totalFreightRmb: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-type RateOption = 'original' | 'paymentDate';
+type RateOption = 'actual' | 'original' | 'paymentDate';
 type RateSource = 'auto' | 'manual';
 
 function formatDate(date: Date): string {
@@ -36,7 +37,7 @@ function formatDate(date: Date): string {
  *   - Rate option: original / payment-date (auto/manual)
  *   - Extra fee (optional): amount, currency, note
  */
-export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, onSuccess }: Props) {
+export default function PaymentDialog({ isOpen, selectedLogisticNums, totalFreightRmb, onClose, onSuccess }: Props) {
   const t = useTranslations('finance');
   const tCommon = useTranslations('common');
   const { theme } = useTheme();
@@ -44,7 +45,7 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
 
   // State
   const [paymentDate, setPaymentDate] = useState(formatDate(new Date()));
-  const [rateOption, setRateOption] = useState<RateOption>('original');
+  const [rateOption, setRateOption] = useState<RateOption>('actual');
   const [rateSource, setRateSource] = useState<RateSource>('auto');
   const [settlementRate, setSettlementRate] = useState<number>(0);
   const [rateFetching, setRateFetching] = useState(false);
@@ -55,12 +56,16 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
   const [extraCurrency, setExtraCurrency] = useState('RMB');
   const [extraNote, setExtraNote] = useState('');
   const [success, setSuccess] = useState(false);
+  // Actual payment state
+  const [actualCurrency, setActualCurrency] = useState('USD');
+  const [actualAmount, setActualAmount] = useState<number>(0);
+  const [paymentType, setPaymentType] = useState<'full' | 'partial'>('full');
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
       setPaymentDate(formatDate(new Date()));
-      setRateOption('original');
+      setRateOption('actual');
       setRateSource('auto');
       setSettlementRate(0);
       setRateFetching(false);
@@ -71,6 +76,9 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
       setExtraCurrency('RMB');
       setExtraNote('');
       setSuccess(false);
+      setActualCurrency('USD');
+      setActualAmount(0);
+      setPaymentType('full');
       createSecurity.onCancel();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,30 +130,77 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, rateOption, rateSource, paymentDate]);
 
+  // Auto-fetch rate for actual tab (always use payment date rate)
+  useEffect(() => {
+    if (isOpen && rateOption === 'actual' && paymentDate) {
+      fetchExchangeRate(paymentDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, rateOption, paymentDate]);
+
+  // Compute actual payment difference (surcharge/discount) in RMB
+  // Logistics freight is in RMB. Compare actual paid (converted to RMB) vs totalFreightRmb.
+  const actualDiffRmb = useMemo(() => {
+    if (rateOption !== 'actual' || paymentType !== 'full' || actualAmount <= 0 || totalFreightRmb <= 0 || settlementRate <= 0) return 0;
+    let actualInRmb: number;
+    if (actualCurrency === 'RMB') {
+      actualInRmb = actualAmount;
+    } else {
+      // USD → RMB
+      actualInRmb = actualAmount * settlementRate;
+    }
+    return Math.round((actualInRmb - totalFreightRmb) * 100) / 100; // positive = surcharge, negative = discount
+  }, [rateOption, actualAmount, actualCurrency, totalFreightRmb, settlementRate, paymentType]);
+
   // Validation
   const canSubmit = useMemo(() => {
     if (selectedLogisticNums.length === 0) return false;
     if (!paymentDate) return false;
+    if (rateOption === 'actual' && (rateFetching || settlementRate <= 0 || actualAmount <= 0)) return false;
     if (rateOption === 'paymentDate' && (!settlementRate || settlementRate <= 0)) return false;
-    if (rateFetching) return false;
+    if (rateFetching && rateOption !== 'original') return false;
     if (showExtraFee && extraAmount > 0 && !extraNote.trim()) return false;
     return true;
-  }, [selectedLogisticNums, paymentDate, rateOption, settlementRate, rateFetching, showExtraFee, extraAmount, extraNote]);
+  }, [selectedLogisticNums, paymentDate, rateOption, settlementRate, rateFetching, showExtraFee, extraAmount, extraNote, actualAmount]);
 
   // Mutation
   const submitMutation = useMutation({
     mutationFn: async (secCode: string) => {
+      // Build extra fee: merge manual + auto diff
+      let finalExtraFee: { amount: number; currency: string; note: string } | undefined;
+
+      // Manual extra fee
+      if (showExtraFee && extraAmount > 0) {
+        finalExtraFee = { amount: extraAmount, currency: extraCurrency, note: extraNote };
+      }
+
+      // Auto-computed surcharge/discount from actual payment mode (only full payment)
+      if (rateOption === 'actual' && paymentType === 'full' && Math.abs(actualDiffRmb) > 0.005) {
+        const diffLabel = actualDiffRmb > 0
+          ? `Surcharge: paid ${actualCurrency === 'RMB' ? '¥' : '$'}${actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} vs freight ¥${totalFreightRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, diff +¥${actualDiffRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : `Discount: paid ${actualCurrency === 'RMB' ? '¥' : '$'}${actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} vs freight ¥${totalFreightRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, diff -¥${Math.abs(actualDiffRmb).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        if (finalExtraFee) {
+          // Combine with manual
+          if (finalExtraFee.currency === 'RMB') {
+            finalExtraFee.amount = Math.round((finalExtraFee.amount + actualDiffRmb) * 100) / 100;
+          } else {
+            // Manual is USD, diff is RMB — convert diff to USD
+            finalExtraFee.amount = Math.round((finalExtraFee.amount + actualDiffRmb / settlementRate) * 100) / 100;
+          }
+          finalExtraFee.note = `${finalExtraFee.note}; ${diffLabel}`;
+        } else {
+          finalExtraFee = { amount: actualDiffRmb, currency: 'RMB', note: diffLabel };
+        }
+      }
+
       return financeApi.submitLogisticPayment({
         logisticNums: selectedLogisticNums,
         paymentDate,
-        usePaymentDateRate: rateOption === 'paymentDate',
-        settlementRate: rateOption === 'paymentDate' ? settlementRate : undefined,
-        rateSource: rateOption === 'paymentDate' ? rateSource : 'original',
-        extraFee: showExtraFee && extraAmount > 0 ? {
-          amount: extraAmount,
-          currency: extraCurrency,
-          note: extraNote,
-        } : undefined,
+        usePaymentDateRate: rateOption !== 'original',
+        settlementRate: rateOption !== 'original' ? settlementRate : undefined,
+        rateSource: rateOption === 'actual' ? 'auto' : (rateOption === 'paymentDate' ? rateSource : 'original'),
+        extraFee: finalExtraFee,
       }, secCode);
     },
     onSuccess: () => {
@@ -255,7 +310,21 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
             title={t('logistic.payment.rateOption')}
           />
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Actual Payment */}
+            <button
+              type="button"
+              onClick={() => setRateOption('actual')}
+              className="p-3 rounded-lg border text-left transition-all"
+              style={{
+                borderColor: rateOption === 'actual' ? colors.blue : colors.border,
+                backgroundColor: rateOption === 'actual' ? `${colors.blue}08` : colors.bgTertiary,
+              }}
+            >
+              <p className="text-sm font-medium" style={{ color: colors.text }}>{t('logistic.payment.rateActual')}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: colors.textTertiary }}>{t('logistic.payment.rateActualDesc')}</p>
+            </button>
+
             {/* Original Rate */}
             <button
               type="button"
@@ -284,6 +353,104 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
               <p className="text-[11px] mt-0.5" style={{ color: colors.textTertiary }}>{t('logistic.payment.ratePaymentDateDesc')}</p>
             </button>
           </div>
+
+          {/* ── Actual Payment input ── */}
+          {rateOption === 'actual' && (
+            <div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {/* Currency selector */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('logistic.payment.actualCurrency')}</label>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => { setActualCurrency('USD'); setActualAmount(0); }}
+                      className="flex-1 h-9 text-sm font-medium rounded-lg transition-colors"
+                      style={{ backgroundColor: actualCurrency === 'USD' ? colors.blue : colors.bgTertiary, color: actualCurrency === 'USD' ? '#fff' : colors.text }}>
+                      $ USD
+                    </button>
+                    <button type="button" onClick={() => { setActualCurrency('RMB'); setActualAmount(0); }}
+                      className="flex-1 h-9 text-sm font-medium rounded-lg transition-colors"
+                      style={{ backgroundColor: actualCurrency === 'RMB' ? colors.blue : colors.bgTertiary, color: actualCurrency === 'RMB' ? '#fff' : colors.text }}>
+                      ¥ RMB
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount input — always shown */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: colors.textSecondary }}>{t('logistic.payment.actualAmount')}</label>
+                  <div className="relative">
+                    <input type="number" step="0.01" value={actualAmount || ''} placeholder="0.00"
+                      onChange={e => { const val = parseFloat(e.target.value); setActualAmount(isNaN(val) ? 0 : val); }}
+                      className={`${inputCls} tabular-nums`}
+                      style={{ ...baseStyle, paddingRight: '40px' }} />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <span className="text-xs" style={{ color: colors.textSecondary }}>{actualCurrency}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full / Partial toggle */}
+              <div className="flex gap-2 mb-3">
+                <button type="button" onClick={() => setPaymentType('full')}
+                  className="flex-1 h-8 text-xs font-medium rounded-lg transition-colors"
+                  style={{ backgroundColor: paymentType === 'full' ? colors.green : colors.bgTertiary, color: paymentType === 'full' ? '#fff' : colors.text }}>
+                  {t('logistic.payment.fullPayment')}
+                </button>
+                <button type="button" onClick={() => setPaymentType('partial')}
+                  className="flex-1 h-8 text-xs font-medium rounded-lg transition-colors"
+                  style={{ backgroundColor: paymentType === 'partial' ? colors.blue : colors.bgTertiary, color: paymentType === 'partial' ? '#fff' : colors.text }}>
+                  {t('logistic.payment.partialPayment')}
+                </button>
+              </div>
+
+              {/* Freight total reference */}
+              <div className="p-2.5 rounded-lg mb-3" style={{ backgroundColor: colors.bgTertiary }}>
+                <div className="flex items-center justify-between text-xs">
+                  <span style={{ color: colors.textSecondary }}>运费总额 (RMB)</span>
+                  <span className="font-mono font-medium" style={{ color: colors.text }}>¥{totalFreightRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
+              {/* Rate fetch status */}
+              {rateFetching && (
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${colors.blue}30`, borderTopColor: colors.blue }} />
+                  <span className="text-xs" style={{ color: colors.textSecondary }}>Fetching rate...</span>
+                </div>
+              )}
+              {rateFetchSource && !rateFetching && (
+                <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: `${colors.green}10` }}>
+                  <p className="text-xs" style={{ color: colors.green }}>Rate: {settlementRate.toFixed(4)} USD/CNY ({rateFetchSource})</p>
+                </div>
+              )}
+
+              {/* Surcharge / Discount display */}
+              {actualAmount > 0 && settlementRate > 0 && Math.abs(actualDiffRmb) > 0.005 && (
+                <div className="p-2.5 rounded-lg" style={{
+                  backgroundColor: actualDiffRmb > 0 ? `${colors.orange}08` : `${colors.blue}08`,
+                  border: `1px solid ${actualDiffRmb > 0 ? colors.orange : colors.blue}25`,
+                }}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span style={{ color: actualDiffRmb > 0 ? colors.orange : colors.blue }}>
+                      {actualDiffRmb > 0 ? t('logistic.payment.surcharge') : t('logistic.payment.discount')}
+                    </span>
+                    <span className="font-mono font-semibold text-sm" style={{ color: actualDiffRmb > 0 ? colors.orange : colors.blue }}>
+                      {actualDiffRmb > 0 ? '+' : ''}¥{actualDiffRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {actualAmount > 0 && settlementRate > 0 && Math.abs(actualDiffRmb) <= 0.005 && (
+                <div className="p-2.5 rounded-lg" style={{ backgroundColor: `${colors.green}08`, border: `1px solid ${colors.green}25` }}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span style={{ color: colors.green }}>✓ Exact match</span>
+                    <span className="font-mono font-medium" style={{ color: colors.green }}>¥{totalFreightRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Rate input — only when paymentDate rate is chosen */}
           {rateOption === 'paymentDate' && (
@@ -331,6 +498,36 @@ export default function PaymentDialog({ isOpen, selectedLogisticNums, onClose, o
               </div>
             </div>
           )}
+        </div>
+
+        {/* ── Always-visible: Actual Payment Highlight ── */}
+        <div
+          className="mb-6 p-4 rounded-xl"
+          style={{
+            backgroundColor: `${colors.green}08`,
+            border: `1px solid ${colors.green}20`,
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.green }}>
+                {t('logistic.payment.actualPayment')}
+              </p>
+              <p className="text-xl font-mono font-bold tabular-nums" style={{ color: colors.text }}>
+                ¥{totalFreightRmb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            {settlementRate > 0 && (
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>
+                  {t('logistic.payment.actualPaymentUsd')}
+                </p>
+                <p className="text-base font-mono font-semibold tabular-nums" style={{ color: colors.textSecondary }}>
+                  ${(totalFreightRmb / settlementRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Extra Fee (optional) */}

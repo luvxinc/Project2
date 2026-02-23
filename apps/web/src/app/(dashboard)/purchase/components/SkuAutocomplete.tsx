@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 /**
  * SkuAutocomplete — Custom autocomplete replacing native <datalist>.
  * Shows max 5 items at a time with scroll + keyboard navigation.
+ * Uses React Portal to escape overflow:hidden/auto parent containers
+ * (e.g. ModalShell), rendering the dropdown on document.body.
  */
 
 interface SkuOption {
@@ -26,6 +29,7 @@ interface SkuAutocompleteProps {
 
 const VISIBLE_COUNT = 5;
 const ITEM_HEIGHT = 32; // px per row
+const DROPDOWN_GAP = 4; // gap between input and dropdown
 
 export default function SkuAutocomplete({
   value,
@@ -45,6 +49,7 @@ export default function SkuAutocomplete({
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   // Filter options based on current input
   const filtered = value.trim()
@@ -55,10 +60,40 @@ export default function SkuAutocomplete({
       )
     : options;
 
-  // Close on outside click
+  // Calculate dropdown position based on input bounding rect
+  const updatePosition = useCallback(() => {
+    if (!inputRef.current) return;
+    const rect = inputRef.current.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + DROPDOWN_GAP,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
+
+  // Reposition on scroll / resize (including modal scroll)
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+
+    // Listen for scroll on all ancestors (to catch modal scroll container)
+    const handleReposition = () => updatePosition();
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true); // useCapture to catch all scroll events
+    return () => {
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isOpen, updatePosition]);
+
+  // Close on outside click — check both container and portal dropdown
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        listRef.current && !listRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -119,6 +154,52 @@ export default function SkuAutocomplete({
 
   const dropdownMaxHeight = VISIBLE_COUNT * ITEM_HEIGHT;
 
+  // Portal dropdown rendered on document.body
+  const dropdown =
+    isOpen && filtered.length > 0 && !disabled && dropdownPos
+      ? createPortal(
+          <div
+            ref={listRef}
+            className="rounded-lg border shadow-lg overflow-y-auto"
+            style={{
+              position: 'fixed',
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              width: dropdownPos.width,
+              maxHeight: dropdownMaxHeight,
+              backgroundColor: colors.bgSecondary,
+              borderColor: colors.border,
+              zIndex: 99999, // above everything including modals
+            }}
+          >
+            {filtered.map((opt, idx) => (
+              <div
+                key={opt.sku}
+                className="flex items-center justify-between px-2.5 cursor-pointer transition-colors"
+                style={{
+                  height: ITEM_HEIGHT,
+                  backgroundColor: idx === activeIndex ? `${colors.blue}18` : 'transparent',
+                  color: idx === activeIndex ? colors.blue : colors.text,
+                }}
+                onMouseEnter={() => setActiveIndex(idx)}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // prevent blur
+                  selectItem(opt.sku);
+                }}
+              >
+                <span className="text-xs font-mono font-medium truncate">{opt.sku}</span>
+                {opt.name && (
+                  <span className="text-[10px] ml-2 truncate" style={{ color: colors.textTertiary, maxWidth: 120 }}>
+                    {opt.name}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <div ref={containerRef} className="relative">
       <input
@@ -130,7 +211,10 @@ export default function SkuAutocomplete({
           setIsOpen(true);
           setActiveIndex(-1);
         }}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          updatePosition();
+          setIsOpen(true);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
@@ -140,42 +224,7 @@ export default function SkuAutocomplete({
           borderColor: hasError ? colors.red : (style?.borderColor || colors.border),
         }}
       />
-
-      {isOpen && filtered.length > 0 && !disabled && (
-        <div
-          ref={listRef}
-          className="absolute z-50 left-0 right-0 mt-1 rounded-lg border shadow-lg overflow-y-auto"
-          style={{
-            maxHeight: dropdownMaxHeight,
-            backgroundColor: colors.bgSecondary,
-            borderColor: colors.border,
-          }}
-        >
-          {filtered.map((opt, idx) => (
-            <div
-              key={opt.sku}
-              className="flex items-center justify-between px-2.5 cursor-pointer transition-colors"
-              style={{
-                height: ITEM_HEIGHT,
-                backgroundColor: idx === activeIndex ? `${colors.blue}18` : 'transparent',
-                color: idx === activeIndex ? colors.blue : colors.text,
-              }}
-              onMouseEnter={() => setActiveIndex(idx)}
-              onMouseDown={(e) => {
-                e.preventDefault(); // prevent blur
-                selectItem(opt.sku);
-              }}
-            >
-              <span className="text-xs font-mono font-medium truncate">{opt.sku}</span>
-              {opt.name && (
-                <span className="text-[10px] ml-2 truncate" style={{ color: colors.textTertiary, maxWidth: 120 }}>
-                  {opt.name}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }

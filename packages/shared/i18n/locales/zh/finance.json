@@ -1,5 +1,8 @@
 {
   "title": "财务管理",
+  "common": {
+    "cancel": "取消"
+  },
   "hub": {
     "prepay": {
       "title": "供应商预付",
@@ -15,13 +18,13 @@
     },
     "poPayment": {
       "title": "订单付款",
-      "navTitle": "订单付款",
+      "navTitle": "采购",
       "description": "管理采购订单尾款支付流程",
       "cta": "管理付款"
     },
     "logistic": {
       "title": "物流费用",
-      "navTitle": "物流费用",
+      "navTitle": "物流",
       "description": "追踪物流运费结算与费用分摊",
       "cta": "查看费用"
     },
@@ -150,6 +153,8 @@
     "title": "定金付款管理",
     "subtitle": "管理采购订单定金支付与核销状态",
     "noData": "暂无定金记录",
+    "loading": "正在加载定金数据...",
+    "retry": "重试",
     "recordCount": "共 {count} 条记录",
     "submitPayment": "提交付款",
     "sectionUnpaid": "未付定金",
@@ -198,7 +203,7 @@
 
     "payment": {
       "title": "提交定金付款",
-      "selectedOrders": "已选 {count} 个订单",
+      "selectedOrders": "已选订单",
       "paymentDate": "付款日期",
       "rateOption": "汇率选项",
       "rateOriginal": "原始汇率",
@@ -230,9 +235,34 @@
       "summaryPrepay": "预付抵扣",
       "summaryCash": "现金支付",
       "summaryPending": "支付后待付",
+      "orderRemaining": "待付",
+      "orderThisPay": "本次支付",
+      "orderAfter": "支付后",
+      "orderOver": "多付",
+      "prepayLabel": "预付",
+      "extraLabel": "额外",
+      "pendingTotal": "待付合计 (USD)",
       "usePrepay": "启用预付款抵扣",
-      "overrideStandard": "覆盖定金标准",
-      "vendorBalance": "供应商余额"
+      "markAsPaid": "标记为定金支付完毕",
+      "markAsPaidDesc": "无视金额，强制标记为已付",
+      "vendorBalance": "供应商余额",
+      "exchangeRate": "汇率",
+      "selectedCount": "已选 {count} 个订单",
+      "rate": {
+        "actual": "付款日汇率（指定币种）",
+        "actualDesc": "采用付款日汇率，可选择支付币种",
+        "actualCurrency": "支付币种",
+        "actualAmount": "支付金额",
+        "calculatedRate": "付款日汇率",
+        "original": "原始汇率",
+        "originalDesc": "使用每个订单的原始汇率",
+        "paymentDate": "付款日汇率",
+        "paymentDateDesc": "获取选定日期的最新汇率"
+      },
+      "actualPayment": "本次支付需求",
+      "actualPaymentRmb": "折合人民币",
+      "surcharge": "多付（额外费用）",
+      "discount": "少付（减免）"
     },
 
     "actions": {
@@ -255,7 +285,8 @@
       "paymentColumn": "付款版本",
       "noStrategyVersions": "暂无策略变更",
       "noPaymentVersions": "暂无付款变更",
-      "noData": "暂无历史数据"
+      "noData": "暂无历史数据",
+      "initial": "初始"
     },
 
     "orders": {
@@ -277,7 +308,8 @@
       "valueRmb": "金额(RMB)",
       "valueUsd": "金额(USD)",
       "totalRmb": "合计(RMB)",
-      "totalUsd": "合计(USD)"
+      "totalUsd": "合计(USD)",
+      "paymentDate": "付款日期"
     },
 
     "detail": {
@@ -293,7 +325,24 @@
       "rateAuto": "自动",
       "rateManual": "手动",
       "depositPercent": "定金比例",
-      "prepayDeducted": "预付抵扣"
+      "prepayDeducted": "预付抵扣",
+      "poDate": "订单日期",
+      "currency": "货币",
+      "exchangeRate": "汇率",
+      "totalAmount": "订单总额",
+      "actualPaid": "实际支付",
+      "balanceRemaining": "尾款余额",
+      "depositPending": "定金待付",
+      "extraFees": "额外费用",
+      "paymentDate": "付款日期",
+      "pmtNo": "付款单号",
+      "depDate": "日期",
+      "depCur": "货币",
+      "depPaid": "定金已付",
+      "depPaidCur": "已付(币种)",
+      "depPrepayAmount": "预付抵扣",
+      "depOverride": "覆盖标准",
+      "extraAmount": "额外金额"
     },
 
     "sidebar": {
@@ -306,7 +355,10 @@
       "deleteTitle": "删除文件",
       "deleteDesc": "此文件将被永久删除",
       "download": "下载",
-      "delete": "删除"
+      "delete": "删除",
+      "upload": "上传",
+      "noFiles": "暂无上传文件",
+      "count": "共 {count} 个文件"
     },
 
     "messages": {
@@ -368,6 +420,17 @@
       "extraCurrency": "币种",
       "extraNote": "备注",
       "submit": "提交付款",
+      "actualPayment": "本次支付需求",
+      "actualPaymentUsd": "折合美元",
+      "rateActual": "实际支付金额",
+      "rateActualDesc": "输入实际支付金额，采用付款日汇率",
+      "actualCurrency": "支付币种",
+      "actualAmount": "实际支付金额",
+      "calculatedRate": "付款日汇率",
+      "surcharge": "多付（额外费用）",
+      "discount": "少付（减免）",
+      "fullPayment": "完整支付",
+      "partialPayment": "部分支付",
       "securityTitle": "确认付款",
       "securityDescription": "请输入安全码以确认物流付款操作。",
       "successTitle": "付款已提交",

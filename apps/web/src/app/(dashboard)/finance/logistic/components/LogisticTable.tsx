@@ -152,7 +152,7 @@ export default function LogisticTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[1200px]">
+      <table className="w-full min-w-[1000px]">
         <thead>
           <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
             {/* Select All */}
@@ -169,7 +169,6 @@ export default function LogisticTable({
               </th>
             )}
             {renderSortHeader('logistic_num', t('logistic.table.logisticNum'))}
-            {renderStaticHeader(t('logistic.table.paymentStatus'), 'text-center')}
             {renderSortHeader('date_sent', t('logistic.table.dateSent'))}
             {renderStaticHeader(t('logistic.table.dateEta'))}
             {renderStaticHeader(t('logistic.table.receiveDate'))}
@@ -177,11 +176,8 @@ export default function LogisticTable({
             {renderStaticHeader(t('logistic.table.pallets'), 'text-center')}
             {renderStaticHeader(t('logistic.table.priceKg'), 'text-right')}
             {renderStaticHeader(t('logistic.table.totalWeight'), 'text-right')}
-            {renderStaticHeader(t('logistic.table.usdRmb'), 'text-right')}
             {renderStaticHeader(t('logistic.table.totalPriceRmb'), 'text-right')}
-            {renderStaticHeader(t('logistic.table.totalPriceUsd'), 'text-right')}
             {renderStaticHeader(t('logistic.table.logisticPaid'), 'text-right')}
-            {renderStaticHeader(t('logistic.table.pmtNo'))}
           </tr>
         </thead>
         <tbody>
@@ -230,25 +226,7 @@ export default function LogisticTable({
                   </div>
                 </td>
 
-                {/* Status */}
-                <td className="py-3 px-4 text-center">
-                  <span
-                    className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-[11px] font-semibold tracking-tight"
-                    style={{
-                      backgroundColor: badge.bg,
-                      color: badge.color,
-                      boxShadow: `0 0 0 1px ${badge.ring}`,
-                    }}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        item.paymentStatus === 'unpaid' && !item.isDeleted ? 'animate-pulse' : ''
-                      }`}
-                      style={{ backgroundColor: badge.dot }}
-                    />
-                    {badge.label}
-                  </span>
-                </td>
+
 
                 {/* Sent Date */}
                 <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
@@ -285,22 +263,10 @@ export default function LogisticTable({
                   {fmtNum(item.totalWeight)}
                 </td>
 
-                {/* Rate */}
-                <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono text-right whitespace-nowrap tabular-nums">
-                  {fmtNum(item.usdRmb, 4)}
-                </td>
-
                 {/* Freight RMB */}
                 <td className="py-3 px-4 text-right whitespace-nowrap">
                   <span style={{ color: colors.text }} className="text-sm font-mono font-medium tabular-nums">
                     ¥{fmtNum(item.totalPriceRmb)}
-                  </span>
-                </td>
-
-                {/* Freight USD */}
-                <td className="py-3 px-4 text-right whitespace-nowrap">
-                  <span style={{ color: colors.textTertiary }} className="text-sm font-mono tabular-nums">
-                    ${fmtNum(item.totalPriceUsd, 5)}
                   </span>
                 </td>
 
@@ -312,17 +278,6 @@ export default function LogisticTable({
                   >
                     {item.logisticPaid > 0 ? `¥${fmtNum(item.logisticPaid)}` : '—'}
                   </span>
-                </td>
-
-                {/* Payment # */}
-                <td className="py-3 px-4 whitespace-nowrap">
-                  {item.pmtNo ? (
-                    <span className="text-sm font-mono" style={{ color: colors.textSecondary }}>
-                      {item.pmtNo}
-                    </span>
-                  ) : (
-                    <span className="text-sm" style={{ color: colors.textTertiary }}>—</span>
-                  )}
                 </td>
               </tr>
             );
