@@ -6,6 +6,7 @@ import com.mgmt.modules.finance.application.dto.*
 import com.mgmt.modules.finance.domain.model.PaymentEvent
 import com.mgmt.modules.finance.domain.repository.PaymentEventRepository
 import com.mgmt.modules.finance.domain.repository.PrepaymentRepository
+import com.mgmt.modules.finance.domain.repository.findLatestAutoRate
 import com.mgmt.modules.purchase.domain.model.Payment
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierStrategyRepository
@@ -379,10 +380,10 @@ class PrepaymentUseCase(
         var prevCurrUse: String? = null
         var prevAmount: Double? = null
         var prevAmountCurrency: String? = null
-        var prevAmountRate: Double? = null
 
         for ((i, evt) in events.withIndex()) {
             val isFirst = (i == 0)
+            @Suppress("UNCHECKED_CAST")
             val changesMap = try {
                 objectMapper.readValue(evt.changes, Map::class.java) as Map<String, Any?>
             } catch (_: Exception) { emptyMap() }
@@ -455,7 +456,6 @@ class PrepaymentUseCase(
             prevCurrUse = currentCurrUse
             prevAmount = currentAmount
             prevAmountCurrency = currentCurrUse
-            prevAmountRate = currentRate
         }
 
         return PrepaymentHistoryResponse(
@@ -475,14 +475,12 @@ class PrepaymentUseCase(
     @Transactional(readOnly = true)
     fun getExchangeRate(): ExchangeRateResponse {
         // V1: Look for most recent auto-rate transaction
-        val allPrepayments = prepaymentRepo.findAllActivePrepayments()
-        val autoRateTxn = allPrepayments
-            .filter { it.rateMode == "auto" && it.exchangeRate > BigDecimal.ZERO }
-            .maxByOrNull { it.paymentDate }
+        // BUG-4 fix: push filter to SQL instead of loading all records
+        val latestAutoRate = prepaymentRepo.findLatestAutoRate()
 
-        return if (autoRateTxn != null) {
+        return if (latestAutoRate != null) {
             ExchangeRateResponse(
-                rate = autoRateTxn.exchangeRate.toDouble(),
+                rate = latestAutoRate.exchangeRate.toDouble(),
                 source = "recent_transaction",
             )
         } else {

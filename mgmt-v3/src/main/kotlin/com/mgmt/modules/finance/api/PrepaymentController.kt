@@ -84,6 +84,10 @@ class PrepaymentController(
     // ═══════════════════════════════════════════════
     // 3. CREATE PREPAYMENT
     // V1: submit_prepay_api (supports FormData with file OR JSON)
+    //
+    // Single route handles both JSON and multipart/form-data:
+    //   - JSON: frontend sends JSON body (no file)
+    //   - Multipart: frontend sends form fields + optional file
     // ═══════════════════════════════════════════════
 
     @PostMapping("/prepayments")
@@ -98,8 +102,9 @@ class PrepaymentController(
     /**
      * Create prepayment with file upload (multipart/form-data).
      * V1: submit_prepay_api supports FormData format (api.py L317-327)
+     * Uses a separate path to avoid Spring MVC ambiguous handler conflict.
      */
-    @PostMapping("/prepayments", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PostMapping("/prepayments/with-file", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @RequirePermission("module.finance.prepay.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_prepay_submit")
     @AuditLog(module = "FINANCE", action = "CREATE_PREPAYMENT", riskLevel = "HIGH")
@@ -132,7 +137,7 @@ class PrepaymentController(
             try {
                 fileService.saveFile(result.tranNum, file.originalFilename ?: "file", file.bytes)
                 fileSaved = true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // File save failure doesn't affect main flow (V1: api.py L428-431)
             }
         }

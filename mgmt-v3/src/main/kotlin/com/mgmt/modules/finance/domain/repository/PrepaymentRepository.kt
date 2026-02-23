@@ -99,4 +99,25 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
         @Param("supplierCode") supplierCode: String,
         @Param("paymentDate") paymentDate: java.time.LocalDate
     ): List<String>
+
+    /**
+     * Find the most recent auto-rate prepayment for exchange rate lookup.
+     * V1 parity: rate_api — SELECT usd_rmb FROM in_pmt_prepay_final
+     *   WHERE tran_curr_type='A' AND usd_rmb>0 ORDER BY tran_date DESC LIMIT 1
+     * BUG-4 fix: push filter to SQL instead of loading all records.
+     */
+    @Query("""
+        SELECT p FROM Payment p 
+        WHERE p.paymentType = 'prepay' 
+          AND p.deletedAt IS NULL 
+          AND p.rateMode = 'auto' 
+          AND p.exchangeRate > 0 
+        ORDER BY p.paymentDate DESC, p.paymentNo DESC
+    """)
+    fun findLatestAutoRateAll(): List<Payment>
 }
+
+/**
+ * Extension to get just the first result (LIMIT 1 equivalent).
+ */
+fun PrepaymentRepository.findLatestAutoRate(): Payment? = findLatestAutoRateAll().firstOrNull()

@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi, type SupplierBalance, type TransactionListResponse, type TransactionItem as TxnItem } from '@/lib/api';
+import { financeApi, type SupplierBalance, type TransactionItem as TxnItem } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
-import { animate } from 'animejs';
 import SupplierBalanceList from './components/SupplierBalanceList';
 import TransactionTable from './components/TransactionTable';
 import PrepayWizard from './components/PrepayWizard';
 import HistoryPanel from './components/HistoryPanel';
+
+interface CurrentUser {
+  id: string;
+  username: string;
+  roles: string[];
+}
 
 /**
  * Prepayment Management Page
@@ -28,6 +33,7 @@ export default function PrepaymentPage() {
   const colors = themeColors[theme];
   const queryClient = useQueryClient();
 
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierBalance | null>(null);
   const [datePreset, setDatePreset] = useState<string>('');
@@ -44,14 +50,25 @@ export default function PrepaymentPage() {
   const [deleteTarget, setDeleteTarget] = useState<TxnItem | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<TxnItem | null>(null);
 
-  useEffect(() => { setIsClient(true); }, []);
+  // eslint-disable-next-line react-compiler/react-compiler
+  useEffect(() => {
+    setIsClient(true);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   // ═══════════ Data Fetching ═══════════
 
   const { data: balances, isLoading: loadingBalances } = useQuery({
     queryKey: ['prepaymentBalances'],
     queryFn: () => financeApi.getBalances(),
-    enabled: isClient,
+    enabled: isClient && !!currentUser,
   });
 
   const { data: txnData, isLoading: loadingTxns, refetch: refetchTxns } = useQuery({
@@ -61,7 +78,7 @@ export default function PrepaymentPage() {
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     }),
-    enabled: isClient && !!selectedSupplier,
+    enabled: isClient && !!currentUser && !!selectedSupplier,
   });
 
   // ═══════════ Handlers ═══════════
@@ -149,8 +166,30 @@ export default function PrepaymentPage() {
 
   if (!isClient) return null;
 
+  if (!currentUser) {
+    return (
+      <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p style={{ color: colors.textSecondary }} className="mb-4">
+            Please sign in to access this page.
+          </p>
+          <button
+            onClick={() => {
+              const loginBtn = document.querySelector('[data-login-trigger]') as HTMLElement;
+              if (loginBtn) loginBtn.click();
+            }}
+            className="inline-flex items-center px-6 py-2 rounded-full text-white"
+            style={{ backgroundColor: colors.blue }}
+          >
+            {tCommon('signIn')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20">
+    <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
       {/* Page title */}
       <section className="pt-12 pb-4 px-6">
         <div className="max-w-[1400px] mx-auto">
@@ -190,7 +229,7 @@ export default function PrepaymentPage() {
                 onAddNew={() => setShowWizard(true)}
                 onDelete={handleDelete}
                 onRestore={handleRestore}
-                onViewHistory={(tranNum) => setHistoryTranNum(tranNum)}
+                onViewHistory={(tranNum: string) => setHistoryTranNum(tranNum)}
               />
             ) : (
               <div

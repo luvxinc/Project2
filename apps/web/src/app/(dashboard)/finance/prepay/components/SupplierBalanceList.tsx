@@ -66,13 +66,12 @@ export default function SupplierBalanceList({ balances, isLoading, selectedCode,
         <button
           key={supplier.supplierCode}
           onClick={() => onSelect(supplier)}
-          className={`w-full text-left p-3 rounded-xl border transition-all hover:scale-[1.01] ${
-            selectedCode === supplier.supplierCode ? 'ring-2' : ''
-          }`}
+          className={`w-full text-left p-3 rounded-xl border transition-all hover:scale-[1.01]`}
           style={{
             backgroundColor: selectedCode === supplier.supplierCode ? `${colors.blue}10` : colors.bgSecondary,
             borderColor: selectedCode === supplier.supplierCode ? colors.blue : colors.border,
-            ringColor: colors.blue,
+            outline: selectedCode === supplier.supplierCode ? `2px solid ${colors.blue}` : 'none',
+            outlineOffset: '-1px',
           }}
         >
           <div className="flex items-center justify-between">
