@@ -36,4 +36,9 @@ export {
   type PrepaymentHistoryResponse, type StrategyVersionItem,
   type RateVersionItem, type AmountVersionItem, type FieldChange,
   type FileInfoResponse, type FileItem, type ExchangeRateResponse,
+  // Logistics
+  type LogisticListItem, type LogisticListResponse,
+  type SubmitLogisticPaymentRequest, type SubmitLogisticPaymentResponse,
+  type LogisticPaymentHistoryResponse, type LogisticSendVersion, type LogisticPaymentVersion,
+  type LogisticPaymentOrdersResponse, type LogisticPaymentOrder,
 } from './finance';

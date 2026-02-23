@@ -99,12 +99,14 @@ class ShipmentUseCase(
             savedItems.add(mapOf("poNum" to item.poNum, "sku" to item.sku, "quantity" to item.quantity, "unitPrice" to item.unitPrice.toDouble()))
         }
 
-        // Record CREATE event
+        // Record CREATE event (include priceKg + totalWeight for history audit)
         val changes = objectMapper.writeValueAsString(mapOf(
             "logisticNum" to saved.logisticNum,
             "sentDate" to saved.sentDate.toString(),
             "etaDate" to saved.etaDate?.toString(),
             "pallets" to saved.pallets,
+            "priceKg" to saved.priceKg.toDouble(),
+            "totalWeight" to saved.totalWeight.toDouble(),
             "logisticsCost" to saved.logisticsCost.toDouble(),
             "exchangeRate" to saved.exchangeRate.toDouble(),
             "items" to savedItems,

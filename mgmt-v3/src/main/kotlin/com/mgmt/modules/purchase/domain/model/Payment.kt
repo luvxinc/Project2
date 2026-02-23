@@ -13,10 +13,10 @@ import java.time.LocalDate
  * Discriminated by payment_type ENUM.
  */
 @Entity
-@Table(
-    name = "payments",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["payment_type", "payment_no"])]
-)
+@Table(name = "payments")
+// Uniqueness enforced by partial indexes in DB (V22 migration):
+//   uq_payments_type_no       — (payment_type, payment_no) WHERE payment_type != 'logistics'
+//   uq_payments_logistics_no  — (payment_type, payment_no, logistic_num) WHERE payment_type = 'logistics'
 class Payment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

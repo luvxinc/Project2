@@ -144,5 +144,142 @@
       "eventRateChange": "Rate Changed",
       "eventAmountChange": "Amount Changed"
     }
+  },
+
+  "logistic": {
+    "title": "Logistics Cost Management",
+    "subtitle": "Track shipping costs, freight payments and fee allocation",
+    "noData": "No logistics records found",
+    "recordCount": "{count} records",
+    "submitPayment": "Submit Payment",
+    "childLabel": "Delay",
+    "sectionUnpaid": "Unpaid Shipments",
+    "sectionPaid": "Paid Shipments",
+
+    "card": {
+      "shipmentCount": "{count} shipments",
+      "freight": "Freight",
+      "extraFee": "Extra Fee",
+      "total": "Total",
+      "settlementRate": "Settlement Rate",
+      "rateAuto": "Auto",
+      "rateManual": "Manual"
+    },
+
+    "status": {
+      "unpaid": "Unpaid",
+      "paid": "Paid",
+      "partial": "Partial",
+      "deleted": "Deleted"
+    },
+
+    "sort": {
+      "logisticNum": "Logistic #",
+      "dateSent": "Sent Date"
+    },
+
+    "payment": {
+      "title": "Submit Logistics Payment",
+      "selectedItems": "{count} shipments selected",
+      "paymentDate": "Payment Date",
+      "rateOption": "Exchange Rate Option",
+      "rateOriginal": "Original Rate",
+      "rateOriginalDesc": "Use each shipment's original exchange rate",
+      "ratePaymentDate": "Payment Date Rate",
+      "ratePaymentDateDesc": "Use a single rate for all shipments",
+      "rateSource": "Rate Source",
+      "rateAuto": "Auto",
+      "rateManual": "Manual",
+      "settlementRate": "Settlement Rate",
+      "extraFee": "Extra Fee",
+      "extraAmount": "Amount",
+      "extraCurrency": "Currency",
+      "extraNote": "Note",
+      "submit": "Submit Payment",
+      "securityTitle": "Confirm Payment",
+      "securityDescription": "Enter your security code to submit this logistics payment.",
+      "successTitle": "Payment Submitted",
+      "successDescription": "Logistics payment has been recorded successfully."
+    },
+
+    "actions": {
+      "delete": "Delete Payment",
+      "restore": "Restore Payment",
+      "history": "Payment History",
+      "orders": "Related Orders",
+      "files": "Files"
+    },
+
+    "delete": {
+      "title": "Delete Logistics Payment",
+      "description": "This will soft-delete the payment batch. Landed prices will be recalculated."
+    },
+
+    "restore": {
+      "title": "Restore Logistics Payment",
+      "description": "This will restore the deleted payment batch. Landed prices will be recalculated."
+    },
+
+    "history": {
+      "title": "Payment History",
+      "sendColumn": "Shipment Versions",
+      "paymentColumn": "Payment Versions",
+      "noSendVersions": "No shipment changes",
+      "noPaymentVersions": "No payment changes",
+      "noData": "No history data"
+    },
+
+    "detail": {
+      "back": "Back to List",
+      "tab_history": "History",
+      "tab_orders": "Related Orders",
+      "noPayment": "No payment record associated with this shipment",
+      "delayShipments": "Delay Sub-shipments",
+      "etaActualDays": "ETA / Actual Days",
+      "initial": "Initial"
+    },
+
+    "table": {
+      "logisticNum": "Logistic #",
+      "paymentStatus": "Status",
+      "dateSent": "Sent Date",
+      "dateEta": "ETA",
+      "receiveDate": "Received",
+      "etaDays": "ETA Days",
+      "actualDays": "Actual Days",
+      "pallets": "Pallets",
+      "priceKg": "Price/kg",
+      "totalWeight": "Weight (kg)",
+      "usdRmb": "Rate",
+      "rateMode": "Rate Mode",
+      "totalPriceRmb": "Freight (RMB)",
+      "totalPriceUsd": "Freight (USD)",
+      "logisticPaid": "Paid (RMB)",
+      "paymentDate": "Payment Date",
+      "pmtNo": "Payment #",
+      "extraPaid": "Extra Fee",
+      "totalWithExtra": "Total w/ Extra",
+      "actions": "Actions",
+      "count": "{count} shipments",
+      "search": "Search by logistic #...",
+      "clearFilters": "Clear"
+    },
+
+    "orders": {
+      "title": "Related Purchase Orders",
+      "noOrders": "No related orders found",
+      "poNum": "PO #",
+      "supplier": "Supplier",
+      "orderDate": "Order Date",
+      "currency": "Currency",
+      "rate": "Rate",
+      "sku": "SKU",
+      "qty": "Qty",
+      "unitPrice": "Unit Price",
+      "valueRmb": "Value (RMB)",
+      "valueUsd": "Value (USD)",
+      "totalRmb": "Total (RMB)",
+      "totalUsd": "Total (USD)"
+    }
   }
 }

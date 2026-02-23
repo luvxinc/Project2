@@ -344,19 +344,25 @@ def migrate_shipments(my_cur, pg_cur, dry_run=False):
     ship_id_map = {}  # logistic_num → pg_id
 
     for r in headers:
+        price_kg = safe_decimal(r[2], 5) or Decimal('0')
+        total_weight = safe_decimal(r[3], 2) or Decimal('0')
         logistics_cost = safe_decimal(r[4], 2) or Decimal('0')
         exchange_rate = safe_decimal(r[5], 4) or Decimal('7')
+        rate_mode = r[6] or 'M'
 
         pg_cur.execute("""
             INSERT INTO shipments
             (logistic_num, sent_date, eta_date, pallets, logistics_cost, exchange_rate,
+             total_weight, price_kg, rate_mode,
              status, note, created_at, updated_at, created_by, version)
-            VALUES (%s, %s, %s, %s, %s, %s, 'pending', %s, NOW(), NOW(), %s, 0)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    'pending', %s, NOW(), NOW(), %s, 0)
             RETURNING id
         """, (
             r[1], r[0], r[7],
             r[8] or 0,
             logistics_cost, exchange_rate,
+            total_weight, price_kg, rate_mode,
             r[9], r[11] or 'system'
         ))
         ship_id = pg_cur.fetchone()[0]
@@ -631,10 +637,10 @@ def migrate_payments(my_cur, pg_cur, dry_run=False):
     log_pmts = my_cur.fetchall()
 
     for r in log_pmts:
-        v1_id = r[0]
         pmt_no = r[1]
-        # De-duplicate: append V1 id suffix if pmt_no is not unique
-        payment_no = f'{pmt_no}_{v1_id}'
+        # V1 logistics: same pmt_no is shared across multiple shipments in a batch
+        # V22 migration changed the unique constraint to (type, payment_no, logistic_num)
+        payment_no = pmt_no
 
         pg_cur.execute('SELECT id FROM shipments WHERE logistic_num = %s', (r[2],))
         ship_row = pg_cur.fetchone()

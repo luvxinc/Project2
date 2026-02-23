@@ -144,5 +144,142 @@
       "eventRateChange": "汇率变更",
       "eventAmountChange": "金额变更"
     }
+  },
+
+  "logistic": {
+    "title": "物流费用管理",
+    "subtitle": "跟踪物流运费结算、付款记录与费用分摊",
+    "noData": "暂无物流记录",
+    "recordCount": "共 {count} 条记录",
+    "submitPayment": "提交付款",
+    "childLabel": "延迟单",
+    "sectionUnpaid": "未付款物流单",
+    "sectionPaid": "已付款物流单",
+
+    "card": {
+      "shipmentCount": "{count} 单",
+      "freight": "运费",
+      "extraFee": "额外费用",
+      "total": "总费用",
+      "settlementRate": "结算汇率",
+      "rateAuto": "自动",
+      "rateManual": "手动"
+    },
+
+    "status": {
+      "unpaid": "未付款",
+      "paid": "已付款",
+      "partial": "部分付款",
+      "deleted": "已删除"
+    },
+
+    "sort": {
+      "logisticNum": "物流单号",
+      "dateSent": "发货日期"
+    },
+
+    "payment": {
+      "title": "提交物流付款",
+      "selectedItems": "已选 {count} 个物流单",
+      "paymentDate": "付款日期",
+      "rateOption": "汇率选项",
+      "rateOriginal": "原始汇率",
+      "rateOriginalDesc": "使用每个物流单的原始汇率",
+      "ratePaymentDate": "付款日汇率",
+      "ratePaymentDateDesc": "所有物流单统一使用一个汇率",
+      "rateSource": "汇率来源",
+      "rateAuto": "自动",
+      "rateManual": "手动",
+      "settlementRate": "结算汇率",
+      "extraFee": "附加费用",
+      "extraAmount": "金额",
+      "extraCurrency": "币种",
+      "extraNote": "备注",
+      "submit": "提交付款",
+      "securityTitle": "确认付款",
+      "securityDescription": "请输入安全码以确认物流付款操作。",
+      "successTitle": "付款已提交",
+      "successDescription": "物流付款记录已成功创建。"
+    },
+
+    "actions": {
+      "delete": "删除付款",
+      "restore": "恢复付款",
+      "history": "付款历史",
+      "orders": "关联订单",
+      "files": "附件"
+    },
+
+    "delete": {
+      "title": "删除物流付款",
+      "description": "此操作将软删除该付款批次。落地价将重新计算。"
+    },
+
+    "restore": {
+      "title": "恢复物流付款",
+      "description": "此操作将恢复已删除的付款批次。落地价将重新计算。"
+    },
+
+    "history": {
+      "title": "付款历史",
+      "sendColumn": "发货版本",
+      "paymentColumn": "付款版本",
+      "noSendVersions": "暂无发货变更",
+      "noPaymentVersions": "暂无付款变更",
+      "noData": "暂无历史数据"
+    },
+
+    "detail": {
+      "back": "返回列表",
+      "tab_history": "历史记录",
+      "tab_orders": "关联订单",
+      "noPayment": "该物流单暂无关联付款记录",
+      "delayShipments": "延迟子单",
+      "etaActualDays": "预计/实际天数",
+      "initial": "初始"
+    },
+
+    "table": {
+      "logisticNum": "物流单号",
+      "paymentStatus": "状态",
+      "dateSent": "发货日期",
+      "dateEta": "预计到达",
+      "receiveDate": "入库日期",
+      "etaDays": "预计天数",
+      "actualDays": "实际天数",
+      "pallets": "托盘数",
+      "priceKg": "单价/kg",
+      "totalWeight": "重量(kg)",
+      "usdRmb": "汇率",
+      "rateMode": "汇率模式",
+      "totalPriceRmb": "运费(RMB)",
+      "totalPriceUsd": "运费(USD)",
+      "logisticPaid": "已付(RMB)",
+      "paymentDate": "付款日期",
+      "pmtNo": "付款单号",
+      "extraPaid": "附加费",
+      "totalWithExtra": "含附加合计",
+      "actions": "操作",
+      "count": "共 {count} 条物流记录",
+      "search": "搜索物流单号...",
+      "clearFilters": "清除"
+    },
+
+    "orders": {
+      "title": "关联采购订单",
+      "noOrders": "未找到关联订单",
+      "poNum": "采购单号",
+      "supplier": "供应商",
+      "orderDate": "下单日期",
+      "currency": "货币",
+      "rate": "汇率",
+      "sku": "SKU",
+      "qty": "数量",
+      "unitPrice": "单价",
+      "valueRmb": "金额(RMB)",
+      "valueUsd": "金额(USD)",
+      "totalRmb": "合计(RMB)",
+      "totalUsd": "合计(USD)"
+    }
   }
 }
