@@ -41,4 +41,10 @@ export {
   type SubmitLogisticPaymentRequest, type SubmitLogisticPaymentResponse,
   type LogisticPaymentHistoryResponse, type LogisticSendVersion, type LogisticPaymentVersion,
   type LogisticPaymentOrdersResponse, type LogisticPaymentOrder,
+  // Deposits
+  type DepositListItem, type DepositPaymentDetail, type DepositListResponse,
+  type SubmitDepositPaymentRequest, type SubmitDepositPaymentResponse,
+  type DepositPaymentItemRequest, type VendorBalanceResponse,
+  type DepositHistoryResponse, type DepositStrategyVersion, type DepositPaymentVersion,
+  type DepositOrdersResponse, type DepositOrderDetail, type DepositOrderItem,
 } from './finance';

@@ -252,6 +252,152 @@ export interface LogisticPaymentOrder {
 }
 
 // ═══════════════════════════════════════════════
+// DEPOSIT TYPES
+// V1 parity: backend/apps/finance/views/deposit/api.py
+// ═══════════════════════════════════════════════
+
+export interface DepositPaymentDetail {
+  pmtNo: string;
+  depDate: string;
+  depCur: string;
+  depPaid: number;
+  depPaidCur: number;
+  depCurMode: string;
+  depPrepayAmount: number;
+  depOverride: number;
+  extraAmount: number;
+  extraCur: string;
+}
+
+export interface DepositListItem {
+  poNum: string;
+  poDate: string;
+  skuCount: number;
+  totalAmount: number;
+  totalAmountUsd: number;
+  totalAmountRmb: number;
+  curCurrency: string;
+  curUsdRmb: number;
+  rateSource: string;
+  rateSourceCode: string;
+  depositPar: number;
+  depositAmount: number;
+  depositAmountUsd: number;
+  depositAmountRmb: number;
+  actualPaid: number;
+  actualPaidUsd: number;
+  prepayDeducted: number;
+  prepayDeductedUsd: number;
+  depositPending: number;
+  depositPendingUsd: number;
+  balanceRemaining: number;
+  balanceRemainingUsd: number;
+  paymentStatus: string;      // paid / unpaid / partial
+  isPaid: boolean;
+  supplierCode: string;
+  supplierName: string;
+  latestPaymentDate: string;
+  extraFeesUsd: number;
+  extraFeesRmb: number;
+  paymentDetails: DepositPaymentDetail[];
+}
+
+export interface DepositListResponse {
+  data: DepositListItem[];
+  count: number;
+}
+
+export interface DepositPaymentItemRequest {
+  poNum: string;
+  paymentMode: string;         // "original" | "custom"
+  customCurrency?: string;
+  customAmount?: number;
+  prepayAmount?: number;
+  coverStandard?: boolean;
+}
+
+export interface SubmitDepositPaymentRequest {
+  poNums: string[];
+  paymentDate: string;
+  usePaymentDateRate: boolean;
+  settlementRate?: number;
+  items: DepositPaymentItemRequest[];
+  extraFee?: number;
+  extraFeeCurrency?: string;
+  extraFeeNote?: string;
+}
+
+export interface SubmitDepositPaymentResponse {
+  pmtNos: string[];
+  count: number;
+  prepayCount: number;
+  message: string;
+}
+
+export interface VendorBalanceResponse {
+  supplierCode: string;
+  supplierName: string;
+  currency: string;
+  balanceBase: number;
+  balanceUsd: number;
+}
+
+export interface DepositStrategyVersion {
+  seq: string;
+  dateRecord: string;
+  byUser: string;
+  note: string;
+  isInitial: boolean;
+  data: Record<string, unknown>;
+  changes: FieldChange[];
+}
+
+export interface DepositPaymentVersion {
+  seq: string;
+  dateRecord: string;
+  byUser: string;
+  note: string;
+  isInitial: boolean;
+  data: Record<string, unknown>;
+  changes: FieldChange[];
+}
+
+export interface DepositHistoryResponse {
+  strategyVersions: DepositStrategyVersion[];
+  paymentVersions: DepositPaymentVersion[];
+}
+
+export interface DepositOrderItem {
+  sku: string;
+  qty: number;
+  unitPrice: number;
+  currency: string;
+  valueRmb: number;
+  valueUsd: number;
+}
+
+export interface DepositOrderDetail {
+  poNum: string;
+  supplierCode: string;
+  poDate: string;
+  depositRmb: number;
+  depositUsd: number;
+  depositPercent: number;
+  currency: string;
+  paymentDate: string;
+  exchangeRate: number;
+  prepayUsedRmb: number;
+  actualPaidRmb: number;
+  items: DepositOrderItem[];
+  totalRmb: number;
+  totalUsd: number;
+}
+
+export interface DepositOrdersResponse {
+  orders: DepositOrderDetail[];
+}
+
+// ═══════════════════════════════════════════════
 // API FUNCTIONS
 // ═══════════════════════════════════════════════
 
@@ -422,4 +568,96 @@ export const financeApi = {
     api.get<LogisticPaymentOrdersResponse>(
       `/finance/logistics/${encodeURIComponent(logisticNum)}/orders`
     ),
+
+  // ═══════════════════════════════════════════════
+  // DEPOSIT PAYMENT API
+  // V1 parity: deposit/api.py (10 endpoints)
+  // ═══════════════════════════════════════════════
+
+  // 23. Deposit list
+  getDepositList: (params?: { sortBy?: string; sortOrder?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.sortBy) query.set('sortBy', params.sortBy);
+    if (params?.sortOrder) query.set('sortOrder', params.sortOrder);
+    const qs = query.toString();
+    return api.get<DepositListResponse>(`/finance/deposits${qs ? `?${qs}` : ''}`);
+  },
+
+  // 24. Submit deposit batch payment
+  // Security: L2 (modify)
+  submitDepositPayment: (data: SubmitDepositPaymentRequest, sec_code_l2: string) =>
+    api.post<SubmitDepositPaymentResponse>('/finance/deposits/payments', {
+      ...data,
+      sec_code_l2,
+    }),
+
+  // 25. Delete deposit payment
+  // Security: L3 (db)
+  deleteDepositPayment: (pmtNo: string, sec_code_l3: string) =>
+    api.delete<{ pmtNo: string; affectedCount: number; message: string }>(
+      `/finance/deposits/payments/${encodeURIComponent(pmtNo)}`,
+      { sec_code_l3 }
+    ),
+
+  // 26. Vendor balance (for deposit wizard)
+  getVendorBalance: (supplierCode: string, paymentDate?: string) => {
+    const query = new URLSearchParams({ supplierCode });
+    if (paymentDate) query.set('paymentDate', paymentDate);
+    return api.get<VendorBalanceResponse>(`/finance/deposits/vendor-balance?${query}`);
+  },
+
+  // 27. Deposit payment history
+  getDepositPaymentHistory: (pmtNo: string, poNum: string) =>
+    api.get<DepositHistoryResponse>(
+      `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/history?poNum=${encodeURIComponent(poNum)}`
+    ),
+
+  // 28. Deposit payment orders
+  getDepositPaymentOrders: (pmtNo: string) =>
+    api.get<DepositOrdersResponse>(
+      `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/orders`
+    ),
+
+  // 29. Deposit payment files
+  getDepositPaymentFiles: (pmtNo: string) =>
+    api.get<FileInfoResponse>(
+      `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/files`
+    ),
+
+  // 30. Upload deposit file
+  // Security: L2 (modify)
+  uploadDepositPaymentFile: async (pmtNo: string, file: File, sec_code_l2: string) => {
+    const { getApiBaseUrlCached } = await import('@/lib/api-url');
+    const base = getApiBaseUrlCached();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(
+      `${base}/finance/deposits/payments/${encodeURIComponent(pmtNo)}/files`,
+      {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'X-Security-Code': sec_code_l2,
+          'X-Security-Level': 'L2',
+        },
+        body: formData,
+      }
+    );
+    if (!res.ok) throw await res.json();
+    const json = await res.json();
+    return json.data || json;
+  },
+
+  // 31. Delete deposit file
+  // Security: L2 (modify)
+  deleteDepositPaymentFile: (pmtNo: string, filename: string, sec_code_l2: string) =>
+    api.delete<{ message: string }>(
+      `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
+      { sec_code_l2 }
+    ),
+
+  // 32. Serve deposit file (returns URL)
+  serveDepositPaymentFile: (pmtNo: string, filename: string) =>
+    `/finance/deposits/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
 };

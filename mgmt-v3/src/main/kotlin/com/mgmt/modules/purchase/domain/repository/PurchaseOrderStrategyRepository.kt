@@ -10,4 +10,10 @@ interface PurchaseOrderStrategyRepository : JpaRepository<PurchaseOrderStrategy,
     fun findByPoId(poId: Long): PurchaseOrderStrategy?
 
     fun findByPoNum(poNum: String): PurchaseOrderStrategy?
+
+    /** Find latest strategy version for a PO (highest strategySeq). */
+    fun findFirstByPoNumOrderByStrategySeqDesc(poNum: String): PurchaseOrderStrategy?
+
+    /** Find all strategy versions for a PO, ordered by strategySeq ASC (for history). */
+    fun findAllByPoNumOrderByStrategySeqAsc(poNum: String): List<PurchaseOrderStrategy>
 }

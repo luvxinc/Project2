@@ -146,6 +146,178 @@
     }
   },
 
+  "deposit": {
+    "title": "定金付款管理",
+    "subtitle": "管理采购订单定金支付与核销状态",
+    "noData": "暂无定金记录",
+    "recordCount": "共 {count} 条记录",
+    "submitPayment": "提交付款",
+    "sectionUnpaid": "未付定金",
+    "sectionPaid": "已付定金",
+    "selectAll": "全选",
+    "batchPayment": "批量付款 ({count})",
+
+    "status": {
+      "unpaid": "未付款",
+      "paid": "已付款",
+      "partial": "部分付款"
+    },
+
+    "sort": {
+      "poNum": "订单号",
+      "poDate": "订单日期"
+    },
+
+    "table": {
+      "poNum": "订单号",
+      "poDate": "订单日期",
+      "skuCount": "SKU数",
+      "totalAmount": "订单总额",
+      "settlementRate": "结算汇率",
+      "rateSource": "汇率来源",
+      "depositRate": "定金比例",
+      "depositAmount": "定金金额",
+      "paidDeposit": "已付定金",
+      "depositPending": "定金待付",
+      "balanceRemaining": "尾款余额",
+      "paymentDate": "付款日期",
+      "extraFees": "额外费用",
+      "actions": "操作",
+      "pmtNo": "付款单号",
+      "currency": "货币",
+      "cashPaid": "现金支付",
+      "prepayDeducted": "预付抵扣",
+      "override": "覆盖标准",
+      "search": "搜索订单号...",
+      "supplierFilter": "按供应商筛选",
+      "count": "共 {count} 条记录",
+      "clearFilters": "清除",
+      "actualPaid": "实际支付",
+      "latestPaymentDate": "最近付款"
+    },
+
+    "payment": {
+      "title": "提交定金付款",
+      "selectedOrders": "已选 {count} 个订单",
+      "paymentDate": "付款日期",
+      "rateOption": "汇率选项",
+      "rateOriginal": "原始汇率",
+      "rateOriginalDesc": "使用每个订单的原始汇率",
+      "ratePaymentDate": "付款日汇率",
+      "ratePaymentDateDesc": "所有订单统一使用一个汇率",
+      "rateManual": "手动",
+      "rateAuto": "自动",
+      "settlementRate": "结算汇率",
+      "prepayBalance": "预付余额",
+      "enablePrepay": "启用预付款抵扣",
+      "extraFee": "附加费用",
+      "extraAmount": "金额",
+      "extraCurrency": "币种",
+      "extraNote": "备注",
+      "coverStandard": "覆盖定金标准",
+      "paymentMode": "付款模式",
+      "modeOriginal": "原额付款",
+      "modeCustom": "自定义金额",
+      "customAmount": "自定义金额",
+      "customCurrency": "币种",
+      "submit": "提交付款",
+      "securityTitle": "确认付款",
+      "securityDescription": "请输入安全码以确认定金付款操作。",
+      "successTitle": "付款已提交",
+      "successDescription": "定金付款记录已成功创建。",
+      "summaryDeposit": "定金合计",
+      "summaryPaid": "已付金额",
+      "summaryPrepay": "预付抵扣",
+      "summaryCash": "现金支付",
+      "summaryPending": "支付后待付",
+      "usePrepay": "启用预付款抵扣",
+      "overrideStandard": "覆盖定金标准",
+      "vendorBalance": "供应商余额"
+    },
+
+    "actions": {
+      "delete": "删除付款",
+      "history": "付款历史",
+      "orders": "关联订单",
+      "files": "附件",
+      "uploadFile": "上传文件",
+      "deleteFile": "删除文件"
+    },
+
+    "delete": {
+      "title": "删除定金付款",
+      "description": "此操作将软删除该定金付款记录。预付款余额将恢复。"
+    },
+
+    "history": {
+      "title": "付款历史",
+      "strategyColumn": "策略版本",
+      "paymentColumn": "付款版本",
+      "noStrategyVersions": "暂无策略变更",
+      "noPaymentVersions": "暂无付款变更",
+      "noData": "暂无历史数据"
+    },
+
+    "orders": {
+      "title": "关联采购订单",
+      "noOrders": "未找到关联订单",
+      "poNum": "采购单号",
+      "supplier": "供应商",
+      "orderDate": "下单日期",
+      "currency": "货币",
+      "rate": "汇率",
+      "depositPercent": "定金比例",
+      "depositRmb": "定金(RMB)",
+      "depositUsd": "定金(USD)",
+      "prepayUsed": "预付抵扣",
+      "actualPaid": "实际支付",
+      "sku": "SKU",
+      "qty": "数量",
+      "unitPrice": "单价",
+      "valueRmb": "金额(RMB)",
+      "valueUsd": "金额(USD)",
+      "totalRmb": "合计(RMB)",
+      "totalUsd": "合计(USD)"
+    },
+
+    "detail": {
+      "back": "返回列表",
+      "tabHistory": "历史记录",
+      "tabOrders": "关联订单",
+      "tabFiles": "附件文件",
+      "tab_history": "历史记录",
+      "tab_orders": "关联订单",
+      "tab_files": "附件文件",
+      "depositAmount": "定金金额",
+      "supplier": "供应商",
+      "rateAuto": "自动",
+      "rateManual": "手动",
+      "depositPercent": "定金比例",
+      "prepayDeducted": "预付抵扣"
+    },
+
+    "sidebar": {
+      "suppliers": "供应商"
+    },
+
+    "files": {
+      "uploadTitle": "上传文件",
+      "uploadDesc": "选择要上传的文件",
+      "deleteTitle": "删除文件",
+      "deleteDesc": "此文件将被永久删除",
+      "download": "下载",
+      "delete": "删除"
+    },
+
+    "messages": {
+      "paymentSuccess": "定金付款提交成功",
+      "paymentDeleted": "定金付款已删除",
+      "noRecordsCreated": "未产生付款记录（金额均为零）",
+      "fileUploaded": "文件上传成功",
+      "fileDeleted": "文件删除成功"
+    }
+  },
+
   "logistic": {
     "title": "物流费用管理",
     "subtitle": "跟踪物流运费结算、付款记录与费用分摊",

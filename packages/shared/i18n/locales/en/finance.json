@@ -146,6 +146,178 @@
     }
   },
 
+  "deposit": {
+    "title": "Deposit Payment Management",
+    "subtitle": "Manage purchase order deposit payments and settlement status",
+    "noData": "No deposit records found",
+    "recordCount": "{count} records",
+    "submitPayment": "Submit Payment",
+    "sectionUnpaid": "Unpaid Deposits",
+    "sectionPaid": "Paid Deposits",
+    "selectAll": "Select All",
+    "batchPayment": "Batch Payment ({count})",
+
+    "status": {
+      "unpaid": "Unpaid",
+      "paid": "Paid",
+      "partial": "Partial"
+    },
+
+    "sort": {
+      "poNum": "PO #",
+      "poDate": "PO Date"
+    },
+
+    "table": {
+      "poNum": "PO #",
+      "poDate": "PO Date",
+      "skuCount": "SKU Count",
+      "totalAmount": "Total Amount",
+      "settlementRate": "Settlement Rate",
+      "rateSource": "Rate Source",
+      "depositRate": "Deposit %",
+      "depositAmount": "Deposit Amount",
+      "paidDeposit": "Paid Deposit",
+      "depositPending": "Pending",
+      "balanceRemaining": "Balance",
+      "paymentDate": "Payment Date",
+      "extraFees": "Extra Fees",
+      "actions": "Actions",
+      "pmtNo": "Payment #",
+      "currency": "Currency",
+      "cashPaid": "Cash Paid",
+      "prepayDeducted": "Prepay Used",
+      "override": "Override",
+      "search": "Search by PO #...",
+      "supplierFilter": "Filter by Supplier",
+      "count": "{count} records",
+      "clearFilters": "Clear",
+      "actualPaid": "Actual Paid",
+      "latestPaymentDate": "Last Payment"
+    },
+
+    "payment": {
+      "title": "Submit Deposit Payment",
+      "selectedOrders": "{count} orders selected",
+      "paymentDate": "Payment Date",
+      "rateOption": "Exchange Rate Option",
+      "rateOriginal": "Original Rate",
+      "rateOriginalDesc": "Use each PO's original exchange rate",
+      "ratePaymentDate": "Payment Date Rate",
+      "ratePaymentDateDesc": "Use a single rate for all POs",
+      "rateManual": "Manual",
+      "rateAuto": "Auto",
+      "settlementRate": "Settlement Rate",
+      "prepayBalance": "Prepay Balance",
+      "enablePrepay": "Enable prepay deduction",
+      "extraFee": "Extra Fee",
+      "extraAmount": "Amount",
+      "extraCurrency": "Currency",
+      "extraNote": "Note",
+      "coverStandard": "Override deposit standard",
+      "paymentMode": "Payment Mode",
+      "modeOriginal": "Original Amount",
+      "modeCustom": "Custom Amount",
+      "customAmount": "Custom Amount",
+      "customCurrency": "Currency",
+      "submit": "Submit Payment",
+      "securityTitle": "Confirm Payment",
+      "securityDescription": "Enter your security code to submit this deposit payment.",
+      "successTitle": "Payment Submitted",
+      "successDescription": "Deposit payment has been recorded successfully.",
+      "summaryDeposit": "Deposit Total",
+      "summaryPaid": "Already Paid",
+      "summaryPrepay": "Prepay Deduction",
+      "summaryCash": "Cash Payment",
+      "summaryPending": "Pending After",
+      "usePrepay": "Enable prepay deduction",
+      "overrideStandard": "Override deposit standard",
+      "vendorBalance": "Vendor Balance"
+    },
+
+    "actions": {
+      "delete": "Delete Payment",
+      "history": "Payment History",
+      "orders": "Related Orders",
+      "files": "Files",
+      "uploadFile": "Upload File",
+      "deleteFile": "Delete File"
+    },
+
+    "delete": {
+      "title": "Delete Deposit Payment",
+      "description": "This will soft-delete the deposit payment. Prepay balance will be restored."
+    },
+
+    "history": {
+      "title": "Payment History",
+      "strategyColumn": "Strategy Versions",
+      "paymentColumn": "Payment Versions",
+      "noStrategyVersions": "No strategy changes",
+      "noPaymentVersions": "No payment changes",
+      "noData": "No history data"
+    },
+
+    "orders": {
+      "title": "Related Purchase Orders",
+      "noOrders": "No related orders found",
+      "poNum": "PO #",
+      "supplier": "Supplier",
+      "orderDate": "Order Date",
+      "currency": "Currency",
+      "rate": "Rate",
+      "depositPercent": "Deposit %",
+      "depositRmb": "Deposit (RMB)",
+      "depositUsd": "Deposit (USD)",
+      "prepayUsed": "Prepay Used",
+      "actualPaid": "Actual Paid",
+      "sku": "SKU",
+      "qty": "Qty",
+      "unitPrice": "Unit Price",
+      "valueRmb": "Value (RMB)",
+      "valueUsd": "Value (USD)",
+      "totalRmb": "Total (RMB)",
+      "totalUsd": "Total (USD)"
+    },
+
+    "detail": {
+      "back": "Back to List",
+      "tabHistory": "History",
+      "tabOrders": "Orders",
+      "tabFiles": "Files",
+      "tab_history": "History",
+      "tab_orders": "Orders",
+      "tab_files": "Files",
+      "depositAmount": "Deposit Amount",
+      "supplier": "Supplier",
+      "rateAuto": "Auto",
+      "rateManual": "Manual",
+      "depositPercent": "Deposit %",
+      "prepayDeducted": "Prepay Deducted"
+    },
+
+    "sidebar": {
+      "suppliers": "Suppliers"
+    },
+
+    "files": {
+      "uploadTitle": "Upload File",
+      "uploadDesc": "Choose files to upload",
+      "deleteTitle": "Delete File",
+      "deleteDesc": "This file will be permanently deleted",
+      "download": "Download",
+      "delete": "Delete"
+    },
+
+    "messages": {
+      "paymentSuccess": "Deposit payment submitted successfully",
+      "paymentDeleted": "Deposit payment deleted successfully",
+      "noRecordsCreated": "No payment records created (all amounts are zero)",
+      "fileUploaded": "File uploaded successfully",
+      "fileDeleted": "File deleted successfully"
+    }
+  },
+
   "logistic": {
     "title": "Logistics Cost Management",
     "subtitle": "Track shipping costs, freight payments and fee allocation",

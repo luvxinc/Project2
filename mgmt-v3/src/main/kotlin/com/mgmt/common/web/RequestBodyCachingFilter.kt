@@ -47,7 +47,11 @@ class RequestBodyCachingFilter : OncePerRequestFilter() {
     }
 
     private fun isBodyRequest(request: HttpServletRequest): Boolean {
-        return request.method in setOf("POST", "PUT", "PATCH")
+        if (request.method !in setOf("POST", "PUT", "PATCH")) return false
+        // Skip multipart requests — caching the raw body breaks Spring's multipart resolver
+        val contentType = request.contentType ?: return true
+        if (contentType.startsWith("multipart/")) return false
+        return true
     }
 }
 
