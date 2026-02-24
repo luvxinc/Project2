@@ -7,11 +7,11 @@ import { inventoryApi } from '@/lib/api/inventory';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { WarehouseCard } from './components/WarehouseCard';
-import { WarehouseWizard } from './components/WarehouseWizard';
+import { WarehouseModal } from './components/WarehouseModal';
 import { CustomDownloadView } from './components/CustomDownloadView';
 import type { WarehouseNode, WarehouseTreeResponse } from '@/lib/api/inventory';
 
-type View = 'list' | 'wizard' | 'customDownload';
+type View = 'list' | 'customDownload';
 
 export default function ShelfPage() {
   const t = useTranslations('inventory');
@@ -23,8 +23,9 @@ export default function ShelfPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Wizard state
-  const [wizardMode, setWizardMode] = useState<'create' | 'edit'>('create');
+  // Modal state (replaces wizard view)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editTarget, setEditTarget] = useState<WarehouseNode | undefined>();
   const [customDownloadWarehouse, setCustomDownloadWarehouse] = useState<string | undefined>();
 
@@ -71,15 +72,15 @@ export default function ShelfPage() {
   }, [loadData]);
 
   const handleEdit = (warehouse: WarehouseNode) => {
-    setWizardMode('edit');
+    setModalMode('edit');
     setEditTarget(warehouse);
-    setView('wizard');
+    setModalOpen(true);
   };
 
   const handleCreate = () => {
-    setWizardMode('create');
+    setModalMode('create');
     setEditTarget(undefined);
-    setView('wizard');
+    setModalOpen(true);
   };
 
   const handleDelete = (warehouse: WarehouseNode) => {
@@ -108,22 +109,11 @@ export default function ShelfPage() {
     setView('customDownload');
   };
 
-  const handleWizardComplete = () => {
-    setView('list');
+  const handleModalComplete = () => {
+    setModalOpen(false);
+    setEditTarget(undefined);
     loadData();
   };
-
-  // Wizard view
-  if (view === 'wizard') {
-    return (
-      <WarehouseWizard
-        mode={wizardMode}
-        existingWarehouse={editTarget}
-        onComplete={handleWizardComplete}
-        onCancel={() => setView('list')}
-      />
-    );
-  }
 
   // Custom download view
   if (view === 'customDownload' && data) {
@@ -257,6 +247,15 @@ export default function ShelfPage() {
           </div>
         )}
       </div>
+
+      {/* Warehouse Create/Edit Modal */}
+      <WarehouseModal
+        isOpen={modalOpen}
+        mode={modalMode}
+        existingWarehouse={editTarget}
+        onComplete={handleModalComplete}
+        onCancel={() => { setModalOpen(false); setEditTarget(undefined); }}
+      />
 
       {/* Delete confirmation dialog */}
       <SecurityCodeDialog
