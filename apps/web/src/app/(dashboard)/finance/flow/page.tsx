@@ -510,7 +510,7 @@ function FlowRow({
     const barColor = (ok: boolean, partial: boolean, special?: string) =>
       special || (ok ? '#30d158' : partial ? '#ffd60a' : 'rgba(142,142,147,0.3)');
 
-    const depColor = depNotRequired ? '#64d2ff' : barColor(depOk, depPartial);
+    const depColor = depNotRequired ? colors.teal : barColor(depOk, depPartial);
     const pmtColor = barColor(pmtOk, pmtPartial);
     const logShipColor = !hasLogistics ? 'rgba(142,142,147,0.3)' : logArrived ? '#30d158' : '#ffd60a';
     const logPmtColor = !hasLogistics ? 'rgba(142,142,147,0.3)' : barColor(logPmtOk, logPmtPartial);

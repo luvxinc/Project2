@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { purchaseApi, type ReceiveManagementItem, type ReceiveManagementDetail, type ReceiveDetailItem, type ReceiveDiff } from '@/lib/api';
+import { shipmentStatusStyle, receiveItemStatusColor, diffStatusStyle } from '@/lib/status-colors';
 
 interface ReceiveDetailPanelProps {
   item: ReceiveManagementItem;
@@ -16,19 +17,7 @@ interface ReceiveDetailPanelProps {
   onBack: () => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  IN_TRANSIT:      '#f5a623',
-  ALL_RECEIVED:    '#30d158',
-  DIFF_UNRESOLVED: '#ff453a',
-  DIFF_RESOLVED:   '#8e8e93',
-  DELETED:         '#636366',
-};
 
-const ITEM_STATUS_COLORS: Record<string, string> = {
-  normal:  '#30d158',
-  deficit: '#ff453a',
-  excess:  '#f5a623',
-};
 
 // ── Sub-component: SKU Accordion Items ──────────────────────────────────────
 // V1 parity: detail.py groups items by DISTINCT po_sku — no poNum column shown.
@@ -82,7 +71,7 @@ function ItemsFlatTable({ items, colors, t }: ItemsFlatTableProps) {
         <tbody>
           {sorted.map((row, idx) => {
             const diff = row.sentQuantity - row.receiveQuantity;
-            const sc = ITEM_STATUS_COLORS[row.itemStatus] ?? colors.text;
+            const sc = receiveItemStatusColor(row.itemStatus, colors);
             return (
               <tr
                 key={`${row.poNum}-${row.sku}-${idx}`}
@@ -124,7 +113,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
     enabled: activeTab === 'history',
   });
 
-  const statusColor = STATUS_COLORS[item.status] ?? '#8e8e93';
+  const statusColor = shipmentStatusStyle(item.status, colors).color;
 
   return (
     <div className="relative">
@@ -315,8 +304,8 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                           <td className="px-4 py-2.5">
                             <span className="text-xs px-2 py-0.5 rounded-full"
                               style={{
-                                backgroundColor: d.status === 'pending' ? 'rgba(255,69,58,0.12)' : 'rgba(99,99,102,0.12)',
-                                color: d.status === 'pending' ? '#ff453a' : '#8e8e93',
+                                backgroundColor: diffStatusStyle(d.status, colors).bg,
+                                color: diffStatusStyle(d.status, colors).color,
                               }}
                             >
                               {t(`receives.diffStatus.${d.status}`)}
@@ -442,9 +431,9 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                         }}
                                       >
                                         <span className="font-mono truncate" style={{ color: colors.textSecondary }}>{item.poNum}</span>
-                                        <span className="font-mono font-medium" style={{ color: isChanged ? '#f5a623' : colors.text }}>{item.sku}</span>
+                                        <span className="font-mono font-medium" style={{ color: isChanged ? colors.orange : colors.text }}>{item.sku}</span>
                                         <span className="text-right" style={{ color: colors.textSecondary }}>{item.sentQuantity}</span>
-                                        <span className="text-right font-semibold" style={{ color: isChanged ? '#f5a623' : isDiff ? '#ff453a' : '#30d158' }}>
+                                        <span className="text-right font-semibold" style={{ color: isChanged ? colors.orange : isDiff ? colors.red : colors.green }}>
                                           {item.receiveQuantity}{isChanged && ' ✎'}
                                         </span>
                                       </div>
@@ -531,7 +520,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                     className="text-xs font-mono font-bold px-2 py-0.5 rounded"
                                     style={{
                                       backgroundColor: dv.isInitial ? 'rgba(255,69,58,0.12)' : 'rgba(245,166,35,0.12)',
-                                      color: dv.isInitial ? '#ff453a' : '#f5a623',
+                                      color: dv.isInitial ? colors.red : colors.orange,
                                     }}
                                   >
                                     {dv.seq ?? 'D01'}
@@ -578,7 +567,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                           backgroundColor: isChanged ? 'rgba(255,69,58,0.05)' : 'transparent',
                                         }}
                                       >
-                                        <span className="font-mono font-medium" style={{ color: isChanged ? '#ff453a' : colors.text }}>{item.sku}</span>
+                                        <span className="font-mono font-medium" style={{ color: isChanged ? colors.red : colors.text }}>{item.sku}</span>
                                         <span className="text-right" style={{ color: colors.textSecondary }}>{item.sentQuantity}</span>
                                         <span className="text-right" style={{ color: colors.textSecondary }}>{item.receiveQuantity}</span>
                                         <span className="text-right font-semibold" style={{ color: colors.red }}>{item.diffQuantity}</span>

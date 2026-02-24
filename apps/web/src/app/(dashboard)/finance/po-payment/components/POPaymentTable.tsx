@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { POPaymentListItem, POPaymentDetail } from '@/lib/api/finance';
 import { themeColors } from '@/contexts/ThemeContext';
+import { paymentStatusStyle } from '@/lib/status-colors';
 
 // ── Types ────────────────────────────────────────
 
@@ -53,17 +54,18 @@ function groupBySupplier(items: POPaymentListItem[]): SupplierGroup[] {
 
 // ── Status Badges ────────────────────────────────
 
-function depositStatusBadge(status: string, t: POPaymentTableProps['t']) {
+function depositStatusBadge(status: string, t: POPaymentTableProps['t'], colors: (typeof themeColors)['dark']) {
+  const style = paymentStatusStyle(status, colors);
   switch (status) {
     case 'paid':
-      return { label: t('poPayment.status.paid'), bg: 'rgba(48,209,88,0.12)', color: '#30d158' };
+      return { label: t('poPayment.status.paid'), bg: style.bg, color: style.color };
     case 'partial':
-      return { label: t('poPayment.status.partial'), bg: 'rgba(100,210,255,0.12)', color: '#64d2ff' };
+      return { label: t('poPayment.status.partial'), bg: style.bg, color: style.color };
     case 'not_required':
-      return { label: t('poPayment.status.not_required'), bg: 'rgba(142,142,147,0.14)', color: '#8e8e93' };
+      return { label: t('poPayment.status.not_required'), bg: style.bg, color: style.color };
     case 'unpaid':
     default:
-      return { label: t('poPayment.status.unpaid'), bg: 'rgba(255,159,10,0.12)', color: '#ff9f0a' };
+      return { label: t('poPayment.status.unpaid'), bg: style.bg, color: style.color };
   }
 }
 
@@ -305,7 +307,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                   {group.items.map((item, idx) => {
                     const isSelectable = !item.isPaid && !item.paymentBlocked && (item.paymentStatus === 'unpaid' || item.paymentStatus === 'partial');
                     const isSelected = selectedPoNums.includes(item.poNum);
-                    const depBadge = depositStatusBadge(item.depositStatus, t);
+                    const depBadge = depositStatusBadge(item.depositStatus, t, colors);
 
                     return (
                       <tr

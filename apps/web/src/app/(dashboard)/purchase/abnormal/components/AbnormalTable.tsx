@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import type { AbnormalListItem } from '@/lib/api';
+import { abnormalStatusStyle } from '@/lib/status-colors';
 
 interface AbnormalTableProps {
   items: AbnormalListItem[];
@@ -12,11 +13,7 @@ interface AbnormalTableProps {
   onRowClick: (item: AbnormalListItem) => void;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
-  pending:  { bg: 'rgba(255,169,64,0.12)',  text: '#f5a623', dot: '#f5a623' },
-  resolved: { bg: 'rgba(48,209,88,0.12)',   text: '#30d158', dot: '#30d158' },
-  deleted:  { bg: 'rgba(99,99,102,0.10)',   text: '#636366', dot: '#636366' },
-};
+
 
 export default function AbnormalTable({ items, isLoading, error, onRetry, onRowClick }: AbnormalTableProps) {
   const t = useTranslations('purchase');
@@ -72,7 +69,7 @@ export default function AbnormalTable({ items, isLoading, error, onRetry, onRowC
       </thead>
       <tbody>
         {items.map((item, idx) => {
-          const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.pending;
+          const style = abnormalStatusStyle(item.status, colors);
           return (
             <tr
               key={`${item.logisticNum}-${item.receiveDate}`}
@@ -96,7 +93,7 @@ export default function AbnormalTable({ items, isLoading, error, onRetry, onRowC
               <td className="px-4 py-3">
                 <span
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: style.bg, color: style.text }}
+                  style={{ backgroundColor: style.bg, color: style.color }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
                   {t(`abnormal.status${item.status.charAt(0).toUpperCase() + item.status.slice(1)}` as 'abnormal.statusPending')}

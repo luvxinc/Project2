@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { rateModeStyle } from '@/lib/status-colors';
 import type { LogisticListItem } from '@/lib/api';
 
 export interface PaymentGroup {
@@ -72,7 +73,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
         <div className="flex items-center gap-2">
           <span
             className="font-mono text-sm font-bold"
-            style={{ color: group.isDeleted ? '#8e8e93' : '#30d158' }}
+            style={{ color: group.isDeleted ? colors.gray : colors.green }}
           >
             {group.pmtNo}
           </span>
@@ -226,12 +227,8 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
             <span
               className="text-[10px] font-medium px-1.5 py-0.5 rounded"
               style={{
-                backgroundColor: group.rateMode === 'A' || group.rateMode === 'auto'
-                  ? 'rgba(10,132,255,0.14)'
-                  : 'rgba(142,142,147,0.14)',
-                color: group.rateMode === 'A' || group.rateMode === 'auto'
-                  ? '#0a84ff'
-                  : '#8e8e93',
+                backgroundColor: rateModeStyle(group.rateMode === 'A' || group.rateMode === 'auto', colors).bg,
+                color: rateModeStyle(group.rateMode === 'A' || group.rateMode === 'auto', colors).color,
               }}
             >
               {group.rateMode === 'A' || group.rateMode === 'auto'

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { DepositListItem, DepositPaymentDetail } from '@/lib/api';
 import { themeColors } from '@/contexts/ThemeContext';
+import { paymentStatusStyle, rateModeStyle, currencyBadgeStyle } from '@/lib/status-colors';
 
 // ── Types ────────────────────────────────────────
 
@@ -53,49 +54,29 @@ function groupBySupplier(items: DepositListItem[]): SupplierGroup[] {
 
 // ── Status Badges ────────────────────────────────
 
-function statusBadge(status: string, t: DepositTableProps['t']) {
+function statusBadge(status: string, t: DepositTableProps['t'], colors: (typeof themeColors)['dark']) {
+  const style = paymentStatusStyle(status, colors);
   switch (status) {
     case 'partial':
-      return {
-        label: t('deposit.status.partial'),
-        bg: 'rgba(100,210,255,0.12)',
-        color: '#64d2ff',
-        dot: '#64d2ff',
-        ring: 'rgba(100,210,255,0.3)',
-        pulse: false,
-      };
+      return { label: t('deposit.status.partial'), ...style, pulse: false };
     case 'paid':
-      return {
-        label: t('deposit.status.paid'),
-        bg: 'rgba(48,209,88,0.12)',
-        color: '#30d158',
-        dot: '#30d158',
-        ring: 'rgba(48,209,88,0.3)',
-        pulse: false,
-      };
+      return { label: t('deposit.status.paid'), ...style, pulse: false };
     case 'unpaid':
     default:
-      return {
-        label: t('deposit.status.unpaid'),
-        bg: 'rgba(255,159,10,0.12)',
-        color: '#ff9f0a',
-        dot: '#ff9f0a',
-        ring: 'rgba(255,159,10,0.3)',
-        pulse: true,
-      };
+      return { label: t('deposit.status.unpaid'), ...style, pulse: true };
   }
 }
 
 // ── Rate Source Badge ────────────────────────────
 
-function RateSourceBadge({ code, label }: { code: string; label: string }) {
-  const isAuto = code === 'AUTO';
+function RateSourceBadge({ code, label, colors }: { code: string; label: string; colors: (typeof themeColors)['dark'] }) {
+  const style = rateModeStyle(code === 'AUTO', colors);
   return (
     <span
       className="text-[10px] font-medium px-1.5 py-0.5 rounded"
       style={{
-        backgroundColor: isAuto ? 'rgba(10,132,255,0.14)' : 'rgba(142,142,147,0.14)',
-        color: isAuto ? '#0a84ff' : '#8e8e93',
+        backgroundColor: style.bg,
+        color: style.color,
       }}
     >
       {label}
@@ -105,13 +86,13 @@ function RateSourceBadge({ code, label }: { code: string; label: string }) {
 
 // ── Dual-Currency Amount Badge ───────────────────
 
-function DualAmount({ usd, rmb }: { usd: number; rmb: number }) {
+function DualAmount({ usd, rmb, colors }: { usd: number; rmb: number; colors: (typeof themeColors)['dark'] }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+      <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
         ${fmtAmt(usd)}
       </span>
-      <span className="font-mono text-[11px] tabular-nums" style={{ color: '#ffd60a' }}>
+      <span className="font-mono text-[11px] tabular-nums" style={{ color: colors.yellow }}>
         ¥{fmtAmt(rmb)}
       </span>
     </span>
@@ -726,8 +707,8 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                         <span
                           className="text-[10px] font-medium px-1.5 py-0.5 rounded"
                           style={{
-                            backgroundColor: det.depCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)',
-                            color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a',
+                            backgroundColor: currencyBadgeStyle(det.depCur, colors).bg,
+                            color: currencyBadgeStyle(det.depCur, colors).color,
                           }}
                         >
                           {curSym(det.depCur)}

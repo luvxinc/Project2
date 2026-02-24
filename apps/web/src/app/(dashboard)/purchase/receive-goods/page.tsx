@@ -203,7 +203,7 @@ export default function ReceiveGoodsPage() {
                         className="w-9 h-9 rounded-xl flex items-center justify-center"
                         style={{ backgroundColor: hasDiff ? 'rgba(255,169,64,0.12)' : 'rgba(48,209,88,0.12)' }}
                       >
-                        <svg className="w-5 h-5" style={{ color: hasDiff ? '#f5a623' : '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" style={{ color: hasDiff ? colors.orange : colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12" />
                         </svg>
                       </div>

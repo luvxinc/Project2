@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { financeApi } from '@/lib/api';
+import { paymentStatusStyle } from '@/lib/status-colors';
 import type { LogisticListItem, LogisticSendVersion, LogisticPaymentVersion, FieldChange } from '@/lib/api';
 
 interface LogisticDetailPanelProps {
@@ -15,12 +16,7 @@ interface LogisticDetailPanelProps {
   readOnly?: boolean;
 }
 
-const PAYMENT_STATUS_COLORS: Record<string, { bg: string; color: string; dot: string; ring: string }> = {
-  unpaid:  { bg: 'rgba(255,159,10,0.12)',  color: '#ff9f0a', dot: '#ff9f0a', ring: 'rgba(255,159,10,0.3)' },
-  paid:    { bg: 'rgba(48,209,88,0.12)',   color: '#30d158', dot: '#30d158', ring: 'rgba(48,209,88,0.3)' },
-  partial: { bg: 'rgba(100,210,255,0.12)', color: '#64d2ff', dot: '#64d2ff', ring: 'rgba(100,210,255,0.3)' },
-  deleted: { bg: 'rgba(142,142,147,0.14)', color: '#8e8e93', dot: '#8e8e93', ring: 'rgba(142,142,147,0.25)' },
-};
+
 
 export default function LogisticDetailPanel({
   item, onBack, onDeletePayment, onRestorePayment, readOnly = false,
@@ -30,7 +26,7 @@ export default function LogisticDetailPanel({
   const colors = themeColors[theme];
   const [activeTab, setActiveTab] = useState<'history' | 'orders'>('history');
 
-  const statusStyle = PAYMENT_STATUS_COLORS[item.paymentStatus] ?? PAYMENT_STATUS_COLORS.unpaid;
+  const statusStyle = paymentStatusStyle(item.paymentStatus, colors);
 
   // Fetch history and orders:
   // - With pmtNo: payment-level query (readOnly filters to single logistic)

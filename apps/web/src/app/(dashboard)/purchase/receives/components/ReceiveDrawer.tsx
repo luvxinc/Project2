@@ -336,7 +336,7 @@ function ReceiveFormPanel({ shipment, onBack, onSuccess, onClose, colors, t }: R
                               : hasDiff
                               ? '1px solid rgba(245,166,35,0.4)'
                               : '1px solid rgba(48,209,88,0.3)',
-                            color: isEmpty ? '#ff453a' : hasDiff ? '#f5a623' : '#30d158',
+                            color: isEmpty ? '#ff453a' : hasDiff ? colors.orange : colors.green,
                           }}
                         />
                       </td>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import type { Shipment, ShipmentEvent } from '@/lib/api';
+import { shipmentStatusStyle } from '@/lib/status-colors';
 
 interface ShipmentDetailPanelProps {
   shipment: Shipment;
@@ -17,13 +18,7 @@ interface ShipmentDetailPanelProps {
   onExport: (type: 'mgmt' | 'warehouse') => void;
 }
 
-const STATUS_COLORS: Record<string, { bg: string; color: string; dot: string; ring: string }> = {
-  IN_TRANSIT:      { bg: 'rgba(255,159,10,0.12)',  color: '#ff9f0a', dot: '#ff9f0a', ring: 'rgba(255,159,10,0.3)' },
-  ALL_RECEIVED:    { bg: 'rgba(48,209,88,0.12)',   color: '#30d158', dot: '#30d158', ring: 'rgba(48,209,88,0.3)' },
-  DIFF_UNRESOLVED: { bg: 'rgba(255,69,58,0.12)',   color: '#ff453a', dot: '#ff453a', ring: 'rgba(255,69,58,0.3)' },
-  DIFF_RESOLVED:   { bg: 'rgba(100,210,255,0.12)', color: '#64d2ff', dot: '#64d2ff', ring: 'rgba(100,210,255,0.3)' },
-  deleted:         { bg: 'rgba(142,142,147,0.14)', color: '#8e8e93', dot: '#8e8e93', ring: 'rgba(142,142,147,0.25)' },
-};
+
 
 export default function ShipmentDetailPanel({
   shipment,
@@ -43,7 +38,7 @@ export default function ShipmentDetailPanel({
 
   const isDeleted = shipment.isDeleted === true;
   const rs = isDeleted ? 'deleted' : (shipment.receiveStatus ?? 'IN_TRANSIT');
-  const statusStyle = STATUS_COLORS[rs] ?? STATUS_COLORS['IN_TRANSIT'];
+  const statusStyle = shipmentStatusStyle(rs, colors);
 
   // V1 business rule: edit/delete only allowed when shipment is IN_TRANSIT
   // (goods not yet received). Once received (ALL_RECEIVED / DIFF_*), logistics are locked.

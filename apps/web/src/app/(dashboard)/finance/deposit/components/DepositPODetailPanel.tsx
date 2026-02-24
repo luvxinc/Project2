@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import type { PurchaseOrder, Shipment, ShipmentEvent } from '@/lib/api/purchase';
 import { purchaseApi } from '@/lib/api/purchase';
+import { shipmentStatusStyle, currencyBadgeStyle } from '@/lib/status-colors';
 import type { DepositPaymentDetail, POPaymentDetail } from '@/lib/api/finance';
 
 // ── Types ────────────────────────────────────────
@@ -37,13 +38,7 @@ const STRATEGY_FIELD_KEYS = [
   'requireDeposit', 'depositRatio', 'note',
 ] as const;
 
-// ── Shipment status color map ────────────
-const SHIP_STATUS: Record<string, { bg: string; color: string }> = {
-  IN_TRANSIT:      { bg: 'rgba(255,159,10,0.12)', color: '#ff9f0a' },
-  ALL_RECEIVED:    { bg: 'rgba(48,209,88,0.12)',  color: '#30d158' },
-  DIFF_UNRESOLVED: { bg: 'rgba(255,69,58,0.12)',  color: '#ff453a' },
-  DIFF_RESOLVED:   { bg: 'rgba(100,210,255,0.12)', color: '#64d2ff' },
-};
+
 
 export default function DepositPODetailPanel({
   order, detail, isLoading, history, onBack, onDeletePayment,
@@ -391,7 +386,7 @@ export default function DepositPODetailPanel({
                       <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.depDate}</td>
                       <td className="py-2 px-4 whitespace-nowrap">
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                          style={{ backgroundColor: det.depCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)', color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a' }}>
+                          style={{ backgroundColor: currencyBadgeStyle(det.depCur, colors).bg, color: currencyBadgeStyle(det.depCur, colors).color }}>
                           {cs(det.depCur)}
                         </span>
                       </td>
@@ -485,7 +480,7 @@ export default function DepositPODetailPanel({
                       <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.poDate}</td>
                       <td className="py-2 px-4 whitespace-nowrap">
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                          style={{ backgroundColor: det.poCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)', color: det.poCur === 'USD' ? '#64d2ff' : '#ffd60a' }}>
+                          style={{ backgroundColor: currencyBadgeStyle(det.poCur, colors).bg, color: currencyBadgeStyle(det.poCur, colors).color }}>
                           {cs(det.poCur)}
                         </span>
                       </td>
@@ -979,7 +974,7 @@ export default function DepositPODetailPanel({
           ) : (
             shipments.map((s) => {
               const rs = s.isDeleted ? 'deleted' : (s.receiveStatus ?? 'IN_TRANSIT');
-              const sc = SHIP_STATUS[rs] ?? SHIP_STATUS['IN_TRANSIT'];
+              const sc = shipmentStatusStyle(rs, colors);
               const poItems = s.items?.filter(i => i.poNum === order.poNum) ?? [];
               const shipTotalUSD = poItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
               const shipExRate = s.exchangeRate ?? 1;

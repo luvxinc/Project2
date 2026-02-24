@@ -115,7 +115,7 @@ export default function PaymentDetailPanel({
           style={{ borderBottom: `1px solid ${colors.border}` }}
         >
           <div className="flex items-center gap-3">
-            <p className="text-base font-mono font-bold" style={{ color: group.isDeleted ? '#8e8e93' : '#30d158' }}>
+            <p className="text-base font-mono font-bold" style={{ color: group.isDeleted ? colors.gray : colors.green }}>
               {group.pmtNo}
             </p>
             {group.isDeleted && (
@@ -299,7 +299,7 @@ function FieldBlock({ label, value, suffix, colors, mono }: {
               backgroundColor: suffix === 'Auto' || suffix === '自动'
                 ? 'rgba(10,132,255,0.14)' : 'rgba(142,142,147,0.14)',
               color: suffix === 'Auto' || suffix === '自动'
-                ? '#0a84ff' : '#8e8e93',
+                ? colors.blue : colors.gray,
             }}
           >
             {suffix}

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import type { ReceiveManagementItem } from '@/lib/api';
+import { shipmentStatusStyle } from '@/lib/status-colors';
 
 interface ReceiveTableProps {
   items: ReceiveManagementItem[];
@@ -12,13 +13,7 @@ interface ReceiveTableProps {
   onRowClick: (item: ReceiveManagementItem) => void;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
-  IN_TRANSIT:      { bg: 'rgba(255,169,64,0.12)', text: '#f5a623', dot: '#f5a623' },
-  ALL_RECEIVED:    { bg: 'rgba(48,209,88,0.12)',  text: '#30d158', dot: '#30d158' },
-  DIFF_UNRESOLVED: { bg: 'rgba(255,69,58,0.12)',  text: '#ff453a', dot: '#ff453a' },
-  DIFF_RESOLVED:   { bg: 'rgba(99,99,102,0.12)',  text: '#8e8e93', dot: '#8e8e93' },
-  DELETED:         { bg: 'rgba(99,99,102,0.10)',  text: '#636366', dot: '#636366' },
-};
+
 
 export default function ReceiveTable({ items, isLoading, error, onRetry, onRowClick }: ReceiveTableProps) {
   const t = useTranslations('purchase');
@@ -74,7 +69,7 @@ export default function ReceiveTable({ items, isLoading, error, onRetry, onRowCl
       </thead>
       <tbody>
         {items.map((item, idx) => {
-          const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.IN_TRANSIT;
+          const style = shipmentStatusStyle(item.status, colors);
           return (
             <tr
               key={item.logisticNum}
@@ -105,7 +100,7 @@ export default function ReceiveTable({ items, isLoading, error, onRetry, onRowCl
               <td className="px-4 py-3">
                 <span
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: style.bg, color: style.text }}
+                  style={{ backgroundColor: style.bg, color: style.color }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
                   {t(`receives.status.${item.status.toLowerCase()}`)}

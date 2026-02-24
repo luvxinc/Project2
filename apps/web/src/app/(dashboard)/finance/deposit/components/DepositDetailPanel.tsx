@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { themeColors } from '@/contexts/ThemeContext';
 import { financeApi } from '@/lib/api';
+import { paymentStatusStyle, currencyBadgeStyle } from '@/lib/status-colors';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
@@ -22,12 +23,7 @@ interface DepositDetailPanelProps {
   theme: string;
 }
 
-const PAYMENT_STATUS_COLORS: Record<string, { bg: string; color: string; dot: string; ring: string }> = {
-  unpaid:  { bg: 'rgba(255,159,10,0.12)',  color: '#ff9f0a', dot: '#ff9f0a', ring: 'rgba(255,159,10,0.3)' },
-  paid:    { bg: 'rgba(48,209,88,0.12)',   color: '#30d158', dot: '#30d158', ring: 'rgba(48,209,88,0.3)' },
-  partial: { bg: 'rgba(100,210,255,0.12)', color: '#64d2ff', dot: '#64d2ff', ring: 'rgba(100,210,255,0.3)' },
-  deleted: { bg: 'rgba(142,142,147,0.14)', color: '#8e8e93', dot: '#8e8e93', ring: 'rgba(142,142,147,0.25)' },
-};
+
 
 const fmtNum = (val: number, decimals = 2) =>
   val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -47,7 +43,7 @@ export default function DepositDetailPanel({
   const [activeTab, setActiveTab] = useState<'history' | 'orders' | 'files'>('history');
   const [uploadPending, setUploadPending] = useState(false);
 
-  const statusStyle = PAYMENT_STATUS_COLORS[item.paymentStatus] ?? PAYMENT_STATUS_COLORS.unpaid;
+  const statusStyle = paymentStatusStyle(item.paymentStatus, colors);
 
   // ── Files query ──
   const { data: filesData, isLoading: filesLoading } = useQuery({
@@ -299,8 +295,8 @@ export default function DepositDetailPanel({
                         <span
                           className="text-[10px] font-medium px-1.5 py-0.5 rounded"
                           style={{
-                            backgroundColor: det.depCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)',
-                            color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a',
+                            backgroundColor: currencyBadgeStyle(det.depCur, colors).bg,
+                            color: currencyBadgeStyle(det.depCur, colors).color,
                           }}
                         >
                           {curSym(det.depCur)}
@@ -460,7 +456,7 @@ function FieldBlock({ label, value, suffix, colors, mono }: {
               backgroundColor: suffix.includes('Auto') || suffix.includes('auto')
                 ? 'rgba(10,132,255,0.14)' : 'rgba(142,142,147,0.14)',
               color: suffix.includes('Auto') || suffix.includes('auto')
-                ? '#0a84ff' : '#8e8e93',
+                ? colors.blue : colors.gray,
             }}
           >
             {suffix}
