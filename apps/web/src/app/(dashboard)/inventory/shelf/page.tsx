@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { inventoryApi } from '@/lib/api/inventory';
@@ -108,6 +108,13 @@ export default function ShelfPage() {
     setCustomDownloadWarehouse(warehouse.warehouse);
     setView('customDownload');
   };
+
+  // V1 parity: build set of existing warehouse names for uniqueness check
+  const existingNames = useMemo(() => {
+    const names = new Set<string>();
+    data?.warehouses.forEach(w => names.add(w.warehouse));
+    return names;
+  }, [data]);
 
   const handleModalComplete = () => {
     setModalOpen(false);
@@ -253,6 +260,7 @@ export default function ShelfPage() {
         isOpen={modalOpen}
         mode={modalMode}
         existingWarehouse={editTarget}
+        existingNames={existingNames}
         onComplete={handleModalComplete}
         onCancel={() => { setModalOpen(false); setEditTarget(undefined); }}
       />

@@ -57,7 +57,11 @@
       "totalLocations": "总位置数",
       "aisleConfig": "通道配置",
       "uniformConfig": "统一配置",
-      "customConfig": "自定义配置"
+      "customConfig": "自定义配置",
+      "aisleL": "左排货架 (L)",
+      "aisleR": "右排货架 (R)",
+      "nameExists": "仓库编号已存在",
+      "enableAtLeastOne": "至少启用一排货架"
     },
     "download": {
       "title": "自定义条码下载",

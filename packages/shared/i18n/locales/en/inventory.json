@@ -57,7 +57,11 @@
       "totalLocations": "Total Locations",
       "aisleConfig": "Aisle Configuration",
       "uniformConfig": "Uniform Configuration",
-      "customConfig": "Custom Configuration"
+      "customConfig": "Custom Configuration",
+      "aisleL": "Left Shelf (L)",
+      "aisleR": "Right Shelf (R)",
+      "nameExists": "Warehouse name already exists",
+      "enableAtLeastOne": "Enable at least one aisle"
     },
     "download": {
       "title": "Custom Barcode Download",
