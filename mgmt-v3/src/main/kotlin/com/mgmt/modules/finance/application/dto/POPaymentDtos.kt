@@ -67,6 +67,7 @@ data class POPaymentListItem(
     val extraFeesUsd: Double,
     val extraFeesRmb: Double,
     val paymentDetails: List<POPaymentDetail>,
+    val depositDetails: List<DepositPaymentDetail>,
 )
 
 /**

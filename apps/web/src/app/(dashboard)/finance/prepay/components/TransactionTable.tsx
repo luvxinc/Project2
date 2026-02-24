@@ -100,7 +100,7 @@ export default function TransactionTable({
             style={{ color: data.beginningBalance >= 0 ? colors.green : colors.red }}
             className="text-sm font-bold tabular-nums"
           >
-            {supplierCurrency} {data.beginningBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
+            {supplierCurrency} {data.beginningBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
       )}
@@ -194,13 +194,13 @@ export default function TransactionTable({
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs tabular-nums" style={{ color: typeInfo.color }}>
                         {txn.tranType === 'usage' || txn.tranType === 'withdraw' ? '-' : '+'}
-                        {txn.convertedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
+                        {txn.convertedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td
                         className="px-3 py-2 whitespace-nowrap text-xs tabular-nums font-bold"
                         style={{ color: txn.runningBalance >= 0 ? colors.green : colors.red }}
                       >
-                        {txn.runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
+                        {txn.runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center gap-1">

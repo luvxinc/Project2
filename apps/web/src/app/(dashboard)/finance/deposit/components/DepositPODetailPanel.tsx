@@ -6,6 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import type { PurchaseOrder, Shipment, ShipmentEvent } from '@/lib/api/purchase';
 import { purchaseApi } from '@/lib/api/purchase';
+import type { DepositPaymentDetail, POPaymentDetail } from '@/lib/api/finance';
 
 // ── Types ────────────────────────────────────────
 interface POEvent {
@@ -24,6 +25,9 @@ interface DepositPODetailPanelProps {
   isLoading: boolean;
   history: POEvent[];
   onBack: () => void;
+  onDeletePayment?: () => void;
+  depositDetails?: DepositPaymentDetail[];
+  paymentDetails?: POPaymentDetail[];
 }
 
 // ── History field labels for PO strategy ────────────
@@ -42,7 +46,8 @@ const SHIP_STATUS: Record<string, { bg: string; color: string }> = {
 };
 
 export default function DepositPODetailPanel({
-  order, detail, isLoading, history, onBack,
+  order, detail, isLoading, history, onBack, onDeletePayment,
+  depositDetails, paymentDetails,
 }: DepositPODetailPanelProps) {
   const t = useTranslations('purchase');
   const tF = useTranslations('finance');
@@ -191,8 +196,8 @@ export default function DepositPODetailPanel({
 
   return (
     <div className="relative">
-      {/* ── Back bar (NO action buttons — read-only) ───────── */}
-      <div className="flex items-center mb-6">
+      {/* ── Back bar + Delete ───────────────────────── */}
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
@@ -203,6 +208,16 @@ export default function DepositPODetailPanel({
           </svg>
           {tF('deposit.detail.back')}
         </button>
+
+        {onDeletePayment && (
+          <button
+            onClick={onDeletePayment}
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
+            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+          >
+            {tF('deposit.actions.delete')}
+          </button>
+        )}
       </div>
 
       {/* ── Summary card ───────────────────────────────────── */}
@@ -310,6 +325,196 @@ export default function DepositPODetailPanel({
                 )}
               </>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Deposit Payment Details (定金明细) ── */}
+      <div
+        className="rounded-xl mb-5"
+        style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}` }}
+      >
+        <div className="px-5 py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" style={{ color: '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
+              {tF('poPayment.detail.depositDetailsTitle')}
+            </h3>
+            {depositDetails && depositDetails.length > 0 && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ backgroundColor: `${colors.green}15`, color: colors.green }}
+              >
+                {depositDetails.length}
+              </span>
+            )}
+          </div>
+        </div>
+        {(!depositDetails || depositDetails.length === 0) ? (
+          <div className="px-5 py-4">
+            <p className="text-xs" style={{ color: colors.textTertiary }}>
+              {strategy?.requireDeposit === false
+                ? tF('poPayment.detail.noDepositRequired')
+                : tF('poPayment.detail.noDeposit')}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: `${colors.bg}50` }}>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.pmtNo')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtDate')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtPaid')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtPaidCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtPrepayAmount')}</th>
+                  <th className="text-center py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.depPmtOverride')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.extraAmount')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {depositDetails.map((det, idx) => {
+                  const cs = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+                  const fmtN = (v: number, d = 2) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+                  return (
+                    <tr
+                      key={det.pmtNo + '-' + idx}
+                      style={{ borderColor: colors.border }}
+                      className={idx !== depositDetails.length - 1 ? 'border-b' : ''}
+                    >
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">{det.pmtNo}</span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.depDate}</td>
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: det.depCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)', color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a' }}>
+                          {cs(det.depCur)}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: colors.text }} className="font-mono text-xs tabular-nums">{cs(det.depCur)}{fmtN(det.depPaid)}</span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono text-right whitespace-nowrap tabular-nums">
+                        {cs(det.depCur)}{fmtN(det.depPaidCur, 4)}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: det.depPrepayAmount > 0 ? colors.purple : colors.textTertiary }} className="font-mono text-xs tabular-nums">
+                          {det.depPrepayAmount > 0 ? `$${fmtN(det.depPrepayAmount)}` : '—'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-center whitespace-nowrap">
+                        {det.depOverride === 1 ? (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>Override</span>
+                        ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        {det.extraAmount > 0 ? (
+                          <span className="font-mono text-xs tabular-nums" style={{ color: colors.orange }}>{cs(det.extraCur)}{fmtN(det.extraAmount)}</span>
+                        ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── PO Payment Details (尾款明细) ── */}
+      <div
+        className="rounded-xl mb-5"
+        style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}` }}
+      >
+        <div className="px-5 py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" style={{ color: '#64d2ff' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
+              {tF('poPayment.detail.paymentDetailsTitle')}
+            </h3>
+            {paymentDetails && paymentDetails.length > 0 && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ backgroundColor: `${colors.blue}15`, color: colors.blue }}
+              >
+                {paymentDetails.length}
+              </span>
+            )}
+          </div>
+        </div>
+        {(!paymentDetails || paymentDetails.length === 0) ? (
+          <div className="px-5 py-4">
+            <p className="text-xs" style={{ color: colors.textTertiary }}>
+              {tF('poPayment.detail.noPayment')}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: `${colors.bg}50` }}>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.pmtNo')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtDate')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtPaid')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtPaidCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtPrepayAmount')}</th>
+                  <th className="text-center py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.poPmtOverride')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{tF('poPayment.detail.extraAmount')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentDetails.map((det, idx) => {
+                  const cs = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+                  const fmtN = (v: number, d = 2) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+                  return (
+                    <tr
+                      key={det.pmtNo + '-' + idx}
+                      style={{ borderColor: colors.border }}
+                      className={idx !== paymentDetails.length - 1 ? 'border-b' : ''}
+                    >
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">{det.pmtNo}</span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.poDate}</td>
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: det.poCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)', color: det.poCur === 'USD' ? '#64d2ff' : '#ffd60a' }}>
+                          {cs(det.poCur)}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: colors.text }} className="font-mono text-xs tabular-nums">{cs(det.poCur)}{fmtN(det.poPaid)}</span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono text-right whitespace-nowrap tabular-nums">
+                        {cs(det.poCur)}{fmtN(det.poPaidCur, 4)}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: det.poPrepayAmount > 0 ? colors.purple : colors.textTertiary }} className="font-mono text-xs tabular-nums">
+                          {det.poPrepayAmount > 0 ? `$${fmtN(det.poPrepayAmount)}` : '—'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-center whitespace-nowrap">
+                        {det.poOverride === 1 ? (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>Override</span>
+                        ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        {det.extraAmount > 0 ? (
+                          <span className="font-mono text-xs tabular-nums" style={{ color: colors.orange }}>{cs(det.extraCur)}{fmtN(det.extraAmount)}</span>
+                        ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -694,9 +899,66 @@ export default function DepositPODetailPanel({
                           <p className="text-xs italic" style={{ color: colors.red }}>{t('shipments.history.deleted')}</p>
                         ) : isRestore ? (
                           <p className="text-xs italic" style={{ color: colors.green }}>{t('shipments.history.restored')}</p>
-                        ) : isCreate ? (
-                          <p className="text-xs italic" style={{ color: colors.green }}>{t('shipments.history.typeCreate')}</p>
-                        ) : null}
+                        ) : isCreate ? (() => {
+                          // Snapshot rendering for CREATE events (matching shipments module)
+                          const SNAPSHOT_LABELS: Record<string, string> = {
+                            logisticNum: t('shipments.history.fieldLabels.logisticNum'),
+                            sentDate: t('shipments.history.fieldLabels.sentDate'),
+                            etaDate: t('shipments.history.fieldLabels.etaDate'),
+                            pallets: t('shipments.history.fieldLabels.pallets'),
+                            logisticsCost: t('shipments.history.fieldLabels.logisticsCost'),
+                            exchangeRate: t('shipments.history.fieldLabels.exchangeRate'),
+                            rateMode: t('shipments.history.fieldLabels.rateMode'),
+                            totalWeight: t('shipments.history.fieldLabels.totalWeight'),
+                          };
+                          let snapshotData: Record<string, unknown> = {};
+                          try {
+                            const raw = JSON.parse(ev.changes) as Record<string, unknown>;
+                            const fields = Object.keys(SNAPSHOT_LABELS);
+                            if (fields.some(f => raw[f] !== undefined)) snapshotData = raw;
+                          } catch { /* empty */ }
+
+                          // Fallback to the matching shipment detail object
+                          if (Object.keys(snapshotData).length === 0) {
+                            const matchShip = shipments.find(s => s.logisticNum === ev.logisticNum);
+                            if (matchShip) {
+                              snapshotData = {
+                                logisticNum: matchShip.logisticNum,
+                                sentDate: matchShip.sentDate,
+                                etaDate: matchShip.etaDate ?? null,
+                                pallets: matchShip.pallets ?? 0,
+                                totalWeight: matchShip.totalWeight ?? 0,
+                                logisticsCost: matchShip.logisticsCost ?? 0,
+                                exchangeRate: matchShip.exchangeRate ?? 1,
+                                rateMode: matchShip.rateMode ?? 'M',
+                              };
+                            }
+                          }
+
+                          const snapshotFields = Object.keys(SNAPSHOT_LABELS);
+                          const hasSnapshotData = snapshotFields.some(f => snapshotData[f] !== undefined && snapshotData[f] !== null && snapshotData[f] !== '');
+
+                          return hasSnapshotData ? (
+                            <div className="space-y-1.5">
+                              {snapshotFields.map(f => {
+                                const val = snapshotData[f];
+                                if (val === undefined || val === null || val === '') return null;
+                                let display = String(val);
+                                if (f === 'rateMode') display = val === 'A' ? t('shipments.history.rateModeAuto') : t('shipments.history.rateModeManual');
+                                if (f === 'logisticsCost') display = `¥${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                if (f === 'totalWeight') display = `${Number(val).toLocaleString()} kg`;
+                                return (
+                                  <div key={f} className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: colors.bgTertiary }}>
+                                    <span className="w-24 shrink-0 font-medium" style={{ color: colors.textTertiary }}>{SNAPSHOT_LABELS[f]}</span>
+                                    <span className="font-mono font-semibold" style={{ color: colors.textSecondary }}>{display}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs italic" style={{ color: colors.green }}>{t('shipments.history.typeCreate')}</p>
+                          );
+                        })() : null}
                       </div>
                     );
                   })

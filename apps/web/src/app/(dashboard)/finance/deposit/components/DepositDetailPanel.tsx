@@ -16,6 +16,7 @@ interface DepositDetailPanelProps {
   poNum: string;
   item: DepositListItem;
   onBack: () => void;
+  onDeletePayment?: (pmtNo: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
   theme: string;
@@ -38,7 +39,7 @@ const fmtNum = (val: number, decimals = 2) =>
  * Shows payment info summary and tabbed content: History | Orders | Files
  */
 export default function DepositDetailPanel({
-  pmtNo, poNum, item, onBack, t, theme,
+  pmtNo, poNum, item, onBack, onDeletePayment, t, theme,
 }: DepositDetailPanelProps) {
   const colors = themeColors[theme as keyof typeof themeColors] ?? themeColors.dark;
   const queryClient = useQueryClient();
@@ -140,7 +141,7 @@ export default function DepositDetailPanel({
 
   return (
     <div className="relative">
-      {/* ── Back button ── */}
+      {/* ── Back button + Delete ── */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={onBack}
@@ -152,6 +153,16 @@ export default function DepositDetailPanel({
           </svg>
           {t('deposit.detail.back')}
         </button>
+
+        {onDeletePayment && pmtNo && (
+          <button
+            onClick={() => onDeletePayment(pmtNo)}
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
+            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+          >
+            {t('deposit.actions.delete')}
+          </button>
+        )}
       </div>
 
       {/* ── Summary card ── */}
@@ -225,6 +236,115 @@ export default function DepositDetailPanel({
           />
           <FieldBlock label={t('deposit.detail.paymentDate')} value={item.latestPaymentDate || '—'} colors={colors} />
         </div>
+      </div>
+
+      {/* ── Deposit Payment Details Section ── */}
+      <div
+        className="rounded-xl mb-5"
+        style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}` }}
+      >
+        <div className="px-5 py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" style={{ color: '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
+              {t('deposit.detail.paymentDetailsTitle')}
+            </h3>
+            {item.paymentDetails && item.paymentDetails.length > 0 && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ backgroundColor: `${colors.green}15`, color: colors.green }}
+              >
+                {item.paymentDetails.length}
+              </span>
+            )}
+          </div>
+        </div>
+        {(!item.paymentDetails || item.paymentDetails.length === 0) ? (
+          <div className="px-5 py-4">
+            <p className="text-xs" style={{ color: colors.textTertiary }}>
+              {t('deposit.detail.noPayment')}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: `${colors.bg}50` }}>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.pmtNo')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depDate')}</th>
+                  <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depPaid')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depPaidCur')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depPrepayAmount')}</th>
+                  <th className="text-center py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.depOverride')}</th>
+                  <th className="text-right py-2.5 px-4 text-xs font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('deposit.detail.extraAmount')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {item.paymentDetails.map((det, idx) => {
+                  const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
+                  return (
+                    <tr
+                      key={det.pmtNo + '-' + idx}
+                      style={{ borderColor: colors.border }}
+                      className={idx !== item.paymentDetails.length - 1 ? 'border-b' : ''}
+                    >
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">{det.pmtNo}</span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.depDate}</td>
+                      <td className="py-2 px-4 whitespace-nowrap">
+                        <span
+                          className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: det.depCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)',
+                            color: det.depCur === 'USD' ? '#64d2ff' : '#ffd60a',
+                          }}
+                        >
+                          {curSym(det.depCur)}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: colors.text }} className="font-mono text-xs tabular-nums">
+                          {curSym(det.depCur)}{fmtNum(det.depPaid)}
+                        </span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono text-right whitespace-nowrap tabular-nums">
+                        {curSym(det.depCur)}{fmtNum(det.depPaidCur, 4)}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        <span
+                          style={{ color: det.depPrepayAmount > 0 ? colors.purple : colors.textTertiary }}
+                          className="font-mono text-xs tabular-nums"
+                        >
+                          {det.depPrepayAmount > 0 ? `$${fmtNum(det.depPrepayAmount)}` : '—'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 text-center whitespace-nowrap">
+                        {det.depOverride === 1 ? (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>Override</span>
+                        ) : (
+                          <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4 text-right whitespace-nowrap">
+                        {det.extraAmount > 0 ? (
+                          <span className="font-mono text-xs tabular-nums" style={{ color: colors.orange }}>
+                            {curSym(det.extraCur)}{fmtNum(det.extraAmount)}
+                          </span>
+                        ) : (
+                          <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* ── Tabs ── */}

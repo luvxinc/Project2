@@ -457,6 +457,7 @@ export interface POPaymentListItem {
   extraFeesUsd: number;
   extraFeesRmb: number;
   paymentDetails: POPaymentDetail[];
+  depositDetails: DepositPaymentDetail[];
 }
 
 export interface POPaymentListResponse {
@@ -856,4 +857,105 @@ export const financeApi = {
   // 42. Serve PO payment file (returns URL)
   servePOPaymentFile: (pmtNo: string, filename: string) =>
     `/finance/po-payments/payments/${encodeURIComponent(pmtNo)}/files/${encodeURIComponent(filename)}`,
+
+  // ═══════════════════════════════════════════════
+  // FLOW OVERVIEW API (订收发总览)
+  // V1 parity: flow/api.py (proxied through V3)
+  // ═══════════════════════════════════════════════
+
+  // 43. Flow list — full lifecycle overview of all POs
+  getFlowList: () =>
+    api.get<FlowListResponse>('/finance/flow'),
+
+  // 44. Flow detail — per-PO logistics breakdown with landed prices
+  getFlowDetail: (poNum: string) =>
+    api.get<FlowDetailResponse>(`/finance/flow/${encodeURIComponent(poNum)}`),
 };
+
+// ═══════════════════════════════════════════════
+// FLOW OVERVIEW TYPES
+// ═══════════════════════════════════════════════
+
+export interface FlowOrderItem {
+  poNum: string;
+  poDate: string;
+  skuCount: number;
+  curCurrency: string;
+  curUsdRmb: number;
+  totalAmount: number;
+  totalAmountUsd: number;
+  depositRequiredUsd: number;
+  depositPar: number;
+  depositStatus: string;
+  depositStatusText: string;
+  depPaidUsd: number;
+  pmtPaid: number;
+  pmtPaidUsd: number;
+  balanceRemaining: number;
+  balanceRemainingUsd: number;
+  actualPaid: number;
+  actualPaidUsd: number;
+  waiverUsd: number;
+  depExtraUsd: number;
+  pmtExtraUsd: number;
+  logisticsExtraUsd: number;
+  totalExtra: number;
+  totalExtraUsd: number;
+  logisticsList: string[];
+  orderWeightKg: number;
+  logisticsApportioned: number;
+  logisticsApportionedUsd: number;
+  logisticsCurrency: string;
+  logisticsUsdRmb: number;
+  totalCost: number;
+  totalCostUsd: number;
+  orderStatus: string;
+  orderStatusText: string;
+  hasDiff: boolean;
+  logisticsStatus: string;
+  logisticsPaymentStatus: string;
+  paymentStatusText: string;
+  curFloat: boolean;
+  curExFloat: number;
+  fluctuationTriggered: boolean;
+}
+
+export interface FlowListResponse {
+  data: FlowOrderItem[];
+  count: number;
+}
+
+export interface FlowSkuDetail {
+  sku: string;
+  priceOriginal: number;
+  priceUsd: number;
+  actualPrice: number;
+  actualPriceUsd: number;
+  feeApportioned: number;
+  feeApportionedUsd: number;
+  landedPrice: number;
+  landedPriceUsd: number;
+  qty: number;
+  totalUsd: number;
+}
+
+export interface FlowLogisticsBlock {
+  logisticNum: string;
+  currency: string;
+  usdRmb: number;
+  logPriceRmb: number;
+  logPriceUsd: number;
+  isPaid: boolean;
+  skus: FlowSkuDetail[];
+}
+
+export interface FlowDetailMeta {
+  totalCostUsd: number;
+  totalCostRmb: number;
+}
+
+export interface FlowDetailResponse {
+  data: FlowLogisticsBlock[];
+  count: number;
+  meta: FlowDetailMeta | null;
+}

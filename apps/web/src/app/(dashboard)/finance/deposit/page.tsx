@@ -606,21 +606,29 @@ export default function DepositPage() {
               poNum={selectedPaymentGroup.items[0]?.poNum ?? ''}
               item={selectedPaymentGroup.items[0]}
               onBack={handleBackToList}
+              onDeletePayment={handleDeletePayment}
               t={t}
               theme={theme}
             />
           )}
 
           {/* ── Level 3: PO Detail (read-only, deposit-specific) ── */}
-          {viewMode === 'poDetail' && poDetailOrder && (
-            <DepositPODetailPanel
-              order={poDetailOrder}
-              detail={poDetailFull}
-              isLoading={poDetailLoading}
-              history={poDetailHistory}
-              onBack={handleBackToList}
-            />
-          )}
+          {viewMode === 'poDetail' && poDetailOrder && (() => {
+            const matchedItem = paidData.find(i => i.poNum === poDetailOrder.poNum)
+              || unpaidData.find(i => i.poNum === poDetailOrder.poNum);
+            const pmtNo = matchedItem?.paymentDetails?.[0]?.pmtNo;
+            return (
+              <DepositPODetailPanel
+                order={poDetailOrder}
+                detail={poDetailFull}
+                isLoading={poDetailLoading}
+                history={poDetailHistory}
+                onBack={handleBackToList}
+                onDeletePayment={pmtNo ? () => handleDeletePayment(pmtNo) : undefined}
+                depositDetails={matchedItem?.paymentDetails}
+              />
+            );
+          })()}
         </div>
       </section>
 

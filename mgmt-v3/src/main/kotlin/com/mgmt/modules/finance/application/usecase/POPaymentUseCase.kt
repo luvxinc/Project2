@@ -36,6 +36,7 @@ class POPaymentUseCase(
     private val strategyRepository: PurchaseOrderStrategyRepository,
     private val itemRepository: PurchaseOrderItemRepository,
     private val supplierStrategyRepository: SupplierStrategyRepository,
+    private val landedPriceRecalcService: LandedPriceRecalcService,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -258,6 +259,15 @@ class POPaymentUseCase(
 
         log.info("[POPayment] Created {} PO payment records, {} prepay records", insertCount, prepayInsertCount)
 
+        // Recalculate FIFO landed prices (V1: po/api.py:946-952)
+        for (poNum in request.poNums) {
+            try {
+                landedPriceRecalcService.recalculateByPoNum(poNum)
+            } catch (e: Exception) {
+                log.warn("Failed to recalculate landed prices for {}: {}", poNum, e.message)
+            }
+        }
+
         return SubmitPOPaymentResponse(
             pmtNos = generatedPmtNos,
             count = insertCount,
@@ -312,6 +322,16 @@ class POPaymentUseCase(
             }
 
             affectedCount++
+        }
+
+        // Recalculate FIFO landed prices for affected POs (V1: po/api.py:1951-1954)
+        val affectedPoNums = payments.mapNotNull { it.poNum }.distinct()
+        for (poNum in affectedPoNums) {
+            try {
+                landedPriceRecalcService.recalculateByPoNum(poNum)
+            } catch (e: Exception) {
+                log.warn("Failed to recalculate landed prices for {}: {}", poNum, e.message)
+            }
         }
 
         return DeletePOPaymentResponse(

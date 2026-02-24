@@ -34,7 +34,7 @@ interface SupplierGroup {
 // ── Helpers ──────────────────────────────────────
 
 const fmtAmt = (val: number) =>
-  val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 });
+  val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
 
@@ -267,10 +267,21 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px]">
+              <table className="w-full min-w-[1200px]" style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '3%' }} />
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '6%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
+                </colgroup>
                 <thead>
                   <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}50` }} className="border-b">
-                    <th className="py-3 px-3 text-center w-10">
+                    <th className="py-3 px-3 text-center">
                       <input
                         type="checkbox"
                         checked={allSelected}
@@ -307,7 +318,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         }}
                       >
                         {/* Checkbox */}
-                        <td className="py-3 px-3 text-center w-10">
+                        <td className="py-3 px-3 text-center">
                           {isSelectable ? (
                             <input
                               type="checkbox"
@@ -434,16 +445,6 @@ interface PaidViewProps {
 }
 
 function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick, t }: PaidViewProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
-  const toggleExpand = (poNum: string) => {
-    setExpandedRows(prev => {
-      const next = new Set(prev);
-      if (next.has(poNum)) next.delete(poNum);
-      else next.add(poNum);
-      return next;
-    });
-  };
 
   const getFirstPmtNo = (details: POPaymentDetail[]) =>
     details.length > 0 ? details[0].pmtNo : '';
@@ -482,7 +483,17 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1200px]">
+            <table className="w-full min-w-[1200px]" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '6%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '10%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}50` }} className="border-b">
                   <TH color={colors.textSecondary}>{t('poPayment.table.poNum')}</TH>
@@ -493,32 +504,59 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
                   <TH color={colors.textSecondary} align="text-right">{t('poPayment.table.balanceRemaining')}</TH>
                   <TH color={colors.textSecondary}>{t('poPayment.table.latestPaymentDate')}</TH>
                   <TH color={colors.textSecondary} align="text-right">{t('poPayment.table.extraFees')}</TH>
-                  <TH color={colors.textSecondary} align="text-center">{t('poPayment.table.actions')}</TH>
                 </tr>
               </thead>
               <tbody>
                 {group.items.map((item, idx) => {
-                  const isExpanded = expandedRows.has(item.poNum);
                   const pmtNo = getFirstPmtNo(item.paymentDetails);
-                  const hasDetails = item.paymentDetails.length > 0;
                   const hasExtra = item.extraFeesUsd > 0 || item.extraFeesRmb > 0;
 
                   return (
-                    <PaidRow
+                    <tr
                       key={item.poNum}
-                      item={item}
-                      pmtNo={pmtNo}
-                      isExpanded={isExpanded}
-                      isLast={idx === group.items.length - 1}
-                      hasDetails={hasDetails}
-                      hasExtra={hasExtra}
-                      colors={colors}
-                      t={t}
-                      onToggle={() => toggleExpand(item.poNum)}
-                      onViewDetail={onViewDetail}
-                      onDeletePayment={onDeletePayment}
-                      onPoRowClick={onPoRowClick}
-                    />
+                      style={{ borderColor: colors.border, cursor: 'pointer' }}
+                      className={`${idx !== group.items.length - 1 ? 'border-b' : ''} transition-colors hover:opacity-80`}
+                      onClick={() => onPoRowClick?.(item.poNum)}
+                    >
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span style={{ color: colors.blue }} className="font-mono text-sm font-semibold">
+                          {item.poNum}
+                        </span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
+                        {item.poDate}
+                      </td>
+                      <td style={{ color: colors.text }} className="py-3 px-4 text-sm text-center whitespace-nowrap tabular-nums">
+                        {item.skuCount}
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                          ${fmtAmt(item.totalAmountUsd)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: '#30d158' }} className="text-sm font-mono font-medium tabular-nums">
+                          ${fmtAmt(item.poPaidUsd)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <span style={{ color: colors.textSecondary }} className="text-sm font-mono tabular-nums">
+                          ${fmtAmt(item.balanceRemainingUsd)}
+                        </span>
+                      </td>
+                      <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
+                        {item.latestPaymentDate !== '-' ? item.latestPaymentDate : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        {hasExtra ? (
+                          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                            ${fmtAmt(item.extraFeesUsd)}
+                          </span>
+                        ) : (
+                          <span style={{ color: colors.textTertiary }} className="text-sm">—</span>
+                        )}
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -527,204 +565,6 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
         </div>
       ))}
     </div>
-  );
-}
-
-// ── Paid Row (expandable) ────────────────────────
-
-interface PaidRowProps {
-  item: POPaymentListItem;
-  pmtNo: string;
-  isExpanded: boolean;
-  isLast: boolean;
-  hasDetails: boolean;
-  hasExtra: boolean;
-  colors: (typeof themeColors)['dark'];
-  t: POPaymentTableProps['t'];
-  onToggle: () => void;
-  onViewDetail: (item: POPaymentListItem, pmtNo: string) => void;
-  onDeletePayment: (pmtNo: string) => void;
-  onPoRowClick?: (poNum: string) => void;
-}
-
-function PaidRow({ item, pmtNo, isExpanded, isLast, hasDetails, hasExtra, colors, t, onToggle, onViewDetail, onDeletePayment, onPoRowClick }: PaidRowProps) {
-  return (
-    <>
-      <tr
-        style={{ borderColor: colors.border, cursor: 'pointer' }}
-        className={`${!isLast || isExpanded ? 'border-b' : ''} transition-colors hover:opacity-80`}
-        onClick={() => onPoRowClick?.(item.poNum)}
-      >
-        {/* PO Num + Chevron */}
-        <td className="py-3 px-4 whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
-            {hasDetails && (
-              <svg
-                className={`w-3 h-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                style={{ color: colors.textTertiary }}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                onClick={(e) => { e.stopPropagation(); onToggle(); }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            )}
-            <span style={{ color: colors.blue }} className="font-mono text-sm font-semibold">
-              {item.poNum}
-            </span>
-          </div>
-        </td>
-
-        <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
-          {item.poDate}
-        </td>
-
-        <td style={{ color: colors.text }} className="py-3 px-4 text-sm text-center whitespace-nowrap tabular-nums">
-          {item.skuCount}
-        </td>
-
-        <td className="py-3 px-4 text-right whitespace-nowrap">
-          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
-            ${fmtAmt(item.totalAmountUsd)}
-          </span>
-        </td>
-
-        <td className="py-3 px-4 text-right whitespace-nowrap">
-          <span style={{ color: '#30d158' }} className="text-sm font-mono font-medium tabular-nums">
-            ${fmtAmt(item.poPaidUsd)}
-          </span>
-        </td>
-
-        <td className="py-3 px-4 text-right whitespace-nowrap">
-          <span style={{ color: colors.textSecondary }} className="text-sm font-mono tabular-nums">
-            ${fmtAmt(item.balanceRemainingUsd)}
-          </span>
-        </td>
-
-        <td style={{ color: colors.textSecondary }} className="py-3 px-4 text-sm font-mono whitespace-nowrap">
-          {item.latestPaymentDate !== '-' ? item.latestPaymentDate : '—'}
-        </td>
-
-        <td className="py-3 px-4 text-right whitespace-nowrap">
-          {hasExtra ? (
-            <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
-              ${fmtAmt(item.extraFeesUsd)}
-            </span>
-          ) : (
-            <span style={{ color: colors.textTertiary }} className="text-sm">—</span>
-          )}
-        </td>
-
-        {/* Actions */}
-        <td className="py-3 px-4 whitespace-nowrap">
-          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <ActionButton title={t('poPayment.actions.history')} color={colors.blue} onClick={() => onViewDetail(item, pmtNo)}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </ActionButton>
-            <ActionButton title={t('poPayment.actions.orders')} color={colors.teal} onClick={() => onViewDetail(item, pmtNo)}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </ActionButton>
-            <ActionButton title={t('poPayment.actions.files')} color={colors.orange} onClick={() => onViewDetail(item, pmtNo)}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </ActionButton>
-            {pmtNo && (
-              <ActionButton title={t('poPayment.actions.delete')} color="#ff453a" onClick={() => onDeletePayment(pmtNo)}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </ActionButton>
-            )}
-          </div>
-        </td>
-      </tr>
-
-      {/* Expanded: Payment Details */}
-      {isExpanded && hasDetails && (
-        <tr>
-          <td colSpan={9} style={{ backgroundColor: `${colors.bg}60` }}>
-            <div className="px-8 py-3">
-              <table className="w-full">
-                <thead>
-                  <tr style={{ borderColor: colors.border }} className="border-b">
-                    <TH color={colors.textTertiary}>{t('poPayment.detail.pmtNo')}</TH>
-                    <TH color={colors.textTertiary}>{t('poPayment.detail.poPmtDate')}</TH>
-                    <TH color={colors.textTertiary}>{t('poPayment.detail.poPmtCur')}</TH>
-                    <TH color={colors.textTertiary} align="text-right">{t('poPayment.detail.poPmtPaid')}</TH>
-                    <TH color={colors.textTertiary} align="text-right">{t('poPayment.detail.poPmtPaidCur')}</TH>
-                    <TH color={colors.textTertiary} align="text-right">{t('poPayment.detail.poPmtPrepayAmount')}</TH>
-                    <TH color={colors.textTertiary} align="text-center">{t('poPayment.detail.poPmtOverride')}</TH>
-                    <TH color={colors.textTertiary} align="text-right">{t('poPayment.detail.extraAmount')}</TH>
-                  </tr>
-                </thead>
-                <tbody>
-                  {item.paymentDetails.map((det, dIdx) => (
-                    <tr
-                      key={det.pmtNo + '-' + dIdx}
-                      style={{ borderColor: colors.border }}
-                      className={dIdx !== item.paymentDetails.length - 1 ? 'border-b' : ''}
-                    >
-                      <td className="py-2 px-4 whitespace-nowrap">
-                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">
-                          {det.pmtNo}
-                        </span>
-                      </td>
-                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">
-                        {det.poDate}
-                      </td>
-                      <td className="py-2 px-4 whitespace-nowrap">
-                        <span
-                          className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                          style={{
-                            backgroundColor: det.poCur === 'USD' ? 'rgba(100,210,255,0.14)' : 'rgba(255,214,10,0.14)',
-                            color: det.poCur === 'USD' ? '#64d2ff' : '#ffd60a',
-                          }}
-                        >
-                          {curSym(det.poCur)}
-                        </span>
-                      </td>
-                      <td className="py-2 px-4 text-right whitespace-nowrap">
-                        <span style={{ color: colors.text }} className="font-mono text-xs tabular-nums">
-                          {curSym(det.poCur)}{fmtAmt(det.poPaid)}
-                        </span>
-                      </td>
-                      <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono text-right whitespace-nowrap tabular-nums">
-                        {curSym(det.poCur)}{fmtAmt(det.poPaidCur)}
-                      </td>
-                      <td className="py-2 px-4 text-right whitespace-nowrap">
-                        <span
-                          style={{ color: det.poPrepayAmount > 0 ? colors.purple : colors.textTertiary }}
-                          className="font-mono text-xs tabular-nums"
-                        >
-                          {det.poPrepayAmount > 0 ? `$${fmtAmt(det.poPrepayAmount)}` : '—'}
-                        </span>
-                      </td>
-                      <td className="py-2 px-4 text-center whitespace-nowrap">
-                        {det.poOverride === 1 ? (
-                          <span
-                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
-                          >
-                            Override
-                          </span>
-                        ) : (
-                          <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 text-right whitespace-nowrap">
-                        {det.extraAmount > 0 ? (
-                          <span className="font-mono text-xs tabular-nums" style={{ color: colors.orange }}>
-                            {curSym(det.extraCur)}{fmtAmt(det.extraAmount)}
-                          </span>
-                        ) : (
-                          <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
   );
 }
 

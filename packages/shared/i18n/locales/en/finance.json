@@ -188,6 +188,7 @@
       "paymentDate": "Payment Date",
       "extraFees": "Extra Fees",
       "actions": "Actions",
+      "delete": "Delete",
       "pmtNo": "Payment #",
       "currency": "Currency",
       "cashPaid": "Cash Paid",
@@ -342,7 +343,9 @@
       "depPaidCur": "Paid (Currency)",
       "depPrepayAmount": "Prepay Used",
       "depOverride": "Override",
-      "extraAmount": "Extra Amount"
+      "extraAmount": "Extra Amount",
+      "paymentDetailsTitle": "Deposit Payments",
+      "noPayment": "No deposit payments"
     },
 
     "sidebar": {
@@ -409,6 +412,7 @@
       "paymentDate": "Payment Date",
       "extraFees": "Extra Fees",
       "actions": "Actions",
+      "delete": "Delete",
       "pmtNo": "Payment #",
       "currency": "Currency",
       "cashPaid": "Cash Paid",
@@ -566,7 +570,18 @@
       "poPmtPaidCur": "Paid (Currency)",
       "poPmtPrepayAmount": "Prepay Used",
       "poPmtOverride": "Override",
-      "extraAmount": "Extra Amount"
+      "extraAmount": "Extra Amount",
+      "depositDetailsTitle": "Deposit Payments",
+      "paymentDetailsTitle": "PO Payments",
+      "depPmtDate": "Date",
+      "depPmtCur": "Currency",
+      "depPmtPaid": "Deposit Paid",
+      "depPmtPaidCur": "Paid (Currency)",
+      "depPmtPrepayAmount": "Prepay Used",
+      "depPmtOverride": "Override",
+      "noDeposit": "No deposit payments",
+      "noDepositRequired": "No deposit required",
+      "noPayment": "No PO payments"
     },
 
     "sidebar": {
@@ -739,6 +754,75 @@
       "valueUsd": "Value (USD)",
       "totalRmb": "Total (RMB)",
       "totalUsd": "Total (USD)"
+    }
+  },
+  "flow": {
+    "title": "Order-Send-Receive Overview",
+    "subtitle": "Full lifecycle overview — deposits, payments, logistics and cost summary",
+    "refresh": "Refresh",
+    "loading": "Loading overview data...",
+    "empty": "No order data available",
+    "totalOrders": "{count} orders",
+    "searchPlaceholder": "Search PO or logistics number...",
+    "clearFilters": "Clear",
+    "diffWarning": "Has unresolved discrepancies",
+    "info": {
+      "title": "Page Description",
+      "totalCost": "Order Total Cost",
+      "totalCostDesc": "= Actual payment + Extra fees + Logistics allocation",
+      "logAlloc": "Logistics Allocation",
+      "logAllocDesc": "Apportioned by order weight / total logistics weight ratio",
+      "extraFees": "Extra Fees",
+      "extraFeesDesc": "Aggregated extra fees from logistics, deposits, and PO payments (apportioned by order count)",
+      "expandDetail": "View Details",
+      "expandDetailDesc": "Click a row to view logistics block–level SKU breakdown"
+    },
+    "table": {
+      "poNum": "PO Number",
+      "poDate": "Order Date",
+      "totalAmount": "Total Amount",
+      "depositStatus": "Deposit Status",
+      "paidAmount": "PO Paid",
+      "balanceRemaining": "Balance Due",
+      "actualPayment": "Actual Paid",
+      "waiver": "Waiver",
+      "extraFees": "Extra Fees",
+      "logisticNums": "Shipment No.",
+      "logAllocation": "Log. Alloc.",
+      "orderTotalCost": "Total Cost",
+      "paymentStatus": "Status"
+    },
+    "status": {
+      "notRequired": "No Deposit",
+      "unpaid": "Unpaid",
+      "partial": "Partial",
+      "paid": "Fully Paid",
+      "override": "Override",
+      "pending": "Pending Shipment",
+      "sent": "Shipped",
+      "received": "Received",
+      "receivedDiff": "Received (Diff)",
+      "partialReceived": "Partially Received",
+      "deposit": "Deposit",
+      "payment": "Payment",
+      "logistics": "Logistics",
+      "logShipment": "Shipment",
+      "logPayment": "Log. Payment"
+    },
+    "detail": {
+      "backToList": "Back to Overview",
+      "orderTotal": "Order Total",
+      "logBlocks": "{count} logistics blocks",
+      "notShipped": "Not Shipped",
+      "logFee": "Logistics Fee",
+      "logBlockTotal": "Block Total",
+      "thSku": "SKU",
+      "thTheoreticalPrice": "Theoretical Price",
+      "thActualPrice": "Actual Price",
+      "thFeeAlloc": "Fee Allocation",
+      "thLandedPrice": "Landed Price",
+      "thQty": "Qty",
+      "thTotal": "Total"
     }
   }
 }

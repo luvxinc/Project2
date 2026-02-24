@@ -129,7 +129,7 @@ export default function HistoryPanel({ tranNum, onClose }: Props) {
                         </p>
                         {v.usdAmount != null && v.currency !== 'USD' && (
                           <p style={{ color: colors.textTertiary }} className="text-[10px] tabular-nums">
-                            ≈ USD {v.usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                            ≈ USD {v.usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         )}
                       </div>

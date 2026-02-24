@@ -11,15 +11,16 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 //   预付款 → 定金 → 采购 → 物流
 // ================================
 
-type FinanceTab = 'prepay' | 'deposit' | 'poPayment' | 'logistic';
+type FinanceTab = 'prepay' | 'deposit' | 'poPayment' | 'logistic' | 'flow';
 
-const financeTabs: FinanceTab[] = ['prepay', 'deposit', 'poPayment', 'logistic'];
+const financeTabs: FinanceTab[] = ['prepay', 'deposit', 'poPayment', 'logistic', 'flow'];
 
 const financeTabPaths: Record<FinanceTab, string> = {
   prepay: '/finance/prepay',
   deposit: '/finance/deposit',
   poPayment: '/finance/po-payment',
   logistic: '/finance/logistic',
+  flow: '/finance/flow',
 };
 
 // ================================
@@ -47,6 +48,7 @@ export default function FinanceTabSelector() {
     if (pathname?.includes('/finance/deposit')) return 'deposit';
     if (pathname?.includes('/finance/po-payment')) return 'poPayment';
     if (pathname?.includes('/finance/logistic')) return 'logistic';
+    if (pathname?.includes('/finance/flow')) return 'flow';
     // Default: first tab
     return 'prepay';
   }, [pathname]);

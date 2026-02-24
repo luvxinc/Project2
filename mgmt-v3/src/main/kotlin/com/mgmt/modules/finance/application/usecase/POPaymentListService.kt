@@ -134,6 +134,7 @@ class POPaymentListService(
             // Aggregate deposit paid
             var depositPaidBD = BigDecimal.ZERO
             var depositPaidUsdBD = BigDecimal.ZERO
+            val depositDetails = mutableListOf<DepositPaymentDetail>()
             for (pmt in depPmts) {
                 val pmtCur = pmt.currency
                 val pmtAmount = pmt.cashAmount
@@ -161,6 +162,22 @@ class POPaymentListService(
                 } else {
                     depositPaidUsdBD = depositPaidUsdBD.add(prepayAmount.divSafe(pmtRate))
                 }
+
+                // Build deposit detail entry
+                val depExtraAmt = pmt.extraAmount
+                val depExtraCur = pmt.extraCurrency ?: ""
+                depositDetails.add(DepositPaymentDetail(
+                    pmtNo = pmt.paymentNo,
+                    depDate = pmt.paymentDate.toString(),
+                    depCur = pmtCur,
+                    depPaid = pmtAmount.round5(),
+                    depPaidCur = pmtRate.setScale(4, RoundingMode.HALF_UP).toDouble(),
+                    depCurMode = if (pmt.rateMode == "auto") "A" else "M",
+                    depPrepayAmount = prepayAmount.round5(),
+                    depOverride = if (pmt.depositOverride == true) 1 else 0,
+                    extraAmount = depExtraAmt.round5(),
+                    extraCur = depExtraCur,
+                ))
             }
 
             // Deposit status
@@ -323,6 +340,7 @@ class POPaymentListService(
                 extraFeesUsd = totalExtraFeesUsd.round5(),
                 extraFeesRmb = totalExtraFeesRmb.round5(),
                 paymentDetails = paymentDetails,
+                depositDetails = depositDetails,
             ))
         }
 

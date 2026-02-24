@@ -4,7 +4,9 @@ import com.mgmt.domain.inventory.FifoLayer
 import com.mgmt.domain.inventory.FifoLayerRepository
 import com.mgmt.domain.inventory.LandedPrice
 import com.mgmt.domain.inventory.LandedPriceRepository
+import com.mgmt.modules.finance.domain.repository.DepositPaymentRepository
 import com.mgmt.modules.finance.domain.repository.LogisticPaymentRepository
+import com.mgmt.modules.finance.domain.repository.POPaymentRepository
 import com.mgmt.modules.products.domain.repository.ProductRepository
 import com.mgmt.modules.purchase.domain.model.Payment
 import com.mgmt.modules.purchase.domain.repository.*
@@ -22,12 +24,19 @@ import java.math.RoundingMode
  *
  * Key business rule #11: Landed price = actual_price * payment_ratio + fee_per_unit
  * Fee allocation is weight-based across logistics grouping.
+ *
+ * Trigger points:
+ *   - Logistics payment submit/delete/restore → recalculate(logisticNum)
+ *   - PO payment submit/delete → recalculateByPoNum(poNum)
+ *   - Deposit payment submit/delete → recalculateByPoNum(poNum)
  */
 @Service
 class LandedPriceRecalcService(
     private val shipmentRepository: ShipmentRepository,
     private val shipmentItemRepository: ShipmentItemRepository,
     private val logisticPaymentRepository: LogisticPaymentRepository,
+    private val depositPaymentRepository: DepositPaymentRepository,
+    private val poPaymentRepository: POPaymentRepository,
     private val purchaseOrderStrategyRepository: PurchaseOrderStrategyRepository,
     private val purchaseOrderItemRepository: PurchaseOrderItemRepository,
     private val productRepository: ProductRepository,
@@ -36,11 +45,10 @@ class LandedPriceRecalcService(
     private val receiveRepository: ReceiveRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val DELAY_PATTERN = Regex("""^(.+)_delay_V\d+$""")
 
     /**
      * Recalculate landed prices for all POs affected by a logistics payment change.
-     * V1 parity: recalculate_landed_prices(logistic_num=...) (landed_price.py:1041-1116)
+     * V1 parity: recalculate_landed_prices(logistic_num=...) (landed_price.py:1062-1086)
      */
     @Transactional
     fun recalculate(logisticNum: String): Int {
@@ -57,12 +65,30 @@ class LandedPriceRecalcService(
             }
         }
 
+        return recalculateForPoNums(affectedPoNums.toList(), "logistic=$logisticNum")
+    }
+
+    /**
+     * Recalculate landed prices for a specific PO.
+     * V1 parity: recalculate_landed_prices(po_num=...) (landed_price.py:1059-1060)
+     *
+     * Called after PO payment or deposit payment submit/delete.
+     */
+    @Transactional
+    fun recalculateByPoNum(poNum: String): Int {
+        return recalculateForPoNums(listOf(poNum), "poNum=$poNum")
+    }
+
+    /**
+     * Shared implementation: recalculate for a list of PO numbers.
+     */
+    private fun recalculateForPoNums(poNums: List<String>, context: String): Int {
         var updatedCount = 0
 
-        for (poNum in affectedPoNums) {
+        for (poNum in poNums) {
             val prices = calculateLandedPrices(poNum)
 
-            // Update landed_prices table
+            // Update landed_prices table + sync fifo_layers
             for ((key, priceData) in prices) {
                 val (logNum, pn, sku) = key
                 val existing = landedPriceRepository.findByLogisticNumAndPoNumAndSku(logNum, pn, sku)
@@ -73,7 +99,7 @@ class LandedPriceRecalcService(
                     existing.updatedAt = java.time.Instant.now()
                     landedPriceRepository.save(existing)
 
-                    // Sync fifo_layers.landedCost
+                    // Sync fifo_layers.landedCost (V3 enhancement over V1)
                     if (existing.fifoLayerId != null) {
                         val layer = fifoLayerRepository.findById(existing.fifoLayerId!!).orElse(null)
                         if (layer != null) {
@@ -87,52 +113,143 @@ class LandedPriceRecalcService(
             }
         }
 
-        log.info("recalculate({}): updated {} landed price records", logisticNum, updatedCount)
+        log.info("recalculate({}): updated {} landed price records", context, updatedCount)
         return updatedCount
     }
 
     /**
      * Core landed price calculation for a single PO.
      * V1 parity: calculate_landed_prices(po_num) (landed_price.py:22-381)
+     *
+     * Full algorithm:
+     *   Step 1: Get PO strategy (currency, exchange rate)
+     *   Step 2: Get PO total amount
+     *   Step 3: Aggregate deposit + PO payments → actual_paid_usd, check override
+     *   Step 4: Calculate payment_ratio
+     *   Step 5: Aggregate extra fees from deposit + PO payments
+     *   Step 6: Get shipment records → group by parent logistics
+     *   Step 7: Get SKU weights
+     *   Step 8: Get logistics info (cost, payment, extra fees)
+     *   Step 9: Calculate total weight per logistics
+     *   Step 10: Calculate landed_price = actual_price * payment_ratio + fee_per_unit
      */
     private fun calculateLandedPrices(poNum: String): Map<Triple<String, String, String>, LandedPriceResult> {
-        // Step 1: Get PO strategy (V1: L44-57)
-        val strategy = purchaseOrderStrategyRepository.findByPoNum(poNum) ?: return emptyMap()
+        // ========== Step 1: Get PO strategy (V1: L44-57) ==========
+        // FIXED: use findFirstByPoNumOrderByStrategySeqDesc for latest version (V1: ORDER BY seq DESC LIMIT 1)
+        val strategy = purchaseOrderStrategyRepository.findFirstByPoNumOrderByStrategySeqDesc(poNum) ?: return emptyMap()
         val orderCurrency = strategy.currency
         val orderUsdRmb = strategy.exchangeRate
 
-        // Step 2: Get PO total (V1: L60-66)
+        // ========== Step 2: Get PO total (V1: L60-66) ==========
         val poItems = purchaseOrderItemRepository.findAllByPoNumAndDeletedAtIsNull(poNum)
         if (poItems.isEmpty()) return emptyMap()
         val rawTotal = poItems.sumOf { it.unitPrice.multiply(BigDecimal(it.quantity)) }
 
-        // Step 3: Payment status (simplified — check if any PO payments exist)
+        // ========== Step 3: Aggregate actual payments (V1: L68-109) ==========
+        // Deposit payments (V1: L70-88)
+        var depPaidUsd = BigDecimal.ZERO
+        val depositPayments = depositPaymentRepository.findByPoNumActive(poNum)
+        for (pmt in depositPayments) {
+            val pmtCur = pmt.currency
+            val pmtRate = pmt.exchangeRate
+            val pmtAmount = pmt.cashAmount.add(pmt.prepayAmount)
+
+            depPaidUsd = if (pmtCur == "USD") {
+                depPaidUsd.add(pmtAmount)
+            } else {
+                if (pmtRate > BigDecimal.ZERO) depPaidUsd.add(pmtAmount.divide(pmtRate, 5, RoundingMode.HALF_UP))
+                else depPaidUsd
+            }
+        }
+
+        // PO payments (V1: L90-109)
+        var pmtPaidUsd = BigDecimal.ZERO
+        var pmtOverride = false
+        val poPayments = poPaymentRepository.findByPoNumActive(poNum)
+        for (pmt in poPayments) {
+            val pmtCur = pmt.currency
+            val pmtRate = pmt.exchangeRate
+            val pmtAmount = pmt.cashAmount.add(pmt.prepayAmount)
+
+            pmtPaidUsd = if (pmtCur == "USD") {
+                pmtPaidUsd.add(pmtAmount)
+            } else {
+                if (pmtRate > BigDecimal.ZERO) pmtPaidUsd.add(pmtAmount.divide(pmtRate, 5, RoundingMode.HALF_UP))
+                else pmtPaidUsd
+            }
+
+            if (pmt.depositOverride == true) {
+                pmtOverride = true
+            }
+        }
+
+        val actualPaidUsd = depPaidUsd.add(pmtPaidUsd)
+
+        // Convert total to USD (V1: L113-117)
         val totalUsd = if (orderCurrency == "USD") rawTotal
         else if (orderUsdRmb > BigDecimal.ZERO) rawTotal.divide(orderUsdRmb, 5, RoundingMode.HALF_UP)
         else BigDecimal.ZERO
 
-        // For logistics recalc, we use payment_ratio = 1.0 (simplified)
-        // Full payment ratio calculation is in the purchase payment module
-        val paymentRatio = BigDecimal.ONE
-
-        // Step 4: Extra fees from order payments (simplified — 0 for now, handled in full flow)
-        val orderExtraUsd = BigDecimal.ZERO
-
-        // Step 5: Get shipment records for this PO (V1: L171-177)
-        val shipmentItems = shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull("").let {
-            // Get ALL shipment items for this PO across all logistics
-            val allItems = mutableListOf<com.mgmt.modules.purchase.domain.model.ShipmentItem>()
-            val allShipments = shipmentRepository.findAllByDeletedAtIsNull()
-            for (shipment in allShipments) {
-                val items = shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull(shipment.logisticNum)
-                allItems.addAll(items.filter { it.poNum == poNum })
-            }
-            allItems
+        // ========== Step 4: Payment ratio (V1: L119-131) ==========
+        // V1 logic: if pmt_override == 1 → is_fully_paid = True
+        // else: balance <= 0.01 → is_fully_paid = True
+        // if is_fully_paid: payment_ratio = actual_paid / total
+        // else: payment_ratio = 1.0 (use theoretical price until paid)
+        val isFullyPaid: Boolean = if (pmtOverride) {
+            true
+        } else {
+            val balanceRemainingUsd = totalUsd.subtract(actualPaidUsd)
+            balanceRemainingUsd <= BigDecimal("0.01")
         }
 
+        val paymentRatio: BigDecimal = if (isFullyPaid) {
+            if (totalUsd > BigDecimal.ZERO) actualPaidUsd.divide(totalUsd, 6, RoundingMode.HALF_UP)
+            else BigDecimal.ONE
+        } else {
+            BigDecimal.ONE
+        }
+
+        // ========== Step 5: Aggregate extra fees (V1: L133-168) ==========
+        // Deposit extra fees (V1: L134-149)
+        var depExtraUsd = BigDecimal.ZERO
+        for (pmt in depositPayments) {
+            val extraAmt = pmt.extraAmount
+            if (extraAmt > BigDecimal.ZERO) {
+                val extraCur = pmt.extraCurrency ?: "RMB"
+                val pmtRate = pmt.exchangeRate
+                depExtraUsd = if (extraCur == "USD") {
+                    depExtraUsd.add(extraAmt)
+                } else {
+                    if (pmtRate > BigDecimal.ZERO) depExtraUsd.add(extraAmt.divide(pmtRate, 5, RoundingMode.HALF_UP))
+                    else depExtraUsd
+                }
+            }
+        }
+
+        // PO payment extra fees (V1: L151-166)
+        var pmtExtraUsd = BigDecimal.ZERO
+        for (pmt in poPayments) {
+            val extraAmt = pmt.extraAmount
+            if (extraAmt > BigDecimal.ZERO) {
+                val extraCur = pmt.extraCurrency ?: "RMB"
+                val pmtRate = pmt.exchangeRate
+                pmtExtraUsd = if (extraCur == "USD") {
+                    pmtExtraUsd.add(extraAmt)
+                } else {
+                    if (pmtRate > BigDecimal.ZERO) pmtExtraUsd.add(extraAmt.divide(pmtRate, 5, RoundingMode.HALF_UP))
+                    else pmtExtraUsd
+                }
+            }
+        }
+
+        val orderExtraUsd = depExtraUsd.add(pmtExtraUsd)
+
+        // ========== Step 6: Get shipment records for this PO (V1: L170-212) ==========
+        // FIXED: use efficient repo method instead of full-table scan
+        val shipmentItems = shipmentItemRepository.findAllByPoNumAndDeletedAtIsNull(poNum)
         if (shipmentItems.isEmpty()) return emptyMap()
 
-        // Step 6: Group by parent logistic (V1: L183-213)
+        // Group by parent logistic (V1: L183-213)
         val parentSkuData = mutableMapOf<String, MutableMap<Pair<String, BigDecimal>, Int>>()
         val allLogistics = shipmentItems.map { it.logisticNum }.distinct()
         val parentLogisticsSet = mutableSetOf<String>()
@@ -147,7 +264,7 @@ class LandedPriceRecalcService(
 
         val logisticsCount = parentLogisticsSet.size
 
-        // Step 7: Get SKU weights (V1: L215-221)
+        // ========== Step 7: Get SKU weights (V1: L215-221) ==========
         val skuWeightMap = mutableMapOf<String, BigDecimal>()
         for (item in shipmentItems) {
             if (item.sku.uppercase() !in skuWeightMap) {
@@ -158,7 +275,7 @@ class LandedPriceRecalcService(
             }
         }
 
-        // Step 8: Get logistics info per parent (V1: L224-290)
+        // ========== Step 8: Get logistics info per parent (V1: L224-290) ==========
         val logisticsInfo = mutableMapOf<String, LogisticsInfo>()
         for (parent in parentLogisticsSet) {
             val shipment = shipmentRepository.findByLogisticNumAndDeletedAtIsNull(parent)
@@ -170,7 +287,7 @@ class LandedPriceRecalcService(
             val isPaid = payment != null && payment.cashAmount > BigDecimal.ZERO
             val pmtUsdRmb = if (isPaid) payment!!.exchangeRate else sendUsdRmb
 
-            // Extra fee from logistics payment
+            // Extra fee from logistics payment (V1: L265-270)
             var logExtraUsd = BigDecimal.ZERO
             if (payment != null) {
                 val extraPaid = payment.extraAmount
@@ -180,7 +297,7 @@ class LandedPriceRecalcService(
                 else BigDecimal.ZERO
             }
 
-            // PO count under this logistics
+            // PO count under this logistics (V1: L273-279)
             val relatedLogistics = allLogistics.filter { getParentLogistic(it) == parent }
             val poCount = relatedLogistics.flatMap { logNum ->
                 shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull(logNum).map { it.poNum }
@@ -197,7 +314,7 @@ class LandedPriceRecalcService(
             )
         }
 
-        // Step 9: Calculate total weight per parent logistics (V1: L293-313)
+        // ========== Step 9: Calculate total weight per parent logistics (V1: L293-313) ==========
         val logisticsTotalWeight = mutableMapOf<String, BigDecimal>()
         for (parent in parentLogisticsSet) {
             val relatedLogistics = allLogistics.filter { getParentLogistic(it) == parent }
@@ -212,11 +329,13 @@ class LandedPriceRecalcService(
             logisticsTotalWeight[parent] = totalWeight
         }
 
-        // Step 10: Calculate landed price per SKU (V1: L316-381)
+        // ========== Step 10: Calculate landed price per SKU (V1: L316-381) ==========
         val result = mutableMapOf<Triple<String, String, String>, LandedPriceResult>()
 
         for (parent in parentLogisticsSet) {
             val logInfo = logisticsInfo[parent] ?: continue
+
+            // Fee pool: order extras / logistics count + logistics extras / PO count + logistics cost
             val apportionedOrderExtraUsd = if (logisticsCount > 0)
                 orderExtraUsd.divide(BigDecimal(logisticsCount), 5, RoundingMode.HALF_UP)
             else BigDecimal.ZERO
@@ -234,7 +353,7 @@ class LandedPriceRecalcService(
                 orderWeightInLog = orderWeightInLog.add(w.multiply(BigDecimal(qty)))
             }
 
-            // Weight ratio -> logistics cost allocation
+            // Weight ratio → logistics cost allocation (V1: L334-341)
             val orderWeightRatio = if (logTotalWeight > BigDecimal.ZERO)
                 orderWeightInLog.divide(logTotalWeight, 10, RoundingMode.HALF_UP)
             else BigDecimal.ZERO
@@ -246,18 +365,19 @@ class LandedPriceRecalcService(
 
             val feePoolUsd = apportionedOrderExtraUsd.add(apportionedLogExtraUsd).add(orderLogCostUsd)
 
-            // Per-SKU calculation
+            // Per-SKU calculation (V1: L346-379)
             for ((skuPrice, qty) in skuData) {
                 val (sku, basePrice) = skuPrice
 
-                // Convert to USD
+                // Convert to USD (V1: L348-351)
                 val priceUsd = if (orderCurrency == "USD") basePrice
                 else if (orderUsdRmb > BigDecimal.ZERO) basePrice.divide(orderUsdRmb, 5, RoundingMode.HALF_UP)
                 else BigDecimal.ZERO
 
+                // Actual price = theoretical price * payment_ratio (V1: L354)
                 val actualPriceUsd = priceUsd.multiply(paymentRatio)
 
-                // Fee apportionment by weight
+                // Fee apportionment by weight (V1: L357-364)
                 val skuWeightKg = skuWeightMap[sku.uppercase()] ?: BigDecimal.ZERO
                 val skuTotalWeight = skuWeightKg.multiply(BigDecimal(qty))
 
@@ -266,13 +386,16 @@ class LandedPriceRecalcService(
                     feePoolUsd.multiply(weightRatio).divide(BigDecimal(qty), 5, RoundingMode.HALF_UP)
                 } else BigDecimal.ZERO
 
+                // Landed price = actual_price + fee (V1: L367)
                 val landedPriceUsd = actualPriceUsd.add(feeApportionedUsd)
 
                 val key = Triple(parent, poNum, sku)
                 result[key] = LandedPriceResult(
-                    landedPriceUsd = landedPriceUsd.setScale(4, RoundingMode.HALF_UP),
+                    landedPriceUsd = landedPriceUsd.setScale(5, RoundingMode.HALF_UP),
                     qty = qty,
-                    basePriceUsd = priceUsd.setScale(4, RoundingMode.HALF_UP),
+                    basePriceUsd = priceUsd.setScale(5, RoundingMode.HALF_UP),
+                    paymentRatio = paymentRatio,
+                    feeApportionedUsd = feeApportionedUsd.setScale(5, RoundingMode.HALF_UP),
                 )
             }
         }
@@ -283,10 +406,19 @@ class LandedPriceRecalcService(
     /**
      * Extract parent logistic num from a potentially-child logistic num.
      * V1 parity: get_parent_logistic() (landed_price.py:184-189)
+     *
+     * V1 logic: if '_delay_' in logistic_num or '_V' in logistic_num → parts[0]
+     * Examples:
+     *   L12345_delay_V01 → L12345
+     *   L12345_V01 → L12345
+     *   L12345 → L12345
      */
     private fun getParentLogistic(logisticNum: String): String {
-        val match = DELAY_PATTERN.matchEntire(logisticNum)
-        return match?.groupValues?.get(1) ?: logisticNum
+        // FIXED: match both _delay_ and _V patterns (V1: L186)
+        if ("_delay_" in logisticNum || "_V" in logisticNum) {
+            return logisticNum.split("_")[0]
+        }
+        return logisticNum
     }
 
     private data class LogisticsInfo(
@@ -301,5 +433,7 @@ class LandedPriceRecalcService(
         val landedPriceUsd: BigDecimal,
         val qty: Int,
         val basePriceUsd: BigDecimal,
+        val paymentRatio: BigDecimal = BigDecimal.ONE,
+        val feeApportionedUsd: BigDecimal = BigDecimal.ZERO,
     )
 }

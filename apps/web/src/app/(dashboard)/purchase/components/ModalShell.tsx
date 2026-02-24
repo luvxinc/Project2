@@ -30,6 +30,8 @@ export interface ModalShellProps {
   footerRight?: ReactNode;
   /** Whether to show the footer at all */
   showFooter?: boolean;
+  /** Use wider panel (~25% wider than default) */
+  wide?: boolean;
   children: ReactNode;
 }
 
@@ -43,6 +45,7 @@ export default function ModalShell({
   footerLeft,
   footerRight,
   showFooter = true,
+  wide = false,
   children,
 }: ModalShellProps) {
   const { theme } = useTheme();
@@ -79,7 +82,7 @@ export default function ModalShell({
 
       {/* Panel — wide */}
       <div
-        className="relative w-full max-w-4xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
+        className={`relative w-full ${wide ? 'max-w-[1120px]' : 'max-w-4xl'} rounded-2xl border shadow-2xl flex flex-col overflow-hidden`}
         style={{
           backgroundColor: colors.bgSecondary,
           borderColor: colors.border,

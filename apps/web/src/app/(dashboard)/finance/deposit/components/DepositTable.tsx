@@ -34,7 +34,7 @@ interface SupplierGroup {
 // ── Helpers ──────────────────────────────────────
 
 const fmtAmt = (val: number) =>
-  val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 });
+  val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Currency code → symbol */
 const curSym = (c: string) => (c === 'RMB' || c === 'CNY') ? '¥' : '$';
@@ -565,7 +565,6 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
                 <TH color={colors.textSecondary} align="text-right">{t('deposit.table.actualPaid')}</TH>
                 <TH color={colors.textSecondary}>{t('deposit.table.latestPaymentDate')}</TH>
                 <TH color={colors.textSecondary} align="text-right">{t('deposit.table.extraFees')}</TH>
-                <TH color={colors.textSecondary} align="text-center">{t('deposit.table.actions')}</TH>
               </tr>
             </thead>
             <tbody>
@@ -687,49 +686,6 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
           ) : (
             <span style={{ color: colors.textTertiary }} className="text-sm">—</span>
           )}
-        </td>
-
-        {/* Actions */}
-        <td className="py-3 px-4 whitespace-nowrap">
-          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-            {/* History */}
-            <ActionButton
-              title={t('deposit.actions.history')}
-              color={colors.blue}
-              onClick={() => onViewDetail(item, pmtNo)}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </ActionButton>
-
-            {/* Orders */}
-            <ActionButton
-              title={t('deposit.actions.orders')}
-              color={colors.teal}
-              onClick={() => onViewDetail(item, pmtNo)}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </ActionButton>
-
-            {/* Files */}
-            <ActionButton
-              title={t('deposit.actions.files')}
-              color={colors.orange}
-              onClick={() => onViewDetail(item, pmtNo)}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </ActionButton>
-
-            {/* Delete */}
-            {pmtNo && (
-              <ActionButton
-                title={t('deposit.actions.delete')}
-                color="#ff453a"
-                onClick={() => onDeletePayment(pmtNo)}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </ActionButton>
-            )}
-          </div>
         </td>
       </tr>
 

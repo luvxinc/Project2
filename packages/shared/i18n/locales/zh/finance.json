@@ -188,6 +188,7 @@
       "paymentDate": "付款日期",
       "extraFees": "额外费用",
       "actions": "操作",
+      "delete": "删除",
       "pmtNo": "付款单号",
       "currency": "货币",
       "cashPaid": "现金支付",
@@ -342,7 +343,9 @@
       "depPaidCur": "已付(币种)",
       "depPrepayAmount": "预付抵扣",
       "depOverride": "覆盖标准",
-      "extraAmount": "额外金额"
+      "extraAmount": "额外金额",
+      "paymentDetailsTitle": "定金明细",
+      "noPayment": "暂无定金记录"
     },
 
     "sidebar": {
@@ -409,6 +412,7 @@
       "paymentDate": "付款日期",
       "extraFees": "额外费用",
       "actions": "操作",
+      "delete": "删除",
       "pmtNo": "付款单号",
       "currency": "货币",
       "cashPaid": "现金支付",
@@ -566,7 +570,18 @@
       "poPmtPaidCur": "已付(币种)",
       "poPmtPrepayAmount": "预付抵扣",
       "poPmtOverride": "覆盖标准",
-      "extraAmount": "额外金额"
+      "extraAmount": "额外金额",
+      "depositDetailsTitle": "定金明细",
+      "paymentDetailsTitle": "尾款明细",
+      "depPmtDate": "日期",
+      "depPmtCur": "货币",
+      "depPmtPaid": "已付定金",
+      "depPmtPaidCur": "已付(币种)",
+      "depPmtPrepayAmount": "预付抵扣",
+      "depPmtOverride": "覆盖标准",
+      "noDeposit": "暂无定金记录",
+      "noDepositRequired": "无需定金",
+      "noPayment": "暂无尾款记录"
     },
 
     "sidebar": {
@@ -739,6 +754,75 @@
       "valueUsd": "金额(USD)",
       "totalRmb": "合计(RMB)",
       "totalUsd": "合计(USD)"
+    }
+  },
+  "flow": {
+    "title": "订收发总览",
+    "subtitle": "订单全生命周期概览 — 定金、货款、物流费用及成本汇总",
+    "refresh": "刷新",
+    "loading": "正在加载概览数据...",
+    "empty": "暂无订单数据",
+    "totalOrders": "共 {count} 条订单",
+    "searchPlaceholder": "搜索订单号或物流单号...",
+    "clearFilters": "清除",
+    "diffWarning": "存在未处理差异",
+    "info": {
+      "title": "页面说明",
+      "totalCost": "订单总成本",
+      "totalCostDesc": "= 实际支付金额 + 额外费用 + 物流摊销",
+      "logAlloc": "物流摊销",
+      "logAllocDesc": "按订单重量占物流单总重量的比例分摊",
+      "extraFees": "额外费用",
+      "extraFeesDesc": "物流/定金/货款三类额外费用汇总（按订单数摊销）",
+      "expandDetail": "查看详情",
+      "expandDetailDesc": "点击行可查看物流单级别SKU明细"
+    },
+    "table": {
+      "poNum": "订单号",
+      "poDate": "订单日期",
+      "totalAmount": "订单总金额",
+      "depositStatus": "定金状态",
+      "paidAmount": "已付货款",
+      "balanceRemaining": "货款剩余",
+      "actualPayment": "实际支付",
+      "waiver": "减免",
+      "extraFees": "额外费用",
+      "logisticNums": "发货单号",
+      "logAllocation": "物流摊销",
+      "orderTotalCost": "订单总成本",
+      "paymentStatus": "付款状态"
+    },
+    "status": {
+      "notRequired": "无需定金",
+      "unpaid": "待付款",
+      "partial": "部分付款",
+      "paid": "已付清",
+      "override": "已减免",
+      "pending": "待发货",
+      "sent": "已发货",
+      "received": "已收货",
+      "receivedDiff": "已收货(有差异)",
+      "partialReceived": "部分收货",
+      "deposit": "定金",
+      "payment": "货款",
+      "logistics": "物流",
+      "logShipment": "发货状态",
+      "logPayment": "物流费用"
+    },
+    "detail": {
+      "backToList": "返回总览",
+      "orderTotal": "订单总计",
+      "logBlocks": "{count}个物流块",
+      "notShipped": "尚未发货",
+      "logFee": "物流费",
+      "logBlockTotal": "物流单合计",
+      "thSku": "SKU",
+      "thTheoreticalPrice": "理论单价",
+      "thActualPrice": "实际单价",
+      "thFeeAlloc": "费用摊销",
+      "thLandedPrice": "入库单价",
+      "thQty": "数量",
+      "thTotal": "总价"
     }
   }
 }

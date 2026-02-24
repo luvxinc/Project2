@@ -418,6 +418,7 @@ export default function PaymentDialog({ open, onClose, selectedItems, onSuccess,
       <ModalShell
         isOpen={open}
         onClose={onClose}
+        wide
         title={t('deposit.payment.title')}
         subtitle={t('deposit.payment.selectedCount', { count: selectedItems.length })}
         footerLeft={

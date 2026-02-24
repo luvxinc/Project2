@@ -39,6 +39,7 @@ class DepositPaymentUseCase(
     private val strategyRepository: PurchaseOrderStrategyRepository,
     private val itemRepository: PurchaseOrderItemRepository,
     private val supplierStrategyRepository: SupplierStrategyRepository,
+    private val landedPriceRecalcService: LandedPriceRecalcService,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -258,6 +259,15 @@ class DepositPaymentUseCase(
 
         log.info("[DepositPayment] Created {} deposit records, {} prepay records", insertCount, prepayInsertCount)
 
+        // Recalculate FIFO landed prices (V1: deposit/api.py:691-694)
+        for (poNum in request.poNums) {
+            try {
+                landedPriceRecalcService.recalculateByPoNum(poNum)
+            } catch (e: Exception) {
+                log.warn("Failed to recalculate landed prices for {}: {}", poNum, e.message)
+            }
+        }
+
         return SubmitDepositPaymentResponse(
             pmtNos = generatedPmtNos,
             count = insertCount,
@@ -312,6 +322,16 @@ class DepositPaymentUseCase(
             }
 
             affectedCount++
+        }
+
+        // Recalculate FIFO landed prices for affected POs (V1: deposit/api.py:1608-1611)
+        val affectedPoNums = payments.mapNotNull { it.poNum }.distinct()
+        for (poNum in affectedPoNums) {
+            try {
+                landedPriceRecalcService.recalculateByPoNum(poNum)
+            } catch (e: Exception) {
+                log.warn("Failed to recalculate landed prices for {}: {}", poNum, e.message)
+            }
         }
 
         return DeleteDepositPaymentResponse(
