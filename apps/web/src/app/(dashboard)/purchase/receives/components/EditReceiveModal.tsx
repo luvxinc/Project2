@@ -85,7 +85,7 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
             <button
               onClick={handleSubmit}
               className="h-9 px-5 text-sm font-medium rounded-lg transition-all hover:opacity-90 text-white"
-              style={{ backgroundColor: '#30d158' }}
+              style={{ backgroundColor: colors.green }}
             >
               {t('receives.edit.submit')}
             </button>

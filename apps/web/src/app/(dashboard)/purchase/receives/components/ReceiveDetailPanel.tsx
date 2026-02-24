@@ -146,7 +146,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
             <button
               onClick={onRestore}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'rgba(48,209,88,0.15)', color: '#30d158' }}
+              style={{ backgroundColor: 'rgba(48,209,88,0.15)', color: colors.green }}
             >
               {t('receives.detail.restore')}
             </button>
@@ -165,7 +165,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                 <button
                   onClick={onDelete}
                   className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-                  style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+                  style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
                 >
                   {t('receives.detail.delete')}
                 </button>
@@ -253,7 +253,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                   className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full inline-block mt-[-2px] align-middle"
                   style={
                     tab === 'diffs'
-                      ? { backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }
+                      ? { backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }
                       : {
                           backgroundColor: activeTab === tab ? `${colors.blue}20` : colors.bgTertiary,
                           color: activeTab === tab ? colors.blue : colors.textTertiary,
@@ -311,7 +311,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                           <td className="px-4 py-2.5 text-sm font-mono" style={{ color: colors.text }}>{d.sku}</td>
                           <td className="px-4 py-2.5 text-sm text-right" style={{ color: colors.text }}>{d.sentQuantity}</td>
                           <td className="px-4 py-2.5 text-sm text-right" style={{ color: colors.text }}>{d.receiveQuantity}</td>
-                          <td className="px-4 py-2.5 text-sm text-right font-bold" style={{ color: '#ff453a' }}>{d.diffQuantity}</td>
+                          <td className="px-4 py-2.5 text-sm text-right font-bold" style={{ color: colors.red }}>{d.diffQuantity}</td>
                           <td className="px-4 py-2.5">
                             <span className="text-xs px-2 py-0.5 rounded-full"
                               style={{
@@ -399,7 +399,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                   {!v.isActive && (
                                     <span
                                       className="px-2 py-0.5 rounded text-xs"
-                                      style={{ backgroundColor: 'rgba(99,99,102,0.12)', color: '#8e8e93' }}
+                                      style={{ backgroundColor: 'rgba(99,99,102,0.12)', color: colors.gray }}
                                     >
                                       {t('receives.detail.historyCancelled')}
                                     </span>
@@ -462,14 +462,14 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                     >
                                       <span
                                         className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
-                                        style={{ backgroundColor: 'rgba(245,166,35,0.15)', color: '#f5a623' }}
+                                        style={{ backgroundColor: 'rgba(245,166,35,0.15)', color: colors.orange }}
                                       >
                                         调整
                                       </span>
                                       <span className="font-mono font-medium" style={{ color: colors.text }}>{ch.sku}</span>
-                                      <span className="font-mono line-through" style={{ color: '#ff453a' }}>{ch.fields[0]?.old ?? '—'}</span>
+                                      <span className="font-mono line-through" style={{ color: colors.red }}>{ch.fields[0]?.old ?? '—'}</span>
                                       <span style={{ color: colors.textTertiary }}>→</span>
-                                      <span className="font-mono font-semibold" style={{ color: '#30d158' }}>{ch.fields[0]?.new ?? '—'}</span>
+                                      <span className="font-mono font-semibold" style={{ color: colors.green }}>{ch.fields[0]?.new ?? '—'}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -492,7 +492,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                       className="flex items-center gap-2 px-4 py-3 shrink-0"
                       style={{ backgroundColor: colors.bgSecondary, borderBottom: `1px solid ${colors.border}` }}
                     >
-                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#f5a623' }}>
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors.orange }}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                       <span className="text-xs font-semibold" style={{ color: colors.text }}>
@@ -500,7 +500,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                       </span>
                       <span
                         className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: 'rgba(245,166,35,0.15)', color: '#f5a623' }}
+                        style={{ backgroundColor: 'rgba(245,166,35,0.15)', color: colors.orange }}
                       >
                         {(history.diffVersions ?? []).length}
                       </span>
@@ -510,7 +510,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                     <div className="p-4 space-y-3 overflow-y-auto" style={{ maxHeight: '520px', backgroundColor: colors.bg }}>
                       {(history.diffVersions ?? []).length === 0 ? (
                         <div className="py-8 text-center">
-                          <p className="text-sm font-medium mb-1" style={{ color: '#30d158' }}>全部正常入库</p>
+                          <p className="text-sm font-medium mb-1" style={{ color: colors.green }}>全部正常入库</p>
                           <p className="text-xs" style={{ color: colors.textTertiary }}>没有差异修订记录</p>
                         </div>
                       ) : (
@@ -581,7 +581,7 @@ export default function ReceiveDetailPanel({ item, detail, isLoading, onEdit, on
                                         <span className="font-mono font-medium" style={{ color: isChanged ? '#ff453a' : colors.text }}>{item.sku}</span>
                                         <span className="text-right" style={{ color: colors.textSecondary }}>{item.sentQuantity}</span>
                                         <span className="text-right" style={{ color: colors.textSecondary }}>{item.receiveQuantity}</span>
-                                        <span className="text-right font-semibold" style={{ color: '#ff453a' }}>{item.diffQuantity}</span>
+                                        <span className="text-right font-semibold" style={{ color: colors.red }}>{item.diffQuantity}</span>
                                       </div>
                                     );
                                   })}

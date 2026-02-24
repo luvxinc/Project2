@@ -144,7 +144,7 @@ export default function ReceiveGoodsPage() {
       {successMsg && (
         <div
           className="fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in"
-          style={{ backgroundColor: '#30d158', color: '#fff' }}
+          style={{ backgroundColor: colors.green, color: '#fff' }}
         >
           {successMsg}
         </div>
@@ -162,7 +162,7 @@ export default function ReceiveGoodsPage() {
         ) : error ? (
           <div className="flex justify-center py-16">
             <div className="text-center">
-              <p className="text-sm mb-3" style={{ color: '#ff453a' }}>{t('receiveGoods.loadFailed')}</p>
+              <p className="text-sm mb-3" style={{ color: colors.red }}>{t('receiveGoods.loadFailed')}</p>
               <button onClick={() => refetch()} className="px-4 py-2 text-sm rounded-lg" style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
                 {t('receiveGoods.retry')}
               </button>
@@ -221,7 +221,7 @@ export default function ReceiveGoodsPage() {
                       {hasDiff && (
                         <span
                           className="px-2.5 py-1 rounded-full text-xs font-medium"
-                          style={{ backgroundColor: 'rgba(255,169,64,0.12)', color: '#f5a623' }}
+                          style={{ backgroundColor: 'rgba(255,169,64,0.12)', color: colors.orange }}
                         >
                           {t('receiveGoods.hasDiff')}
                         </span>
@@ -229,7 +229,7 @@ export default function ReceiveGoodsPage() {
                       <button
                         onClick={e => { e.stopPropagation(); handleSubmitShipment(shipment); }}
                         className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-                        style={{ backgroundColor: '#30d158', color: '#fff' }}
+                        style={{ backgroundColor: colors.green, color: '#fff' }}
                       >
                         {t('receiveGoods.submitBtn')}
                       </button>
@@ -290,7 +290,7 @@ export default function ReceiveGoodsPage() {
                                       }}
                                     />
                                     {isDiff && (
-                                      <span className="text-xs font-medium" style={{ color: '#ff453a' }}>
+                                      <span className="text-xs font-medium" style={{ color: colors.red }}>
                                         {qty - item.quantity > 0 ? `+${qty - item.quantity}` : qty - item.quantity}
                                       </span>
                                     )}

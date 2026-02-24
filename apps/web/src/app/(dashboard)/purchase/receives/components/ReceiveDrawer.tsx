@@ -63,7 +63,7 @@ function ShipmentListPanel({ onSelect, colors, t }: ShipmentListPanelProps) {
           </div>
         )}
         {error && (
-          <p className="text-center py-12 text-sm" style={{ color: '#ff453a' }}>
+          <p className="text-center py-12 text-sm" style={{ color: colors.red }}>
             {t('receives.drawer.loadError')}
           </p>
         )}
@@ -96,7 +96,7 @@ function ShipmentListPanel({ onSelect, colors, t }: ShipmentListPanelProps) {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(245,166,35,0.12)', color: '#f5a623' }}>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(245,166,35,0.12)', color: colors.orange }}>
                 {t('receives.status.in_transit')}
               </span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors.textTertiary }}>
@@ -214,7 +214,7 @@ function ReceiveFormPanel({ shipment, onBack, onSuccess, onClose, colors, t }: R
             onClick={handleFillNoDiscrepancy}
             disabled={rows.length === 0}
             className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80 disabled:opacity-40"
-            style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: '#30d158' }}
+            style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}
           >
             ✓ {t('receives.drawer.noDiscrepancy')}
           </button>
@@ -260,14 +260,14 @@ function ReceiveFormPanel({ shipment, onBack, onSuccess, onClose, colors, t }: R
 
       {/* Error */}
       {submitError && (
-        <div className="mx-6 mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(255,69,58,0.1)', color: '#ff453a' }}>
+        <div className="mx-6 mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(255,69,58,0.1)', color: colors.red }}>
           {submitError}
         </div>
       )}
 
       {/* Empty alert */}
       {hasEmpty && !submitMutation.isPending && (
-        <div className="mx-6 mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(245,166,35,0.1)', color: '#f5a623' }}>
+        <div className="mx-6 mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(245,166,35,0.1)', color: colors.orange }}>
           {t('receives.drawer.fillAllPrompt')}
         </div>
       )}

@@ -525,7 +525,7 @@ export default function OrdersPage() {
             {/* Create PO — right-most (aligned like suppliers page) */}
             <button
               onClick={() => setShowCreateModal(true)}
-              style={{ backgroundColor: '#30d158', color: '#ffffff' }}
+              style={{ backgroundColor: colors.green, color: '#ffffff' }}
               className="ml-auto h-9 px-4 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95 flex items-center gap-1.5"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

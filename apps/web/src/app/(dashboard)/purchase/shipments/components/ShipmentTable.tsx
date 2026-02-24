@@ -62,8 +62,8 @@ export default function ShipmentTable({ shipments, isLoading, error, onRetry, on
       return {
         label: t('shipments.status.deleted'),
         bg: 'rgba(142,142,147,0.14)',
-        color: '#8e8e93',
-        dot: '#8e8e93',
+        color: colors.gray,
+        dot: colors.gray,
         ring: 'rgba(142,142,147,0.25)',
       };
     }
@@ -72,24 +72,24 @@ export default function ShipmentTable({ shipments, isLoading, error, onRetry, on
         return {
           label: t('shipments.receiveStatus.ALL_RECEIVED'),
           bg: 'rgba(48,209,88,0.12)',
-          color: '#30d158',
-          dot: '#30d158',
+          color: colors.green,
+          dot: colors.green,
           ring: 'rgba(48,209,88,0.3)',
         };
       case 'DIFF_UNRESOLVED':
         return {
           label: t('shipments.receiveStatus.DIFF_UNRESOLVED'),
           bg: 'rgba(255,69,58,0.12)',
-          color: '#ff453a',
-          dot: '#ff453a',
+          color: colors.red,
+          dot: colors.red,
           ring: 'rgba(255,69,58,0.3)',
         };
       case 'DIFF_RESOLVED':
         return {
           label: t('shipments.receiveStatus.DIFF_RESOLVED'),
           bg: 'rgba(100,210,255,0.12)',
-          color: '#64d2ff',
-          dot: '#64d2ff',
+          color: colors.teal,
+          dot: colors.teal,
           ring: 'rgba(100,210,255,0.3)',
         };
       case 'IN_TRANSIT':
@@ -97,8 +97,8 @@ export default function ShipmentTable({ shipments, isLoading, error, onRetry, on
         return {
           label: t('shipments.receiveStatus.IN_TRANSIT'),
           bg: 'rgba(255,159,10,0.12)',
-          color: '#ff9f0a',
-          dot: '#ff9f0a',
+          color: colors.orange,
+          dot: colors.orange,
           ring: 'rgba(255,159,10,0.3)',
         };
     }
