@@ -200,7 +200,7 @@ export default function LogisticDetailPanel({
                     <span style={{ color: colors.textTertiary }}>{child.dateSent}</span>
                     {child.isPaid && (
                       <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: '#30d158' }}>
+                        style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}>
                         {t('logistic.status.paid')}
                       </span>
                     )}

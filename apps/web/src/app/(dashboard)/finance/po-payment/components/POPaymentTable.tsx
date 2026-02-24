@@ -344,7 +344,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                             {item.hasUnresolvedDiff && (
                               <span
                                 className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-                                style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+                                style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
                                 title={t('poPayment.diffBlocked')}
                               >
                                 Diff
@@ -353,7 +353,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                             {item.fluctuationTriggered && (
                               <span
                                 className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-                                style={{ backgroundColor: 'rgba(255,214,10,0.12)', color: '#ffd60a' }}
+                                style={{ backgroundColor: 'rgba(255,214,10,0.12)', color: colors.yellow }}
                                 title={`${t('poPayment.floatTriggered')}: $${fmtAmt(item.adjustedBalanceUsd)}`}
                               >
                                 Float
@@ -374,7 +374,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
 
                         {/* Total Amount (USD) */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                          <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
                             ${fmtAmt(item.totalAmountUsd)}
                           </span>
                         </td>
@@ -530,12 +530,12 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
                         {item.skuCount}
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                        <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
                           ${fmtAmt(item.totalAmountUsd)}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <span style={{ color: '#30d158' }} className="text-sm font-mono font-medium tabular-nums">
+                        <span style={{ color: colors.green }} className="text-sm font-mono font-medium tabular-nums">
                           ${fmtAmt(item.poPaidUsd)}
                         </span>
                       </td>
@@ -549,7 +549,7 @@ function PaidView({ groups, colors, onViewDetail, onDeletePayment, onPoRowClick,
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         {hasExtra ? (
-                          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                          <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
                             ${fmtAmt(item.extraFeesUsd)}
                           </span>
                         ) : (

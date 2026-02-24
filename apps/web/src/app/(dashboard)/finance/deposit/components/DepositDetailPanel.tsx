@@ -158,7 +158,7 @@ export default function DepositDetailPanel({
           <button
             onClick={() => onDeletePayment(pmtNo)}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
           >
             {t('deposit.actions.delete')}
           </button>
@@ -245,7 +245,7 @@ export default function DepositDetailPanel({
       >
         <div className="px-5 py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" style={{ color: '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
@@ -292,7 +292,7 @@ export default function DepositDetailPanel({
                       className={idx !== item.paymentDetails.length - 1 ? 'border-b' : ''}
                     >
                       <td className="py-2 px-4 whitespace-nowrap">
-                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">{det.pmtNo}</span>
+                        <span style={{ color: colors.green }} className="font-mono text-xs font-semibold">{det.pmtNo}</span>
                       </td>
                       <td style={{ color: colors.textSecondary }} className="py-2 px-4 text-xs font-mono whitespace-nowrap">{det.depDate}</td>
                       <td className="py-2 px-4 whitespace-nowrap">
@@ -324,7 +324,7 @@ export default function DepositDetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.depOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>{t('deposit.detail.depOverride')}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}>{t('deposit.detail.depOverride')}</span>
                         ) : (
                           <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
                         )}

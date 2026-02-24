@@ -57,8 +57,8 @@ export default function LogisticTable({
       return {
         label: t('logistic.status.deleted'),
         bg: 'rgba(142,142,147,0.14)',
-        color: '#8e8e93',
-        dot: '#8e8e93',
+        color: colors.gray,
+        dot: colors.gray,
         ring: 'rgba(142,142,147,0.25)',
       };
     }
@@ -67,16 +67,16 @@ export default function LogisticTable({
         return {
           label: t('logistic.status.paid'),
           bg: 'rgba(48,209,88,0.12)',
-          color: '#30d158',
-          dot: '#30d158',
+          color: colors.green,
+          dot: colors.green,
           ring: 'rgba(48,209,88,0.3)',
         };
       case 'partial':
         return {
           label: t('logistic.status.partial'),
           bg: 'rgba(100,210,255,0.12)',
-          color: '#64d2ff',
-          dot: '#64d2ff',
+          color: colors.teal,
+          dot: colors.teal,
           ring: 'rgba(100,210,255,0.3)',
         };
       case 'unpaid':
@@ -84,8 +84,8 @@ export default function LogisticTable({
         return {
           label: t('logistic.status.unpaid'),
           bg: 'rgba(255,159,10,0.12)',
-          color: '#ff9f0a',
-          dot: '#ff9f0a',
+          color: colors.orange,
+          dot: colors.orange,
           ring: 'rgba(255,159,10,0.3)',
         };
     }
@@ -273,7 +273,7 @@ export default function LogisticTable({
                 {/* Paid RMB */}
                 <td className="py-3 px-4 text-right whitespace-nowrap">
                   <span
-                    style={{ color: item.isPaid ? '#30d158' : colors.textTertiary }}
+                    style={{ color: item.isPaid ? colors.green : colors.textTertiary }}
                     className="text-sm font-mono tabular-nums"
                   >
                     {item.logisticPaid > 0 ? `¥${fmtNum(item.logisticPaid)}` : '—'}

@@ -348,7 +348,7 @@ function FlowListContent({
           </h2>
           <span
             className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: '#ff9f0a' }}
+            style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: colors.orange }}
           >
             {orders.length}
           </span>
@@ -564,13 +564,13 @@ function FlowRow({
           </div>
 
           {allOk ? (
-            <svg className="w-3 h-3 flex-shrink-0" style={{ color: '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 flex-shrink-0" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           ) : order.hasDiff ? (
-            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: '#ff9f0a' }}>{t('flow.diffWarning')}</span>
+            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: colors.orange }}>{t('flow.diffWarning')}</span>
           ) : hasProblem ? (
-            <div className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: '#ffd60a' }} />
+            <div className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: colors.yellow }} />
           ) : null}
         </div>
 
@@ -621,12 +621,12 @@ function FlowRow({
               {(order.hasDiff || order.fluctuationTriggered) && (
                 <div className="flex gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                   {order.hasDiff && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: '#ff9f0a' }}>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: colors.orange }}>
                       {t('flow.diffWarning')}
                     </span>
                   )}
                   {order.fluctuationTriggered && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,214,10,0.15)', color: '#ffd60a' }}>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,214,10,0.15)', color: colors.yellow }}>
                       +/- {order.curExFloat}%
                     </span>
                   )}
@@ -673,7 +673,7 @@ function FlowRow({
         {order.hasDiff && (
           <span
             className="ml-1 text-[8px] px-1 py-0.5 rounded font-medium"
-            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
             title={t('flow.diffWarning')}
           >
             DIFF
@@ -727,7 +727,7 @@ function FlowRow({
       {/* Waiver (Override) */}
       <td className="py-2.5 px-3 text-right">
         {order.waiverUsd > 0 ? (
-          <span className="font-mono text-[11px] tabular-nums" style={{ color: '#ff453a' }}>
+          <span className="font-mono text-[11px] tabular-nums" style={{ color: colors.red }}>
             -${fmtNum(order.waiverUsd)}
           </span>
         ) : (
@@ -896,10 +896,10 @@ function FlowDetailContent({
                   <div className="flex items-center gap-2">
                     {isNotShipped ? (
                       <>
-                        <svg className="w-4 h-4" style={{ color: '#ffd60a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" style={{ color: colors.yellow }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        <span className="text-sm font-bold" style={{ color: '#ffd60a' }}>
+                        <span className="text-sm font-bold" style={{ color: colors.yellow }}>
                           {t('flow.detail.notShipped')}
                         </span>
                       </>

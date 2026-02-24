@@ -435,7 +435,7 @@ export default function LogisticPage() {
                   </h2>
                   <span
                     className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: '#ff9f0a' }}
+                    style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: colors.orange }}
                   >
                     {unpaidData.length}
                   </span>
@@ -470,7 +470,7 @@ export default function LogisticPage() {
                     </h2>
                     <span
                       className="text-xs font-medium px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: '#30d158' }}
+                      style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}
                     >
                       {paymentGroups.length}
                     </span>

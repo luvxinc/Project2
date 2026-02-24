@@ -70,8 +70,8 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
         <tbody>
           {groups.map((group, index) => {
             const badge = group.isDeleted
-              ? { label: t('logistic.status.deleted'), bg: 'rgba(142,142,147,0.14)', color: '#8e8e93', dot: '#8e8e93', ring: 'rgba(142,142,147,0.25)' }
-              : { label: t('logistic.status.paid'), bg: 'rgba(48,209,88,0.12)', color: '#30d158', dot: '#30d158', ring: 'rgba(48,209,88,0.3)' };
+              ? { label: t('logistic.status.deleted'), bg: 'rgba(142,142,147,0.14)', color: colors.gray, dot: colors.gray, ring: 'rgba(142,142,147,0.25)' }
+              : { label: t('logistic.status.paid'), bg: 'rgba(48,209,88,0.12)', color: colors.green, dot: colors.green, ring: 'rgba(48,209,88,0.3)' };
 
             return (
               <tr
@@ -85,7 +85,7 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
               >
                 {/* Payment # */}
                 <td className="py-3 px-4 whitespace-nowrap">
-                  <span style={{ color: '#30d158' }} className="font-mono text-sm font-semibold">
+                  <span style={{ color: colors.green }} className="font-mono text-sm font-semibold">
                     {group.pmtNo}
                   </span>
                 </td>

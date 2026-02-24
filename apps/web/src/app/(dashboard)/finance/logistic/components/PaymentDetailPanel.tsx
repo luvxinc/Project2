@@ -84,7 +84,7 @@ export default function PaymentDetailPanel({
             <button
               onClick={() => onRestorePayment(group.pmtNo)}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: '#30d158' }}
+              style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}
             >
               {t('logistic.actions.restore')}
             </button>
@@ -92,7 +92,7 @@ export default function PaymentDetailPanel({
             <button
               onClick={() => onDeletePayment(group.pmtNo)}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+              style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
             >
               {t('logistic.actions.delete')}
             </button>
@@ -121,9 +121,9 @@ export default function PaymentDetailPanel({
             {group.isDeleted && (
               <span
                 className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: '#8e8e93', boxShadow: '0 0 0 1px rgba(142,142,147,0.25)' }}
+                style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: colors.gray, boxShadow: '0 0 0 1px rgba(142,142,147,0.25)' }}
               >
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#8e8e93' }} />
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: colors.gray }} />
                 {t('logistic.status.deleted')}
               </span>
             )}

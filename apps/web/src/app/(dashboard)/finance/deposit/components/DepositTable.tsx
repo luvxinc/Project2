@@ -396,7 +396,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
 
                         {/* Total Amount (USD only) */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+                          <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
                             ${fmtAmt(item.totalAmountUsd)}
                           </span>
                         </td>
@@ -653,7 +653,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
 
         {/* Total Amount (USD only) */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
-          <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+          <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
             ${fmtAmt(item.totalAmountUsd)}
           </span>
         </td>
@@ -667,7 +667,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
 
         {/* Actual Paid */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
-          <span style={{ color: '#30d158' }} className="text-sm font-mono font-medium tabular-nums">
+          <span style={{ color: colors.green }} className="text-sm font-mono font-medium tabular-nums">
             ${fmtAmt(item.actualPaid)}
           </span>
         </td>
@@ -680,7 +680,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
         {/* Extra Fees */}
         <td className="py-3 px-4 text-right whitespace-nowrap">
           {hasExtra ? (
-            <span className="font-mono text-sm tabular-nums" style={{ color: '#64d2ff' }}>
+            <span className="font-mono text-sm tabular-nums" style={{ color: colors.teal }}>
               ${fmtAmt(item.extraFeesUsd)}
             </span>
           ) : (
@@ -715,7 +715,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                       className={dIdx !== item.paymentDetails.length - 1 ? 'border-b' : ''}
                     >
                       <td className="py-2 px-4 whitespace-nowrap">
-                        <span style={{ color: '#30d158' }} className="font-mono text-xs font-semibold">
+                        <span style={{ color: colors.green }} className="font-mono text-xs font-semibold">
                           {det.pmtNo}
                         </span>
                       </td>
@@ -753,9 +753,9 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                         {det.depOverride === 1 ? (
                           <span
                             className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}
+                            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
                           >
-                            Override
+                            {t('deposit.detail.depOverride')}
                           </span>
                         ) : (
                           <span style={{ color: colors.textTertiary }} className="text-xs">—</span>

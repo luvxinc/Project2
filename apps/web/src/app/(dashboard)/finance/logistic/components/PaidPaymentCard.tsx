@@ -79,7 +79,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
           {group.isDeleted && (
             <span
               className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: '#8e8e93' }}
+              style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: colors.gray }}
             >
               {t('logistic.status.deleted')}
             </span>
@@ -94,7 +94,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
               className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
               title={t('logistic.actions.restore')}
             >
-              <svg className="w-3.5 h-3.5" style={{ color: '#30d158' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg className="w-3.5 h-3.5" style={{ color: colors.green }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
@@ -104,7 +104,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
               className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
               title={t('logistic.actions.delete')}
             >
-              <svg className="w-3.5 h-3.5" style={{ color: '#ff453a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg className="w-3.5 h-3.5" style={{ color: colors.red }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -170,10 +170,10 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
             {t('logistic.card.freight')}
           </span>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs tabular-nums" style={{ color: '#64d2ff' }}>
+            <span className="font-mono text-xs tabular-nums" style={{ color: colors.teal }}>
               ${fmtNum(group.totalFreightUsd, 2)}
             </span>
-            <span className="font-mono text-xs tabular-nums" style={{ color: '#ffd60a' }}>
+            <span className="font-mono text-xs tabular-nums" style={{ color: colors.yellow }}>
               ¥{fmtNum(group.totalFreightRmb)}
             </span>
           </div>
@@ -186,10 +186,10 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
               {t('logistic.card.extraFee')}
             </span>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-xs tabular-nums" style={{ color: '#64d2ff' }}>
+              <span className="font-mono text-xs tabular-nums" style={{ color: colors.teal }}>
                 ${fmtNum(group.extraPaidUsd, 2)}
               </span>
-              <span className="font-mono text-xs tabular-nums" style={{ color: '#ffd60a' }}>
+              <span className="font-mono text-xs tabular-nums" style={{ color: colors.yellow }}>
                 ¥{fmtNum(group.extraPaid)}
               </span>
             </div>
@@ -205,10 +205,10 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
             {t('logistic.card.total')}
           </span>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs font-semibold tabular-nums" style={{ color: '#64d2ff' }}>
+            <span className="font-mono text-xs font-semibold tabular-nums" style={{ color: colors.teal }}>
               ${fmtNum(group.totalWithExtraUsd, 2)}
             </span>
-            <span className="font-mono text-xs font-semibold tabular-nums" style={{ color: '#ffd60a' }}>
+            <span className="font-mono text-xs font-semibold tabular-nums" style={{ color: colors.yellow }}>
               ¥{fmtNum(group.totalWithExtraRmb)}
             </span>
           </div>
