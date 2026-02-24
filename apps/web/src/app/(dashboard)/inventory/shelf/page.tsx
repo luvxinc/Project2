@@ -332,7 +332,7 @@ export default function ShelfPage() {
               <div
                 key={warehouse.warehouse}
                 className="warehouse-item flex-shrink-0 opacity-0"
-                style={{ width: '340px' }}
+                style={{ width: '680px' }}
               >
                 <WarehouseCard
                   warehouse={warehouse}
