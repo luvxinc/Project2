@@ -154,8 +154,8 @@ function PermSwitch({
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const activeColor = colors.green;
-  const inactiveColor = theme === 'dark' ? '#39393d' : '#e9e9eb';
-  const disabledColor = theme === 'dark' ? '#1c1c1e' : '#f0f0f0';
+  const inactiveColor = colors.switchTrack;
+  const disabledColor = colors.switchTrackDisabled;
 
   return (
     <button
@@ -182,7 +182,7 @@ function PermSwitch({
           width: 20,
           height: 20,
           borderRadius: '50%',
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.white,
           boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           transition: 'transform 0.2s ease',
           transform: checked ? 'translateX(16px)' : 'translateX(0)',

@@ -89,7 +89,7 @@ function AppleSwitch({
   const { theme } = useTheme();
   const c = themeColors[theme];
   const activeColor = { green: c.green, orange: c.orange, red: c.red }[variant];
-  const inactiveColor = theme === 'dark' ? '#39393d' : '#e9e9eb';
+  const inactiveColor = c.switchTrack;
   
   return (
     <button
@@ -116,7 +116,7 @@ function AppleSwitch({
           width: 27,
           height: 27,
           borderRadius: '50%',
-          backgroundColor: '#ffffff',
+          backgroundColor: c.white,
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
           transition: 'transform 0.2s ease',
           transform: checked ? 'translateX(20px)' : 'translateX(0)',
@@ -747,7 +747,7 @@ export default function CapabilitiesPage() {
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
-                        style={{ backgroundColor: role.color || '#666' }}
+                        style={{ backgroundColor: role.color || colors.gray }}
                       >
                         L{role.level}
                       </div>

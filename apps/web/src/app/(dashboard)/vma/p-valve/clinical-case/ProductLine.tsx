@@ -91,7 +91,7 @@ export default function ProductLine({ line, index, specOptions, colors, onSpecCh
           style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }} />
         <button onClick={onPick} disabled={!line.specNo || line.loading}
           className="px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 disabled:opacity-40 transition"
-          style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
+          style={{ backgroundColor: colors.controlAccent, color: colors.white }}>
           {line.loading ? '...' : t('p_valve.clinicalCase.productLine.pick')}
         </button>
         {canRemove && (

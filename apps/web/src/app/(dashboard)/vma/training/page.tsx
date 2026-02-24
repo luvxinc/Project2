@@ -292,7 +292,7 @@ export default function TrainingPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95"
               style={{
                 backgroundColor: colors.blue,
-                color: '#fff',
+                color: colors.white,
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -385,7 +385,7 @@ export default function TrainingPage() {
                               ) : (
                                 <span
                                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                  style={{ backgroundColor: colors.red, color: '#fff' }}
+                                  style={{ backgroundColor: colors.red, color: colors.white }}
                                 >
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -436,7 +436,7 @@ export default function TrainingPage() {
                       ) : (
                         <span
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: colors.red, color: '#fff' }}
+                          style={{ backgroundColor: colors.red, color: colors.white }}
                         >
                           {t('training.status.missing', { count: selectedEmployee.missingCount })}
                         </span>
@@ -637,7 +637,7 @@ export default function TrainingPage() {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all"
               style={{
                 backgroundColor: smartFillRunning ? colors.gray : colors.green,
-                color: '#fff',
+                color: colors.white,
                 opacity: !lecturerNo ? 0.5 : 1,
               }}
             >
@@ -687,7 +687,7 @@ export default function TrainingPage() {
                       }
                     }}
                     className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
-                    style={{ backgroundColor: colors.blue, color: '#fff' }}
+                    style={{ backgroundColor: colors.blue, color: colors.white }}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

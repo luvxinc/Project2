@@ -534,7 +534,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
           <button
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-[12px] font-medium"
-            style={{ backgroundColor: colors.blue, color: '#fff' }}
+            style={{ backgroundColor: colors.blue, color: colors.white }}
           >
             关闭
           </button>

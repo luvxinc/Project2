@@ -353,7 +353,7 @@ export default function SopRoadmapModal({
         ) : history.length === 0 ? (
           <div className="h-full w-full flex flex-col items-center justify-center gap-6">
             <div className="text-xl font-medium opacity-50">{t('sopHistory.noHistoryFound') || 'No history found'}</div>
-            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: colors.indigo, color: '#fff' }}>{t('sopHistory.createFirstMilestone') || 'Create First Milestone'}</button>
+            <button onClick={openNewPopup} className="px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition hover:shadow-purple-500/25" style={{ backgroundColor: colors.indigo, color: colors.white }}>{t('sopHistory.createFirstMilestone') || 'Create First Milestone'}</button>
           </div>
         ) : (
           /* PADDING-LEFT: 33vw to start at 1/3 screen */

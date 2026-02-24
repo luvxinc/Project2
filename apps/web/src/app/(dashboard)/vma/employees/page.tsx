@@ -767,7 +767,7 @@ function EmployeeCardModal({
                 className="h-10 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition animate-pulse"
                 style={{
                   backgroundColor: colors.red,
-                  color: '#fff',
+                  color: colors.white,
                 }}
               >
                 {t('employees.actions.confirmDelete')}

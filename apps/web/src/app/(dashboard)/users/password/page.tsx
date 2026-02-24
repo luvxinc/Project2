@@ -8,15 +8,17 @@ import { api } from '@/lib/api';
 import { invalidateSecurityActionCache } from '@/hooks/useSecurityAction';
 
 /**
- * 安全等级定义 (L0-L4)
+ * 安全等级定义 (L0-L4) — 需传入 colors 以获取主题色
  */
-const securityLevels = [
-  { key: 'user', level: 'L0', levelKey: 'l0', color: '#007aff' },
-  { key: 'query', level: 'L1', levelKey: 'l1', color: '#ff9f0a' },
-  { key: 'modify', level: 'L2', levelKey: 'l2', color: '#ff9f0a' },
-  { key: 'db', level: 'L3', levelKey: 'l3', color: '#ff3b30' },
-  { key: 'system', level: 'L4', levelKey: 'l4', color: '#ff3b30' },
-];
+function getSecurityLevels(c: typeof themeColors.light) {
+  return [
+    { key: 'user', level: 'L0', levelKey: 'l0', color: c.blue },
+    { key: 'query', level: 'L1', levelKey: 'l1', color: c.orange },
+    { key: 'modify', level: 'L2', levelKey: 'l2', color: c.orange },
+    { key: 'db', level: 'L3', levelKey: 'l3', color: c.red },
+    { key: 'system', level: 'L4', levelKey: 'l4', color: c.red },
+  ];
+}
 
 /**
  * Action 注册表结构 (只包含 key 和默认 tokens，名称从 i18n 获取)
@@ -236,14 +238,16 @@ type ActionTokens = Record<string, string[]>;
 function MiniSwitch({ 
   checked, 
   onChange, 
-  color = '#34c759' 
+  color, 
 }: { 
   checked: boolean; 
   onChange: () => void;
   color?: string;
 }) {
   const { theme } = useTheme();
-  const inactiveColor = theme === 'dark' ? '#39393d' : '#e9e9eb';
+  const tc = themeColors[theme];
+  const activeColor = color || tc.green;
+  const inactiveColor = tc.switchTrack;
   
   return (
     <button
@@ -255,7 +259,7 @@ function MiniSwitch({
         height: 20,
         padding: 2,
         borderRadius: 10,
-        backgroundColor: checked ? color : inactiveColor,
+        backgroundColor: checked ? activeColor : inactiveColor,
         border: 'none',
         cursor: 'pointer',
         transition: 'background-color 0.2s ease',
@@ -268,7 +272,7 @@ function MiniSwitch({
           width: 16,
           height: 16,
           borderRadius: '50%',
-          backgroundColor: '#ffffff',
+          backgroundColor: tc.white,
           boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           transition: 'transform 0.2s ease',
           transform: checked ? 'translateX(14px)' : 'translateX(0)',
@@ -283,6 +287,7 @@ export default function PasswordPolicyPage() {
   const tc = useTranslations('common');
   const { theme } = useTheme();
   const colors = themeColors[theme];
+  const securityLevels = getSecurityLevels(colors);
   const { showPassword, showSuccess, showError } = useModal();
   
   // State

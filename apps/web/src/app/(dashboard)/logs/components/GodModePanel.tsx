@@ -194,7 +194,7 @@ export function GodModePanel({ refreshInterval = 10000, onStatusChange }: GodMod
             className="flex items-center gap-1.5 px-3 py-1 rounded text-xs transition-colors"
             style={{
               backgroundColor: colors.orange,
-              color: '#fff',
+              color: colors.white,
               opacity: loading ? 0.5 : 1,
             }}
           >
@@ -288,7 +288,7 @@ export function GodModePanel({ refreshInterval = 10000, onStatusChange }: GodMod
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: colors.orange,
-                  color: '#fff',
+                  color: colors.white,
                   opacity: loading ? 0.5 : 1,
                 }}
               >

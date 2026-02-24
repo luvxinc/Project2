@@ -231,7 +231,7 @@ export default function TrainingMatrixRoadmap({
                                 {/* DA LABEL (Floating Badge) */}
                                 <div className="absolute -top-3 left-6 z-20 shadow-lg shadow-black/20">
                                     <span className="text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10 backdrop-blur-md"
-                                          style={{ backgroundColor: daColor, color: '#000' }}>
+                                          style={{ backgroundColor: daColor, color: colors.black }}>
                                         {getDaLabel(ms)}
                                     </span>
                                 </div>

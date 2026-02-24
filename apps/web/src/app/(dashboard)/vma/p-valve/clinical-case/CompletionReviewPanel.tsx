@@ -227,7 +227,7 @@ export default function CompletionReviewPanel({
           <button
             onClick={() => setConfirmModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition"
-            style={{ backgroundColor: colors.green, color: '#fff' }}
+            style={{ backgroundColor: colors.green, color: colors.white }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />

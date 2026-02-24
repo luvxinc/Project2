@@ -213,7 +213,7 @@ export default function ProductsHubPage() {
                 <Link 
                   href={feature.href}
                   className="inline-flex items-center justify-center px-5 py-2 rounded-full text-[15px] font-medium transition-all hover:opacity-90"
-                  style={{ backgroundColor: colors.blue, color: '#fff' }}
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
                 >
                   {t(`hub.${feature.key}.cta`)}
                 </Link>

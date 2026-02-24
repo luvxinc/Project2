@@ -270,6 +270,16 @@ export const themeColors = {
     shadow: colorTokens.dark.effect.shadow,
     // Logo
     logoFilter: colorTokens.dark.logo.filter,
+    // 固定对比色
+    white: '#ffffff',
+    black: '#000000',
+    // iOS Switch 控件
+    switchTrack: '#39393d',               // iOS switch inactive track (dark)
+    switchTrackDisabled: '#1c1c1e',       // iOS switch disabled track (dark)
+    // iOS Segment 控件
+    segmentBg: '#39393d',                 // segment inactive background (dark)
+    segmentIndicator: '#ffffff',          // segment active indicator (dark)
+    segmentText: '#1d1d1f',               // segment active text on white pill (dark)
   },
   light: {
     // 背景
@@ -321,6 +331,16 @@ export const themeColors = {
     shadow: colorTokens.light.effect.shadow,
     // Logo
     logoFilter: colorTokens.light.logo.filter,
+    // 固定对比色
+    white: '#ffffff',
+    black: '#000000',
+    // iOS Switch 控件
+    switchTrack: '#e9e9eb',               // iOS switch inactive track (light)
+    switchTrackDisabled: '#f0f0f0',       // iOS switch disabled track (light)
+    // iOS Segment 控件
+    segmentBg: '#e8e8ed',                 // segment inactive background (light)
+    segmentIndicator: '#1d1d1f',          // segment active indicator dark pill (light)
+    segmentText: '#ffffff',               // segment active text on dark pill (light)
   },
 };
 

@@ -370,7 +370,7 @@ export default function DemoInventoryPage() {
                   </button>
                   <button onClick={openModal}
                     className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold hover:opacity-90 transition"
-                    style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
+                    style={{ backgroundColor: colors.controlAccent, color: colors.white }}>
                     + {t('p_valve.demoInventory.addDemo')}
                   </button>
                 </div>
@@ -607,7 +607,7 @@ export default function DemoInventoryPage() {
                       <button
                         onClick={() => setShowReturnConfirm(true)}
                         className="w-full py-3 rounded-xl text-[13px] font-semibold transition hover:opacity-90 flex items-center justify-center gap-2"
-                        style={{ backgroundColor: colors.green, color: '#fff' }}
+                        style={{ backgroundColor: colors.green, color: colors.white }}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
@@ -649,7 +649,7 @@ export default function DemoInventoryPage() {
                             onClick={handleReturnToInventory}
                             disabled={returning || !returnOperator}
                             className="flex-1 py-2 rounded-xl text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-40"
-                            style={{ backgroundColor: colors.green, color: '#fff' }}
+                            style={{ backgroundColor: colors.green, color: colors.white }}
                           >
                              {returning ? t('p_valve.demoInventory.returnToInventory.processing') : t('p_valve.demoInventory.returnToInventory.confirm')}
                           </button>
@@ -807,7 +807,7 @@ export default function DemoInventoryPage() {
                 <button onClick={handleSubmit}
                   disabled={demoSubmitting || !demoOperator || demoLines.filter(l => l.specNo).length === 0}
                   className="px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition disabled:opacity-40"
-                  style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
+                  style={{ backgroundColor: colors.controlAccent, color: colors.white }}>
                   {demoSubmitting ? t('p_valve.demoInventory.addModal.processing') : t('p_valve.demoInventory.addModal.confirm')}
                 </button>
               </div>

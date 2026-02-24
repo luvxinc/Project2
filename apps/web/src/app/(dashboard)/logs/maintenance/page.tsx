@@ -12,13 +12,17 @@ function AppleSwitch({
   enabled, 
   onChange, 
   disabled = false,
-  color = '#34c759',
+  color,
 }: { 
   enabled: boolean; 
   onChange: () => void; 
   disabled?: boolean;
   color?: string;
 }) {
+  const { theme } = useTheme();
+  const c = themeColors[theme];
+  const activeColor = color || c.green;
+  
   return (
     <button
       type="button"
@@ -26,16 +30,17 @@ function AppleSwitch({
       disabled={disabled}
       className="relative w-[51px] h-[31px] rounded-full transition-all duration-300 flex-shrink-0"
       style={{
-        backgroundColor: enabled ? color : 'rgba(120, 120, 128, 0.32)',
+        backgroundColor: enabled ? activeColor : c.switchTrack,
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
     >
       <div
-        className="absolute w-[27px] h-[27px] rounded-full bg-white transition-all duration-300"
+        className="absolute w-[27px] h-[27px] rounded-full transition-all duration-300"
         style={{
           top: '2px',
           left: enabled ? '22px' : '2px',
+          backgroundColor: c.white,
           boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15), 0 3px 1px rgba(0, 0, 0, 0.06)',
         }}
       />
@@ -354,7 +359,7 @@ export default function MaintenancePage() {
                         width: '51px',
                         height: '31px',
                         borderRadius: '15.5px',
-                        backgroundColor: devModeEnabled ? '#ff9500' : 'rgba(120, 120, 128, 0.32)',
+                        backgroundColor: devModeEnabled ? colors.orange : colors.switchTrack,
                         cursor: 'pointer',
                         position: 'relative',
                         flexShrink: 0,
@@ -364,7 +369,7 @@ export default function MaintenancePage() {
                         width: '27px',
                         height: '27px',
                         borderRadius: '50%',
-                        backgroundColor: 'white',
+                        backgroundColor: colors.white,
                         position: 'absolute',
                         top: '2px',
                         left: devModeEnabled ? '22px' : '2px',
@@ -393,7 +398,7 @@ export default function MaintenancePage() {
                         width: '51px',
                         height: '31px',
                         borderRadius: '15.5px',
-                        backgroundColor: godModeEnabled ? '#ff3b30' : 'rgba(120, 120, 128, 0.32)',
+                        backgroundColor: godModeEnabled ? colors.red : colors.switchTrack,
                         cursor: 'pointer',
                         position: 'relative',
                         flexShrink: 0,
@@ -403,7 +408,7 @@ export default function MaintenancePage() {
                         width: '27px',
                         height: '27px',
                         borderRadius: '50%',
-                        backgroundColor: 'white',
+                        backgroundColor: colors.white,
                         position: 'absolute',
                         top: '2px',
                         left: godModeEnabled ? '22px' : '2px',

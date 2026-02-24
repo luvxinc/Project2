@@ -256,7 +256,7 @@ export default function ClinicalCasePage() {
         <div
           style={{
             position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: `${colors.red}f2`, color: '#fff',
+            backgroundColor: `${colors.red}f2`, color: colors.white,
             padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 500,
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)', zIndex: 9999,
             display: 'flex', alignItems: 'center', gap: 12, maxWidth: 480,
@@ -268,7 +268,7 @@ export default function ClinicalCasePage() {
           <button
             onClick={() => setToastError(null)}
             style={{
-              background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
+              background: 'rgba(255,255,255,0.2)', border: 'none', color: colors.white,
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 13,
             }}
           >
