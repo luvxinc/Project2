@@ -10,11 +10,14 @@ import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
-const statusColor: Record<string, string> = {
-  ACTIVE: '#30d158',
-  DISABLED: '#86868b',
-  LOCKED: '#ff453a',
-};
+function userStatusColor(status: string, c: typeof themeColors.light): string {
+  switch (status) {
+    case 'ACTIVE': return c.green;
+    case 'LOCKED': return c.red;
+    case 'DISABLED': 
+    default: return c.gray;
+  }
+}
 
 const roles: UserRole[] = ['admin', 'manager', 'staff', 'operator', 'viewer'];
 
@@ -125,8 +128,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           <span 
             className="px-3 py-1 rounded-full text-[12px] font-medium"
             style={{ 
-              backgroundColor: `${statusColor[user.status]}20`,
-              color: statusColor[user.status]
+              backgroundColor: `${userStatusColor(user.status, colors)}20`,
+              color: userStatusColor(user.status, colors)
             }}
           >
             {t(`status.${user.status.toLowerCase()}`)}

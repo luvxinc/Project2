@@ -5,6 +5,11 @@
  * 1. 表格只显示最关键的字段 (5-7列)，便于快速扫描
  * 2. 详细信息通过点击行展开 Modal 查看
  * 3. 每行都可点击，鼠标悬浮有视觉反馈
+ *
+ * Colors are NOT stored here — they are resolved at render time
+ * via theme-aware helpers in LogTable / LogDetailModal.
+ * The `badgeColorKey` field references a resolver function
+ * that accepts ThemeColors and returns the color map.
  */
 
 export type ColumnType = 'text' | 'datetime' | 'badge' | 'status' | 'duration' | 'truncate';
@@ -15,48 +20,9 @@ export interface TableColumn {
   type: ColumnType;
   width?: string;          // Tailwind width class
   align?: 'left' | 'center' | 'right';
-  badgeColors?: Record<string, string>;
+  /** Key into badge color resolver — resolved at render time with theme colors */
+  badgeColorKey?: 'severity' | 'risk' | 'result' | 'method';
 }
-
-// ================================
-// 严重程度颜色
-// ================================
-export const severityColors: Record<string, string> = {
-  CRITICAL: '#ff3b30',
-  HIGH: '#ff9f0a',
-  MEDIUM: '#ffcc00',
-  LOW: '#30d158',
-};
-
-// ================================
-// 风险等级颜色
-// ================================
-export const riskColors: Record<string, string> = {
-  CRITICAL: '#ff3b30',
-  HIGH: '#ff9f0a',
-  MEDIUM: '#ffcc00',
-  LOW: '#30d158',
-};
-
-// ================================
-// 结果颜色
-// ================================
-export const resultColors: Record<string, string> = {
-  SUCCESS: '#30d158',
-  DENIED: '#ff9f0a',
-  FAILED: '#ff3b30',
-};
-
-// ================================
-// HTTP 方法颜色
-// ================================
-export const methodColors: Record<string, string> = {
-  GET: '#30d158',
-  POST: '#0071e3',
-  PUT: '#ff9f0a',
-  PATCH: '#ffcc00',
-  DELETE: '#ff3b30',
-};
 
 // ================================
 // Error Log 表格列
@@ -66,7 +32,7 @@ export const methodColors: Record<string, string> = {
 
 export const errorLogColumns: TableColumn[] = [
   { key: 'createdAt', label: 'time', type: 'datetime', width: 'w-[140px]' },
-  { key: 'severity', label: 'severity', type: 'badge', width: 'w-[100px]', badgeColors: severityColors },
+  { key: 'severity', label: 'severity', type: 'badge', width: 'w-[100px]', badgeColorKey: 'severity' },
   { key: 'errorType', label: 'type', type: 'text', width: 'w-[120px]' },
   { key: 'errorMessage', label: 'message', type: 'truncate', width: 'flex-1' },
   { key: 'module', label: 'module', type: 'text', width: 'w-[100px]' },
@@ -85,8 +51,8 @@ export const auditLogColumns: TableColumn[] = [
   { key: 'module', label: 'module', type: 'text', width: 'w-[100px]' },
   { key: 'action', label: 'action', type: 'badge', width: 'w-[150px]' },
   { key: 'entityType', label: 'entity', type: 'text', width: 'w-[100px]' },
-  { key: 'result', label: 'result', type: 'badge', width: 'w-[90px]', badgeColors: resultColors, align: 'center' },
-  { key: 'riskLevel', label: 'risk', type: 'badge', width: 'w-[80px]', badgeColors: riskColors, align: 'center' },
+  { key: 'result', label: 'result', type: 'badge', width: 'w-[90px]', badgeColorKey: 'result', align: 'center' },
+  { key: 'riskLevel', label: 'risk', type: 'badge', width: 'w-[80px]', badgeColorKey: 'risk', align: 'center' },
 ];
 
 // ================================
@@ -112,7 +78,7 @@ export const businessLogColumns: TableColumn[] = [
 
 export const accessLogColumns: TableColumn[] = [
   { key: 'createdAt', label: 'time', type: 'datetime', width: 'w-[140px]' },
-  { key: 'method', label: 'method', type: 'badge', width: 'w-[80px]', badgeColors: methodColors, align: 'center' },
+  { key: 'method', label: 'method', type: 'badge', width: 'w-[80px]', badgeColorKey: 'method', align: 'center' },
   { key: 'path', label: 'path', type: 'truncate', width: 'flex-1' },
   { key: 'statusCode', label: 'status', type: 'badge', width: 'w-[70px]', align: 'center' },
   { key: 'responseTime', label: 'duration', type: 'duration', width: 'w-[80px]', align: 'right' },

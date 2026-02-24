@@ -3,8 +3,31 @@
 import { useState } from 'react';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
-import { TableColumn, LogType, methodColors } from './tableColumns';
+import { TableColumn, LogType } from './tableColumns';
 import LogDetailModal from './LogDetailModal';
+
+// ── Badge color resolvers (theme-aware) ──
+type ColorSet = typeof themeColors.light;
+
+function severityColorMap(c: ColorSet): Record<string, string> {
+  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
+}
+function riskColorMap(c: ColorSet): Record<string, string> {
+  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
+}
+function resultColorMap(c: ColorSet): Record<string, string> {
+  return { SUCCESS: c.green, DENIED: c.orange, FAILED: c.red };
+}
+function methodColorMap(c: ColorSet): Record<string, string> {
+  return { GET: c.green, POST: c.blue, PUT: c.orange, PATCH: c.yellow, DELETE: c.red };
+}
+
+const badgeResolvers: Record<string, (c: ColorSet) => Record<string, string>> = {
+  severity: severityColorMap,
+  risk: riskColorMap,
+  result: resultColorMap,
+  method: methodColorMap,
+};
 
 // ================================
 // Types
@@ -24,11 +47,11 @@ interface LogTableProps {
 // ================================
 // HTTP 状态码颜色
 // ================================
-function getStatusCodeColor(code: number): string {
-  if (code >= 500) return '#ff3b30';
-  if (code >= 400) return '#ff9f0a';
-  if (code >= 300) return '#ffcc00';
-  return '#30d158';
+function getStatusCodeColor(code: number, c: typeof themeColors.light): string {
+  if (code >= 500) return c.red;
+  if (code >= 400) return c.orange;
+  if (code >= 300) return c.yellow;
+  return c.green;
 }
 
 // ================================
@@ -113,8 +136,8 @@ export default function LogTable({
           <span 
             className="px-2 py-1 rounded text-[11px] font-medium inline-flex items-center gap-1"
             style={{ 
-              backgroundColor: isResolved ? '#30d15820' : '#ff9f0a20',
-              color: isResolved ? '#30d158' : '#ff9f0a',
+              backgroundColor: `${isResolved ? colors.green : colors.orange}20`,
+              color: isResolved ? colors.green : colors.orange,
             }}
           >
             {isResolved ? '✓' : '○'}
@@ -123,17 +146,15 @@ export default function LogTable({
 
       case 'badge':
         const strValue = String(value);
-        let badgeColor = column.badgeColors?.[strValue] || colors.blue;
+        const resolvedColors = column.badgeColorKey
+          ? badgeResolvers[column.badgeColorKey]?.(colors) ?? {}
+          : {};
+        let badgeColor = resolvedColors[strValue] || colors.blue;
         
         // HTTP 状态码特殊处理
         const statusCode = Number(value);
         if (!isNaN(statusCode) && statusCode >= 100 && statusCode < 600) {
-          badgeColor = getStatusCodeColor(statusCode);
-        }
-        
-        // HTTP 方法颜色
-        if (methodColors[strValue]) {
-          badgeColor = methodColors[strValue];
+          badgeColor = getStatusCodeColor(statusCode, colors);
         }
         
         return (

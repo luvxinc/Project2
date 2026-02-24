@@ -366,7 +366,7 @@ export default function FridgeShelfPage() {
         >
           <div className="flex h-full">
             {/* Left accent bar */}
-            <div className="w-[3px] rounded-l-lg flex-shrink-0" style={{ backgroundColor: isExpired ? '#ff453a' : '#0071e3' }} />
+            <div className="w-[3px] rounded-l-lg flex-shrink-0" style={{ backgroundColor: isExpired ? colors.red : colors.blue }} />
             <div className="flex-1 px-2 py-1.5 flex flex-col justify-between min-w-0">
               {/* Spec + Batch (same line) */}
               <div className="flex items-center gap-1 leading-tight min-w-0">
@@ -394,7 +394,7 @@ export default function FridgeShelfPage() {
                 {slot.expDate && (
                   <span className="text-[9px] px-1 py-[1px] rounded font-medium" style={{
                     backgroundColor: isExpired ? 'rgba(255,69,58,0.12)' : 'rgba(255,159,10,0.10)',
-                    color: isExpired ? '#ff453a' : '#ff9f0a',
+                    color: isExpired ? colors.red : colors.orange,
                   }}>
                     {slot.expDate}
                   </span>
@@ -746,10 +746,10 @@ export default function FridgeShelfPage() {
                       <div className="flex justify-between text-[13px]">
                         <span style={{ color: colors.textSecondary }}>Status</span>
                         <span className="font-medium" style={{
-                          color: selectedProduct.status === 'AVAILABLE' ? '#30d158'
-                            : selectedProduct.status === 'NEAR_EXP' ? '#ff9f0a'
-                            : selectedProduct.status === 'EXPIRED' ? '#ff453a'
-                            : '#af52de',
+                          color: selectedProduct.status === 'AVAILABLE' ? colors.green
+                            : selectedProduct.status === 'NEAR_EXP' ? colors.orange
+                            : selectedProduct.status === 'EXPIRED' ? colors.red
+                            : colors.purple,
                         }}>
                           {selectedProduct.status === 'AVAILABLE' ? 'Available'
                             : selectedProduct.status === 'NEAR_EXP' ? 'Near Expiry'
@@ -860,7 +860,7 @@ export default function FridgeShelfPage() {
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-2xl text-[14px] font-medium text-white"
           style={{
-            backgroundColor: toast.type === 'ok' ? '#30d158' : '#ff453a',
+            backgroundColor: toast.type === 'ok' ? colors.green : colors.red,
           }}
         >
           {toast.msg}

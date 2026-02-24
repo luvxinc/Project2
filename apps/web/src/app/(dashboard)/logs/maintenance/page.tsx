@@ -12,7 +12,7 @@ function AppleSwitch({
   enabled, 
   onChange, 
   disabled = false,
-  color = '#30d158',
+  color = '#34c759',
 }: { 
   enabled: boolean; 
   onChange: () => void; 
@@ -267,7 +267,7 @@ export default function MaintenancePage() {
     return (
       <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#ff3b3020' }}>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.red + '20' }}>
             <svg className="w-8 h-8" style={{ color: colors.red }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>

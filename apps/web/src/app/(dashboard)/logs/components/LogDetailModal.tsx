@@ -28,37 +28,40 @@ interface FieldConfig {
   type: 'text' | 'code' | 'json' | 'badge' | 'datetime' | 'duration' | 'status';
   group: 'basic' | 'request' | 'user' | 'system' | 'business' | 'detail';
   fullWidth?: boolean;
-  badgeColors?: Record<string, string>;
+  /** Key into badgeColorResolvers — resolved at render time with theme colors */
+  badgeColorKey?: string;
 }
 
-// 严重程度颜色
-const severityColors: Record<string, string> = {
-  CRITICAL: '#ff3b30',
-  HIGH: '#ff9f0a',
-  MEDIUM: '#ffcc00',
-  LOW: '#30d158',
-};
+// ── Badge color resolvers (theme-aware) ──
+type ColorSet = typeof themeColors.light;
 
-// 风险等级颜色
-const riskColors: Record<string, string> = {
-  CRITICAL: '#ff3b30',
-  HIGH: '#ff9f0a',
-  MEDIUM: '#ffcc00',
-  LOW: '#30d158',
-};
+function severityColors(c: ColorSet): Record<string, string> {
+  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
+}
+function riskColors(c: ColorSet): Record<string, string> {
+  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
+}
+function resultColors(c: ColorSet): Record<string, string> {
+  return { SUCCESS: c.green, DENIED: c.orange, FAILED: c.red };
+}
+function logStatusColors(c: ColorSet): Record<string, string> {
+  return { SUCCESS: c.green, FAILED: c.red, PENDING: c.yellow };
+}
+function httpMethodColors(c: ColorSet): Record<string, string> {
+  return { GET: c.green, POST: c.blue, PUT: c.orange, PATCH: c.yellow, DELETE: c.red };
+}
+function httpStatusColor(code: number, c: ColorSet): string {
+  if (code >= 500) return c.red;
+  if (code >= 400) return c.orange;
+  if (code >= 300) return c.yellow;
+  return c.green;
+}
 
-// 结果颜色
-const resultColors: Record<string, string> = {
-  SUCCESS: '#30d158',
-  DENIED: '#ff9f0a',
-  FAILED: '#ff3b30',
-};
-
-// 状态颜色
-const statusColors: Record<string, string> = {
-  SUCCESS: '#30d158',
-  FAILED: '#ff3b30',
-  PENDING: '#ffcc00',
+const badgeColorResolvers: Record<string, (c: ColorSet) => Record<string, string>> = {
+  severity: severityColors,
+  risk: riskColors,
+  result: resultColors,
+  status: logStatusColors,
 };
 
 // ================================
@@ -68,7 +71,7 @@ const statusColors: Record<string, string> = {
 const errorLogFields: FieldConfig[] = [
   { key: 'traceId', label: 'Trace ID', type: 'code', group: 'basic' },
   { key: 'createdAt', label: '时间', type: 'datetime', group: 'basic' },
-  { key: 'severity', label: '严重程度', type: 'badge', group: 'basic', badgeColors: severityColors },
+  { key: 'severity', label: '严重程度', type: 'badge', group: 'basic', badgeColorKey: 'severity' },
   { key: 'category', label: '分类', type: 'badge', group: 'basic' },
   { key: 'occurrences', label: '出现次数', type: 'text', group: 'basic' },
   { key: 'isResolved', label: '状态', type: 'status', group: 'basic' },
@@ -94,8 +97,8 @@ const errorLogFields: FieldConfig[] = [
 const auditLogFields: FieldConfig[] = [
   { key: 'traceId', label: 'Trace ID', type: 'code', group: 'basic' },
   { key: 'createdAt', label: '时间', type: 'datetime', group: 'basic' },
-  { key: 'result', label: '结果', type: 'badge', group: 'basic', badgeColors: resultColors },
-  { key: 'riskLevel', label: '风险等级', type: 'badge', group: 'basic', badgeColors: riskColors },
+  { key: 'result', label: '结果', type: 'badge', group: 'basic', badgeColorKey: 'result' },
+  { key: 'riskLevel', label: '风险等级', type: 'badge', group: 'basic', badgeColorKey: 'risk' },
   { key: 'module', label: '模块', type: 'text', group: 'business' },
   { key: 'action', label: '操作', type: 'badge', group: 'business' },
   { key: 'entityType', label: '实体类型', type: 'text', group: 'business' },
@@ -112,7 +115,7 @@ const auditLogFields: FieldConfig[] = [
 const businessLogFields: FieldConfig[] = [
   { key: 'traceId', label: 'Trace ID', type: 'code', group: 'basic' },
   { key: 'createdAt', label: '时间', type: 'datetime', group: 'basic' },
-  { key: 'status', label: '状态', type: 'badge', group: 'basic', badgeColors: statusColors },
+  { key: 'status', label: '状态', type: 'badge', group: 'basic', badgeColorKey: 'status' },
   { key: 'module', label: '模块', type: 'text', group: 'business' },
   { key: 'action', label: '操作', type: 'badge', group: 'business' },
   { key: 'summary', label: '摘要', type: 'text', group: 'business', fullWidth: true },
@@ -312,19 +315,17 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
       
       case 'badge':
         const strValue = String(value);
-        const badgeColor = field.badgeColors?.[strValue] || colors.blue;
+        const resolvedBadgeColors = field.badgeColorKey
+          ? badgeColorResolvers[field.badgeColorKey]?.(colors) ?? {}
+          : {};
+        const badgeColor = resolvedBadgeColors[strValue] || colors.blue;
         const statusCode = Number(value);
         let computedBadgeColor = badgeColor;
         if (!isNaN(statusCode) && statusCode >= 100) {
-          if (statusCode >= 500) computedBadgeColor = '#ff3b30';
-          else if (statusCode >= 400) computedBadgeColor = '#ff9f0a';
-          else if (statusCode >= 300) computedBadgeColor = '#ffcc00';
-          else computedBadgeColor = '#30d158';
+          computedBadgeColor = httpStatusColor(statusCode, colors);
         }
-        const methodColors: Record<string, string> = {
-          GET: '#30d158', POST: '#0071e3', PUT: '#ff9f0a', PATCH: '#ffcc00', DELETE: '#ff3b30',
-        };
-        if (methodColors[strValue]) computedBadgeColor = methodColors[strValue];
+        const mColors = httpMethodColors(colors);
+        if (mColors[strValue]) computedBadgeColor = mColors[strValue];
         
         return (
           <span 
@@ -341,8 +342,8 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
           <span 
             className="px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1"
             style={{ 
-              backgroundColor: isResolved ? '#30d15820' : '#ff3b3020',
-              color: isResolved ? '#30d158' : '#ff3b30',
+              backgroundColor: `${isResolved ? colors.green : colors.red}20`,
+              color: isResolved ? colors.green : colors.red,
             }}
           >
             {isResolved ? (

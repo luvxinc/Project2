@@ -87,8 +87,8 @@ function AppleSwitch({
   disabled?: boolean;
 }) {
   const { theme } = useTheme();
-  
-  const activeColor = { green: '#34c759', orange: '#ff9f0a', red: '#ff3b30' }[variant];
+  const c = themeColors[theme];
+  const activeColor = { green: c.green, orange: c.orange, red: c.red }[variant];
   const inactiveColor = theme === 'dark' ? '#39393d' : '#e9e9eb';
   
   return (
@@ -785,10 +785,10 @@ export default function CapabilitiesPage() {
                         <button 
                           onClick={() => handleDeleteRole(role)} 
                           className="p-2 rounded-lg hover:opacity-70 transition-opacity"
-                          style={{ backgroundColor: '#ff3b3010' }}
+                          style={{ backgroundColor: `${colors.red}10` }}
                           title={t('roles.delete')}
                         >
-                          <CapIcon name="trash" color="#ff3b30" />
+                          <CapIcon name="trash" color={colors.red} />
                         </button>
                       </div>
                     )}
@@ -846,9 +846,9 @@ export default function CapabilitiesPage() {
               >
                 <div 
                   className="w-16 h-16 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: '#0071e320' }}
+                  style={{ backgroundColor: `${colors.blue}20` }}
                 >
-                  <CapIcon name="plus" color="#0071e3" />
+                  <CapIcon name="plus" color={colors.blue} />
                 </div>
                 <span style={{ color: colors.blue }} className="text-[15px] font-medium">
                   {t('roles.addRole')}

@@ -152,7 +152,8 @@ function PermSwitch({
   disabled?: boolean;
 }) {
   const { theme } = useTheme();
-  const activeColor = '#34c759';
+  const colors = themeColors[theme];
+  const activeColor = colors.green;
   const inactiveColor = theme === 'dark' ? '#39393d' : '#e9e9eb';
   const disabledColor = theme === 'dark' ? '#1c1c1e' : '#f0f0f0';
 
