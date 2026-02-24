@@ -523,11 +523,11 @@ export default function FridgeShelfPage() {
               <div style={{ color: colors.textTertiary }}>{t('p_valve.fridgeShelf.totalSlots')}</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-[18px]" style={{ color: '#0071e3' }}>{usedCount}</div>
+              <div className="font-semibold text-[18px]" style={{ color: colors.blue }}>{usedCount}</div>
               <div style={{ color: colors.textTertiary }}>{t('p_valve.fridgeShelf.usedSlots')}</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-[18px]" style={{ color: '#30d158' }}>{totalCount - usedCount}</div>
+              <div className="font-semibold text-[18px]" style={{ color: colors.green }}>{totalCount - usedCount}</div>
               <div style={{ color: colors.textTertiary }}>{t('p_valve.fridgeShelf.availableSlots')}</div>
             </div>
             <button
@@ -666,8 +666,8 @@ export default function FridgeShelfPage() {
               {/* P-Valve only indicator */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-4"
                 style={{ backgroundColor: 'rgba(0, 113, 227, 0.1)', border: '1px solid rgba(0, 113, 227, 0.3)' }}>
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#0071e3' }} />
-                <span className="text-[12px] font-medium" style={{ color: '#0071e3' }}>P-Valve</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.blue }} />
+                <span className="text-[12px] font-medium" style={{ color: colors.blue }}>P-Valve</span>
               </div>
 
               {loadingEligible ? (
@@ -787,7 +787,7 @@ export default function FridgeShelfPage() {
                   onClick={handlePlace}
                   disabled={!placeSpec || !placeSerial || saving}
                   className="flex-1 h-[44px] rounded-xl text-[15px] font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center"
-                  style={{ backgroundColor: '#0071e3' }}
+                  style={{ backgroundColor: colors.blue }}
                 >
                   {saving ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -814,7 +814,7 @@ export default function FridgeShelfPage() {
           >
             <div className="p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#0071e3' }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.blue }} />
                 <h3 className="text-[18px] font-semibold" style={{ color: colors.text }}>
                   {t('p_valve.fridgeShelf.shelf')} {modal.slot.shelfNo} — R{modal.slot.rowNo}C{modal.slot.colNo}
                 </h3>
@@ -846,7 +846,7 @@ export default function FridgeShelfPage() {
                 <button
                   onClick={() => handleRemove(modal.slot!.id)}
                   className="flex-1 h-[44px] rounded-xl text-[15px] font-medium text-white transition-colors"
-                  style={{ backgroundColor: '#ff453a' }}
+                  style={{ backgroundColor: colors.red }}
                 >
                   {t('p_valve.fridgeShelf.removeProduct')}
                 </button>

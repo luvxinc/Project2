@@ -400,7 +400,7 @@ export default function CreateProductPage() {
                 disabled={createMutation.isPending}
                 style={{
                   backgroundColor: colors.blue,
-                  color: '#ffffff',
+                  color: '#fff',
                 }}
                 className="flex-1 py-3 rounded-xl font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
               >

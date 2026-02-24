@@ -488,7 +488,7 @@ export default function BarcodePage() {
               disabled={generateMutation.isPending || validItemCount === 0}
               style={{
                 backgroundColor: colors.blue,
-                color: '#ffffff',
+                color: '#fff',
               }}
               className="flex items-center gap-2 px-6 h-9 hover:opacity-90 text-[14px] font-medium rounded-lg transition-all active:scale-95 disabled:opacity-50"
             >

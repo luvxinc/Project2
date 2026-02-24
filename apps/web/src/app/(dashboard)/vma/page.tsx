@@ -233,7 +233,7 @@ export default function VmaHubPage() {
                 <Link 
                   href={feature.href}
                   className="inline-flex items-center justify-center px-5 py-2 rounded-full text-[15px] font-medium transition-all hover:opacity-90"
-                  style={{ backgroundColor: colors.controlAccent, color: '#ffffff' }}
+                  style={{ backgroundColor: colors.controlAccent, color: '#fff' }}
                 >
                   {t(`hub.${feature.key}.cta`)}
                 </Link>

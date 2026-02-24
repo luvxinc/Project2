@@ -295,7 +295,7 @@ function RoleModal({
         {error && (
           <div 
             className="mt-4 p-3 rounded-lg text-sm"
-            style={{ backgroundColor: '#ff453a20', color: '#ff453a' }}
+            style={{ backgroundColor: '#ff453a20', color: colors.red }}
           >
             {error}
           </div>
@@ -313,7 +313,7 @@ function RoleModal({
           <button
             onClick={handleSubmit}
             className="flex-1 h-10 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-80"
-            style={{ backgroundColor: '#0071e3' }}
+            style={{ backgroundColor: colors.blue }}
           >
             {editingRole ? tc('save') : t('roles.addRole')}
           </button>
@@ -640,7 +640,7 @@ export default function CapabilitiesPage() {
               <button 
                 onClick={handleSave}
                 disabled={saving}
-                style={{ backgroundColor: '#0071e3' }}
+                style={{ backgroundColor: colors.blue }}
                 className="h-9 px-5 hover:opacity-90 text-white text-[14px] font-medium rounded-lg transition-opacity disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
@@ -698,7 +698,7 @@ export default function CapabilitiesPage() {
               borderLeftColor: colors.border, 
               borderRightColor: colors.border, 
               borderBottomColor: colors.border, 
-              borderTopColor: '#0071e3' 
+              borderTopColor: colors.blue 
             }} 
           />
         </div>
@@ -850,7 +850,7 @@ export default function CapabilitiesPage() {
                 >
                   <CapIcon name="plus" color="#0071e3" />
                 </div>
-                <span style={{ color: '#0071e3' }} className="text-[15px] font-medium">
+                <span style={{ color: colors.blue }} className="text-[15px] font-medium">
                   {t('roles.addRole')}
                 </span>
               </button>
@@ -899,15 +899,15 @@ export default function CapabilitiesPage() {
               {/* 图例 */}
               <div className="flex gap-6 mt-4 pt-4" style={{ borderTop: `1px solid ${colors.border}` }}>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#34c759' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.green }} />
                   <span style={{ color: colors.textSecondary }} className="text-[12px]">{t('capabilities.standard')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff9f0a' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.orange }} />
                   <span style={{ color: colors.textSecondary }} className="text-[12px]">{t('capabilities.highRisk')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff3b30' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.red }} />
                   <span style={{ color: colors.textSecondary }} className="text-[12px]">{t('capabilities.criticalRisk')}</span>
                 </div>
               </div>

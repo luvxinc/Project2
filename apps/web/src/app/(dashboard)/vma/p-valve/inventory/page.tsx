@@ -940,7 +940,7 @@ function LedgerEntry({
                 onClick={() => onDelete(initialTxn)}
                 disabled={saving}
                 className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition hover:opacity-80 disabled:opacity-40"
-                style={{ color: '#ff3b30', backgroundColor: colors.bgTertiary }}
+                style={{ color: colors.red, backgroundColor: colors.bgTertiary }}
               >Delete</button>
             )}
 

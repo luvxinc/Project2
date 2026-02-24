@@ -138,7 +138,7 @@ export default function NewCaseModal({
                 <h3 className="text-sm font-semibold" style={{ color: colors.text }}>
                   {t('p_valve.clinicalCase.newCaseModal.additionalCaseTitle', { number: idx + 2 })}
                 </h3>
-                <button onClick={() => removeRow(idx)} className="text-xs hover:opacity-70" style={{ color: '#ff453a' }}>
+                <button onClick={() => removeRow(idx)} className="text-xs hover:opacity-70" style={{ color: colors.red }}>
                   {t('p_valve.clinicalCase.newCaseModal.remove')}
                 </button>
               </div>

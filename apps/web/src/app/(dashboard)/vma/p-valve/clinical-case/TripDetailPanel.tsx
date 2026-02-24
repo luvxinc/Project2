@@ -171,7 +171,7 @@ export default function TripDetailPanel({
                 onClick={handleComplete}
                 disabled={actionLoading}
                 className="px-3 py-1.5 rounded-lg text-xs text-white font-medium hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#30d158' }}
+                style={{ backgroundColor: colors.green }}
               >
                 ✓ Complete Trip
               </button>
@@ -179,7 +179,7 @@ export default function TripDetailPanel({
             <button
               onClick={() => onDelete(trip.tripId)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80"
-              style={{ color: '#ff453a', backgroundColor: '#ff453a15' }}
+              style={{ color: colors.red, backgroundColor: '#ff453a15' }}
             >
               Delete
             </button>
@@ -226,7 +226,7 @@ export default function TripDetailPanel({
                       onClick={() => handleRemoveCase(c.caseId)}
                       disabled={actionLoading}
                       className="ml-auto text-[10px] px-2 py-0.5 rounded-lg hover:opacity-70 disabled:opacity-50"
-                      style={{ color: '#ff453a' }}
+                      style={{ color: colors.red }}
                     >
                       Remove
                     </button>
@@ -371,7 +371,7 @@ export default function TripDetailPanel({
               onClick={handleComplete}
               disabled={actionLoading}
               className="px-6 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: '#30d158' }}
+              style={{ backgroundColor: colors.green }}
             >
               ✓ Complete This Trip
             </button>

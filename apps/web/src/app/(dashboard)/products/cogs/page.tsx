@@ -493,7 +493,7 @@ export default function CogsPage() {
           </span>
           <button
             onClick={openCreateModal}
-            style={{ backgroundColor: '#30d158', color: '#ffffff' }}
+            style={{ backgroundColor: colors.green, color: '#fff' }}
             className="ml-auto px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,7 +598,7 @@ export default function CogsPage() {
               </p>
               <button
                 onClick={() => refetch()}
-                style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+                style={{ backgroundColor: colors.blue, color: '#fff' }}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
               >
                 {t('list.retry')}
@@ -1052,7 +1052,7 @@ export default function CogsPage() {
                       }
                     }}
                     disabled={updateMutation.isPending}
-                    style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+                    style={{ backgroundColor: colors.blue, color: '#fff' }}
                     className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     {t('cogs.modal.save')}
@@ -1440,7 +1440,7 @@ export default function CogsPage() {
                   <button
                     onClick={handleCreateSubmit}
                     disabled={createMutation.isPending || !!skuCheckMessage}
-                    style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+                    style={{ backgroundColor: colors.blue, color: '#fff' }}
                     className="px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     {createMutation.isPending ? tCommon('saving') : t('actions.create')}

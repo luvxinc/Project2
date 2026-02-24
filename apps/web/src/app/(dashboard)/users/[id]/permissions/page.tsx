@@ -392,7 +392,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
     if (primaryRole === 'admin') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-          style={{ backgroundColor: 'rgba(13,202,240,0.15)', color: '#0dcaf0', border: '1px solid rgba(13,202,240,0.25)' }}>
+          style={{ backgroundColor: 'rgba(13,202,240,0.15)', color: colors.teal, border: '1px solid rgba(13,202,240,0.25)' }}>
           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
           {t(`roleNames.${primaryRole}`)}
         </span>
@@ -438,7 +438,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
                   style={{
                     background: 'linear-gradient(135deg, rgba(13,202,240,0.2), rgba(13,110,253,0.2))',
                     border: '1px solid rgba(13,202,240,0.3)',
-                    color: '#0dcaf0'
+                    color: colors.teal
                   }}
                 >
                   {(user.displayName || user.username || '?').charAt(0).toUpperCase()}
@@ -588,10 +588,10 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
               className="rounded-xl border p-5 sticky top-6"
             >
               <div className="flex items-center gap-2 mb-4">
-                <svg style={{ color: '#0dcaf0' }} className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <svg style={{ color: colors.teal }} className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
-                <span style={{ color: '#0dcaf0' }} className="text-[14px] font-semibold">
+                <span style={{ color: colors.teal }} className="text-[14px] font-semibold">
                   {t('permissions.notice.title')}
                 </span>
               </div>
