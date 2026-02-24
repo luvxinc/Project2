@@ -61,7 +61,12 @@
       "aisleL": "Left Shelf (L)",
       "aisleR": "Right Shelf (R)",
       "nameExists": "Warehouse name already exists",
-      "enableAtLeastOne": "Enable at least one aisle"
+      "enableAtLeastOne": "Enable at least one aisle",
+      "binNone": "0 (None)",
+      "binLR": "2 (L/R)",
+      "saveFailed": "Failed to save",
+      "largeWarehouse": "Large warehouse",
+      "maxChars": "max 10 chars"
     },
     "download": {
       "title": "Custom Barcode Download",
@@ -86,6 +91,7 @@
       "title": "No Warehouses",
       "message": "Get started by creating your first warehouse with shelf locations.",
       "createFirst": "Create Warehouse"
-    }
+    },
+    "retry": "Retry"
   }
 }

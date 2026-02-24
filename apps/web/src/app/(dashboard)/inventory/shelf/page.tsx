@@ -181,7 +181,7 @@ export default function ShelfPage() {
               onClick={handleCreate}
               style={{
                 backgroundColor: colors.controlAccent,
-                color: '#ffffff',
+                color: '#fff',
               }}
               className="px-5 py-2.5 rounded-full text-[13px] font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
             >
@@ -208,7 +208,7 @@ export default function ShelfPage() {
           >
             <span style={{ color: colors.red }} className="text-[14px]">{error}</span>
             <button onClick={loadData} style={{ color: colors.controlAccent }} className="ml-3 text-[14px] font-medium">
-              Retry
+              {t('shelf.retry')}
             </button>
           </div>
         ) : !data || data.warehouses.length === 0 ? (
@@ -232,7 +232,7 @@ export default function ShelfPage() {
             </p>
             <button
               onClick={handleCreate}
-              style={{ backgroundColor: colors.controlAccent, color: '#ffffff' }}
+              style={{ backgroundColor: colors.controlAccent, color: '#fff' }}
               className="px-6 py-2.5 rounded-full text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               {t('shelf.empty.createFirst')}
@@ -240,7 +240,7 @@ export default function ShelfPage() {
           </div>
         ) : (
           /* Warehouse cards grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {data.warehouses.map((warehouse) => (
               <WarehouseCard
                 key={warehouse.warehouse}

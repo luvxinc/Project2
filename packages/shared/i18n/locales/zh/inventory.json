@@ -61,7 +61,12 @@
       "aisleL": "左排货架 (L)",
       "aisleR": "右排货架 (R)",
       "nameExists": "仓库编号已存在",
-      "enableAtLeastOne": "至少启用一排货架"
+      "enableAtLeastOne": "至少启用一排货架",
+      "binNone": "0 (不区分)",
+      "binLR": "2 (L/R)",
+      "saveFailed": "保存失败",
+      "largeWarehouse": "大型仓库",
+      "maxChars": "最多10字符"
     },
     "download": {
       "title": "自定义条码下载",
@@ -86,6 +91,7 @@
       "title": "暂无仓库",
       "message": "创建您的第一个仓库和货架位置，开始使用。",
       "createFirst": "创建仓库"
-    }
+    },
+    "retry": "重试"
   }
 }

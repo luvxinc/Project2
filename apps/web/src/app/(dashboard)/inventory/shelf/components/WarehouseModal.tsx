@@ -26,8 +26,8 @@ const LEVEL_COLORS: Record<string, string> = {
 
 // V1 parity: Bin/Slot only allow 0 or 2
 const BIN_SLOT_OPTIONS = [
-  { value: 0, label: '0' },
-  { value: 2, label: '2 (L/R)' },
+  { value: 0, labelKey: 'shelf.wizard.binNone' },
+  { value: 2, labelKey: 'shelf.wizard.binLR' },
 ];
 
 interface WarehouseModalProps {
@@ -202,7 +202,7 @@ export function WarehouseModal({
         security.onCancel();
         onComplete();
       } catch (err: unknown) {
-        const msg = (err as { message?: string })?.message || 'Failed to save';
+        const msg = (err as { message?: string })?.message || t('shelf.wizard.saveFailed');
         security.setError(msg);
         setSubmitError(msg);
       } finally {
@@ -249,7 +249,7 @@ export function WarehouseModal({
               const bins = Math.max(1, config.binCount);
               const slots = Math.max(1, config.slotCount);
               return config.bayCount * config.levels.length * bins * slots;
-            })()} loc
+            })()} {t('shelf.card.locations')}
           </span>
         )}
       </div>
@@ -290,7 +290,7 @@ export function WarehouseModal({
                     disabled={belowDisabled}
                     style={{
                       backgroundColor: active ? LEVEL_COLORS[level] : colors.bgTertiary,
-                      color: active ? '#ffffff' : belowDisabled ? colors.textQuaternary : colors.textSecondary,
+                      color: active ? '#fff' : belowDisabled ? colors.textQuaternary : colors.textSecondary,
                       borderColor: active ? LEVEL_COLORS[level] : colors.border,
                     }}
                     className="flex-1 rounded-lg border px-1.5 py-1.5 text-[12px] font-semibold transition-all hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
@@ -315,7 +315,7 @@ export function WarehouseModal({
                 className="w-full rounded-lg border px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/30 appearance-none"
               >
                 {BIN_SLOT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>{t(o.labelKey as 'shelf.wizard.binNone')}</option>
                 ))}
               </select>
             </div>
@@ -332,7 +332,7 @@ export function WarehouseModal({
                 className="w-full rounded-lg border px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/30 appearance-none"
               >
                 {BIN_SLOT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>{t(o.labelKey as 'shelf.wizard.binNone')}</option>
                 ))}
               </select>
             </div>
@@ -374,7 +374,7 @@ export function WarehouseModal({
               <p style={{ color: colors.textTertiary }} className="text-[12px] mt-0.5">
                 {totalLocations.toLocaleString()} {t('shelf.card.locations')}
                 {totalLocations > MAX_LOCATIONS_WARNING && (
-                  <span style={{ color: colors.orange }} className="ml-2">⚠ Large warehouse</span>
+                  <span style={{ color: colors.orange }} className="ml-2">⚠ {t('shelf.wizard.largeWarehouse')}</span>
                 )}
               </p>
             </div>
@@ -401,7 +401,7 @@ export function WarehouseModal({
                 <label style={{ color: colors.textSecondary }} className="block text-[12px] font-medium mb-1.5">
                   {t('shelf.wizard.warehouse')}
                   <span style={{ color: colors.textTertiary }} className="ml-1 text-[10px]">
-                    (max 10)
+                    ({t('shelf.wizard.maxChars')})
                   </span>
                 </label>
                 <input
@@ -476,7 +476,7 @@ export function WarehouseModal({
                 {(enableL || enableR) ? (
                   <WarehouseScene aisles={aisles} />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: '#1a1d24' }}>
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: colors.bg }}>
                     <span style={{ color: colors.textTertiary }} className="text-[13px]">
                       {t('shelf.wizard.enableAtLeastOne')}
                     </span>
