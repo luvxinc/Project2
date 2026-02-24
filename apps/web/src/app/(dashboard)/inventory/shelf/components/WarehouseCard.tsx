@@ -48,7 +48,7 @@ export function WarehouseCard({
           backgroundColor: colors.bgSecondary,
           borderColor: colors.border,
         }}
-        className="relative overflow-hidden rounded-[28px] border h-[640px] transition-transform duration-300 hover:scale-[1.01] group cursor-pointer"
+        className="relative overflow-hidden rounded-[22px] border h-[512px] transition-transform duration-300 hover:scale-[1.01] group cursor-pointer"
         onClick={onEdit}
       >
         {/* 3D Scene filling the entire card */}
@@ -57,10 +57,10 @@ export function WarehouseCard({
         </div>
 
         {/* Warehouse name overlay — top left */}
-        <div className="absolute top-5 left-6 z-10">
+        <div className="absolute top-4 left-5 z-10">
           <h3
             style={{ color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
-            className="text-[32px] font-bold tracking-tight"
+            className="text-[26px] font-bold tracking-tight"
           >
             {warehouse.warehouse}
           </h3>
@@ -68,7 +68,7 @@ export function WarehouseCard({
 
         {/* Stats overlay — bottom with gradient */}
         <div
-          className="absolute bottom-0 left-0 right-0 z-10 px-6 py-4 flex items-center gap-5"
+          className="absolute bottom-0 left-0 right-0 z-10 px-5 py-3 flex items-center gap-4"
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)'
@@ -76,17 +76,17 @@ export function WarehouseCard({
           }}
         >
           <div>
-            <div className="text-[22px] font-bold text-white">{warehouse.totalLocations}</div>
+            <div className="text-[18px] font-bold text-white">{warehouse.totalLocations}</div>
             <div className="text-[11px] text-white/60">{t('shelf.card.locations')}</div>
           </div>
-          <div className="w-px h-7 bg-white/20" />
+          <div className="w-px h-6 bg-white/20" />
           <div>
-            <div className="text-[22px] font-bold text-white">{aisleCount}</div>
+            <div className="text-[18px] font-bold text-white">{aisleCount}</div>
             <div className="text-[11px] text-white/60">{t('shelf.card.aisles')}</div>
           </div>
-          <div className="w-px h-7 bg-white/20" />
+          <div className="w-px h-6 bg-white/20" />
           <div>
-            <div className="text-[22px] font-bold text-white">{bayCount}</div>
+            <div className="text-[18px] font-bold text-white">{bayCount}</div>
             <div className="text-[11px] text-white/60">{t('shelf.card.bays')}</div>
           </div>
           <div className="w-px h-7 bg-white/20" />
@@ -96,7 +96,7 @@ export function WarehouseCard({
                 <span
                   key={l}
                   style={{ color: LEVEL_COLORS[l] || '#fff' }}
-                  className="text-[16px] font-bold"
+                  className="text-[13px] font-bold"
                 >
                   {l}
                 </span>
@@ -112,7 +112,7 @@ export function WarehouseCard({
         {/* Title */}
         <h2
           style={{ color: colors.text }}
-          className="text-[24px] font-semibold text-center mb-1"
+          className="text-[20px] font-semibold text-center mb-1"
         >
           {warehouse.warehouse}
         </h2>
@@ -124,7 +124,7 @@ export function WarehouseCard({
         <div className="flex flex-col gap-2">
           <button
             onClick={onEdit}
-            className="w-full h-[42px] flex items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-all hover:opacity-90"
+            className="w-full h-[34px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all hover:opacity-90"
             style={{ backgroundColor: colors.controlAccent, color: '#fff' }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -135,7 +135,7 @@ export function WarehouseCard({
 
           <button
             onClick={onDownload}
-            className="w-full h-[42px] flex items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-all hover:opacity-80"
+            className="w-full h-[34px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all hover:opacity-80"
             style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -146,7 +146,7 @@ export function WarehouseCard({
 
           <button
             onClick={onCustomDownload}
-            className="w-full h-[42px] flex items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-all hover:opacity-80"
+            className="w-full h-[34px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all hover:opacity-80"
             style={{ backgroundColor: colors.bgTertiary, color: colors.text }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -157,7 +157,7 @@ export function WarehouseCard({
 
           <button
             onClick={onDelete}
-            className="w-full h-[42px] flex items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-all hover:opacity-80"
+            className="w-full h-[34px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all hover:opacity-80"
             style={{ backgroundColor: `${colors.red}12`, color: colors.red }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
