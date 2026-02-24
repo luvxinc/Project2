@@ -53,3 +53,10 @@ export {
   type POPaymentItemRequest, type POPaymentHistoryResponse,
   type POPaymentOrdersResponse,
 } from './finance';
+export {
+  inventoryApi,
+  type WarehouseTreeResponse, type WarehouseNode, type AisleNode, type BayNode,
+  type LevelNode, type BinNode, type WarehouseStats,
+  type BatchCreateWarehouseRequest, type AisleConfig, type BayConfig,
+  type DownloadBarcodeRequest,
+} from './inventory';

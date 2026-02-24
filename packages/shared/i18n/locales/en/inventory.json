@@ -1,0 +1,87 @@
+{
+  "hub": {
+    "shelf": {
+      "title": "Shelf Codes",
+      "navTitle": "Shelf",
+      "subtitle": "Warehouse Location System",
+      "description": "Create and manage warehouse shelf locations with structured aisle-bay-level codes",
+      "cta": "Manage Shelves"
+    },
+    "dynamic": {
+      "title": "Dynamic Inventory",
+      "navTitle": "Dynamic",
+      "subtitle": "Real-time Stock Tracking",
+      "description": "Monitor live inventory movements and stock levels across warehouses",
+      "cta": "Coming Soon"
+    },
+    "stocktake": {
+      "title": "Stocktake",
+      "navTitle": "Stocktake",
+      "subtitle": "Physical Count & Reconciliation",
+      "description": "Schedule and manage physical inventory counts with variance reporting",
+      "cta": "Coming Soon"
+    }
+  },
+  "shelf": {
+    "title": "Shelf Code Management",
+    "subtitle": "Warehouse location system for inventory tracking",
+    "card": {
+      "locations": "Locations",
+      "aisles": "Aisles",
+      "bays": "Bays",
+      "levels": "Levels",
+      "edit": "Edit",
+      "delete": "Delete",
+      "download": "Download Barcodes",
+      "downloadAll": "Download All",
+      "customDownload": "Custom Download"
+    },
+    "wizard": {
+      "createTitle": "Create Warehouse",
+      "editTitle": "Edit Warehouse",
+      "step1": "Warehouse Name",
+      "step2": "Aisle Configuration",
+      "step3": "Preview & Confirm",
+      "warehouse": "Warehouse",
+      "aisle": "Aisle",
+      "bayCount": "Bay Count",
+      "levels": "Levels",
+      "binCount": "Bin Count",
+      "slotCount": "Slot Count",
+      "customBays": "Custom Bays",
+      "next": "Next",
+      "back": "Back",
+      "create": "Create",
+      "update": "Update",
+      "preview": "Preview",
+      "totalLocations": "Total Locations",
+      "aisleConfig": "Aisle Configuration",
+      "uniformConfig": "Uniform Configuration",
+      "customConfig": "Custom Configuration"
+    },
+    "download": {
+      "title": "Custom Barcode Download",
+      "subtitle": "Select specific locations to generate barcode labels",
+      "selectLocations": "Select Locations",
+      "downloadSelected": "Download Selected",
+      "clickToSelect": "Click to select",
+      "clickToDeselect": "Click to deselect",
+      "selectedCount": "{count} selected"
+    },
+    "delete": {
+      "title": "Delete Warehouse",
+      "message": "Are you sure you want to delete warehouse \"{warehouse}\"? This action cannot be undone. All shelf locations will be permanently removed.",
+      "confirm": "Delete"
+    },
+    "levels": {
+      "G": "Ground",
+      "M": "Middle",
+      "T": "Top"
+    },
+    "empty": {
+      "title": "No Warehouses",
+      "message": "Get started by creating your first warehouse with shelf locations.",
+      "createFirst": "Create Warehouse"
+    }
+  }
+}

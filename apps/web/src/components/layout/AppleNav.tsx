@@ -33,7 +33,8 @@ const modules = [
   },
   {
     key: 'inventory',
-    enabled: false,
+    enabled: true,
+    href: '/inventory',
     groups: [
       { key: 'stocktake', items: ['upload', 'modify'] },
       { key: 'dynamic', items: ['view'] },
@@ -135,6 +136,14 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'vma.training':                '/vma/training',
   'vma.training_sop':            '/vma/training-sop',
   'vma.training_records':        '/vma/training-records',
+  // Inventory module
+  'inventory.shelf':             '/inventory/shelf',
+  'inventory.shelf.manage':      '/inventory/shelf',
+  'inventory.stocktake':         '/inventory/stocktake',
+  'inventory.stocktake.upload':  '/inventory/stocktake',
+  'inventory.stocktake.modify':  '/inventory/stocktake',
+  'inventory.dynamic':           '/inventory/dynamic',
+  'inventory.dynamic.view':      '/inventory/dynamic',
   // Finance module
   'finance.flow':                '/finance/flow',
   'finance.flow.overview':       '/finance/flow',
