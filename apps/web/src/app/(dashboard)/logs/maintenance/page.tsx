@@ -58,7 +58,7 @@ function Card({
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
-  colors: Record<string, string>;
+  colors: typeof themeColors.light;
 }) {
   return (
     <div

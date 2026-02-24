@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useEffect, useCallback } from 'react';
+import { themeColors } from '@/contexts/ThemeContext';
 
 interface Props {
   diameterA: number; diameterB: number; diameterC: number;
@@ -168,10 +169,12 @@ export default function ValveWireframe({
     const f=fr.current%TOT; fr.current++;
     let cp:number,rot:number,label:string,wc:string,hc:string;
 
-    if(f<FE){cp=0;rot=(f/FE)*Math.PI*2;label='Expanded';wc=theme==='dark'?'#a8b4c4':'#5a6475';hc=theme==='dark'?'#dce3ed':'#c1cbda';}
-    else if(f<FE+FC){const t=f-FE;cp=t/FC;rot=Math.PI*2+(t/FC)*Math.PI*1.2;label='Crimping...';wc=theme==='dark'?'#f0b429':'#b45309';hc=theme==='dark'?'#fde68a':'#fbbf24';}
-    else if(f<FE+FC+FCR){cp=1;const t=f-FE-FC;rot=Math.PI*3.2+(t/FCR)*Math.PI*2;label='Crimped';wc=theme==='dark'?'#5ecea0':'#047857';hc=theme==='dark'?'#a7f3d0':'#6ee7b7';}
-    else{const t=f-FE-FC-FCR;cp=1-t/FX;rot=Math.PI*5.2+(t/FX)*Math.PI*1.2;label='Expanding...';wc=theme==='dark'?'#b8a4f0':'#6d28d9';hc=theme==='dark'?'#ddd6fe':'#a78bfa';}
+    const wf = themeColors[theme as 'dark'|'light'].wireframe;
+
+    if(f<FE){cp=0;rot=(f/FE)*Math.PI*2;label='Expanded';wc=wf.expandedWire;hc=wf.expandedHighlight;}
+    else if(f<FE+FC){const t=f-FE;cp=t/FC;rot=Math.PI*2+(t/FC)*Math.PI*1.2;label='Crimping...';wc=wf.crimpingWire;hc=wf.crimpingHighlight;}
+    else if(f<FE+FC+FCR){cp=1;const t=f-FE-FC;rot=Math.PI*3.2+(t/FCR)*Math.PI*2;label='Crimped';wc=wf.crimpedWire;hc=wf.crimpedHighlight;}
+    else{const t=f-FE-FC-FCR;cp=1-t/FX;rot=Math.PI*5.2+(t/FX)*Math.PI*1.2;label='Expanding...';wc=wf.expandingWire;hc=wf.expandingHighlight;}
 
     const edges=genStent(dA,dB,dC,lD,lE,cp,cL);
     ctx.clearRect(0,0,width,height);
@@ -192,7 +195,7 @@ export default function ValveWireframe({
     // ===== DIMENSION MARKERS =====
     const tS=ss(cp), curL=lerp(lE,cL,tS);
     const dimA=cp<0.2?0.7:cp>0.8?0.15:lerp(0.7,0.15,(cp-0.2)/0.6); // fade during crimping
-    const dc=theme==='dark'?'#6baaec':'#2a7ade';
+    const dc=wf.dimension;
 
     // Project center at model z to screen y, and compute silhouette half-width
     const sY=(mz:number)=>{let v=rotY(0,-mz,0,rot);v=rotX(v.x,v.y,v.z,elev);return proj(v.x,v.y,v.z,fov,vd).py+height/2;};
@@ -263,7 +266,7 @@ export default function ValveWireframe({
     // -- Crimped length label (when crimped) --
     if(cp>0.5){
       ctx.globalAlpha=(cp-0.5)*2*0.6;
-      ctx.strokeStyle=theme==='dark'?'#5ecea0':'#047857';ctx.fillStyle=ctx.strokeStyle;
+      ctx.strokeStyle=wf.successStroke;ctx.fillStyle=ctx.strokeStyle;
       const crX=cx+hwB+14;
       arrLine(crX,ty,crX,by);
       ctx.textAlign='left';ctx.fillText(`${cL}mm`,crX+10,(ty+by)/2+4);
@@ -273,7 +276,7 @@ export default function ValveWireframe({
     ctx.globalAlpha=1;ctx.font='600 12px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif';
     ctx.fillStyle=wc;ctx.textAlign='center';ctx.fillText(label,width/2,height-12);
 
-    const dots=[{on:cp===0,c:theme==='dark'?'#a8b4c4':'#5a6475'},{on:cp>0&&cp<1&&f<FE+FC,c:theme==='dark'?'#f0b429':'#b45309'},{on:cp===1,c:theme==='dark'?'#5ecea0':'#047857'}];
+    const dots=[{on:cp===0,c:wf.expandedWire},{on:cp>0&&cp<1&&f<FE+FC,c:wf.crimpingWire},{on:cp===1,c:wf.crimpedWire}];
     const dy=height-30,sp=22,sx=width/2-sp;
     dots.forEach((dd,i)=>{ctx.beginPath();ctx.arc(sx+i*sp,dy,dd.on?3.5:2,0,Math.PI*2);ctx.fillStyle=dd.on?dd.c:(theme==='dark'?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.08)');ctx.fill();});
 

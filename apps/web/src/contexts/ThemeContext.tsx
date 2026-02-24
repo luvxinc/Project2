@@ -280,6 +280,30 @@ export const themeColors = {
     segmentBg: '#39393d',                 // segment inactive background (dark)
     segmentIndicator: '#ffffff',          // segment active indicator (dark)
     segmentText: '#1d1d1f',               // segment active text on white pill (dark)
+    // macOS 标准色板 (用于角色/部门选色器)
+    palette: [
+      '#8e8e93',  // systemGray
+      '#64d2ff',  // systemCyan (dark)
+      '#30d158',  // systemGreen (dark)
+      '#ff9f0a',  // systemOrange (dark)
+      '#ff453a',  // systemRed (dark)
+      '#bf5af2',  // systemPurple (dark)
+      '#ff375f',  // systemPink (dark)
+      '#5e5ce6',  // systemIndigo (dark)
+      '#ff9500',  // iOS orange
+      '#ac8e68',  // systemBrown (dark)
+    ] as string[],
+    // Valve Wireframe 动画色 (canvas 2D)
+    wireframe: {
+      expandedWire: '#a8b4c4',     expandedHighlight: '#dce3ed',
+      crimpingWire: '#f0b429',     crimpingHighlight: '#fde68a',
+      crimpedWire: '#5ecea0',      crimpedHighlight: '#a7f3d0',
+      expandingWire: '#b8a4f0',    expandingHighlight: '#ddd6fe',
+      dimension: '#6baaec',
+      successStroke: '#5ecea0',
+    },
+    // 设备边框
+    deviceBorder: '#555b65',
   },
   light: {
     // 背景
@@ -341,6 +365,30 @@ export const themeColors = {
     segmentBg: '#e8e8ed',                 // segment inactive background (light)
     segmentIndicator: '#1d1d1f',          // segment active indicator dark pill (light)
     segmentText: '#ffffff',               // segment active text on dark pill (light)
+    // macOS 标准色板 (用于角色/部门选色器)
+    palette: [
+      '#8e8e93',  // systemGray
+      '#32ade6',  // systemCyan (light)
+      '#34c759',  // systemGreen (light)
+      '#ff9500',  // systemOrange (light)
+      '#ff3b30',  // systemRed (light)
+      '#af52de',  // systemPurple (light)
+      '#ff2d55',  // systemPink (light)
+      '#5856d6',  // systemIndigo (light)
+      '#ff9f0a',  // iOS orange vibrant
+      '#a2845e',  // systemBrown (light)
+    ] as string[],
+    // Valve Wireframe 动画色 (canvas 2D)
+    wireframe: {
+      expandedWire: '#5a6475',     expandedHighlight: '#c1cbda',
+      crimpingWire: '#b45309',     crimpingHighlight: '#fbbf24',
+      crimpedWire: '#047857',      crimpedHighlight: '#6ee7b7',
+      expandingWire: '#6d28d9',    expandingHighlight: '#a78bfa',
+      dimension: '#2a7ade',
+      successStroke: '#047857',
+    },
+    // 设备边框
+    deviceBorder: '#a0a5b0',
   },
 };
 

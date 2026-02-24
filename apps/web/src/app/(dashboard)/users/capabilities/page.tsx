@@ -19,11 +19,8 @@ const CAPABILITY_SWITCHES = [
   { key: 'can_delete_user', i18nKey: 'deleteUser', icon: 'trash', level: 'danger' },
 ];
 
-// 预设颜色
-const PRESET_COLORS = [
-  '#9CA3AF', '#60A5FA', '#34D399', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6366F1',
-];
+// 预设颜色 — 从 ThemeContext colors.palette 获取
+// (移除硬编码，由调用方传入)
 
 // SF Symbols 风格图标
 function CapIcon({ name, color }: { name: string; color?: string }) {
@@ -161,7 +158,7 @@ function RoleModal({
   const [name, setName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [level, setLevel] = useState(1);
-  const [color, setColor] = useState(PRESET_COLORS[0]);
+  const [color, setColor] = useState(colors.palette[0]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -169,14 +166,14 @@ function RoleModal({
       setName(editingRole.name);
       setDisplayName(editingRole.displayName);
       setLevel(editingRole.level);
-      setColor(editingRole.color || PRESET_COLORS[0]);
+      setColor(editingRole.color || colors.palette[0]);
     } else {
       // 新建时自动计算下一个可用 level
       const maxLevel = Math.max(...existingLevels, 0);
       setName('');
       setDisplayName('');
       setLevel(maxLevel + 1);
-      setColor(PRESET_COLORS[existingLevels.length % PRESET_COLORS.length]);
+      setColor(colors.palette[existingLevels.length % colors.palette.length]);
     }
     setError(null);
   }, [editingRole, existingLevels, isOpen]);
@@ -275,7 +272,7 @@ function RoleModal({
               {t('roles.fields.color')}
             </label>
             <div className="flex gap-2 flex-wrap">
-              {PRESET_COLORS.map(c => (
+              {colors.palette.map(c => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}
@@ -412,10 +409,10 @@ export default function CapabilitiesPage() {
       // 使用静态数据 - L1 最高职级 (admin), L3 最低可配置职级 (editor)
       // 不包含 viewer - 未登录用户无法进入 dashboard，不需要配置边界
       setRoles([
-        { id: '4', name: 'admin', displayName: t('roleNames.admin'), level: 1, isSystem: false, isActive: true, color: '#F59E0B', description: null, createdAt: '', updatedAt: '' },
-        { id: '3', name: 'staff', displayName: t('roleNames.staff'), level: 2, isSystem: false, isActive: true, color: '#34D399', description: null, createdAt: '', updatedAt: '' },
-        { id: '2', name: 'editor', displayName: t('roleNames.editor') || 'Editor', level: 3, isSystem: false, isActive: true, color: '#60A5FA', description: null, createdAt: '', updatedAt: '' },
-        { id: '5', name: 'superuser', displayName: t('roleNames.superuser'), level: 0, isSystem: true, isActive: true, color: '#EF4444', description: null, createdAt: '', updatedAt: '' },
+        { id: '4', name: 'admin', displayName: t('roleNames.admin'), level: 1, isSystem: false, isActive: true, color: colors.palette[3], description: null, createdAt: '', updatedAt: '' },
+        { id: '3', name: 'staff', displayName: t('roleNames.staff'), level: 2, isSystem: false, isActive: true, color: colors.palette[2], description: null, createdAt: '', updatedAt: '' },
+        { id: '2', name: 'editor', displayName: t('roleNames.editor') || 'Editor', level: 3, isSystem: false, isActive: true, color: colors.palette[1], description: null, createdAt: '', updatedAt: '' },
+        { id: '5', name: 'superuser', displayName: t('roleNames.superuser'), level: 0, isSystem: true, isActive: true, color: colors.palette[4], description: null, createdAt: '', updatedAt: '' },
       ]);
     } finally {
       setLoading(false);

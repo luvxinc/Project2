@@ -564,7 +564,7 @@ export default function FridgeShelfPage() {
                   background: theme === 'dark'
                     ? 'linear-gradient(180deg, #3a4050 0%, #2a3040 50%, #252a35 100%)'
                     : 'linear-gradient(180deg, #d8dce5 0%, #c8ccd5 50%, #b8bcc5 100%)',
-                  border: `3px solid ${theme === 'dark' ? '#555b65' : '#a0a5b0'}`,
+                  border: `3px solid ${colors.deviceBorder}`,
                   boxShadow: theme === 'dark'
                     ? '0 20px 60px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.08)'
                     : '0 20px 60px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.6)',

@@ -62,15 +62,10 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// 分组颜色
-const GROUP_COLORS_FALLBACK = [
-  '#007AFF', '#5856D6', '#34C759', '#FF9F0A',
-  '#FF2D55', '#5AC8FA', '#FFCC00', '#AF52DE',
-];
-
-function getGroupColor(code: string): string {
+// 分组颜色 — 使用 ThemeContext palette
+function getGroupColor(code: string, palette: string[]): string {
   const hash = code.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
-  return GROUP_COLORS_FALLBACK[hash % GROUP_COLORS_FALLBACK.length];
+  return palette[hash % palette.length];
 }
 
 // ================================
@@ -477,7 +472,7 @@ export default function DutiesPage() {
     return Array.from(map.entries()).map(([code, depts]) => ({
       code,
       name: depts[0].name,
-      color: getGroupColor(code),
+      color: getGroupColor(code, colors.palette),
       departments: depts,
     }));
   }, [departments]);
