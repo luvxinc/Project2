@@ -408,7 +408,7 @@ export default function DepositPODetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.depOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>Override</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>{tF('deposit.detail.depOverride')}</span>
                         ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">
@@ -502,7 +502,7 @@ export default function DepositPODetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.poOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>Override</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: '#ff453a' }}>{tF('po.detail.poPmtOverride')}</span>
                         ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">

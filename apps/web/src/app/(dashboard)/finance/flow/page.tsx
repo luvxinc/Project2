@@ -568,7 +568,7 @@ function FlowRow({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           ) : order.hasDiff ? (
-            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: '#ff9f0a' }}>DIFF</span>
+            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: '#ff9f0a' }}>{t('flow.diffWarning')}</span>
           ) : hasProblem ? (
             <div className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: '#ffd60a' }} />
           ) : null}
