@@ -43,7 +43,7 @@ export function WarehouseCard({
       className="rounded-2xl border overflow-hidden transition-transform duration-200 hover:scale-[1.01]"
     >
       {/* 3D Preview */}
-      <div className="h-[180px] relative">
+      <div className="h-[540px] relative">
         <WarehouseScene warehouseData={warehouse} mini />
         {/* Warehouse name overlay */}
         <div className="absolute top-3 left-4">
