@@ -33,8 +33,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
         format_sql: true
-        default_batch_fetch_size: 20    # N+1 safety net for lazy collections
+        default_batch_fetch_size: 100   # N+1 safety net (v3-architecture §9)
+        order_inserts: true             # Group INSERTs by entity type for batching
+        order_updates: true             # Group UPDATEs by entity type for batching
         jdbc:
+          batch_size: 50                # Batch N statements per roundtrip (v3-architecture §9)
           time_zone: America/Los_Angeles  # Pacific Time
 
   # === Flyway ===
