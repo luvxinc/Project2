@@ -6,7 +6,7 @@ import com.mgmt.common.response.PageMeta
 import com.mgmt.common.response.PagedResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
-import com.mgmt.modules.auth.JwtTokenProvider
+import com.mgmt.common.security.SecurityUtils
 import com.mgmt.common.exception.BusinessException
 import com.mgmt.modules.products.application.dto.*
 import com.mgmt.modules.products.application.usecase.*
@@ -17,7 +17,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -107,7 +106,7 @@ class ProductController(
     @AuditLog(module = "PRODUCTS", action = "CREATE_PRODUCT", riskLevel = "MEDIUM")
     fun create(@Valid @RequestBody dto: CreateProductRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(toResponse(createUseCase.create(dto, currentUsername()))))
+            .body(ApiResponse.ok(toResponse(createUseCase.create(dto, SecurityUtils.currentUsername()))))
 
     @PostMapping("/batch")
     @RequirePermission("module.products.catalog.create")
@@ -115,7 +114,7 @@ class ProductController(
     @AuditLog(module = "PRODUCTS", action = "BATCH_CREATE_PRODUCT", riskLevel = "MEDIUM")
     fun batchCreate(@RequestBody dto: BatchCreateProductRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(createUseCase.batchCreate(dto, currentUsername())))
+            .body(ApiResponse.ok(createUseCase.batchCreate(dto, SecurityUtils.currentUsername())))
 
     // ═══════════ Update ═══════════
 
@@ -124,14 +123,14 @@ class ProductController(
     @SecurityLevel(level = "L2", actionKey = "btn_update_cogs")
     @AuditLog(module = "PRODUCTS", action = "UPDATE_PRODUCT", riskLevel = "MEDIUM")
     fun update(@PathVariable id: String, @Valid @RequestBody dto: UpdateProductRequest): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(toResponse(updateUseCase.update(id, dto, currentUsername()))))
+        ResponseEntity.ok(ApiResponse.ok(toResponse(updateUseCase.update(id, dto, SecurityUtils.currentUsername()))))
 
     @PostMapping("/cogs/batch")
     @RequirePermission("module.products.catalog.cogs")
     @SecurityLevel(level = "L3", actionKey = "btn_batch_update_cogs")
     @AuditLog(module = "PRODUCTS", action = "BATCH_UPDATE_COGS", riskLevel = "HIGH")
     fun batchUpdateCogs(@RequestBody dto: BatchUpdateCogsRequest): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(updateUseCase.batchUpdateCogs(dto, currentUsername())))
+        ResponseEntity.ok(ApiResponse.ok(updateUseCase.batchUpdateCogs(dto, SecurityUtils.currentUsername())))
 
     // ═══════════ Delete ═══════════
 
@@ -140,7 +139,7 @@ class ProductController(
     @SecurityLevel(level = "L3", actionKey = "btn_delete_product")
     @AuditLog(module = "PRODUCTS", action = "DELETE_PRODUCT", riskLevel = "HIGH")
     fun delete(@PathVariable id: String): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(mapOf("success" to deleteUseCase.delete(id, currentUsername()))))
+        ResponseEntity.ok(ApiResponse.ok(mapOf("success" to deleteUseCase.delete(id, SecurityUtils.currentUsername()))))
 
     // ═══════════ Barcode (V1 parity) ═══════════
 
@@ -181,10 +180,4 @@ class ProductController(
         createdAt = p.createdAt, updatedAt = p.updatedAt,
     )
 
-    private fun currentUsername(): String {
-        val auth = SecurityContextHolder.getContext().authentication
-        val claims = auth?.principal as? JwtTokenProvider.TokenClaims
-        return claims?.username ?: "system"
-    }
 }
-

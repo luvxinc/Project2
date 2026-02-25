@@ -4,7 +4,7 @@ import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
-import com.mgmt.modules.auth.JwtTokenProvider
+import com.mgmt.common.security.SecurityUtils
 import com.mgmt.modules.inventory.application.dto.BatchCreateWarehouseRequest
 import com.mgmt.modules.inventory.application.dto.DownloadBarcodeRequest
 import com.mgmt.modules.inventory.application.usecase.WarehouseShelfUseCase
@@ -68,7 +68,7 @@ class WarehouseShelfController(
     @SecurityLevel(level = "L2", actionKey = "btn_create_warehouse")
     @AuditLog(module = "INVENTORY", action = "CREATE_WAREHOUSE", riskLevel = "HIGH")
     fun batchCreate(@Valid @RequestBody request: BatchCreateWarehouseRequest): ResponseEntity<Any> {
-        val locations = shelfUseCase.batchCreate(request, currentUsername())
+        val locations = shelfUseCase.batchCreate(request, SecurityUtils.currentUsername())
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.ok(mapOf(
                 "count" to locations.size,
@@ -88,7 +88,7 @@ class WarehouseShelfController(
         @PathVariable warehouse: String,
         @Valid @RequestBody request: BatchCreateWarehouseRequest,
     ): ResponseEntity<Any> {
-        val locations = shelfUseCase.updateWarehouse(warehouse, request, currentUsername())
+        val locations = shelfUseCase.updateWarehouse(warehouse, request, SecurityUtils.currentUsername())
         return ResponseEntity.ok(ApiResponse.ok(mapOf(
             "count" to locations.size,
             "warehouse" to warehouse.trim().uppercase(),
@@ -157,13 +157,4 @@ class WarehouseShelfController(
             .body(pdfBytes)
     }
 
-    // ═══════════════════════════════════════════════
-    // HELPERS
-    // ═══════════════════════════════════════════════
-
-    private fun currentUsername(): String {
-        val auth = SecurityContextHolder.getContext().authentication
-        val claims = auth?.principal as? JwtTokenProvider.TokenClaims
-        return claims?.username ?: "system"
-    }
 }

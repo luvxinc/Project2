@@ -4,13 +4,12 @@ import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
-import com.mgmt.modules.auth.JwtTokenProvider
+import com.mgmt.common.security.SecurityUtils
 import com.mgmt.modules.inventory.application.dto.*
 import com.mgmt.modules.inventory.application.usecase.StocktakeUseCase
 import com.mgmt.modules.inventory.domain.model.Stocktake
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -40,14 +39,14 @@ class StocktakeController(
     @AuditLog(module = "INVENTORY", action = "CREATE_STOCKTAKE", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreateStocktakeRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(toDetailResponse(stocktakeUseCase.create(dto, currentUsername()))))
+            .body(ApiResponse.ok(toDetailResponse(stocktakeUseCase.create(dto, SecurityUtils.currentUsername()))))
 
     @PutMapping("/{id}")
     @RequirePermission("module.inventory.stocktake.edit")
     @SecurityLevel(level = "L3", actionKey = "btn_edit_stocktake")
     @AuditLog(module = "INVENTORY", action = "UPDATE_STOCKTAKE", riskLevel = "MEDIUM")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdateStocktakeRequest): ResponseEntity<Any> =
-        ResponseEntity.ok(ApiResponse.ok(toDetailResponse(stocktakeUseCase.update(id, dto, currentUsername()))))
+        ResponseEntity.ok(ApiResponse.ok(toDetailResponse(stocktakeUseCase.update(id, dto, SecurityUtils.currentUsername()))))
 
     @DeleteMapping("/{id}")
     @RequirePermission("module.inventory.stocktake.delete")
@@ -71,10 +70,4 @@ class StocktakeController(
         items = st.items.map { StocktakeItemResponse(id = it.id, sku = it.sku, countedQty = it.countedQty) },
         createdAt = st.createdAt, updatedAt = st.updatedAt,
     )
-
-    private fun currentUsername(): String {
-        val auth = SecurityContextHolder.getContext().authentication
-        val claims = auth?.principal as? JwtTokenProvider.TokenClaims
-        return claims?.username ?: "system"
-    }
 }

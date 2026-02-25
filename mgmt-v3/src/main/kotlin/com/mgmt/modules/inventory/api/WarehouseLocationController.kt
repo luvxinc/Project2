@@ -6,13 +6,12 @@ import com.mgmt.common.response.PageMeta
 import com.mgmt.common.response.PagedResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
-import com.mgmt.modules.auth.JwtTokenProvider
+import com.mgmt.common.security.SecurityUtils
 import com.mgmt.modules.inventory.application.dto.*
 import com.mgmt.modules.inventory.application.usecase.WarehouseLocationUseCase
 import com.mgmt.modules.inventory.domain.model.WarehouseLocation
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -60,7 +59,7 @@ class WarehouseLocationController(
     @AuditLog(module = "INVENTORY", action = "CREATE_WAREHOUSE_LOCATION", riskLevel = "MEDIUM")
     fun create(@RequestBody dto: CreateWarehouseLocationRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(toResponse(warehouseLocationUseCase.create(dto, currentUsername()))))
+            .body(ApiResponse.ok(toResponse(warehouseLocationUseCase.create(dto, SecurityUtils.currentUsername()))))
 
     @DeleteMapping("/{id}")
     @RequirePermission("module.inventory.warehouse.delete")
@@ -80,9 +79,4 @@ class WarehouseLocationController(
         createdAt = loc.createdAt, updatedAt = loc.updatedAt,
     )
 
-    private fun currentUsername(): String {
-        val auth = SecurityContextHolder.getContext().authentication
-        val claims = auth?.principal as? JwtTokenProvider.TokenClaims
-        return claims?.username ?: "system"
-    }
 }
