@@ -4,6 +4,7 @@ import com.mgmt.common.exception.NotFoundException
 import com.mgmt.modules.purchase.application.dto.*
 import com.mgmt.modules.purchase.domain.model.Payment
 import com.mgmt.modules.purchase.domain.repository.*
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
@@ -24,6 +25,7 @@ class PaymentUseCase(
     private val shipmentRepo: ShipmentRepository,
     private val supplierRepo: SupplierRepository,
 ) {
+    private val log = LoggerFactory.getLogger(PaymentUseCase::class.java)
 
     // ═══════════ Query ═══════════
 
@@ -93,7 +95,9 @@ class PaymentUseCase(
             createdBy = username,
             updatedBy = username,
         )
-        return paymentRepo.save(payment)
+        return paymentRepo.save(payment).also {
+            log.info("[Payment:CREATE] type={} no={} by={}", it.paymentType, it.paymentNo, username)
+        }
     }
 
     // ═══════════ Delete ═══════════
@@ -104,6 +108,7 @@ class PaymentUseCase(
         payment.deletedAt = Instant.now()
         payment.updatedBy = username
         paymentRepo.save(payment)
+        log.info("[Payment:DELETE] id={} no={} by={}", id, payment.paymentNo, username)
         return true
     }
 

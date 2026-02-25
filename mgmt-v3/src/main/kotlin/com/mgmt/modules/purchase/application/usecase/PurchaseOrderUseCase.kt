@@ -13,6 +13,7 @@ import com.mgmt.modules.purchase.domain.repository.PurchaseOrderStrategyReposito
 import com.mgmt.modules.purchase.domain.repository.ShipmentItemRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
@@ -38,6 +39,7 @@ class PurchaseOrderUseCase(
     private val eventRepo: PurchaseOrderEventRepository,
     private val objectMapper: ObjectMapper,
 ) {
+    private val log = LoggerFactory.getLogger(PurchaseOrderUseCase::class.java)
 
     // ═══════════ Query ═══════════
 
@@ -134,6 +136,7 @@ class PurchaseOrderUseCase(
             "strategy" to strategyToMap(strategy),
         ), "原始订单", username)
 
+        log.info("[PO:CREATE] poNum={} supplier={} items={} by={}", poNum, dto.supplierCode, dto.items.size, username)
         return savedPo
     }
 
@@ -213,6 +216,7 @@ class PurchaseOrderUseCase(
         }
         recordEvent(po.id, po.poNum, eventType, changes, null, username)
 
+        log.info("[PO:UPDATE] poNum={} type={} by={}", po.poNum, eventType, username)
         return savedPo
     }
 
@@ -277,6 +281,7 @@ class PurchaseOrderUseCase(
             "items_at_deletion" to itemsAtDeletion,
         ), "删除订单_${username}_${today}", username)
 
+        log.info("[PO:DELETE] poNum={} by={}", po.poNum, username)
         return true
     }
 
@@ -299,6 +304,7 @@ class PurchaseOrderUseCase(
             "restored_items" to restoredItems,
         ), "恢复删除_${username}_${today}", username)
 
+        log.info("[PO:RESTORE] poNum={} by={}", po.poNum, username)
         return saved
     }
 

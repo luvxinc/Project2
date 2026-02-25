@@ -1,5 +1,6 @@
 package com.mgmt.modules.purchase.api
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.response.ApiResponse
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
@@ -210,6 +211,7 @@ class AbnormalController(
     // ═══════════════════════════════════════
     @PostMapping("/process")
     @RequirePermission("module.purchase.receive.mgmt")
+    @AuditLog(module = "PURCHASE", action = "PROCESS_ABNORMAL", riskLevel = "HIGH")
     @SecurityLevel(level = "L3", actionKey = "btn_abnormal_process")
     fun process(@RequestBody request: ProcessAbnormalRequest): ResponseEntity<ApiResponse<Map<String, Any>>> {
         val diffs = diffRepo.findAllByLogisticNum(request.logisticNum)
@@ -431,6 +433,7 @@ class AbnormalController(
     // ═══════════════════════════════════════
     @PostMapping("/delete")
     @RequirePermission("module.purchase.receive.mgmt")
+    @AuditLog(module = "PURCHASE", action = "ROLLBACK_ABNORMAL", riskLevel = "HIGH")
     @SecurityLevel(level = "L3", actionKey = "btn_abnormal_delete")
     fun delete(@RequestBody request: DeleteAbnormalRequest): ResponseEntity<ApiResponse<Map<String, Any>>> {
         val diffs = diffRepo.findAllByLogisticNum(request.logisticNum)

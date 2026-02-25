@@ -8,6 +8,7 @@ import com.mgmt.modules.purchase.domain.model.Shipment
 import com.mgmt.modules.purchase.domain.model.ShipmentEvent
 import com.mgmt.modules.purchase.domain.model.ShipmentItem
 import com.mgmt.modules.purchase.domain.repository.*
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
@@ -31,6 +32,7 @@ class ShipmentUseCase(
     private val receiveRepo: ReceiveRepository,
     private val objectMapper: ObjectMapper,
 ) {
+    private val log = LoggerFactory.getLogger(ShipmentUseCase::class.java)
 
     // ═══════════ Query ═══════════
 
@@ -113,6 +115,7 @@ class ShipmentUseCase(
         ))
         recordEvent(saved.id, saved.logisticNum, "CREATE", changes, "Initial shipment", username)
 
+        log.info("[Shipment:CREATE] logistic={} items={} by={}", saved.logisticNum, dto.items.size, username)
         return saved
     }
 
@@ -259,6 +262,7 @@ class ShipmentUseCase(
             }
         }
 
+        log.info("[Shipment:UPDATE] logistic={} by={}", shipment.logisticNum, username)
         return saved
     }
 
@@ -382,6 +386,7 @@ class ShipmentUseCase(
             objectMapper.writeValueAsString(mapOf("status" to "cancelled")),
             "Deleted by $username", username)
 
+        log.info("[Shipment:DELETE] logistic={} by={}", shipment.logisticNum, username)
         return true
     }
 
@@ -398,6 +403,7 @@ class ShipmentUseCase(
             objectMapper.writeValueAsString(mapOf("status" to "pending")),
             "Restored by $username", username)
 
+        log.info("[Shipment:RESTORE] logistic={} by={}", saved.logisticNum, username)
         return saved
     }
 

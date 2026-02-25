@@ -8,6 +8,7 @@ import com.mgmt.modules.purchase.domain.model.Supplier
 import com.mgmt.modules.purchase.domain.model.SupplierStrategy
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierStrategyRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -24,6 +25,7 @@ class SupplierUseCase(
     private val supplierRepo: SupplierRepository,
     private val strategyRepo: SupplierStrategyRepository,
 ) {
+    private val log = LoggerFactory.getLogger(SupplierUseCase::class.java)
 
     // ═══════════ Query ═══════════
 
@@ -84,6 +86,7 @@ class SupplierUseCase(
         )
         strategyRepo.save(strategy)
 
+        log.info("[Supplier:CREATE] code={} name={} by={}", saved.supplierCode, saved.supplierName, username)
         return saved
     }
 
@@ -96,7 +99,9 @@ class SupplierUseCase(
         dto.status?.let { supplier.status = it }
         supplier.updatedAt = Instant.now()
         supplier.updatedBy = username
-        return supplierRepo.save(supplier)
+        return supplierRepo.save(supplier).also {
+            log.info("[Supplier:UPDATE] code={} by={}", it.supplierCode, username)
+        }
     }
 
     // ═══════════ Soft Delete ═══════════
@@ -107,6 +112,7 @@ class SupplierUseCase(
         supplier.deletedAt = Instant.now()
         supplier.updatedBy = username
         supplierRepo.save(supplier)
+        log.info("[Supplier:DELETE] code={} by={}", supplier.supplierCode, username)
         return true
     }
 
@@ -197,7 +203,9 @@ class SupplierUseCase(
             createdBy = username,
             updatedBy = username,
         )
-        return strategyRepo.save(strategy)
+        return strategyRepo.save(strategy).also {
+            log.info("[Supplier:STRATEGY] code={} date={} by={}", supplier.supplierCode, dto.effectiveDate, username)
+        }
     }
 
     // ═══════════ Aggregated Query ═══════════
