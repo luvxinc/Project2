@@ -46,17 +46,17 @@ class VmaClinicalCaseController(
     // ═══════════ Case CRUD ═══════════
 
     @GetMapping("/clinical-cases")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun findAll(): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.findAll())
 
     @GetMapping("/clinical-cases/{caseId}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun findOne(@PathVariable caseId: String): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.findOne(caseId))
 
     @PostMapping("/clinical-cases")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "CREATE_CLINICAL_CASE")
     fun createCase(@RequestBody dto: CreateClinicalCaseRequest): ResponseEntity<Any> {
         val result = caseService.createCaseWithPdf(dto)
@@ -71,7 +71,7 @@ class VmaClinicalCaseController(
     }
 
     @PatchMapping("/clinical-cases/{caseId}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "UPDATE_CLINICAL_CASE")
     fun updateCaseInfo(
         @PathVariable caseId: String,
@@ -80,19 +80,19 @@ class VmaClinicalCaseController(
         ResponseEntity.ok(caseService.updateCaseInfo(caseId, dto))
 
     @DeleteMapping("/clinical-cases/{caseId}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "DELETE_CLINICAL_CASE", riskLevel = "HIGH")
     fun deleteCase(@PathVariable caseId: String): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.deleteCase(caseId))
 
     @DeleteMapping("/clinical-cases/{caseId}/related-cases")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "DELETE_ALL_RELATED_CASES", riskLevel = "HIGH")
     fun deleteAllRelatedCases(@PathVariable caseId: String): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.deleteAllRelatedCases(caseId))
 
     @PostMapping("/clinical-cases/{caseId}/related-case")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "ADD_RELATED_CASE")
     fun addRelatedCase(
         @PathVariable caseId: String,
@@ -103,7 +103,7 @@ class VmaClinicalCaseController(
     // ═══════════ Case Item CRUD ═══════════
 
     @PatchMapping("/clinical-cases/{caseId}/items/{txnId}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "UPDATE_CASE_ITEM")
     fun updateCaseItem(
         @PathVariable caseId: String,
@@ -113,19 +113,19 @@ class VmaClinicalCaseController(
         ResponseEntity.ok(caseService.updateCaseItem(caseId, txnId, dto))
 
     @DeleteMapping("/clinical-cases/{caseId}/items/{txnId}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "DELETE_CASE_ITEM", riskLevel = "HIGH")
     fun deleteCaseItem(@PathVariable caseId: String, @PathVariable txnId: String): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.deleteCaseItem(caseId, txnId))
 
     @PostMapping("/clinical-cases/{caseId}/items")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "ADD_CASE_ITEM")
     fun addCaseItem(@PathVariable caseId: String, @RequestBody dto: AddCaseItemRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(caseService.addCaseItem(caseId, dto))
 
     @PostMapping("/clinical-cases/{caseId}/items/batch")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "ADD_CASE_ITEMS_BATCH")
     fun addCaseItemsBatch(@PathVariable caseId: String, @RequestBody items: List<AddCaseItemRequest>): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(caseService.addCaseItemsBatch(caseId, items))
@@ -133,17 +133,17 @@ class VmaClinicalCaseController(
     // ═══════════ Product Picking ═══════════
 
     @PostMapping("/case-pick-products")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun pickProducts(@RequestBody dto: PickProductsRequest): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.pickProducts(dto))
 
     @PostMapping("/case-available-products")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun getAvailableProducts(@RequestBody dto: AvailableProductsRequest): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.getAvailableProducts(dto))
 
     @GetMapping("/case-compatible-ds")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun getCompatibleDS(@RequestParam specs: String): ResponseEntity<Any> {
         val specList = specs.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         return ResponseEntity.ok(caseService.getCompatibleDS(specList))
@@ -152,13 +152,13 @@ class VmaClinicalCaseController(
     // ═══════════ Case Lifecycle ═══════════
 
     @PostMapping("/clinical-cases/{caseId}/complete")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "COMPLETE_CLINICAL_CASE")
     fun completeCase(@PathVariable caseId: String, @RequestBody dto: CompleteCaseRequest): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.completeCase(caseId, dto))
 
     @PostMapping("/clinical-cases/{caseId}/reverse")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     @AuditLog(module = "VMA", action = "REVERSE_CLINICAL_CASE", riskLevel = "HIGH")
     fun reverseCompletion(@PathVariable caseId: String): ResponseEntity<Any> =
         ResponseEntity.ok(caseService.reverseCompletion(caseId))
@@ -166,7 +166,7 @@ class VmaClinicalCaseController(
     // ═══════════ PDF Download ═══════════
 
     @GetMapping("/clinical-cases/{caseId}/pdf")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.clinical.manage")
     fun downloadPdf(@PathVariable caseId: String): ResponseEntity<ByteArray> {
         val result = caseService.generatePackingListPdf(caseId)
         return ResponseEntity.ok()

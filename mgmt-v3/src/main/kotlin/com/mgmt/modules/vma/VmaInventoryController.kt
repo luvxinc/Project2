@@ -42,29 +42,29 @@ class VmaInventoryController(
     // ═══════════ CRUD ═══════════
 
     @GetMapping("/inventory-transactions")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun findAll(@RequestParam(required = false) productType: String?): ResponseEntity<Any> =
         ResponseEntity.ok(invService.findAll(productType))
 
     @GetMapping("/inventory-transactions/{id}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun findOne(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(invService.findOne(id))
 
     @PostMapping("/inventory-transactions")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "CREATE_INVENTORY_TRANSACTION")
     fun create(@RequestBody dto: CreateInventoryTransactionRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(invService.create(dto))
 
     @PatchMapping("/inventory-transactions/{id}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "UPDATE_INVENTORY_TRANSACTION")
     fun update(@PathVariable id: String, @RequestBody dto: UpdateInventoryTransactionRequest): ResponseEntity<Any> =
         ResponseEntity.ok(invService.update(id, dto))
 
     @DeleteMapping("/inventory-transactions/{id}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "DELETE_INVENTORY_TRANSACTION", riskLevel = "HIGH")
     fun remove(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(invService.remove(id))
@@ -72,17 +72,17 @@ class VmaInventoryController(
     // ═══════════ Query/Report ═══════════
 
     @GetMapping("/inventory-transactions/spec-options")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getSpecOptions(@RequestParam productType: String): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getSpecOptions(productType))
 
     @GetMapping("/inventory-transactions/summary")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getInventorySummary(@RequestParam productType: String): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getInventorySummary(productType))
 
     @GetMapping("/inventory-transactions/detail")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getInventoryDetail(
         @RequestParam specNo: String,
         @RequestParam productType: String,
@@ -90,17 +90,17 @@ class VmaInventoryController(
         ResponseEntity.ok(invService.getInventoryDetail(specNo, productType))
 
     @GetMapping("/inventory-transactions/demo")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getDemoInventory(): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getDemoInventory())
 
     @GetMapping("/inventory-transactions/operators")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getOperatorOptions(): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getActiveOperators())
 
     @GetMapping("/inventory-transactions/returnable")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getReturnableInventory(
         @RequestParam productType: String,
         @RequestParam specNo: String,
@@ -112,7 +112,7 @@ class VmaInventoryController(
      * Receive from China — creates batch + transactions, returns PDF blob.
      */
     @PostMapping("/inventory-transactions/receive-from-china")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "RECEIVE_FROM_CHINA")
     fun receiveFromChina(@RequestBody dto: ReceiveFromChinaRequest): ResponseEntity<ByteArray> {
         // 1. Upsert batch
@@ -156,7 +156,7 @@ class VmaInventoryController(
      * - Filename: receiving_inspection_{specNo}_{serialNo}_{date}.pdf
      */
     @GetMapping("/inventory-transactions/receive-pdf/{id}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getReceivePdf(@PathVariable id: String): ResponseEntity<ByteArray> {
         val txn = invService.findOne(id)
         val batchNo = txn.batchNo
@@ -179,18 +179,18 @@ class VmaInventoryController(
     // ═══════════ Fridge Shelf ═══════════
 
     @GetMapping("/fridge-slots")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getFridgeSlots(): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getAllFridgeSlots())
 
     @PostMapping("/fridge-slots")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "PLACE_FRIDGE_SLOT")
     fun placeFridgeSlot(@RequestBody dto: PlaceFridgeSlotRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(invService.placeFridgeSlot(dto))
 
     @DeleteMapping("/fridge-slots/{id}")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     @AuditLog(module = "VMA", action = "REMOVE_FRIDGE_SLOT")
     fun removeFridgeSlot(@PathVariable id: String): ResponseEntity<Any> {
         invService.removeFridgeSlot(id)
@@ -198,7 +198,7 @@ class VmaInventoryController(
     }
 
     @GetMapping("/fridge-slots/eligible")
-    @RequirePermission("vma.employees.manage")
+    @RequirePermission("vma.inventory.manage")
     fun getEligibleFridgeProducts(): ResponseEntity<Any> =
         ResponseEntity.ok(invService.getEligibleFridgeProducts())
 }
