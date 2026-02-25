@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { LEVEL_COLORS_HEX } from '../../constants';
 
 /**
  * V1-PARITY Shelf Bay Component
@@ -15,13 +16,6 @@ import * as THREE from 'three';
  *   - MeshLambertMaterial with level color
  *   - EdgesGeometry black wireframe (V1 parity)
  */
-
-// Level colors: G=Ground(green), M=Middle(blue), T=Top(orange) — exact V1 hex values
-const LEVEL_COLORS: Record<string, number> = {
-  G: 0x4CAF50,
-  M: 0x2196F3,
-  T: 0xFF9800,
-};
 
 const LEVEL_ORDER = ['G', 'M', 'T'];
 
@@ -90,7 +84,7 @@ export function ShelfBay({
         ).length - 1;
 
         const y = shelfHeight / 2 + 0.1 + enabledIndex * (shelfHeight + 0.1);
-        const baseColor = LEVEL_COLORS[level] || 0xcccccc;
+        const baseColor = LEVEL_COLORS_HEX[level] || 0xcccccc;
 
         if (binCount === 0) {
           // Case A: Whole Level

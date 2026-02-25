@@ -8,6 +8,7 @@ import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { inventoryApi } from '@/lib/api/inventory';
 import type { AisleConfig, BayConfig, WarehouseNode } from '@/lib/api/inventory';
+import { LEVEL_COLORS } from '../constants';
 
 const WarehouseScene = dynamic(
   () => import('./three/WarehouseScene').then(m => ({ default: m.WarehouseScene })),
@@ -18,11 +19,6 @@ const MAX_LOCATIONS_WARNING = 10000;
 
 // V1 parity: fixed level order with dependency chain G→M→T
 const LEVELS = ['G', 'M', 'T'] as const;
-const LEVEL_COLORS: Record<string, string> = {
-  G: '#4CAF50',
-  M: '#2196F3',
-  T: '#FF9800',
-};
 
 // V1 parity: Bin/Slot only allow 0 or 2
 const BIN_SLOT_OPTIONS = [

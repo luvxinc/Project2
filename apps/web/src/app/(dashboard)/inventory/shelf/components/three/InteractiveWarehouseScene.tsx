@@ -6,13 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import * as THREE from 'three';
 import type { WarehouseNode } from '@/lib/api/inventory';
-
-// Level colors
-const LEVEL_COLORS: Record<string, string> = {
-  G: '#4CAF50',
-  M: '#2196F3',
-  T: '#FF9800',
-};
+import { LEVEL_COLORS } from '../../constants';
 
 const SELECTED_COLOR = '#FFD700';
 const HOVER_COLOR = '#FFFFFF';

@@ -3,15 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import type { AisleConfig, BayConfig } from '@/lib/api/inventory';
-
-const AVAILABLE_LEVELS = ['G', 'M', 'T'] as const;
-
-// Level colors matching Three.js
-const LEVEL_COLORS: Record<string, string> = {
-  G: '#4CAF50',
-  M: '#2196F3',
-  T: '#FF9800',
-};
+import { LEVEL_COLORS, AVAILABLE_LEVELS } from '../constants';
 
 interface AisleConfigPanelProps {
   aisles: AisleConfig[];

@@ -4,17 +4,12 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import type { WarehouseNode } from '@/lib/api/inventory';
+import { LEVEL_COLORS } from '../constants';
 
 const WarehouseScene = dynamic(
   () => import('./three/WarehouseScene').then(m => ({ default: m.WarehouseScene })),
   { ssr: false }
 );
-
-const LEVEL_COLORS: Record<string, string> = {
-  G: '#4CAF50',
-  M: '#2196F3',
-  T: '#FF9800',
-};
 
 interface WarehouseCardProps {
   warehouse: WarehouseNode;
