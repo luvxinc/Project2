@@ -1,0 +1,32 @@
+# ══════════════════════════════════════════════════════════════
+# ESPLUS ERP V3 — Production Profile
+# ══════════════════════════════════════════════════════════════
+# Activated via SPRING_PROFILES_ACTIVE=prod
+# Overrides application.yml defaults for production deployment
+# ══════════════════════════════════════════════════════════════
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+# Disable Swagger/OpenAPI in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Production logging
+logging:
+  level:
+    root: WARN
+    com.mgmt: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/esplus-erp.log

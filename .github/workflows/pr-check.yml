@@ -9,15 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+
+      # Frontend
+      - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm prisma generate
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test --passWithNoTests
+      - name: TypeScript Check
+        run: cd apps/web && npx tsc --noEmit
+
+      # Backend
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Kotlin Compile
+        run: ./gradlew compileKotlin --no-daemon

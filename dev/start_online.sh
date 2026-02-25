@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ══════════════════════════════════════════════════════════════
-# MGMT V3 — 公网服务器 启动脚本
+# ESPLUS ERP — 公网服务器 启动脚本
 # ══════════════════════════════════════════════════════════════
 # 用法: bash dev/start_online.sh
 # 说明: 启动 V3 全栈 + Cloudflare Tunnel 公网访问
@@ -15,7 +15,7 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-V3_DIR="$PROJECT_ROOT/mgmt-v3"
+
 PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
@@ -41,7 +41,7 @@ log_info() { printf "${BLUE}ℹ️${NC}  %s\n" "$1"; }
 
 printf "\n"
 printf "${MAGENTA}══════════════════════════════════════════════════════${NC}\n"
-printf "${MAGENTA}  MGMT V3 — 公网服务器启动${NC}\n"
+printf "${MAGENTA}  ESPLUS ERP — 公网服务器启动${NC}\n"
 printf "${MAGENTA}  %s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S')"
 printf "${MAGENTA}══════════════════════════════════════════════════════${NC}\n"
 printf "\n"
@@ -126,7 +126,7 @@ log_ok "Cloudflare Tunnel 已启动 (PID: $TUNNEL_PID)"
 # ══════════════════════════════════════════════════════════════
 printf "\n${BLUE}▶ Phase 4: 启动后端 (Spring Boot → 0.0.0.0:8080)${NC}\n"
 
-cd "$V3_DIR"
+cd "$PROJECT_ROOT"
 # 使用 caffeinate 防止系统休眠
 nohup caffeinate -ims ./gradlew bootRun > "$LOG_DIR/v3-backend.log" 2>&1 &
 BACKEND_PID=$!
@@ -198,7 +198,7 @@ fi
 # ══════════════════════════════════════════════════════════════
 printf "\n"
 printf "${MAGENTA}══════════════════════════════════════════════════════${NC}\n"
-printf "${MAGENTA}  ✅ MGMT V3 公网服务已启动!${NC}\n"
+printf "${MAGENTA}  ✅ ESPLUS ERP 公网服务已启动!${NC}\n"
 printf "${MAGENTA}══════════════════════════════════════════════════════${NC}\n"
 printf "\n"
 printf "  🖥️  前端:  ${CYAN}http://localhost:3000${NC}  (PID: $FRONTEND_PID)\n"

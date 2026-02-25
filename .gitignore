@@ -1,37 +1,18 @@
-# Node.js
+# ══════════════════════════════════════════════════════════════
+# ESPLUS ERP V3 — .gitignore
+# ══════════════════════════════════════════════════════════════
+
+# Node.js / Frontend
 node_modules/
 .turbo/
 .dev-pids/
 .next/
 .vercel/
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Kotlin / Spring Boot
 build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-.venv/
-venv/
-ENV/
-env/
+.gradle/
+logs/
 
 # IDE
 .idea/
@@ -53,20 +34,13 @@ env/
 *.key
 secrets/
 
-# Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-staticfiles/
-
 # Logs
 logs/
 *.log
 
-# Data & Backups (sensitive)
-backups/
+# Data & Uploads (runtime-generated, sensitive)
 data/records/
+data/exports/
 
 # Cache
 .pytest_cache/
@@ -80,6 +54,3 @@ htmlcov/
 # Output files
 output/
 generated-pdfs/
-
-# Legacy
-legacy_streamlit/

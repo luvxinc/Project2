@@ -1,0 +1,99 @@
+# ══════════════════════════════════════════════════════════════
+# ESPLUS ERP — Docker Compose (Local Deployment)
+# ══════════════════════════════════════════════════════════════
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose logs -f backend    # View backend logs
+#   docker compose down               # Stop all services
+# ══════════════════════════════════════════════════════════════
+
+services:
+
+  # ─── PostgreSQL ───
+  postgres:
+    image: postgres:16-alpine
+    container_name: esplus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mgmt_v2}
+      POSTGRES_USER: ${POSTGRES_USER:-aaron}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-***REDACTED_PASSWORD***}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aaron} -d ${POSTGRES_DB:-mgmt_v2}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ───
+  redis:
+    image: redis:7-alpine
+    container_name: esplus-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend (Spring Boot) ───
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: esplus-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-mgmt_v2}?stringtype=unspecified
+      DB_USERNAME: ${POSTGRES_USER:-aaron}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-***REDACTED_PASSWORD***}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-***REDACTED_JWT_SECRET***}
+      CORS_ORIGINS: http://localhost:3000
+      SEC_CODE_QUERY: ${SEC_CODE_QUERY:-7951}
+      SEC_CODE_MODIFY: ${SEC_CODE_MODIFY:-1522}
+      SEC_CODE_DB: ${SEC_CODE_DB:-6130}
+      SEC_CODE_SYSTEM: ${SEC_CODE_SYSTEM:-***REDACTED_SYSTEM_CODE***}
+      DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:-admin}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-1522P}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+
+  # ─── Frontend (Next.js) ───
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: esplus-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  app_data:
+  app_logs:

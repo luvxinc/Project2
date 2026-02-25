@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ══════════════════════════════════════════════════════════════
-# MGMT V3 — 本地开发服务器 启动脚本
+# ESPLUS ERP — 本地开发服务器 启动脚本
 # ══════════════════════════════════════════════════════════════
 # 用法: bash dev/start_dev.sh
 # 说明: 一键启动 V3 全栈本地开发环境
@@ -14,7 +14,7 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-V3_DIR="$PROJECT_ROOT/mgmt-v3"
+
 PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
@@ -36,7 +36,7 @@ log_info() { printf "${BLUE}ℹ️${NC}  %s\n" "$1"; }
 
 printf "\n"
 printf "${CYAN}══════════════════════════════════════════════════════${NC}\n"
-printf "${CYAN}  MGMT V3 — 本地开发环境启动${NC}\n"
+printf "${CYAN}  ESPLUS ERP — 本地开发环境启动${NC}\n"
 printf "${CYAN}  %s${NC}\n" "$(date '+%Y-%m-%d %H:%M:%S')"
 printf "${CYAN}══════════════════════════════════════════════════════${NC}\n"
 printf "\n"
@@ -128,7 +128,7 @@ log_ok "端口 8080 和 3000 均空闲"
 # ══════════════════════════════════════════════════════════════
 printf "\n${BLUE}▶ Phase 3: 启动后端 (Spring Boot → :8080)${NC}\n"
 
-cd "$V3_DIR"
+cd "$PROJECT_ROOT"
 nohup ./gradlew bootRun > "$LOG_DIR/v3-backend.log" 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > "$PID_DIR/v3-backend.pid"
@@ -204,7 +204,7 @@ fi
 # ══════════════════════════════════════════════════════════════
 printf "\n"
 printf "${GREEN}══════════════════════════════════════════════════════${NC}\n"
-printf "${GREEN}  ✅ MGMT V3 本地开发环境已启动!${NC}\n"
+printf "${GREEN}  ✅ ESPLUS ERP 本地开发环境已启动!${NC}\n"
 printf "${GREEN}══════════════════════════════════════════════════════${NC}\n"
 printf "\n"
 printf "  🖥️  前端:  ${CYAN}http://localhost:3000${NC}  (PID: $FRONTEND_PID)\n"

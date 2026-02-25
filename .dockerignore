@@ -1,0 +1,16 @@
+.git
+.github
+.agent
+.claude
+.idea
+.vscode
+.turbo
+.next
+.dev-pids
+node_modules
+build
+.gradle
+*.log
+logs/
+data/records/
+data/exports/

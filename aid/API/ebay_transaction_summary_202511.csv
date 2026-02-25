@@ -1,8 +1,0 @@
-Metric,Count,Amount,Currency,BookingEntry
-Credit (Sales),778,26714.510000000002,USD,CREDIT
-Refund,56,1923.31,USD,DEBIT
-Dispute,8,507.97,USD,DEBIT
-Shipping Label,184,6071.02,USD,DEBIT
-"Non-Sale Charge (Ads, etc)",559,2024.23,USD,DEBIT
-Transfer,0,,,
-Adjustment,0,,,

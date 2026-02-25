@@ -1,0 +1,52 @@
+# ══════════════════════════════════════════════════════════════
+# ESPLUS ERP — Backend Dockerfile (Spring Boot + Kotlin)
+# Multi-stage build: Gradle build → JRE 21 runtime
+# ══════════════════════════════════════════════════════════════
+
+# --- Stage 1: Build ---
+FROM eclipse-temurin:21-jdk AS builder
+
+WORKDIR /app
+
+# Copy Gradle wrapper & build files first (cache layer)
+COPY gradle/ gradle/
+COPY gradlew build.gradle.kts settings.gradle.kts ./
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon 2>/dev/null || true
+
+# Copy source code
+COPY src/ src/
+
+# Build fat JAR (skip tests for faster builds)
+RUN ./gradlew bootJar --no-daemon -x test
+
+# --- Stage 2: Runtime ---
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r esplus && useradd -r -g esplus -d /app esplus
+
+# Create data directories
+RUN mkdir -p /app/data/records /app/data/exports /app/logs /app/output && \
+    chown -R esplus:esplus /app
+
+# Copy JAR from builder
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Copy VMA PDF templates (required at runtime)
+COPY apps/web/src/app/\(dashboard\)/vma/data/ /app/apps/web/src/app/\(dashboard\)/vma/data/
+
+USER esplus
+
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/api/v1/health || exit 1
+
+ENTRYPOINT ["java", \
+    "-XX:+UseG1GC", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]

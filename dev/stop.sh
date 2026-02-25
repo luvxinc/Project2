@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ══════════════════════════════════════════════════════════════
-# MGMT V3 — 统一关闭脚本
+# ESPLUS ERP — 统一关闭脚本
 # ══════════════════════════════════════════════════════════════
 # 用法: bash dev/stop.sh
 # 说明: 一键关闭所有 V3 服务 (后端 + 前端 + 依赖进程)
@@ -11,7 +11,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 PID_DIR="$PROJECT_ROOT/.dev-pids"
-OPS_DIR="$PROJECT_ROOT/ops"
+
 
 # 静默模式 (被 start_dev.sh 调用时)
 QUIET=false
@@ -33,7 +33,7 @@ log_info() { [ "$QUIET" = false ] && printf "   %s\n" "$1"; }
 if [ "$QUIET" = false ]; then
     printf "\n"
     printf "${RED}══════════════════════════════════════════════════════${NC}\n"
-    printf "${RED}  MGMT V3 — 关闭所有服务${NC}\n"
+    printf "${RED}  ESPLUS ERP — 关闭所有服务${NC}\n"
     printf "${RED}══════════════════════════════════════════════════════${NC}\n"
     printf "\n"
 fi
@@ -72,14 +72,7 @@ stop_by_pid_file "V3 后端 (Spring Boot)" "$PID_DIR/v3-backend.pid"
 # V3 前端 (Turbo/Next.js)
 stop_by_pid_file "V3 前端 (Next.js)" "$PID_DIR/v3-frontend.pid"
 
-# V2 前端 Turbo (兼容 scripts/dev.sh)
-stop_by_pid_file "Turbo Dev" "$PID_DIR/turbo.pid"
 
-# 老架构 Django
-stop_by_pid_file "Django" "$OPS_DIR/django.pid"
-
-# 老架构 Cloudflare Tunnel
-stop_by_pid_file "Cloudflare Tunnel" "$OPS_DIR/tunnel.pid"
 
 # ══════════════════════════════════════════════════════════════
 # 2. 清理孤儿进程 (端口占用 + 进程名匹配)
@@ -106,7 +99,7 @@ if [ -n "$BOOTRUN_PIDS" ]; then
 fi
 
 # Spring Boot 应用
-SPRING_PIDS=$(pgrep -f "mgmt-v3" 2>/dev/null || true)
+SPRING_PIDS=$(pgrep -f "bootRun\|spring" 2>/dev/null || true)
 if [ -n "$SPRING_PIDS" ]; then
     echo "$SPRING_PIDS" | xargs kill 2>/dev/null || true
     log_ok "清理 Spring Boot 进程: $SPRING_PIDS"
@@ -128,8 +121,7 @@ pkill -f "turbo.*daemon" 2>/dev/null || true
 # Next Server 残留
 pkill -f "next-server" 2>/dev/null && { log_ok "清理 next-server 残留进程"; KILLED=$((KILLED + 1)); } || true
 
-# Django 残留
-pkill -f "manage.py runserver" 2>/dev/null && { log_ok "清理 Django 残留进程"; KILLED=$((KILLED + 1)); } || true
+
 
 # Cloudflare 残留
 pkill -f "cloudflared" 2>/dev/null && { log_ok "清理 Cloudflare 残留进程"; KILLED=$((KILLED + 1)); } || true

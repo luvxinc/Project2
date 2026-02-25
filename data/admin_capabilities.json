@@ -1,8 +1,0 @@
-{
-  "can_create_user": false,
-  "can_lock_user": true,
-  "can_reset_pwd": true,
-  "can_manage_perms": true,
-  "can_delete_user": true,
-  "can_change_role": true
-}
