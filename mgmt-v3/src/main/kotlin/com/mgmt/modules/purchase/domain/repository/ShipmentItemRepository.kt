@@ -3,6 +3,7 @@ package com.mgmt.modules.purchase.domain.repository
 import com.mgmt.modules.purchase.domain.model.ShipmentItem
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 
@@ -36,4 +37,8 @@ interface ShipmentItemRepository : JpaRepository<ShipmentItem, Long> {
 
     /** Find all shipment items for a PO across all shipments. */
     fun findAllByPoNumAndDeletedAtIsNull(poNum: String): List<ShipmentItem>
+
+    /** Batch-load items for a parent logistic and its children (N+1 fix for LandedPriceRecalcService). */
+    @Query("SELECT i FROM ShipmentItem i WHERE (i.logisticNum = :parent OR i.logisticNum LIKE CONCAT(:parent, '_%')) AND i.deletedAt IS NULL")
+    fun findAllByLogisticNumStartingWithAndDeletedAtIsNull(@Param("parent") parent: String): List<ShipmentItem>
 }

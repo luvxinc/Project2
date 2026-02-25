@@ -10,6 +10,7 @@ import com.mgmt.modules.finance.domain.repository.findLatestAutoRate
 import com.mgmt.modules.purchase.domain.model.Payment
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierStrategyRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -33,6 +34,7 @@ class PrepaymentUseCase(
     private val balanceService: PrepaymentBalanceService,
     private val objectMapper: ObjectMapper,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     // ═══════════════════════════════════════════════
     // TRANSACTION LIST

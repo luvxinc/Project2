@@ -69,4 +69,13 @@ interface LogisticPaymentRepository : JpaRepository<Payment, Long>, JpaSpecifica
         ORDER BY p.paymentNo DESC
     """)
     fun findLatestPaymentNo(@Param("prefix") prefix: String, pageable: Pageable): List<String>
+
+    /** Get logistic nums that have deleted logistics payments (for "deleted" status in list view) */
+    @Query("""
+        SELECT DISTINCT p.logisticNum FROM Payment p
+        WHERE p.paymentType = 'logistics'
+          AND p.deletedAt IS NOT NULL
+          AND p.logisticNum IS NOT NULL
+    """)
+    fun findDeletedLogisticNums(): Set<String>
 }

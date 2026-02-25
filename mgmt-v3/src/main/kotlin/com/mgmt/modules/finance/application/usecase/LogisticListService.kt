@@ -54,13 +54,8 @@ class LogisticListService(
         val allPayments = logisticPaymentRepository.findAllActiveLogistics()
         val paymentMap: Map<String, Payment> = allPayments.associateBy { it.logisticNum ?: "" }
 
-        // Also get deleted payments for "deleted" status
-        val allPaymentsIncludeDeleted = logisticPaymentRepository.findAll()
-            .filter { it.paymentType == "logistics" }
-        val deletedPaymentNums = allPaymentsIncludeDeleted
-            .filter { it.deletedAt != null }
-            .mapNotNull { it.logisticNum }
-            .toSet()
+        // Also get deleted payment logistic nums for "deleted" status
+        val deletedPaymentNums = logisticPaymentRepository.findDeletedLogisticNums()
 
         // Step 3: Get receive dates (V1: Step 4 — in_receive_final GROUP BY logistic_num)
         val receiveDateMap: Map<String, java.time.LocalDate> = buildReceiveDateMap(logisticNums)
@@ -236,14 +231,11 @@ class LogisticListService(
      * V1 parity: logistic.py:144-155
      */
     private fun buildReceiveDateMap(logisticNums: List<String>): Map<String, java.time.LocalDate> {
-        val result = mutableMapOf<String, java.time.LocalDate>()
-        for (logisticNum in logisticNums) {
-            val receives = receiveRepository.findByLogisticNumAndDeletedAtIsNull(logisticNum)
-            if (receives.isNotEmpty()) {
-                val minDate = receives.minOf { it.receiveDate }
-                result[logisticNum] = minDate
-            }
-        }
-        return result
+        if (logisticNums.isEmpty()) return emptyMap()
+        // FIX: batch-load all receives at once instead of per-logisticNum (N+1)
+        val allReceives = receiveRepository.findAllByDeletedAtIsNullOrderByReceiveDateDesc()
+            .filter { it.logisticNum in logisticNums.toSet() }
+        return allReceives.groupBy { it.logisticNum }
+            .mapValues { (_, receives) -> receives.minOf { it.receiveDate } }
     }
 }

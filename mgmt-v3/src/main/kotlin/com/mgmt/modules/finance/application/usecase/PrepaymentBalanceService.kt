@@ -5,6 +5,7 @@ import com.mgmt.modules.finance.domain.repository.PrepaymentRepository
 import com.mgmt.modules.purchase.domain.model.Payment
 import com.mgmt.modules.purchase.domain.repository.SupplierRepository
 import com.mgmt.modules.purchase.domain.repository.SupplierStrategyRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -34,6 +35,7 @@ class PrepaymentBalanceService(
     private val supplierRepo: SupplierRepository,
     private val strategyRepo: SupplierStrategyRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     /**
      * Get all supplier balances.
@@ -47,17 +49,15 @@ class PrepaymentBalanceService(
         if (suppliers.isEmpty()) return emptyList()
 
         // Step 2: Get latest strategy per supplier for settlement currency
-        // V1: SELECT s.supplier_code, s.currency FROM in_supplier_strategy s INNER JOIN (MAX effective_date)
-        val currencyMap = mutableMapOf<String, String>()
-        for (supplier in suppliers) {
-            val latestStrategy = strategyRepo
-                .findAllBySupplierCodeAndDeletedAtIsNullOrderByEffectiveDateDesc(supplier.supplierCode)
-                .firstOrNull()
-            currencyMap[supplier.supplierCode] = latestStrategy?.currency ?: "RMB"
-        }
+        // FIX F4: batch-load ALL strategies in ONE query + groupBy supplierCode
+        val allStrategies = strategyRepo.findAll().filter { it.deletedAt == null }
+        val currencyMap = allStrategies
+            .groupBy { it.supplierCode }
+            .mapValues { (_, strategies) ->
+                strategies.maxByOrNull { it.effectiveDate }?.currency ?: "RMB"
+            }
 
         // Step 3: Get all active prepayment transactions
-        // V1: SELECT supplier_code, tran_curr_use, tran_amount, tran_type, usd_rmb FROM in_pmt_prepay_final
         val allPrepayments = prepaymentRepo.findAllActivePrepayments()
 
         // Step 4: Calculate balance per supplier

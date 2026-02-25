@@ -56,16 +56,11 @@ class LandedPriceRecalcService(
         val parentLogistic = getParentLogistic(logisticNum)
 
         // Find all PO nums shipped via this logistics (including children)
-        val affectedPoNums = mutableSetOf<String>()
-        val allShipments = shipmentRepository.findAllByDeletedAtIsNull()
-        for (shipment in allShipments) {
-            if (getParentLogistic(shipment.logisticNum) == parentLogistic) {
-                val items = shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull(shipment.logisticNum)
-                items.forEach { affectedPoNums.add(it.poNum) }
-            }
-        }
+        // FIX F1: Use poNum-based query instead of full-table shipment scan
+        val allShipmentItems = shipmentItemRepository.findAllByLogisticNumStartingWithAndDeletedAtIsNull(parentLogistic)
+        val affectedPoNums = allShipmentItems.map { it.poNum }.distinct()
 
-        return recalculateForPoNums(affectedPoNums.toList(), "logistic=$logisticNum")
+        return recalculateForPoNums(affectedPoNums, "logistic=$logisticNum")
     }
 
     /**
@@ -276,25 +271,36 @@ class LandedPriceRecalcService(
         val logisticsCount = parentLogisticsSet.size
 
         // ========== Step 7: Get SKU weights (V1: L215-221) ==========
-        val skuWeightMap = mutableMapOf<String, BigDecimal>()
-        for (item in shipmentItems) {
-            if (item.sku.uppercase() !in skuWeightMap) {
-                val product = productRepository.findBySkuAndDeletedAtIsNull(item.sku)
-                val weightKg = if (product != null) BigDecimal(product.weight).divide(BigDecimal(1000), 5, RoundingMode.HALF_UP)
-                else BigDecimal.ZERO
-                skuWeightMap[item.sku.uppercase()] = weightKg
-            }
+        // FIX F3: batch-load all products in ONE query
+        val allSkus = shipmentItems.map { it.sku }.distinct()
+        val productWeightMap = productRepository.findAllBySkuInAndDeletedAtIsNull(allSkus)
+            .associate { it.sku.uppercase() to BigDecimal(it.weight).divide(BigDecimal(1000), 5, RoundingMode.HALF_UP) }
+        val skuWeightMap = allSkus.associate { sku ->
+            sku.uppercase() to (productWeightMap[sku.uppercase()] ?: BigDecimal.ZERO)
         }
 
-        // ========== Step 8: Get logistics info per parent (V1: L224-290) ==========
+        // ========== Step 8+9: Pre-load data for logistics info (V1: L224-313) ==========
+        // FIX F2: batch-load ALL shipment items for related logistics into a map
+        //         eliminating 2×N repeated queries in Steps 8 and 9
+        val allLogisticItemsMap = shipmentItems.groupBy { it.logisticNum }
+        val parentToLogistics = allLogistics.groupBy { getParentLogistic(it) }
+
+        // Pre-load shipments and payments for all parent logistics
+        val parentShipmentMap = shipmentRepository.findAllByLogisticNumIn(parentLogisticsSet)
+            .associateBy { it.logisticNum }
+        val allActivePayments = logisticPaymentRepository.findAllActiveLogistics()
+        val paymentByLogistic = allActivePayments.associateBy { it.logisticNum ?: "" }
+
         val logisticsInfo = mutableMapOf<String, LogisticsInfo>()
+        val logisticsTotalWeight = mutableMapOf<String, BigDecimal>()
+
         for (parent in parentLogisticsSet) {
-            val shipment = shipmentRepository.findByLogisticNumAndDeletedAtIsNull(parent)
+            val shipment = parentShipmentMap[parent]
             val totalPriceRmb = shipment?.logisticsCost ?: BigDecimal.ZERO
             val sendUsdRmb = shipment?.exchangeRate ?: BigDecimal("7.0")
 
             // Check payment
-            val payment = logisticPaymentRepository.findByPaymentTypeAndLogisticNumAndDeletedAtIsNull("logistics", parent)
+            val payment = paymentByLogistic[parent]
             val isPaid = payment != null && payment.cashAmount > BigDecimal.ZERO
             val pmtUsdRmb = if (isPaid) payment!!.exchangeRate else sendUsdRmb
 
@@ -308,10 +314,10 @@ class LandedPriceRecalcService(
                 else BigDecimal.ZERO
             }
 
-            // PO count under this logistics (V1: L273-279)
-            val relatedLogistics = allLogistics.filter { getParentLogistic(it) == parent }
+            // PO count under this logistics (V1: L273-279) — from pre-loaded map
+            val relatedLogistics = parentToLogistics[parent] ?: listOf(parent)
             val poCount = relatedLogistics.flatMap { logNum ->
-                shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull(logNum).map { it.poNum }
+                allLogisticItemsMap[logNum]?.map { it.poNum } ?: emptyList()
             }.distinct().size.coerceAtLeast(1)
 
             val usedUsdRmb = if (isPaid) pmtUsdRmb else sendUsdRmb
@@ -323,15 +329,11 @@ class LandedPriceRecalcService(
                 logExtraUsd = logExtraUsd,
                 poCount = poCount,
             )
-        }
 
-        // ========== Step 9: Calculate total weight per parent logistics (V1: L293-313) ==========
-        val logisticsTotalWeight = mutableMapOf<String, BigDecimal>()
-        for (parent in parentLogisticsSet) {
-            val relatedLogistics = allLogistics.filter { getParentLogistic(it) == parent }
+            // Step 9: total weight — from pre-loaded map (no extra queries)
             var totalWeight = BigDecimal.ZERO
             for (logNum in relatedLogistics) {
-                val items = shipmentItemRepository.findAllByLogisticNumAndDeletedAtIsNull(logNum)
+                val items = allLogisticItemsMap[logNum] ?: continue
                 for (item in items) {
                     val w = skuWeightMap[item.sku.uppercase()] ?: BigDecimal.ZERO
                     totalWeight = totalWeight.add(w.multiply(BigDecimal(item.quantity)))
