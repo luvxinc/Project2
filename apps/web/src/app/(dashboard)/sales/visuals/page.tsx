@@ -30,10 +30,12 @@ const ACTION_KEYS = ['Sales', 'Cancel', 'Return', 'Request', 'Case', 'Dispute'] 
 const SHIP_KEYS = ['shipRegular', 'shipFine', 'shipOver', 'shipReturn'] as const;
 const FEE_KEYS = ['cogs', 'platformFee'] as const;
 
-const LINE_COLORS = ['#0dcaf0', '#d63384', '#ffc107', '#20c997', '#6f42c1', '#fd7e14', '#e83e8c',
-  '#198754', '#dc3545', '#0d6efd', '#6610f2', '#adb5bd'];
-
-const PIE_COLORS = ['#34d399', '#f472b6', '#60a5fa', '#fbbf24', '#a78bfa'];
+const CHART_PALETTE = [
+  '#007AFF', '#FF9500', '#34C759', '#AF52DE', '#FF2D55',
+  '#5AC8FA', '#FF3B30', '#FFCC00', '#64D2FF', '#30B0C7',
+  '#BF5AF2', '#AC8E68',
+];
+const PIE_PALETTE = ['#34C759', '#FF9500', '#007AFF', '#FF2D55', '#AF52DE'];
 
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
@@ -47,11 +49,12 @@ export default function SalesVisualsPage() {
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const t = useTranslations('sales');
+  const isDark = theme === 'dark';
 
-  // -- Control state --
+  // -- Control state (default: 90 days to cover more data) --
   const [chartType, setChartType] = useState<ChartType>('line');
   const [mode, setMode] = useState<ChartMode>('Amount');
-  const [startDate, setStartDate] = useState(() => formatDate(new Date(Date.now() - 30 * 86400000)));
+  const [startDate, setStartDate] = useState(() => formatDate(new Date(Date.now() - 90 * 86400000)));
   const [endDate, setEndDate] = useState(() => formatDate(new Date()));
   const [stores, setStores] = useState<string[]>(['esplus', '88']);
   const [actions, setActions] = useState<string[]>(['Sales']);
@@ -84,27 +87,24 @@ export default function SalesVisualsPage() {
     if (!chartInstance.current) {
       chartInstance.current = echarts.init(chartRef.current, undefined, { renderer: 'canvas' });
     }
-    const handleResize = () => chartInstance.current?.resize();
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    const ro = new ResizeObserver(() => chartInstance.current?.resize());
+    ro.observe(chartRef.current);
+    return () => ro.disconnect();
   }, []);
 
   // -- Render chart when data changes --
   useEffect(() => {
     if (!chartInstance.current || !data) return;
-
     if (chartType === 'pie' && data.pie_data) {
-      renderPie(chartInstance.current, data.pie_data, colors, theme);
+      renderPie(chartInstance.current, data.pie_data, isDark);
     } else if (data.categories && data.series) {
-      renderLine(chartInstance.current, data.categories, data.series, mode, colors, theme);
+      renderLine(chartInstance.current, data.categories, data.series, mode, isDark);
     } else {
       chartInstance.current.clear();
     }
-  }, [data, chartType, mode, colors, theme]);
+  }, [data, chartType, mode, isDark]);
 
-  // Theme change → reinit chart
+  // Theme change → reinit
   useEffect(() => {
     if (chartInstance.current) {
       chartInstance.current.dispose();
@@ -115,7 +115,7 @@ export default function SalesVisualsPage() {
     }
   }, [theme]);
 
-  // -- Checkbox toggle helpers --
+  // -- Helpers --
   const toggleItem = useCallback((list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     setter(prev => prev.includes(item) ? prev.filter(x => x !== item) : [...prev, item]);
   }, []);
@@ -126,36 +126,29 @@ export default function SalesVisualsPage() {
 
   const isPie = chartType === 'pie';
 
-  // i18n helper for filter labels
-  const actionLabel = (k: string) => {
-    const map: Record<string, string> = {
-      Sales: t('hub.visuals.sales'), Cancel: t('hub.visuals.cancel'),
-      Return: t('hub.visuals.return'), Request: t('hub.visuals.request'),
-      Case: t('hub.visuals.case'), Dispute: t('hub.visuals.dispute'),
-    };
-    return map[k] || k;
-  };
-  const shipLabel = (k: string) => {
-    const map: Record<string, string> = {
-      shipRegular: t('hub.visuals.shipRegular'), shipFine: t('hub.visuals.shipFine'),
-      shipOver: t('hub.visuals.shipOver'), shipReturn: t('hub.visuals.shipReturn'),
-    };
-    return map[k] || k;
-  };
-  const feeLabel = (k: string) => {
-    const map: Record<string, string> = {
-      cogs: t('hub.visuals.cogs'), platformFee: t('hub.visuals.platformFee'),
-    };
-    return map[k] || k;
+  // i18n labels
+  const lbl = (ns: string, k: string) => t(`hub.visuals.${k}` as any);
+
+  const modes: { key: ChartMode; label: string }[] = [
+    { key: 'Amount', label: lbl('v', 'modeAmount') },
+    { key: 'Quantity', label: lbl('v', 'modeQty') },
+    { key: 'Order', label: lbl('v', 'modeOrder') },
+    { key: 'Percentage', label: lbl('v', 'modePct') },
+  ];
+
+  // Glass card style
+  const glass = {
+    backgroundColor: isDark ? 'rgba(28, 28, 30, 0.72)' : 'rgba(255, 255, 255, 0.72)',
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: `0.5px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+    borderRadius: 14,
   };
 
-  // -- Mode buttons --
-  const modes: { key: ChartMode; label: string }[] = [
-    { key: 'Amount', label: t('hub.visuals.modeAmount') },
-    { key: 'Quantity', label: t('hub.visuals.modeQty') },
-    { key: 'Order', label: t('hub.visuals.modeOrder') },
-    { key: 'Percentage', label: t('hub.visuals.modePct') },
-  ];
+  const glassInner = {
+    ...glass,
+    backgroundColor: isDark ? 'rgba(44, 44, 46, 0.65)' : 'rgba(242, 242, 247, 0.65)',
+  };
 
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen pb-20 overflow-x-hidden">
@@ -167,28 +160,28 @@ export default function SalesVisualsPage() {
       </section>
 
       <section className="max-w-[1400px] mx-auto px-6 pt-2">
-        {/* ══ Control Bar ══ */}
-        <div
-          style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-          className="rounded-xl border p-4 mb-4"
-        >
+        {/* ══ Control Bar — macOS toolbar style ══ */}
+        <div style={glass} className="p-4 mb-4">
           <div className="flex flex-wrap items-center gap-6">
-            {/* Mode Selector */}
+
+            {/* Mode Selector — iOS Segment Control */}
             <div>
-              <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: colors.textTertiary }}>
-                {t('hub.visuals.mode')}
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
+                style={{ color: colors.textTertiary }}>
+                {lbl('v', 'mode')}
               </label>
-              <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: colors.border }}>
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: isDark ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)' }}>
                 {modes.map(m => (
                   <button
                     key={m.key}
-                    onClick={() => setMode(m.key)}
-                    disabled={isPie}
-                    className="px-3 py-1.5 text-xs font-medium transition-all"
+                    onClick={() => !isPie && setMode(m.key)}
+                    className="px-3 py-1.5 text-[11px] font-medium rounded-md transition-all relative"
                     style={{
-                      backgroundColor: mode === m.key ? colors.textLink : 'transparent',
-                      color: mode === m.key ? '#fff' : colors.textSecondary,
-                      opacity: isPie ? 0.4 : 1,
+                      backgroundColor: mode === m.key ? (isDark ? 'rgba(99,99,102,0.55)' : '#fff') : 'transparent',
+                      color: mode === m.key ? colors.text : colors.textTertiary,
+                      boxShadow: mode === m.key ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                      opacity: isPie ? 0.35 : 1,
+                      cursor: isPie ? 'default' : 'pointer',
                     }}
                   >
                     {m.label}
@@ -199,72 +192,81 @@ export default function SalesVisualsPage() {
 
             {/* Date Range */}
             <div>
-              <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: colors.textTertiary }}>
-                {t('hub.visuals.dateRange')}
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
+                style={{ color: colors.textTertiary }}>
+                {lbl('v', 'dateRange')}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <input
                   type="date" value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="rounded-lg px-2.5 py-1.5 text-xs border"
-                  style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }}
+                  className="rounded-lg px-2 py-1.5 text-[11px] font-mono"
+                  style={{ backgroundColor: isDark ? 'rgba(118,118,128,0.18)' : 'rgba(118,118,128,0.08)',
+                    color: colors.text, border: 'none', outline: 'none' }}
                 />
-                <span className="text-xs" style={{ color: colors.textTertiary }}>→</span>
+                <span className="text-[10px] font-medium" style={{ color: colors.textTertiary }}>→</span>
                 <input
                   type="date" value={endDate}
                   onChange={e => setEndDate(e.target.value)}
-                  className="rounded-lg px-2.5 py-1.5 text-xs border"
-                  style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }}
+                  className="rounded-lg px-2 py-1.5 text-[11px] font-mono"
+                  style={{ backgroundColor: isDark ? 'rgba(118,118,128,0.18)' : 'rgba(118,118,128,0.08)',
+                    color: colors.text, border: 'none', outline: 'none' }}
                 />
               </div>
             </div>
 
-            {/* Stores */}
+            {/* Stores — iOS toggle */}
             <div>
-              <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: colors.textTertiary }}>
-                {t('hub.visuals.store')}
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
+                style={{ color: colors.textTertiary }}>
+                {lbl('v', 'store')}
               </label>
               <div className="flex gap-3">
                 {[{ key: 'esplus', label: 'ES Plus' }, { key: '88', label: 'Parts 88' }].map(s => (
                   <label key={s.key} className="flex items-center gap-2 cursor-pointer select-none">
                     <div
                       onClick={() => toggleStore(s.key)}
-                      className="w-10 h-5 rounded-full relative transition-all cursor-pointer"
-                      style={{ backgroundColor: stores.includes(s.key) ? colors.textLink : (theme === 'dark' ? '#4a4a4a' : '#d1d5db') }}
+                      className="w-[42px] h-[25px] rounded-full relative transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: stores.includes(s.key) ? '#34C759' : (isDark ? '#39393d' : '#e9e9eb') }}
                     >
                       <div
-                        className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
-                        style={{ left: stores.includes(s.key) ? 22 : 2 }}
+                        className="absolute top-[2px] w-[21px] h-[21px] rounded-full bg-white transition-transform duration-200"
+                        style={{
+                          transform: stores.includes(s.key) ? 'translateX(19px)' : 'translateX(2px)',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1)',
+                        }}
                       />
                     </div>
-                    <span className="text-xs font-mono" style={{ color: colors.text }}>{s.label}</span>
+                    <span className="text-[11px] font-medium" style={{ color: colors.text }}>{s.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Chart Type Toggle */}
+            {/* Chart Type — iOS Segment */}
             <div>
-              <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: colors.textTertiary }}>
-                {t('hub.visuals.chartType')}
+              <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
+                style={{ color: colors.textTertiary }}>
+                {lbl('v', 'chartType')}
               </label>
-              <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: colors.border }}>
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: isDark ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)' }}>
                 {(['line', 'pie'] as ChartType[]).map(ct => (
                   <button
                     key={ct}
                     onClick={() => setChartType(ct)}
-                    className="px-4 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 text-[11px] font-medium rounded-md transition-all flex items-center gap-1.5"
                     style={{
-                      backgroundColor: chartType === ct ? colors.textLink : 'transparent',
-                      color: chartType === ct ? '#fff' : colors.textSecondary,
+                      backgroundColor: chartType === ct ? (isDark ? 'rgba(99,99,102,0.55)' : '#fff') : 'transparent',
+                      color: chartType === ct ? colors.text : colors.textTertiary,
+                      boxShadow: chartType === ct ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
                     }}
                   >
                     {ct === 'line' ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
                     ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
                     )}
-                    {t(`hub.visuals.${ct}`)}
+                    {lbl('v', ct)}
                   </button>
                 ))}
               </div>
@@ -272,97 +274,80 @@ export default function SalesVisualsPage() {
           </div>
         </div>
 
-        {/* ══ Content: Filter Panel + Chart ══ */}
+        {/* ══ Content: Filter Sidebar + Chart ══ */}
         <div className="flex gap-4">
+
           {/* Left: Filter Panel */}
-          <div className="w-[220px] flex-shrink-0">
-            <div
-              style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, opacity: isPie ? 0.5 : 1 }}
-              className="rounded-xl border p-4 transition-opacity"
-            >
-              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: colors.text }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-                {t('hub.visuals.filters')}
+          <div className="w-[210px] flex-shrink-0">
+            <div style={{ ...glass, opacity: isPie ? 0.45 : 1 }} className="p-4 transition-opacity duration-300">
+              <h3 className="text-[12px] font-semibold mb-4 flex items-center gap-2" style={{ color: colors.text }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+                {lbl('v', 'filters')}
               </h3>
 
-              {/* Actions */}
-              <div className="mb-4">
-                <label className="text-xs font-bold mb-2 block" style={{ color: '#60a5fa' }}>
-                  {t('hub.visuals.actions')}
-                </label>
-                <div className="flex flex-col gap-1.5">
-                  {ACTION_KEYS.map(k => (
-                    <FilterChip
-                      key={k} label={actionLabel(k)} active={actions.includes(k)}
-                      onClick={() => toggleItem(actions, setActions, k)}
-                      activeColor="#3b82f6" disabled={isPie} colors={colors}
-                    />
-                  ))}
-                </div>
-              </div>
+              {/* Actions (blue accent) */}
+              <FilterGroup
+                title={lbl('v', 'actions')} titleColor="#007AFF"
+                items={ACTION_KEYS.map(k => ({ key: k, label: lbl('v', k.toLowerCase()) }))}
+                selected={actions}
+                onToggle={k => toggleItem(actions, setActions, k)}
+                activeColor="#007AFF" disabled={isPie} colors={colors} isDark={isDark}
+              />
 
-              {/* Ships */}
-              <div className="mb-4">
-                <label className="text-xs font-bold mb-2 block" style={{ color: '#fbbf24' }}>
-                  {t('hub.visuals.shipping')}
-                </label>
-                <div className="flex flex-col gap-1.5">
-                  {SHIP_KEYS.map(k => (
-                    <FilterChip
-                      key={k} label={shipLabel(k)} active={ships.includes(k)}
-                      onClick={() => toggleItem(ships, setShips, k)}
-                      activeColor="#eab308" disabled={isPie} colors={colors}
-                    />
-                  ))}
-                </div>
-              </div>
+              {/* Shipping (amber accent) */}
+              <FilterGroup
+                title={lbl('v', 'shipping')} titleColor="#FF9500"
+                items={SHIP_KEYS.map(k => ({
+                  key: k, label: lbl('v', k),
+                }))}
+                selected={ships}
+                onToggle={k => toggleItem(ships, setShips, k)}
+                activeColor="#FF9500" disabled={isPie} colors={colors} isDark={isDark}
+              />
 
-              {/* Fees */}
-              <div>
-                <label className="text-xs font-bold mb-2 block" style={{ color: '#f87171' }}>
-                  {t('hub.visuals.expenses')}
-                </label>
-                <div className="flex flex-col gap-1.5">
-                  {FEE_KEYS.map(k => (
-                    <FilterChip
-                      key={k} label={feeLabel(k)} active={fees.includes(k)}
-                      onClick={() => toggleItem(fees, setFees, k)}
-                      activeColor="#ef4444" disabled={isPie} colors={colors}
-                    />
-                  ))}
-                </div>
-              </div>
+              {/* Fees (red accent) */}
+              <FilterGroup
+                title={lbl('v', 'expenses')} titleColor="#FF3B30"
+                items={FEE_KEYS.map(k => ({ key: k, label: lbl('v', k) }))}
+                selected={fees}
+                onToggle={k => toggleItem(fees, setFees, k)}
+                activeColor="#FF3B30" disabled={isPie} colors={colors} isDark={isDark}
+                isLast
+              />
             </div>
           </div>
 
           {/* Right: Chart Area */}
           <div className="flex-1 min-w-0">
-            <div
-              style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
-              className="rounded-xl border relative overflow-hidden"
-            >
-              {/* Loading overlay */}
+            <div style={glass} className="relative overflow-hidden">
+              {/* Loading shimmer */}
               {(isLoading || isFetching) && (
                 <div className="absolute inset-0 flex items-center justify-center z-10"
-                  style={{ backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)' }}>
+                  style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.55)',
+                    backdropFilter: 'blur(4px)' }}>
                   <div className="text-center">
-                    <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-2"
-                      style={{ borderColor: colors.textLink, borderTopColor: 'transparent' }} />
-                    <span className="text-xs font-mono" style={{ color: colors.textTertiary }}>
-                      {t('hub.visuals.loading')}
+                    <div className="relative w-10 h-10 mx-auto mb-3">
+                      <div className="absolute inset-0 rounded-full border-2 border-transparent animate-spin"
+                        style={{ borderTopColor: '#007AFF', borderRightColor: 'rgba(0,122,255,0.3)' }} />
+                    </div>
+                    <span className="text-[11px] font-medium" style={{ color: colors.textTertiary }}>
+                      {lbl('v', 'loading')}
                     </span>
                   </div>
                 </div>
               )}
 
               {/* ECharts container */}
-              <div ref={chartRef} style={{ width: '100%', height: 600 }} />
+              <div ref={chartRef} style={{ width: '100%', height: 560 }} />
 
-              {/* No data message */}
+              {/* No data */}
               {!isLoading && !isFetching && data && !data.pie_data?.length && !data.series?.length && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-sm" style={{ color: colors.textTertiary }}>
-                    {t('hub.visuals.noData')}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <svg width="48" height="48" fill="none" stroke={colors.textTertiary} strokeWidth="1.2" viewBox="0 0 24 24" className="mb-3 opacity-40">
+                    <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <p className="text-[13px] font-medium" style={{ color: colors.textTertiary }}>
+                    {lbl('v', 'noData')}
                   </p>
                 </div>
               )}
@@ -375,32 +360,62 @@ export default function SalesVisualsPage() {
 }
 
 // ═══════════════════════════════════════════════
-// Filter Chip Component
+// Filter Group Sub-Component
 // ═══════════════════════════════════════════════
 
-function FilterChip({ label, active, onClick, activeColor, disabled, colors }: {
-  label: string; active: boolean; onClick: () => void;
-  activeColor: string; disabled: boolean; colors: any;
+function FilterGroup({ title, titleColor, items, selected, onToggle, activeColor, disabled, colors, isDark, isLast }: {
+  title: string; titleColor: string;
+  items: { key: string; label: string }[];
+  selected: string[];
+  onToggle: (k: string) => void;
+  activeColor: string; disabled: boolean; colors: any; isDark: boolean; isLast?: boolean;
 }) {
   return (
-    <button
-      onClick={disabled ? undefined : onClick}
-      className="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-left"
-      style={{
-        backgroundColor: active ? activeColor : 'transparent',
-        color: active ? '#fff' : colors.textSecondary,
-        border: `1px solid ${active ? 'transparent' : colors.border}`,
-        opacity: disabled ? 0.4 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {label}
-    </button>
+    <div className={isLast ? '' : 'mb-4'}>
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: titleColor }} />
+        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: titleColor }}>
+          {title}
+        </label>
+      </div>
+      <div className="flex flex-col gap-1">
+        {items.map(item => {
+          const isActive = selected.includes(item.key);
+          return (
+            <button
+              key={item.key}
+              onClick={disabled ? undefined : () => onToggle(item.key)}
+              className="px-2.5 py-[6px] rounded-lg text-[11px] font-medium text-left transition-all"
+              style={{
+                backgroundColor: isActive
+                  ? activeColor + (isDark ? '30' : '18')
+                  : 'transparent',
+                color: isActive ? activeColor : colors.textSecondary,
+                border: `0.5px solid ${isActive ? activeColor + '40' : 'transparent'}`,
+                opacity: disabled ? 0.35 : 1,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded flex items-center justify-center text-[9px]"
+                  style={{
+                    backgroundColor: isActive ? activeColor : (isDark ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)'),
+                    color: isActive ? '#fff' : 'transparent',
+                  }}>
+                  {isActive && '✓'}
+                </span>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
 // ═══════════════════════════════════════════════
-// ECharts Render Functions
+// ECharts Render — Line
 // ═══════════════════════════════════════════════
 
 function renderLine(
@@ -408,15 +423,13 @@ function renderLine(
   categories: string[],
   series: { name: string; data: number[] }[],
   mode: ChartMode,
-  colors: any,
-  theme: string
+  isDark: boolean
 ) {
-  const isDark = theme === 'dark';
-  const textColor = isDark ? '#adb5bd' : '#6c757d';
-  const splitColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
 
   const yFormatter = (val: number) => {
-    if (mode === 'Amount') return `$${val.toLocaleString()}`;
+    if (mode === 'Amount') return `$${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val}`;
     if (mode === 'Quantity') return `${val}`;
     if (mode === 'Order') return `${val}`;
     if (mode === 'Percentage') return `${val}%`;
@@ -425,82 +438,105 @@ function renderLine(
 
   const option: echarts.EChartsCoreOption = {
     backgroundColor: 'transparent',
-    grid: { top: 50, left: 65, right: 30, bottom: 60 },
+    grid: { top: 45, left: 55, right: 20, bottom: 55 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)',
-      borderColor: isDark ? '#444' : '#ddd',
-      textStyle: { color: isDark ? '#fff' : '#333', fontFamily: 'ui-monospace, monospace', fontSize: 12 },
+      backgroundColor: isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.96)',
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      borderWidth: 0.5,
+      textStyle: { color: isDark ? '#fff' : '#1d1d1f', fontSize: 11,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
+      extraCssText: 'border-radius: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0,0,0,0.15);',
     },
     legend: {
       show: true,
-      textStyle: { color: textColor, fontSize: 11 },
+      textStyle: { color: textColor, fontSize: 11,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
       top: 5, right: 10,
+      itemWidth: 10, itemHeight: 10,
+      itemGap: 14,
     },
     xAxis: {
       type: 'category',
       data: categories,
       axisLine: { show: false },
-      axisLabel: { color: textColor, fontFamily: 'ui-monospace, monospace', fontSize: 10 },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 10, margin: 12,
+        fontFamily: 'ui-monospace, "SF Mono", monospace' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: splitColor } },
-      axisLabel: { color: textColor, fontFamily: 'ui-monospace, monospace', fontSize: 10, formatter: yFormatter },
+      splitLine: { lineStyle: { color: gridColor } },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 10,
+        fontFamily: 'ui-monospace, "SF Mono", monospace', formatter: yFormatter },
     },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
-      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20, bottom: 8,
-        textStyle: { color: textColor, fontSize: 10 },
-        borderColor: 'transparent', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 18, bottom: 6,
+        textStyle: { color: textColor, fontSize: 9 },
+        borderColor: 'transparent',
+        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        fillerColor: isDark ? 'rgba(0,122,255,0.12)' : 'rgba(0,122,255,0.08)',
+        handleStyle: { color: '#007AFF', borderColor: '#007AFF' },
       },
     ],
     series: series.map((s, idx) => ({
       name: s.name,
       type: 'line' as const,
       data: s.data,
-      smooth: true,
+      smooth: 0.4,
       showSymbol: false,
-      lineStyle: { width: 2.5, color: LINE_COLORS[idx % LINE_COLORS.length] },
-      itemStyle: { color: LINE_COLORS[idx % LINE_COLORS.length] },
+      symbolSize: 6,
+      lineStyle: { width: 2, color: CHART_PALETTE[idx % CHART_PALETTE.length] },
+      itemStyle: { color: CHART_PALETTE[idx % CHART_PALETTE.length] },
+      emphasis: { focus: 'series', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
       areaStyle: series.length === 1 ? {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: LINE_COLORS[idx % LINE_COLORS.length] + '40' },
-          { offset: 1, color: LINE_COLORS[idx % LINE_COLORS.length] + '05' },
+          { offset: 0, color: CHART_PALETTE[idx] + '30' },
+          { offset: 1, color: CHART_PALETTE[idx] + '03' },
         ]),
       } : undefined,
     })),
+    animationDuration: 800,
+    animationEasing: 'cubicOut',
   };
 
   chart.clear();
   chart.setOption(option);
 }
 
+// ═══════════════════════════════════════════════
+// ECharts Render — Pie (Donut)
+// ═══════════════════════════════════════════════
+
 function renderPie(
   chart: echarts.ECharts,
   pieData: PieSlice[],
-  colors: any,
-  theme: string
+  isDark: boolean
 ) {
-  const isDark = theme === 'dark';
-  const textColor = isDark ? '#e5e7eb' : '#374151';
+  const textColor = isDark ? 'rgba(235,235,245,0.85)' : 'rgba(28,28,30,0.85)';
 
   const option: echarts.EChartsCoreOption = {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
-      backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)',
-      borderColor: isDark ? '#444' : '#ddd',
-      textStyle: { color: isDark ? '#fff' : '#333', fontSize: 12 },
+      backgroundColor: isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.96)',
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      borderWidth: 0.5,
+      textStyle: { color: isDark ? '#fff' : '#1d1d1f', fontSize: 11,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
+      extraCssText: 'border-radius: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0,0,0,0.15);',
       formatter: (params: any) => {
         const d = params.data;
-        let html = `<div style="font-weight:600;margin-bottom:4px">${d.name}</div>`;
-        html += `<div>$${d.value.toLocaleString()}</div>`;
-        html += `<div style="opacity:0.6;font-size:11px">${d.pct}% of Sales</div>`;
+        let html = `<div style="font-weight:600;margin-bottom:4px;font-size:13px">${d.name}</div>`;
+        html += `<div style="font-size:18px;font-weight:700;margin-bottom:2px">$${d.value.toLocaleString()}</div>`;
+        html += `<div style="opacity:0.5;font-size:11px">${d.pct}% of Sales</div>`;
         if (d.details && Object.keys(d.details).length > 0) {
-          html += '<hr style="margin:6px 0;border-color:rgba(128,128,128,0.2)">';
+          html += '<div style="height:1px;background:rgba(128,128,128,0.15);margin:8px 0"></div>';
           for (const [k, v] of Object.entries(d.details)) {
-            html += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;opacity:0.7"><span>${k}</span><span>$${(v as number).toLocaleString()}</span></div>`;
+            html += `<div style="display:flex;justify-content:space-between;gap:16px;font-size:11px;opacity:0.65;padding:1px 0"><span>${k}</span><span>$${(v as number).toLocaleString()}</span></div>`;
           }
         }
         return html;
@@ -508,36 +544,48 @@ function renderPie(
     },
     legend: {
       orient: 'vertical',
-      right: 20,
+      right: 24,
       top: 'center',
-      textStyle: { color: textColor, fontSize: 12 },
+      textStyle: { color: textColor, fontSize: 12,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
+      itemWidth: 10, itemHeight: 10, itemGap: 16,
     },
     series: [{
       type: 'pie',
-      radius: ['35%', '65%'],
-      center: ['40%', '50%'],
+      radius: ['40%', '68%'],
+      center: ['38%', '50%'],
       avoidLabelOverlap: true,
-      itemStyle: { borderRadius: 6, borderColor: isDark ? '#1a1a2e' : '#fff', borderWidth: 3 },
+      padAngle: 2,
+      itemStyle: {
+        borderRadius: 8,
+        borderColor: isDark ? 'rgba(28,28,30,0.9)' : 'rgba(255,255,255,0.9)',
+        borderWidth: 3,
+      },
       label: {
         show: true,
-        formatter: '{b}\n${c}',
-        color: textColor,
-        fontSize: 11,
-        lineHeight: 16,
+        formatter: (p: any) => `{name|${p.data.name}}\n{val|$${p.data.value.toLocaleString()}}`,
+        rich: {
+          name: { fontSize: 11, color: textColor, lineHeight: 18,
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
+          val: { fontSize: 13, fontWeight: 'bold' as const, color: textColor, lineHeight: 20 },
+        },
       },
-      labelLine: { length: 15, length2: 10 },
+      labelLine: { length: 16, length2: 12, smooth: true },
       emphasis: {
+        scaleSize: 8,
         label: { fontSize: 14, fontWeight: 'bold' },
-        itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.3)' },
+        itemStyle: { shadowBlur: 24, shadowColor: 'rgba(0,0,0,0.2)' },
       },
       data: pieData.map((d, i) => ({
         name: d.name,
         value: d.value,
         pct: d.percentage,
         details: d.details,
-        itemStyle: { color: PIE_COLORS[i % PIE_COLORS.length] },
+        itemStyle: { color: PIE_PALETTE[i % PIE_PALETTE.length] },
       })),
     }],
+    animationDuration: 1000,
+    animationEasing: 'cubicOut',
   };
 
   chart.clear();
