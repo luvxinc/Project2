@@ -176,8 +176,8 @@ export default function CreateProductPage() {
               const loginBtn = document.querySelector('[data-login-trigger]') as HTMLElement;
               if (loginBtn) loginBtn.click();
             }}
-            className="inline-flex items-center px-6 py-2 rounded-full text-white"
-            style={{ backgroundColor: colors.blue }}
+            className="inline-flex items-center px-6 py-2 rounded-full"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
           >
             {tCommon('signIn')}
           </button>

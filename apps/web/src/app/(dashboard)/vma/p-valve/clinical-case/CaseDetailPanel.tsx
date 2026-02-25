@@ -5,6 +5,7 @@ import type { ClinicalCase, CaseTransaction, Site, SpecOption, DSOption, LineIte
 import ProductLine from './ProductLine';
 import { useTranslations } from 'next-intl';
 import { useModal } from '@/components/modal/GlobalModal';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface CaseDetailPanelProps {
   selectedCase: ClinicalCase;
@@ -12,7 +13,7 @@ interface CaseDetailPanelProps {
   completionSummary: CompletionSummary | null;
   loadingDetail: boolean;
   isCompleted: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   sites: Site[];
   // Edit Info
   editInfoMode: boolean;
@@ -256,8 +257,8 @@ export default function CaseDetailPanel({
                   <button onClick={() => setEditInfoMode(false)}
                     className="px-3 py-1.5 rounded-lg text-xs hover:opacity-70" style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.detail.cancel')}</button>
                   <button onClick={handleSaveInfo} disabled={infoSaving}
-                    className="px-4 py-1.5 rounded-lg text-xs text-white font-medium hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: colors.controlAccent }}>{infoSaving ? t('p_valve.clinicalCase.detail.saving') : t('p_valve.clinicalCase.detail.save')}</button>
+                    className="px-4 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: colors.controlAccent, color: colors.white }}>{infoSaving ? t('p_valve.clinicalCase.detail.saving') : t('p_valve.clinicalCase.detail.save')}</button>
                 </div>
               </div>
             )}
@@ -371,7 +372,8 @@ export default function CaseDetailPanel({
                               <button
                                 onClick={() => confirmDelete(txn.id)}
                                 disabled={deleteLoading}
-                                className="text-[10px] px-1.5 py-0.5 rounded bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-50"
+                                className="text-[10px] px-1.5 py-0.5 rounded hover:opacity-80 transition disabled:opacity-50"
+                                style={{ backgroundColor: colors.red, color: colors.white }}
                               >
                                 {deleteLoading ? '...' : t('p_valve.clinicalCase.detail.deleteYes')}
                               </button>
@@ -611,8 +613,8 @@ export default function CaseDetailPanel({
                       <button
                         onClick={handleAddItems}
                         disabled={addingItems || ([...addPvLines, ...addDsLines].every(l => l.picked.length === 0))}
-                        style={{ backgroundColor: colors.controlAccent }}
-                        className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
+                        style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+                        className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
                       >
                         {addingItems ? t('p_valve.clinicalCase.detail.adding') : t('p_valve.clinicalCase.detail.addToCase')}
                       </button>

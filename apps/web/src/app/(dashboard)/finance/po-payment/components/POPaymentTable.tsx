@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { POPaymentListItem, POPaymentDetail } from '@/lib/api/finance';
 import { themeColors } from '@/contexts/ThemeContext';
-import { paymentStatusStyle } from '@/lib/status-colors';
+import { paymentStatusStyle, hexToRgba } from '@/lib/status-colors';
 
 // ── Types ────────────────────────────────────────
 
@@ -346,7 +346,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                             {item.hasUnresolvedDiff && (
                               <span
                                 className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-                                style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+                                style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
                                 title={t('poPayment.diffBlocked')}
                               >
                                 Diff
@@ -355,7 +355,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                             {item.fluctuationTriggered && (
                               <span
                                 className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-                                style={{ backgroundColor: 'rgba(255,214,10,0.12)', color: colors.yellow }}
+                                style={{ backgroundColor: hexToRgba(colors.yellow, 0.12), color: colors.yellow }}
                                 title={`${t('poPayment.floatTriggered')}: $${fmtAmt(item.adjustedBalanceUsd)}`}
                               >
                                 Float
@@ -394,7 +394,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         {/* Deposit Paid */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span
-                            style={{ color: item.depositPaidUsd > 0 ? '#30d158' : colors.textTertiary }}
+                            style={{ color: item.depositPaidUsd > 0 ? colors.green : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
                             {item.depositPaidUsd > 0 ? `$${fmtAmt(item.depositPaidUsd)}` : '—'}
@@ -404,7 +404,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         {/* PO Paid */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span
-                            style={{ color: item.poPaidUsd > 0 ? '#30d158' : colors.textTertiary }}
+                            style={{ color: item.poPaidUsd > 0 ? colors.green : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
                             {item.poPaidUsd > 0 ? `$${fmtAmt(item.poPaidUsd)}` : '—'}
@@ -414,7 +414,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         {/* Balance Remaining */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span
-                            style={{ color: item.balanceRemainingUsd > 0 ? '#ff9f0a' : colors.textTertiary }}
+                            style={{ color: item.balanceRemainingUsd > 0 ? colors.orange : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
                             {item.balanceRemainingUsd > 0 ? `$${fmtAmt(item.balanceRemainingUsd)}` : '—'}

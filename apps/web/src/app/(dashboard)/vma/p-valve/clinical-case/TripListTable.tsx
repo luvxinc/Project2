@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface Trip {
   tripId: string;
@@ -18,7 +19,7 @@ interface Trip {
 interface TripListTableProps {
   trips: Trip[];
   loading: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onTripClick: (trip: Trip) => void;
 }
 
@@ -79,8 +80,8 @@ export default function TripListTable({ trips, loading, colors, onTripClick }: T
                 <span
                   className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                   style={{
-                    backgroundColor: trip.status === 'COMPLETED' ? '#30d15820' : `${colors.orange}20`,
-                    color: trip.status === 'COMPLETED' ? '#30d158' : colors.orange,
+                    backgroundColor: trip.status === 'COMPLETED' ? `${colors.green}20` : `${colors.orange}20`,
+                    color: trip.status === 'COMPLETED' ? colors.green : colors.orange,
                   }}
                 >
                   {trip.status === 'COMPLETED' ? '✓ Completed' : '● Out'}

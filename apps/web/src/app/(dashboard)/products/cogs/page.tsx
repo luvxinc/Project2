@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi, Product, CategoryHierarchy } from '@/lib/api';
+import { hexToRgba } from '@/lib/status-colors';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 
@@ -296,17 +297,17 @@ export default function CogsPage() {
     const freight = parseFloat(form.freight);
     const weight = parseInt(form.weight);
 
-    if (isNaN(cost) || cost < 0) errors.cost = 'Must be ≥ 0';
-    else if (!/^\d+(\.\d{1,2})?$/.test(form.cost)) errors.cost = 'Max 2 decimal places';
+    if (isNaN(cost) || cost < 0) errors.cost = t('cogs.modal.mustBePositive');
+    else if (!/^\d+(\.\d{1,2})?$/.test(form.cost)) errors.cost = t('cogs.modal.maxTwoDecimals');
 
-    if (isNaN(freight) || freight < 0) errors.freight = 'Must be ≥ 0';
-    else if (!/^\d+(\.\d{1,2})?$/.test(form.freight)) errors.freight = 'Max 2 decimal places';
+    if (isNaN(freight) || freight < 0) errors.freight = t('cogs.modal.mustBePositive');
+    else if (!/^\d+(\.\d{1,2})?$/.test(form.freight)) errors.freight = t('cogs.modal.maxTwoDecimals');
 
-    if (isNaN(weight) || weight < 0) errors.weight = 'Must be ≥ 0';
-    else if (!Number.isInteger(Number(form.weight))) errors.weight = 'Must be integer';
+    if (isNaN(weight) || weight < 0) errors.weight = t('cogs.modal.mustBePositive');
+    else if (!Number.isInteger(Number(form.weight))) errors.weight = t('cogs.modal.mustBeInteger');
 
     return errors;
-  }, []);
+  }, [t]);
 
   // Validate edit form
   const validateForm = useCallback((): boolean => {
@@ -414,8 +415,8 @@ export default function CogsPage() {
               const loginBtn = document.querySelector('[data-login-trigger]') as HTMLElement;
               if (loginBtn) loginBtn.click();
             }}
-            className="inline-flex items-center px-6 py-2 rounded-full text-white"
-            style={{ backgroundColor: colors.blue }}
+            className="inline-flex items-center px-6 py-2 rounded-full"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
           >
             {tCommon('signIn')}
           </button>
@@ -487,7 +488,7 @@ export default function CogsPage() {
             {t('pagination.total', { count: total })}
             {hasActiveFilters && (
               <span style={{ color: colors.orange }} className="ml-2">
-                ({filteredProducts.length} filtered)
+                {t('list.filteredCount', { count: filteredProducts.length })}
               </span>
             )}
           </span>
@@ -509,7 +510,7 @@ export default function CogsPage() {
             <svg className="w-3.5 h-3.5" style={{ color: colors.textTertiary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            <span style={{ color: colors.textTertiary }} className="text-xs font-medium uppercase tracking-wider">Filters</span>
+            <span style={{ color: colors.textTertiary }} className="text-xs font-medium uppercase tracking-wider">{t('list.filters')}</span>
           </div>
 
           <select
@@ -522,7 +523,7 @@ export default function CogsPage() {
             }}
             className="px-3 py-1.5 rounded-lg border text-xs focus:outline-none focus:ring-2 cursor-pointer min-w-[120px]"
           >
-            <option value="">All Categories</option>
+            <option value="">{t('list.allCategories')}</option>
             {filterOptions.categories.map(opt => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
@@ -538,7 +539,7 @@ export default function CogsPage() {
             }}
             className="px-3 py-1.5 rounded-lg border text-xs focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
           >
-            <option value="">All SubCategories</option>
+            <option value="">{t('list.allSubCategories')}</option>
             {filterOptions.subcategories.map(opt => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
@@ -554,7 +555,7 @@ export default function CogsPage() {
             }}
             className="px-3 py-1.5 rounded-lg border text-xs focus:outline-none focus:ring-2 cursor-pointer min-w-[100px]"
           >
-            <option value="">All Types</option>
+            <option value="">{t('list.allTypes')}</option>
             {filterOptions.types.map(opt => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
@@ -569,7 +570,7 @@ export default function CogsPage() {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Clear
+              {t('list.clearFilters')}
             </button>
           )}
         </div>
@@ -614,28 +615,28 @@ export default function CogsPage() {
                 <thead>
                   <tr style={{ borderColor: colors.border, backgroundColor: `${colors.bg}80` }} className="border-b">
                     <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-                      SKU
+                      {t('list.columns.sku')}
                     </th>
                     <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-                      Category
+                      {t('list.columns.category')}
                     </th>
                     <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap">
-                      SubCategory
+                      {t('list.columns.subcategory')}
                     </th>
                     <th style={{ color: colors.textSecondary }} className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap w-24">
-                      Type
+                      {t('list.columns.type')}
                     </th>
                     <th style={{ color: colors.blue }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap w-24">
-                      Cost
+                      {t('list.columns.cost')}
                     </th>
                     <th style={{ color: colors.blue }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap w-24">
-                      Freight
+                      {t('list.columns.freight')}
                     </th>
                     <th style={{ color: colors.orange }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap w-20">
-                      Weight
+                      {t('list.columns.weight')}
                     </th>
                     <th style={{ color: colors.green }} className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider whitespace-nowrap w-24">
-                      COG
+                      {t('list.columns.cogs')}
                     </th>
                   </tr>
                 </thead>
@@ -644,8 +645,10 @@ export default function CogsPage() {
                     <tr
                       key={product.id}
                       onClick={() => openEditModal(product)}
+                      className={`${index !== filteredProducts.length - 1 ? 'border-b' : ''} transition-colors cursor-pointer`}
                       style={{ borderColor: colors.border }}
-                      className={`${index !== filteredProducts.length - 1 ? 'border-b' : ''} transition-colors cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02]`}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.bgTertiary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       <td style={{ color: colors.text }} className="py-3 px-4 font-mono text-sm whitespace-nowrap">
                         {product.sku}
@@ -697,7 +700,7 @@ export default function CogsPage() {
       {/* ═══════════ Edit Product Modal ═══════════ */}
       {editingProduct && (
         <div
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: hexToRgba(colors.bg, 0.7), backdropFilter: 'blur(4px)' }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget && !updateMutation.isPending) setEditingProduct(null); }}
         >
@@ -1091,7 +1094,7 @@ export default function CogsPage() {
       {/* Create Product Modal */}
       {showCreateModal && (
         <div
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: hexToRgba(colors.bg, 0.7), backdropFilter: 'blur(4px)' }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget && !createMutation.isPending) setShowCreateModal(false); }}
         >

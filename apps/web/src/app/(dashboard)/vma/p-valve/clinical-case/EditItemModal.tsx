@@ -2,6 +2,7 @@
 
 import type { CaseTransaction, SpecOption, PickedProduct } from './types';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface EditItemModalProps {
   editTxn: CaseTransaction;
@@ -11,7 +12,7 @@ interface EditItemModalProps {
   editSpecOptions: SpecOption[];
   editAvailable: PickedProduct[];
   editLoadingAvail: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onClose: () => void;
   onSpecChange: (spec: string) => void;
   onSerialChange: (serial: string) => void;
@@ -33,7 +34,7 @@ export default function EditItemModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+      style={{ backgroundColor: `${colors.bg}73`, backdropFilter: 'blur(6px)' }}
       onClick={onClose}
     >
       <div
@@ -94,8 +95,8 @@ export default function EditItemModal({
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm hover:opacity-70 transition"
               style={{ color: colors.textSecondary }}>{t('p_valve.clinicalCase.editModal.cancel')}</button>
-            <button onClick={onSave} disabled={editSaving} style={{ backgroundColor: colors.controlAccent }}
-              className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            <button onClick={onSave} disabled={editSaving} style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+              className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
             >{editSaving ? t('p_valve.clinicalCase.editModal.saving') : t('p_valve.clinicalCase.editModal.save')}</button>
           </div>
         </div>

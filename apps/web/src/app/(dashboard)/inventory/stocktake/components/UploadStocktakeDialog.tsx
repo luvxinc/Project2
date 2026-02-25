@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { inventoryApi } from '@/lib/api/inventory';
+import { hexToRgba } from '@/lib/status-colors';
 import { api } from '@/lib/api/client';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
@@ -278,8 +279,8 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
 
   if (!open) return null;
 
-  const cardBg = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
-  const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const cardBg = colors.bgSecondary;
+  const borderColor = colors.separator;
   const correctedCount = corrections.filter(c => c.selectedSku !== '').length;
 
   return (
@@ -287,7 +288,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+        style={{ backgroundColor: hexToRgba('#000000', 0.6), backdropFilter: 'blur(8px)' }}
         onClick={onClose}
       >
         {/* Dialog */}
@@ -301,7 +302,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
             style={{ backgroundColor: colors.bgElevated, borderBottom: `1px solid ${borderColor}` }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #34c759, #30d158)' }}>
+                style={{ background: `linear-gradient(135deg, ${colors.green}, ${colors.green}dd)` }}>
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                 </svg>
@@ -323,7 +324,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
           {done && result ? (
             <div className="px-6 py-10 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(52,199,89,0.1)' }}>
+                style={{ background: hexToRgba(colors.green, 0.1) }}>
                 <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                 </svg>
@@ -334,15 +335,15 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
               </p>
               <div className="grid grid-cols-3 gap-4 mb-6 rounded-xl p-4" style={{ background: cardBg }}>
                 <div className="text-center">
-                  <div className="text-2xl font-bold" style={{ color: '#34c759' }}>{result.rows}</div>
+                  <div className="text-2xl font-bold" style={{ color: colors.green }}>{result.rows}</div>
                   <div className="text-xs" style={{ color: colors.textTertiary }}>{t('rowsWritten')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold" style={{ color: '#0a84ff' }}>{result.fixed}</div>
+                  <div className="text-2xl font-bold" style={{ color: colors.blue }}>{result.fixed}</div>
                   <div className="text-xs" style={{ color: colors.textTertiary }}>{t('skuFixed')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold" style={{ color: '#ff9f0a' }}>{result.skipped}</div>
+                  <div className="text-2xl font-bold" style={{ color: colors.orange }}>{result.skipped}</div>
                   <div className="text-xs" style={{ color: colors.textTertiary }}>{t('skuSkipped')}</div>
                 </div>
               </div>
@@ -369,13 +370,13 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                   className="w-full h-10 px-3 rounded-lg text-sm outline-none transition-all focus:ring-2"
                   style={{
                     backgroundColor: cardBg,
-                    border: `1px solid ${dateExists ? 'rgba(255,193,7,0.5)' : borderColor}`,
+                    border: `1px solid ${dateExists ? hexToRgba(colors.yellow, 0.5) : borderColor}`,
                     color: colors.text,
                   }}
                 />
                 {dateExists && (
                   <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-center gap-2"
-                    style={{ background: 'rgba(255,193,7,0.08)', border: '1px solid rgba(255,193,7,0.25)', color: '#ffc107' }}>
+                    style={{ background: hexToRgba(colors.yellow, 0.08), border: `1px solid ${hexToRgba(colors.yellow, 0.25)}`, color: colors.yellow }}>
                     <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" />
                     </svg>
@@ -395,8 +396,8 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                   onClick={() => !submitting && fileInputRef.current?.click()}
                   className="rounded-xl p-6 text-center cursor-pointer transition-all hover:opacity-80"
                   style={{
-                    border: `2px dashed ${file ? '#34c759' : borderColor}`,
-                    background: file ? 'rgba(52,199,89,0.04)' : cardBg,
+                    border: `2px dashed ${file ? colors.green : borderColor}`,
+                    background: file ? hexToRgba(colors.green, 0.04) : cardBg,
                     pointerEvents: submitting ? 'none' : 'auto',
                   }}
                 >
@@ -422,7 +423,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                       </svg>
                       <span className="text-sm font-medium" style={{ color: colors.text }}>{file.name}</span>
-                      <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: 'rgba(52,199,89,0.1)', color: '#34c759' }}>
+                      <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: hexToRgba(colors.green, 0.1), color: colors.green }}>
                         {parsedRows.length} rows
                       </span>
                       <button onClick={e => { e.stopPropagation(); setFile(null); setParsedRows([]); setCorrections([]); }}
@@ -437,14 +438,14 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium" style={{ color: '#ff9f0a' }}>⚠ {t('unknownSku')}</span>
+                      <span className="text-sm font-medium" style={{ color: colors.orange }}>⚠ {t('unknownSku')}</span>
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium"
-                        style={{ background: 'rgba(255,159,10,0.15)', color: '#ff9f0a' }}>
+                        style={{ background: hexToRgba(colors.orange, 0.15), color: colors.orange }}>
                         {correctedCount}/{corrections.length}
                       </span>
                     </div>
                     <button onClick={skipAll} className="px-3 py-1 rounded-full text-xs font-medium transition-all hover:opacity-80"
-                      style={{ background: 'rgba(255,159,10,0.1)', color: '#ff9f0a', border: '1px solid rgba(255,159,10,0.25)' }}>
+                      style={{ background: hexToRgba(colors.orange, 0.1), color: colors.orange, border: `1px solid ${hexToRgba(colors.orange, 0.25)}` }}>
                       {t('skipAll')}
                     </button>
                   </div>
@@ -465,19 +466,19 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                             <tr key={i}
                               style={{
                                 borderTop: `1px solid ${borderColor}`,
-                                background: c.selectedSku === 'SKIP' ? 'rgba(220,53,69,0.04)' :
-                                  c.selectedSku ? 'rgba(52,199,89,0.04)' : 'transparent',
+                                background: c.selectedSku === 'SKIP' ? hexToRgba(colors.red, 0.04) :
+                                  c.selectedSku ? hexToRgba(colors.green, 0.04) : 'transparent',
                                 opacity: c.selectedSku === 'SKIP' ? 0.6 : 1,
                               }}>
-                              <td className="px-3 py-2 font-mono font-medium" style={{ color: '#ff9f0a' }}>{c.badSku}</td>
+                              <td className="px-3 py-2 font-mono font-medium" style={{ color: colors.orange }}>{c.badSku}</td>
                               <td className="px-3 py-2">
                                 <div className="flex flex-wrap gap-1">
                                   {c.suggestions.length > 0 ? c.suggestions.map(s => (
                                     <button key={s} onClick={() => setCorrectionSku(i, s)}
                                       className="px-2 py-0.5 rounded text-xs transition-all hover:opacity-80"
                                       style={{
-                                        background: c.selectedSku === s ? 'rgba(0,113,227,0.15)' : 'rgba(0,113,227,0.06)',
-                                        color: '#0071e3', border: `1px solid ${c.selectedSku === s ? '#0071e3' : 'transparent'}`,
+                                        background: c.selectedSku === s ? hexToRgba(colors.controlAccent, 0.15) : hexToRgba(colors.controlAccent, 0.06),
+                                        color: colors.controlAccent, border: `1px solid ${c.selectedSku === s ? colors.controlAccent : 'transparent'}`,
                                       }}>
                                       {s}
                                     </button>
@@ -500,9 +501,9 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                                 <button onClick={() => c.selectedSku === 'SKIP' ? setCorrectionSku(i, '') : skipCorrection(i)}
                                   className="px-2 py-1 rounded text-xs font-medium transition-all"
                                   style={{
-                                    background: c.selectedSku === 'SKIP' ? 'rgba(220,53,69,0.15)' : 'transparent',
-                                    color: c.selectedSku === 'SKIP' ? '#dc3545' : colors.textSecondary,
-                                    border: `1px solid ${c.selectedSku === 'SKIP' ? 'rgba(220,53,69,0.3)' : borderColor}`,
+                                    background: c.selectedSku === 'SKIP' ? hexToRgba(colors.red, 0.15) : 'transparent',
+                                    color: c.selectedSku === 'SKIP' ? colors.red : colors.textSecondary,
+                                    border: `1px solid ${c.selectedSku === 'SKIP' ? hexToRgba(colors.red, 0.3) : borderColor}`,
                                   }}>
                                   {c.selectedSku === 'SKIP' ? t('skipped') : t('skip')}
                                 </button>
@@ -515,7 +516,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                   </div>
 
                   {hasUnhandled && (
-                    <p className="text-xs mt-1.5" style={{ color: '#ff9f0a' }}>
+                    <p className="text-xs mt-1.5" style={{ color: colors.orange }}>
                       {t('remaining', { count: corrections.filter(c => c.selectedSku === '').length })}
                     </p>
                   )}
@@ -526,11 +527,11 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
               {computedFinalRows.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium" style={{ color: '#0a84ff' }}>
+                    <span className="text-sm font-medium" style={{ color: colors.blue }}>
                       {t('finalReview')}
                     </span>
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium"
-                      style={{ background: 'rgba(10,132,255,0.12)', color: '#0a84ff' }}>
+                      style={{ background: hexToRgba(colors.blue, 0.12), color: colors.blue }}>
                       {t('recordCount', { count: computedFinalRows.length })}
                     </span>
                   </div>
@@ -562,7 +563,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
 
               {/* Error */}
               {error && (
-                <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(220,53,69,0.08)', border: '1px solid rgba(220,53,69,0.25)', color: '#dc3545' }}>
+                <div className="px-3 py-2 rounded-lg text-xs" style={{ background: hexToRgba(colors.red, 0.08), border: `1px solid ${hexToRgba(colors.red, 0.25)}`, color: colors.red }}>
                   {error}
                 </div>
               )}
@@ -580,7 +581,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
                   onClick={handleSubmit}
                   disabled={!canSubmit}
                   className="flex-1 h-11 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: canSubmit ? '#34c759' : colors.textTertiary }}>
+                  style={{ backgroundColor: canSubmit ? colors.green : colors.textTertiary }}>
                   {submitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                   {submitting ? t('syncing') : t('confirmSync')}
                 </button>

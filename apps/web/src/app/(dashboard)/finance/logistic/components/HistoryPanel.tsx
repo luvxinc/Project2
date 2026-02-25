@@ -110,7 +110,7 @@ export default function HistoryPanel({ paymentNo, onClose }: Props) {
 
 // ═══════════ Sub-components ═══════════
 
-function SendVersionCard({ version: v, colors }: { version: LogisticSendVersion; colors: Record<string, string> }) {
+function SendVersionCard({ version: v, colors }: { version: LogisticSendVersion; colors: (typeof themeColors)['dark'] }) {
   const dateStr = v.dateRecord ? new Date(v.dateRecord).toLocaleDateString('zh-CN') : '';
   return (
     <div style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border }} className="p-2.5 rounded-lg border text-xs">
@@ -145,7 +145,7 @@ function SendVersionCard({ version: v, colors }: { version: LogisticSendVersion;
   );
 }
 
-function PaymentVersionCard({ version: v, colors }: { version: LogisticPaymentVersion; colors: Record<string, string> }) {
+function PaymentVersionCard({ version: v, colors }: { version: LogisticPaymentVersion; colors: (typeof themeColors)['dark'] }) {
   const dateStr = v.dateRecord ? new Date(v.dateRecord).toLocaleDateString('zh-CN') : '';
   return (
     <div style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border }} className="p-2.5 rounded-lg border text-xs">
@@ -182,7 +182,7 @@ function PaymentVersionCard({ version: v, colors }: { version: LogisticPaymentVe
   );
 }
 
-function InitialBadge({ label, value, colors }: { label: string; value: string; colors: Record<string, string> }) {
+function InitialBadge({ label, value, colors }: { label: string; value: string; colors: (typeof themeColors)['dark'] }) {
   return (
     <span
       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] mt-1"
@@ -193,7 +193,7 @@ function InitialBadge({ label, value, colors }: { label: string; value: string; 
   );
 }
 
-function ChangeBadge({ change, colors }: { change: FieldChange; colors: Record<string, string> }) {
+function ChangeBadge({ change, colors }: { change: FieldChange; colors: (typeof themeColors)['dark'] }) {
   return (
     <div className="mt-1 p-1.5 rounded" style={{ backgroundColor: `${colors.orange}10` }}>
       <span style={{ color: colors.textSecondary }} className="text-[10px]">{change.field}</span>

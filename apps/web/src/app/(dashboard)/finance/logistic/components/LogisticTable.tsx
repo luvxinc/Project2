@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { paymentStatusStyle } from '@/lib/status-colors';
 import type { LogisticListItem } from '@/lib/api';
 
 interface Props {
@@ -53,42 +54,13 @@ export default function LogisticTable({
 
   // ── Apple-style payment status badge ──
   const paymentBadge = (item: LogisticListItem) => {
-    if (item.isDeleted) {
-      return {
-        label: t('logistic.status.deleted'),
-        bg: 'rgba(142,142,147,0.14)',
-        color: colors.gray,
-        dot: colors.gray,
-        ring: 'rgba(142,142,147,0.25)',
-      };
-    }
-    switch (item.paymentStatus) {
-      case 'paid':
-        return {
-          label: t('logistic.status.paid'),
-          bg: 'rgba(48,209,88,0.12)',
-          color: colors.green,
-          dot: colors.green,
-          ring: 'rgba(48,209,88,0.3)',
-        };
-      case 'partial':
-        return {
-          label: t('logistic.status.partial'),
-          bg: 'rgba(100,210,255,0.12)',
-          color: colors.teal,
-          dot: colors.teal,
-          ring: 'rgba(100,210,255,0.3)',
-        };
-      case 'unpaid':
-      default:
-        return {
-          label: t('logistic.status.unpaid'),
-          bg: 'rgba(255,159,10,0.12)',
-          color: colors.orange,
-          dot: colors.orange,
-          ring: 'rgba(255,159,10,0.3)',
-        };
-    }
+    const statusKey = item.isDeleted ? 'deleted' : item.paymentStatus;
+    const style = paymentStatusStyle(statusKey, colors);
+    const labelKey = item.isDeleted ? 'deleted' : item.paymentStatus;
+    return {
+      label: t(`logistic.status.${labelKey}`),
+      ...style,
+    };
   };
 
   const fmtNum = (val: number, decimals = 2) =>

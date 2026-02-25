@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { rateModeStyle } from '@/lib/status-colors';
+import { rateModeStyle, hexToRgba } from '@/lib/status-colors';
 import type { LogisticListItem } from '@/lib/api';
 
 export interface PaymentGroup {
@@ -60,7 +60,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
     <div
       style={{
         backgroundColor: colors.bgSecondary,
-        borderColor: group.isDeleted ? 'rgba(142,142,147,0.3)' : colors.border,
+        borderColor: group.isDeleted ? hexToRgba(colors.gray, 0.3) : colors.border,
         opacity: group.isDeleted ? 0.6 : 1,
       }}
       className="rounded-xl border overflow-hidden transition-all hover:shadow-md"
@@ -80,7 +80,7 @@ export default function PaidPaymentCard({ group, onClickShipment, onDeletePaymen
           {group.isDeleted && (
             <span
               className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: colors.gray }}
+              style={{ backgroundColor: hexToRgba(colors.gray, 0.14), color: colors.gray }}
             >
               {t('logistic.status.deleted')}
             </span>

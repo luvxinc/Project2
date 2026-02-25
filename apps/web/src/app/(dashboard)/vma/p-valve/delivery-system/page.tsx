@@ -86,7 +86,7 @@ export default function DeliverySystemPage() {
             Delivery System Inventory — {transactions.length} record{transactions.length !== 1 ? 's' : ''}
           </p>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowForm('REC_CN')} style={{ backgroundColor: colors.blue }} className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5">
+            <button onClick={() => setShowForm('REC_CN')} style={{ backgroundColor: colors.blue, color: colors.white }} className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
               Receive from China
             </button>
@@ -145,7 +145,7 @@ export default function DeliverySystemPage() {
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <button onClick={handleSubmit} disabled={!formData.specNo} className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-40" style={{ backgroundColor: colors.blue }}>
+              <button onClick={handleSubmit} disabled={!formData.specNo} className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-40" style={{ backgroundColor: colors.blue, color: colors.white }}>
                 Save Transaction
               </button>
             </div>

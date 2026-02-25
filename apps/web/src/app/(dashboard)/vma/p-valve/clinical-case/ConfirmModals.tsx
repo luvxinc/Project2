@@ -2,12 +2,13 @@
 
 import type { ClinicalCase, CompletionItem } from './types';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface ConfirmCompletionModalProps {
   selectedCase: ClinicalCase | null;
   completionItems: CompletionItem[];
   completing: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -19,7 +20,7 @@ export function ConfirmCompletionModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backgroundColor: `${colors.bg}80`, backdropFilter: 'blur(4px)' }}
       onClick={() => !completing && onClose()}
     >
       <div
@@ -53,8 +54,8 @@ export function ConfirmCompletionModal({
           <button
             onClick={onConfirm}
             disabled={completing}
-            className="px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-            style={{ backgroundColor: colors.green }}
+            className="px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+            style={{ backgroundColor: colors.green, color: colors.white }}
           >{completing ? t('p_valve.clinicalCase.confirmModal.processing') : t('p_valve.clinicalCase.confirmModal.confirm')}</button>
         </div>
       </div>
@@ -65,7 +66,7 @@ export function ConfirmCompletionModal({
 interface ReverseCompletionModalProps {
   selectedCase: ClinicalCase | null;
   reversing: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onClose: () => void;
   onReverse: () => void;
 }
@@ -77,7 +78,7 @@ export function ReverseCompletionModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backgroundColor: `${colors.bg}80`, backdropFilter: 'blur(4px)' }}
       onClick={() => !reversing && onClose()}
     >
       <div
@@ -106,8 +107,8 @@ export function ReverseCompletionModal({
           <button
             onClick={onReverse}
             disabled={reversing}
-            className="px-5 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-            style={{ backgroundColor: colors.orange }}
+            className="px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+            style={{ backgroundColor: colors.orange, color: colors.white }}
           >{reversing ? t('p_valve.clinicalCase.reverseModal.reversing') : t('p_valve.clinicalCase.reverseModal.reverse')}</button>
         </div>
       </div>

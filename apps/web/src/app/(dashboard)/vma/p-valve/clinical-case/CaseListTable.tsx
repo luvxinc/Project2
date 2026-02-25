@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { ClinicalCase } from './types';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 type SortKey = 'caseNo' | 'caseId' | 'site' | 'caseDate' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -10,7 +11,7 @@ type SortDir = 'asc' | 'desc';
 interface CaseListTableProps {
   cases: ClinicalCase[];
   loading: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onCaseClick: (c: ClinicalCase) => void;
 }
 

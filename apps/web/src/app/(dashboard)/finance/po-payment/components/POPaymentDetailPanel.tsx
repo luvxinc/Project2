@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { themeColors } from '@/contexts/ThemeContext';
 import { financeApi } from '@/lib/api';
-import { paymentStatusStyle, currencyBadgeStyle } from '@/lib/status-colors';
+import { paymentStatusStyle, currencyBadgeStyle, hexToRgba } from '@/lib/status-colors';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
@@ -142,7 +142,7 @@ export default function POPaymentDetailPanel({
           <button
             onClick={() => onDeletePayment(pmtNo)}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+            style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
           >
             {t('poPayment.actions.delete')}
           </button>
@@ -303,7 +303,7 @@ export default function POPaymentDetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.depOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}>{t('poPayment.detail.depPmtOverride')}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}>{t('poPayment.detail.depPmtOverride')}</span>
                         ) : (
                           <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
                         )}
@@ -412,7 +412,7 @@ export default function POPaymentDetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.poOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}>{t('poPayment.detail.poPmtOverride')}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}>{t('poPayment.detail.poPmtOverride')}</span>
                         ) : (
                           <span style={{ color: colors.textTertiary }} className="text-xs">—</span>
                         )}
@@ -527,7 +527,7 @@ export default function POPaymentDetailPanel({
 
 function FieldBlock({ label, value, suffix, colors, mono }: {
   label: string; value: string; suffix?: string;
-  colors: Record<string, string>; mono?: boolean;
+  colors: (typeof themeColors)['dark']; mono?: boolean;
 }) {
   return (
     <div>
@@ -539,7 +539,7 @@ function FieldBlock({ label, value, suffix, colors, mono }: {
             className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded"
             style={{
               backgroundColor: suffix.includes('Auto') || suffix.includes('auto')
-                ? 'rgba(10,132,255,0.14)' : 'rgba(142,142,147,0.14)',
+                ? hexToRgba(colors.blue, 0.14) : hexToRgba(colors.gray, 0.14),
               color: suffix.includes('Auto') || suffix.includes('auto')
                 ? colors.blue : colors.gray,
             }}
@@ -554,7 +554,7 @@ function FieldBlock({ label, value, suffix, colors, mono }: {
 
 function DualCurrencyBlock({ label, usd, rmb, dash, colors }: {
   label: string; usd: number; rmb: number; dash?: boolean;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
 }) {
   return (
     <div>
@@ -577,7 +577,7 @@ function FilesContent({ files, isLoading, uploadPending, colors, t, onUpload, on
   files: FileItem[];
   isLoading: boolean;
   uploadPending: boolean;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
   onUpload: () => void;

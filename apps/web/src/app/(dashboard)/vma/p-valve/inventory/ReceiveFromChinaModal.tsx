@@ -265,7 +265,7 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: `${colors.bg}66`, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
       <div
         className="w-[95vw] max-w-[1400px] rounded-2xl border flex flex-col overflow-hidden"
         style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, height: '65vh' }}
@@ -492,8 +492,8 @@ export default function ReceiveFromChinaModal({ open, onClose, onSuccess }: Prop
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="px-5 py-2 rounded-xl text-white text-[13px] font-medium hover:opacity-90 transition disabled:opacity-40"
-              style={{ backgroundColor: colors.blue }}
+              className="px-5 py-2 rounded-xl text-[13px] font-medium hover:opacity-90 transition disabled:opacity-40"
+              style={{ backgroundColor: colors.blue, color: colors.white }}
             >
               {submitting ? t('p_valve.receiveFromChina.processing') : t('p_valve.receiveFromChina.confirm')}
             </button>

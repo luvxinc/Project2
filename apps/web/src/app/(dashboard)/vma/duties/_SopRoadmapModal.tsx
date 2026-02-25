@@ -442,7 +442,7 @@ export default function SopRoadmapModal({
                 })}
 
                 <div className="ms-add-node absolute top-1/2 left-0 -translate-y-1/2 opacity-0" style={{ transform: `translateX(${history.length * SLOT_W + CARD_W / 2}px)` }}>
-                   <div onClick={openNewPopup} className="w-12 h-12 -ml-6 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(191,90,242,0.6)] cursor-pointer hover:scale-110 hover:bg-purple-500 transition-all z-20"><span className="text-2xl font-light mb-1">+</span></div>
+                   <div onClick={openNewPopup} className="w-12 h-12 -ml-6 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(191,90,242,0.6)] cursor-pointer hover:scale-110 hover:bg-purple-500 transition-all z-20" style={{ backgroundColor: colors.indigo, color: colors.white }}><span className="text-2xl font-light mb-1">+</span></div>
                    <div className="absolute top-16 left-1/2 -translate-x-1/2 text-center w-[100px] opacity-60 text-xs font-bold uppercase tracking-widest">{t('sopHistory.newEntry') || 'New Entry'}</div>
                 </div>
               </div>
@@ -516,8 +516,8 @@ export default function SopRoadmapModal({
                         }}
                       >
                         <div 
-                          className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isActive ? 'text-white' : 'border-white/20'}`}
-                          style={isActive ? { backgroundColor: colors.blue, borderColor: colors.blue } : {}}
+                          className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isActive ? '' : 'border-white/20'}`}
+                          style={isActive ? { backgroundColor: colors.blue, borderColor: colors.blue, color: colors.white } : {}}
                         >
                           {isActive && '✓'}
                         </div>
@@ -558,8 +558,8 @@ export default function SopRoadmapModal({
                <button 
                  onClick={handleSaveRequirements} 
                  disabled={saving} 
-                 className="ml-auto px-8 py-3 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 tracking-wide"
-                 style={{ backgroundColor: colors.indigo }}
+                 className="ml-auto px-8 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 tracking-wide"
+                 style={{ backgroundColor: colors.indigo, color: colors.white }}
                >
                   {saving ? (t('sopHistory.saving') || 'SAVING...') : (t('sopHistory.saveChanges') || 'SAVE CHANGES')}
                </button>

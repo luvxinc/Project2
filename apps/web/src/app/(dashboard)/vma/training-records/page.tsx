@@ -284,20 +284,20 @@ export default function TrainingRecordsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode('sessions')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${viewMode === 'sessions' ? 'text-white' : ''}`}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition"
                 style={{
                   backgroundColor: viewMode === 'sessions' ? colors.controlAccent : 'transparent',
-                  color: viewMode === 'sessions' ? '#fff' : colors.textSecondary,
+                  color: viewMode === 'sessions' ? colors.white : colors.textSecondary,
                 }}
               >
                 {t('trainingRecords.sessions') || 'Sessions'}
               </button>
               <button
                 onClick={() => setViewMode('roadmap')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${viewMode === 'roadmap' ? 'text-white' : ''}`}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5"
                 style={{
                   backgroundColor: viewMode === 'roadmap' ? colors.indigo : 'transparent',
-                  color: viewMode === 'roadmap' ? '#fff' : colors.textSecondary,
+                  color: viewMode === 'roadmap' ? colors.white : colors.textSecondary,
                 }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

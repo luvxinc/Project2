@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { financeApi, type FlowOrderItem, type FlowDetailResponse } from '@/lib/api/finance';
+import { hexToRgba } from '@/lib/status-colors';
 import { animate } from 'animejs';
 import FinanceTabSelector from '../components/FinanceTabSelector';
 
@@ -348,7 +349,7 @@ function FlowListContent({
           </h2>
           <span
             className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: colors.orange }}
+            style={{ backgroundColor: hexToRgba(colors.orange, 0.12), color: colors.orange }}
           >
             {orders.length}
           </span>
@@ -508,12 +509,12 @@ function FlowRow({
     const logPmtPartial = order.logisticsPaymentStatus === 'partial';
 
     const barColor = (ok: boolean, partial: boolean, special?: string) =>
-      special || (ok ? '#30d158' : partial ? '#ffd60a' : 'rgba(142,142,147,0.3)');
+      special || (ok ? colors.green : partial ? colors.yellow : hexToRgba(colors.gray, 0.3));
 
     const depColor = depNotRequired ? colors.teal : barColor(depOk, depPartial);
     const pmtColor = barColor(pmtOk, pmtPartial);
-    const logShipColor = !hasLogistics ? 'rgba(142,142,147,0.3)' : logArrived ? '#30d158' : '#ffd60a';
-    const logPmtColor = !hasLogistics ? 'rgba(142,142,147,0.3)' : barColor(logPmtOk, logPmtPartial);
+    const logShipColor = !hasLogistics ? hexToRgba(colors.gray, 0.3) : logArrived ? colors.green : colors.yellow;
+    const logPmtColor = !hasLogistics ? hexToRgba(colors.gray, 0.3) : barColor(logPmtOk, logPmtPartial);
 
     const allOk = depOk && pmtOk && (!hasLogistics || (logArrived && logPmtOk));
     const hasProblem = !depOk || !pmtOk || (hasLogistics && (!logArrived || !logPmtOk));
@@ -568,7 +569,7 @@ function FlowRow({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           ) : order.hasDiff ? (
-            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: colors.orange }}>{t('flow.diffWarning')}</span>
+            <span className="text-[7px] font-bold px-1 py-0 rounded flex-shrink-0" style={{ backgroundColor: hexToRgba(colors.orange, 0.15), color: colors.orange }}>{t('flow.diffWarning')}</span>
           ) : hasProblem ? (
             <div className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: colors.yellow }} />
           ) : null}
@@ -621,12 +622,12 @@ function FlowRow({
               {(order.hasDiff || order.fluctuationTriggered) && (
                 <div className="flex gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                   {order.hasDiff && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,149,0,0.15)', color: colors.orange }}>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: hexToRgba(colors.orange, 0.15), color: colors.orange }}>
                       {t('flow.diffWarning')}
                     </span>
                   )}
                   {order.fluctuationTriggered && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,214,10,0.15)', color: colors.yellow }}>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: hexToRgba(colors.yellow, 0.15), color: colors.yellow }}>
                       +/- {order.curExFloat}%
                     </span>
                   )}
@@ -673,7 +674,7 @@ function FlowRow({
         {order.hasDiff && (
           <span
             className="ml-1 text-[8px] px-1 py-0.5 rounded font-medium"
-            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+            style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
             title={t('flow.diffWarning')}
           >
             DIFF
@@ -706,7 +707,7 @@ function FlowRow({
       {/* Balance Remaining */}
       <td
         className="py-2.5 px-3 text-right"
-        style={{ backgroundColor: order.orderStatus !== 'paid' && order.balanceRemainingUsd > 0 ? 'rgba(255,214,10,0.06)' : undefined }}
+        style={{ backgroundColor: order.orderStatus !== 'paid' && order.balanceRemainingUsd > 0 ? hexToRgba(colors.yellow, 0.06) : undefined }}
       >
         {order.orderStatus === 'paid' ? (
           <span className="font-mono text-[11px]" style={{ color: colors.textTertiary }}>{'\u2014'}</span>
@@ -771,7 +772,7 @@ function FlowRow({
       {/* Total Cost */}
       <td
         className="py-2.5 px-3 text-right"
-        style={{ backgroundColor: 'rgba(48,209,88,0.06)' }}
+        style={{ backgroundColor: hexToRgba(colors.green, 0.06) }}
       >
         <UsdAmt
           value={order.totalCostUsd}
@@ -914,8 +915,8 @@ function FlowDetailContent({
                         <span
                           className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
                           style={{
-                            backgroundColor: block.isPaid ? `${colors.green}18` : 'rgba(255,69,58,0.12)',
-                            color: block.isPaid ? colors.green : '#ff453a',
+                            backgroundColor: block.isPaid ? `${colors.green}18` : hexToRgba(colors.red, 0.12),
+                            color: block.isPaid ? colors.green : colors.red,
                           }}
                         >
                           {block.isPaid ? t('flow.status.paid') : t('flow.status.unpaid')}
@@ -962,7 +963,7 @@ function FlowDetailContent({
                             <PriceCell amtUsd={sku.actualPriceUsd} colors={colors} />
                           </td>
                           <td className="py-2 px-4 text-right">
-                            <PriceCell amtUsd={sku.feeApportionedUsd} colors={colors} highlight="#ffd60a" />
+                            <PriceCell amtUsd={sku.feeApportionedUsd} colors={colors} highlight={colors.yellow} />
                           </td>
                           <td className="py-2 px-4 text-right">
                             <PriceCell amtUsd={sku.landedPriceUsd} colors={colors} highlight={colors.blue} bold />

@@ -79,8 +79,8 @@ export default function ClinicalCasePage() {
           </p>
           <button
             onClick={() => { resetModal(); setModalOpen(true); }}
-            style={{ backgroundColor: colors.controlAccent }}
-            className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+            className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition"
           >
             {t('p_valve.clinicalCase.newCase')}
           </button>

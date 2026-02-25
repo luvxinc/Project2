@@ -4,6 +4,8 @@ import { VMA_API as API, getAuthHeaders } from '@/lib/vma-api';
 import { useEffect, useState, useRef } from 'react';
 import { createTimeline } from 'animejs';
 
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, { ...init, headers: { ...getAuthHeaders(), ...init?.headers } });
   if (!res.ok) throw new Error(await res.text());
@@ -46,16 +48,7 @@ interface RoadmapMilestone {
   }[];
 }
 
-const DA_COLORS = [
-    '#0A84FF', // Apple Blue (Neon)
-    '#BF5AF2', // Apple Purple
-    '#32D74B', // Apple Green
-    '#FF9F0A', // Apple Orange
-    '#FF375F', // Apple Pink
-    '#64D2FF', // Apple Cyan
-    '#FFD60A', // Apple Yellow
-    '#5E5CE6', // Apple Indigo
-];
+// DA_COLORS now resolved dynamically inside the component from theme `colors`
 
 export default function TrainingMatrixRoadmap({
   colors,
@@ -63,7 +56,7 @@ export default function TrainingMatrixRoadmap({
   t,
   onClose,
 }: {
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   theme: 'dark' | 'light';
   t: (key: string, params?: Record<string, string | number | Date>) => string;
   onClose?: () => void;
@@ -133,6 +126,7 @@ export default function TrainingMatrixRoadmap({
 
   // Helper colors
   const isDark = theme === 'dark';
+  const DA_COLORS = [colors.blue, colors.indigo, colors.green, colors.orange, colors.pink, colors.cyan, colors.yellow, colors.purple];
 
   const getDaColor = (milestone: RoadmapMilestone) => {
       const da = milestone.sopChanges.find(c => c.daNo)?.daNo;
@@ -292,8 +286,8 @@ export default function TrainingMatrixRoadmap({
                                                     {ms.topNonCompliant.slice(0, 4).map((emp, ei) => (
                                                         <div key={ei} className="flex justify-between items-center text-xs p-2.5 rounded-lg transition border"
                                                              style={{ 
-                                                               backgroundColor: 'rgba(255, 69, 58, 0.1)', // Red tint
-                                                               borderColor: 'rgba(255, 69, 58, 0.2)' 
+                                                               backgroundColor: `${colors.red}1A`,
+                                                               borderColor: `${colors.red}33` 
                                                              }}>
                                                             <div className="font-semibold flex items-center gap-2">
                                                               <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center text-[9px] font-bold text-red-500">

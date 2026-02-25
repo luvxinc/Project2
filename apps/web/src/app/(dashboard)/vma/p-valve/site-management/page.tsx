@@ -108,8 +108,8 @@ export default function SiteManagementPage() {
           </p>
           <button
             onClick={openCreate}
-            style={{ backgroundColor: colors.blue }}
-            className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
+            className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -198,7 +198,7 @@ export default function SiteManagementPage() {
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+          style={{ backgroundColor: `${colors.bg}80`, backdropFilter: 'blur(8px)' }}
           onClick={() => { if (!saving) setModalOpen(false); }}
         >
           <div
@@ -370,8 +370,8 @@ export default function SiteManagementPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
-                style={{ backgroundColor: colors.blue }}
+                className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                style={{ backgroundColor: colors.blue, color: colors.white }}
               >
                 {saving ? t('p_valve.siteManagement.modal.saving') : editMode ? t('p_valve.siteManagement.modal.saveChanges') : t('p_valve.siteManagement.modal.createSite')}
               </button>

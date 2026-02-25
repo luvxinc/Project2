@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { inventoryApi } from '@/lib/api/inventory';
+import { hexToRgba } from '@/lib/status-colors';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import type { StocktakeListItem, StocktakeDetail, StocktakeItemData } from '@/lib/api/inventory';
@@ -155,8 +156,8 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
 
   if (!open) return null;
 
-  const cardBg = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
-  const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const cardBg = colors.bgSecondary;
+  const borderColor = colors.separator;
   const variance = currentItem && newQty !== '' && !qtyError
     ? parseInt(newQty) - currentItem.countedQty
     : null;
@@ -165,7 +166,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
     <>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+        style={{ backgroundColor: hexToRgba('#000000', 0.6), backdropFilter: 'blur(8px)' }}
         onClick={onClose}
       >
         <div
@@ -178,7 +179,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
             style={{ backgroundColor: colors.bgElevated, borderBottom: `1px solid ${borderColor}` }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #ff9f0a, #ff6f00)' }}>
+                style={{ background: `linear-gradient(135deg, ${colors.orange}, ${colors.orange}cc)` }}>
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
@@ -218,7 +219,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                     ))}
                   </select>
                   {stocktakes.length === 0 && (
-                    <p className="text-xs mt-1" style={{ color: '#ff9f0a' }}>{t('noAvailableDates')}</p>
+                    <p className="text-xs mt-1" style={{ color: colors.orange }}>{t('noAvailableDates')}</p>
                   )}
                 </div>
 
@@ -234,12 +235,12 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                         onClick={() => setActionType('update')}
                         className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                         style={{
-                          border: `2px solid ${actionType === 'update' ? '#ffc107' : borderColor}`,
-                          background: actionType === 'update' ? 'rgba(255,193,7,0.06)' : cardBg,
+                          border: `2px solid ${actionType === 'update' ? colors.yellow : borderColor}`,
+                          background: actionType === 'update' ? hexToRgba(colors.yellow, 0.06) : cardBg,
                         }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
-                          style={{ background: 'rgba(255,193,7,0.12)' }}>
-                          <svg className="w-4 h-4" fill="none" stroke="#ffc107" viewBox="0 0 24 24" strokeWidth={2}>
+                          style={{ background: hexToRgba(colors.yellow, 0.12) }}>
+                          <svg className="w-4 h-4" fill="none" stroke={colors.yellow} viewBox="0 0 24 24" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
                           </svg>
                         </div>
@@ -252,12 +253,12 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                         onClick={() => setActionType('delete')}
                         className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                         style={{
-                          border: `2px solid ${actionType === 'delete' ? '#dc3545' : borderColor}`,
-                          background: actionType === 'delete' ? 'rgba(220,53,69,0.04)' : cardBg,
+                          border: `2px solid ${actionType === 'delete' ? colors.red : borderColor}`,
+                          background: actionType === 'delete' ? hexToRgba(colors.red, 0.04) : cardBg,
                         }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
-                          style={{ background: 'rgba(220,53,69,0.12)' }}>
-                          <svg className="w-4 h-4" fill="none" stroke="#dc3545" viewBox="0 0 24 24" strokeWidth={2}>
+                          style={{ background: hexToRgba(colors.red, 0.12) }}>
+                          <svg className="w-4 h-4" fill="none" stroke={colors.red} viewBox="0 0 24 24" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                           </svg>
                         </div>
@@ -299,9 +300,9 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                         {currentItem && (
                           <>
                             <div className="flex items-center justify-between px-3 py-2 rounded-lg"
-                              style={{ background: 'rgba(0,113,227,0.06)', border: '1px solid rgba(0,113,227,0.15)' }}>
+                              style={{ background: hexToRgba(colors.blue, 0.06), border: `1px solid ${hexToRgba(colors.blue, 0.15)}` }}>
                               <span className="text-xs" style={{ color: colors.textSecondary }}>{t('currentValue')}</span>
-                              <span className="text-lg font-bold font-mono" style={{ color: '#0071e3' }}>
+                              <span className="text-lg font-bold font-mono" style={{ color: colors.controlAccent }}>
                                 {currentItem.countedQty}
                               </span>
                             </div>
@@ -320,12 +321,12 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                                 className="w-full h-9 px-3 rounded-lg text-sm outline-none"
                                 style={{
                                   backgroundColor: colors.bgElevated,
-                                  border: `1px solid ${qtyError ? '#dc3545' : borderColor}`,
+                                  border: `1px solid ${qtyError ? colors.red : borderColor}`,
                                   color: colors.text,
                                 }}
                               />
                               {qtyError && (
-                                <p className="text-xs mt-1" style={{ color: '#dc3545' }}>{qtyError}</p>
+                                <p className="text-xs mt-1" style={{ color: colors.red }}>{qtyError}</p>
                               )}
                             </div>
 
@@ -333,12 +334,11 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                             {variance !== null && (
                               <div className="flex items-center justify-between px-3 py-2 rounded-lg"
                                 style={{
-                                  background: variance > 0 ? 'rgba(52,199,89,0.06)' : 'rgba(220,53,69,0.06)',
-                                  border: `1px solid ${variance > 0 ? 'rgba(52,199,89,0.2)' : 'rgba(220,53,69,0.2)'}`,
-                                }}>
+                                  background: variance > 0 ? hexToRgba(colors.green, 0.06) : hexToRgba(colors.red, 0.06),
+                                  border: `1px solid ${variance > 0 ? hexToRgba(colors.green, 0.2) : hexToRgba(colors.red, 0.2)}`,                                }}>
                                 <span className="text-xs" style={{ color: colors.textSecondary }}>{t('variance')}</span>
                                 <span className="text-sm font-bold font-mono"
-                                  style={{ color: variance > 0 ? '#34c759' : '#dc3545' }}>
+                                  style={{ color: variance > 0 ? colors.green : colors.red }}>
                                   {variance > 0 ? '+' : ''}{variance}
                                 </span>
                               </div>
@@ -355,12 +355,12 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                   <div className="space-y-4">
                     {/* Warning */}
                     <div className="px-4 py-3 rounded-xl flex items-start gap-3"
-                      style={{ background: 'rgba(220,53,69,0.06)', border: '1px solid rgba(220,53,69,0.2)' }}>
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="#dc3545" viewBox="0 0 20 20">
+                      style={{ background: hexToRgba(colors.red, 0.06), border: `1px solid ${hexToRgba(colors.red, 0.2)}` }}>
+                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill={colors.red} viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: '#dc3545' }}>{t('highRiskWarning')}</p>
+                        <p className="text-sm font-medium" style={{ color: colors.red }}>{t('highRiskWarning')}</p>
                         <p className="text-xs mt-1" style={{ color: colors.textSecondary }}>
                           {t('deleteWarning', { date: selectedStocktake?.stocktakeDate || '' })}
                         </p>
@@ -380,12 +380,12 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                         className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
                         style={{
                           backgroundColor: cardBg,
-                          border: `1px solid ${deleteReason.trim() ? borderColor : 'rgba(220,53,69,0.3)'}`,
+                          border: `1px solid ${deleteReason.trim() ? borderColor : hexToRgba(colors.red, 0.3)}`,
                           color: colors.text,
                         }}
                       />
                       {deleteReason.trim() === '' && (
-                        <p className="text-xs mt-1" style={{ color: '#dc3545' }}>* {t('auditReason')}</p>
+                        <p className="text-xs mt-1" style={{ color: colors.red }}>* {t('auditReason')}</p>
                       )}
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
 
                 {/* Error */}
                 {error && (
-                  <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(220,53,69,0.08)', color: '#dc3545' }}>
+                  <div className="px-3 py-2 rounded-lg text-xs" style={{ background: hexToRgba(colors.red, 0.08), color: colors.red }}>
                     {error}
                   </div>
                 )}
@@ -406,7 +406,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                     className="px-5 py-2.5 rounded-full text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40"
                     style={{
                       background: canSubmit
-                        ? (actionType === 'delete' ? '#dc3545' : '#34c759')
+                        ? (actionType === 'delete' ? colors.red : colors.green)
                         : colors.textTertiary,
                     }}>
                     {actionType === 'delete' ?
@@ -431,7 +431,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
             {phase === 'done' && (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(52,199,89,0.1)' }}>
+                  style={{ background: hexToRgba(colors.green, 0.1) }}>
                   <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                   </svg>
@@ -456,7 +456,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                       </div>
                       <div className="flex justify-between">
                         <span style={{ color: colors.textTertiary }}>{t('newValue')}</span>
-                        <span className="font-mono font-bold" style={{ color: '#34c759' }}>{newQty}</span>
+                        <span className="font-mono font-bold" style={{ color: colors.green }}>{newQty}</span>
                       </div>
                     </div>
                   </div>
@@ -465,7 +465,7 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
                 {actionType === 'delete' && (
                   <div className="mt-4 rounded-xl p-4 text-left" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
                     <p className="text-xs font-medium mb-2" style={{ color: colors.textSecondary }}>{t('deletedDate')}</p>
-                    <p className="text-sm font-mono" style={{ color: '#dc3545' }}>{selectedStocktake?.stocktakeDate}</p>
+                    <p className="text-sm font-mono" style={{ color: colors.red }}>{selectedStocktake?.stocktakeDate}</p>
                     <p className="text-xs mt-2" style={{ color: colors.textTertiary }}>{t('deleteReason')}: {deleteReason}</p>
                   </div>
                 )}
@@ -482,13 +482,13 @@ export function EditStocktakeDialog({ open, onClose, onComplete, stocktakes }: E
             {phase === 'error' && (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(220,53,69,0.1)' }}>
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#dc3545' }}>
+                  style={{ background: hexToRgba(colors.red, 0.1) }}>
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20" style={{ color: colors.red }}>
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" />
                   </svg>
                 </div>
                 <h4 className="text-lg font-semibold mb-1" style={{ color: colors.text }}>{t('operationFailed')}</h4>
-                <p className="text-sm mb-6" style={{ color: '#dc3545' }}>{error}</p>
+                <p className="text-sm mb-6" style={{ color: colors.red }}>{error}</p>
                 <button onClick={() => { setPhase('form'); setError(''); }}
                   className="px-6 py-2.5 rounded-full text-sm font-medium transition-all hover:opacity-90"
                   style={{ border: `1px solid ${borderColor}`, color: colors.text }}>

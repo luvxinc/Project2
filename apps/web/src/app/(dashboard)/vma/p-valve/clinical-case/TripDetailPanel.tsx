@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Trip } from './TripListTable';
 import type { ClinicalCase } from './types';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface TripTransaction {
   id: string;
@@ -30,7 +31,7 @@ interface TripDetailPanelProps {
   trip: Trip;
   detail: TripDetailData | null;
   loading: boolean;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onBack: () => void;
   onDelete: (tripId: string) => void;
   onAssign: (tripId: string, caseId: string, txnIds: string[]) => Promise<boolean>;
@@ -155,8 +156,8 @@ export default function TripDetailPanel({
             <span
               className="ml-3 px-2 py-0.5 rounded-full text-[10px] font-semibold"
               style={{
-                backgroundColor: isCompleted ? '#30d15820' : `${colors.orange}20`,
-                color: isCompleted ? '#30d158' : colors.orange,
+                backgroundColor: isCompleted ? `${colors.green}20` : `${colors.orange}20`,
+                color: isCompleted ? colors.green : colors.orange,
               }}
             >
               {isCompleted ? '✓ Completed' : '● Out'}
@@ -170,8 +171,8 @@ export default function TripDetailPanel({
               <button
                 onClick={handleComplete}
                 disabled={actionLoading}
-                className="px-3 py-1.5 rounded-lg text-xs text-white font-medium hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: colors.green }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: colors.green, color: colors.white }}
               >
                 ✓ Complete Trip
               </button>
@@ -179,7 +180,7 @@ export default function TripDetailPanel({
             <button
               onClick={() => onDelete(trip.tripId)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80"
-              style={{ color: colors.red, backgroundColor: '#ff453a15' }}
+              style={{ color: colors.red, backgroundColor: `${colors.red}15` }}
             >
               Delete
             </button>
@@ -210,8 +211,8 @@ export default function TripDetailPanel({
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                     style={{
-                      backgroundColor: c.status === 'COMPLETED' ? '#30d15820' : `${colors.controlAccent}20`,
-                      color: c.status === 'COMPLETED' ? '#30d158' : colors.controlAccent,
+                      backgroundColor: c.status === 'COMPLETED' ? `${colors.green}20` : `${colors.controlAccent}20`,
+                      color: c.status === 'COMPLETED' ? colors.green : colors.controlAccent,
                     }}
                   >
                     {c.status}
@@ -257,8 +258,8 @@ export default function TripDetailPanel({
               <button
                 onClick={handleAddCase}
                 disabled={!addCaseId || actionLoading}
-                className="px-3 py-1.5 rounded-lg text-xs text-white font-medium hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: colors.controlAccent }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: colors.controlAccent, color: colors.white }}
               >
                 + Add
               </button>
@@ -340,8 +341,8 @@ export default function TripDetailPanel({
                 <button
                   onClick={handleAssign}
                   disabled={!assignCaseId || actionLoading}
-                  className="px-3 py-1.5 rounded-lg text-xs text-white font-medium hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: colors.controlAccent }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: colors.controlAccent, color: colors.white }}
                 >
                   Assign
                 </button>
@@ -370,8 +371,8 @@ export default function TripDetailPanel({
             <button
               onClick={handleComplete}
               disabled={actionLoading}
-              className="px-6 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: colors.green }}
+              className="px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: colors.green, color: colors.white }}
             >
               ✓ Complete This Trip
             </button>

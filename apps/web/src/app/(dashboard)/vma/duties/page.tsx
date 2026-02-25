@@ -131,8 +131,8 @@ function DeptGroupCarousel({
       <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-bold tracking-wider"
-            style={{ backgroundColor: group.color }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold tracking-wider"
+            style={{ backgroundColor: group.color, color: colors.white }}
           >
             {group.code.slice(0, 3)}
           </div>
@@ -331,8 +331,8 @@ function DutyCard({
           <button
             onClick={onDelete}
             disabled={!canDelete}
-            className="h-8 px-3 flex items-center justify-center rounded-lg text-[12px] font-medium transition-all hover:opacity-90 text-white disabled:opacity-30"
-            style={{ backgroundColor: colors.red }}
+            className="h-8 px-3 flex items-center justify-center rounded-lg text-[12px] font-medium transition-all hover:opacity-90 disabled:opacity-30"
+            style={{ backgroundColor: colors.red, color: colors.white }}
             title={canDelete ? t('departments.actions.delete') : t('departments.actions.cannotDelete')}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -561,8 +561,8 @@ export default function DutiesPage() {
           </div>
           <button
             onClick={openAddDepartment}
-            style={{ backgroundColor: colors.controlAccent }}
-            className="px-5 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+            className="px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition"
           >
             + {t('departments.actions.addDepartment')}
           </button>
@@ -647,10 +647,10 @@ export default function DutiesPage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50 transition-all ${
+          className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all ${
             toast.type === 'ok' ? '' : ''
           }`}
-          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red }}
+          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red, color: colors.white }}
         >
           {toast.msg}
         </div>
@@ -825,8 +825,8 @@ function DeptFormModal({
             <button
               type="submit"
               disabled={saving || !code.trim() || !name.trim() || !duties.trim()}
-              style={{ backgroundColor: colors.controlAccent }}
-              className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+              style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+              className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
             >
               {saving ? '...' : (t('sopRequirementsModal.save') || 'Save')}
             </button>

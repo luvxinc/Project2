@@ -4,12 +4,13 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { LineItem, SpecOption, PickedProduct } from './types';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface ProductLineProps {
   line: LineItem;
   index: number;
   specOptions: SpecOption[];
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   onSpecChange: (spec: string) => void;
   onQtyChange: (qty: number) => void;
   onPick: () => void;

@@ -3,6 +3,7 @@
 import type { Site, SpecOption, DSOption, LineItem, PickedProduct } from './types';
 import ProductLine from './ProductLine';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 export interface AdditionalCaseRow {
   caseNo: string;
@@ -12,7 +13,7 @@ export interface AdditionalCaseRow {
 }
 
 interface NewCaseModalProps {
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   sites: Site[];
   // Primary Case Fields
   caseNo: string;
@@ -73,7 +74,7 @@ export default function NewCaseModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+      style={{ backgroundColor: `${colors.bg}80`, backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
       <div
@@ -229,8 +230,8 @@ export default function NewCaseModal({
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex-1" />
           <button onClick={onSubmit} disabled={submitting}
-            style={{ backgroundColor: colors.controlAccent }}
-            className="px-6 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+            className="px-6 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
           >
             {submitting ? t('p_valve.clinicalCase.newCaseModal.creating') : t('p_valve.clinicalCase.newCaseModal.createAndDownload')}
           </button>

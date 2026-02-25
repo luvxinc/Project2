@@ -128,7 +128,7 @@ const fmtNum = (val: number, decimals = 2) =>
 
 function StrategyVersionCard({ version: v, idx, colors, t }: {
   version: DepositStrategyVersion; idx: number;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
 }) {
@@ -193,7 +193,7 @@ function StrategyVersionCard({ version: v, idx, colors, t }: {
 
 function PaymentVersionCard({ version: v, idx, colors, t }: {
   version: DepositPaymentVersion; idx: number;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
 }) {
@@ -256,7 +256,7 @@ function PaymentVersionCard({ version: v, idx, colors, t }: {
   );
 }
 
-function ChangeRow({ change, colors }: { change: FieldChange; colors: Record<string, string> }) {
+function ChangeRow({ change, colors }: { change: FieldChange; colors: (typeof themeColors)['dark'] }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: colors.bgTertiary }}>
       <span className="w-28 shrink-0 font-medium" style={{ color: colors.textTertiary }}>{change.field}</span>

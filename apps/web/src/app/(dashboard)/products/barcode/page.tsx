@@ -207,8 +207,8 @@ export default function BarcodePage() {
               const loginBtn = document.querySelector('[data-login-trigger]') as HTMLElement;
               if (loginBtn) loginBtn.click();
             }}
-            className="inline-flex items-center px-6 py-2 rounded-full text-white"
-            style={{ backgroundColor: colors.blue }}
+            className="inline-flex items-center px-6 py-2 rounded-full"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
           >
             {tCommon('signIn')}
           </button>
@@ -324,19 +324,19 @@ export default function BarcodePage() {
                     style={{ color: colors.textSecondary }}
                     className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide"
                   >
-                    SKU
+                    {t('list.columns.sku')}
                   </th>
                   <th
                     style={{ color: colors.blue }}
                     className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide w-[160px]"
                   >
-                    Qty/Box
+                    {t('barcode.qtyPerBox')}
                   </th>
                   <th
                     style={{ color: colors.orange }}
                     className="text-left py-3 px-5 text-[11px] font-semibold uppercase tracking-wide w-[160px]"
                   >
-                    Box/Ctn
+                    {t('barcode.boxPerCtn')}
                   </th>
                   <th
                     style={{ color: colors.textTertiary }}
@@ -378,12 +378,13 @@ export default function BarcodePage() {
                         <select
                           value={row.sku}
                           onChange={(e) => updateRow(row.id, 'sku', e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 transition-all"
                           style={{
                             backgroundColor: colors.bgTertiary,
                             borderColor: colors.border,
                             color: row.sku ? colors.text : colors.textTertiary,
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
+                            '--tw-ring-color': colors.blue,
+                          } as React.CSSProperties}
                         >
                           <option value="">{t('barcode.selectSku')}</option>
                           {skuList.map((s: SkuItem) => (
@@ -402,12 +403,13 @@ export default function BarcodePage() {
                           value={row.qtyPerBox}
                           onChange={(e) => updateRow(row.id, 'qtyPerBox', e.target.value)}
                           placeholder="0"
+                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 transition-all"
                           style={{
                             backgroundColor: colors.bgTertiary,
                             borderColor: colors.border,
                             color: colors.blue,
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
+                            '--tw-ring-color': colors.blue,
+                          } as React.CSSProperties}
                         />
                       </td>
 
@@ -419,12 +421,13 @@ export default function BarcodePage() {
                           value={row.boxPerCtn}
                           onChange={(e) => updateRow(row.id, 'boxPerCtn', e.target.value)}
                           placeholder="0"
+                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 transition-all"
                           style={{
                             backgroundColor: colors.bgTertiary,
                             borderColor: colors.border,
                             color: colors.orange,
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-[#0071e3] transition-all"
+                            '--tw-ring-color': colors.blue,
+                          } as React.CSSProperties}
                         />
                       </td>
 
@@ -496,7 +499,7 @@ export default function BarcodePage() {
                 <>
                   <div
                     className="w-4 h-4 border-2 rounded-full animate-spin"
-                    style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#ffffff' }}
+                    style={{ borderColor: `${colors.white}4D`, borderTopColor: colors.white }}
                   />
                   {t('barcode.generating')}
                 </>

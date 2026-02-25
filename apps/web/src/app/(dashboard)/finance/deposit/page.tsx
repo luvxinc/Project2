@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { hexToRgba } from '@/lib/status-colors';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi, type DepositListItem } from '@/lib/api/finance';
 import { purchaseApi, type PurchaseOrder } from '@/lib/api/purchase';
@@ -484,7 +485,7 @@ export default function DepositPage() {
               onClick={handleSubmitPayment}
               disabled={selectedItems.length === 0}
               style={{
-                backgroundColor: selectedItems.length > 0 ? '#30d158' : colors.bgTertiary,
+                backgroundColor: selectedItems.length > 0 ? colors.green : colors.bgTertiary,
                 color: selectedItems.length > 0 ? '#ffffff' : colors.textTertiary,
               }}
               className="ml-auto h-9 px-4 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed flex items-center gap-1.5"
@@ -523,7 +524,7 @@ export default function DepositPage() {
                   </h2>
                   <span
                     className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: 'rgba(255,159,10,0.12)', color: colors.orange }}
+                    style={{ backgroundColor: hexToRgba(colors.orange, 0.12), color: colors.orange }}
                   >
                     {unpaidData.length}
                   </span>
@@ -564,7 +565,7 @@ export default function DepositPage() {
                     </h2>
                     <span
                       className="text-xs font-medium px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}
+                      style={{ backgroundColor: hexToRgba(colors.green, 0.12), color: colors.green }}
                     >
                       {paymentGroups.length}
                     </span>

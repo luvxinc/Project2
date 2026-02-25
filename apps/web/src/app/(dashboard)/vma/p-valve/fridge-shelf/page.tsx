@@ -646,13 +646,13 @@ export default function FridgeShelfPage() {
 
       {/* ═══════════ Place Product Modal ═══════════ */}
       {modal?.type === 'place' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: `${colors.bg}B3`, backdropFilter: 'blur(4px)' }}>
           <div className="absolute inset-0 backdrop-blur-md" />
           <div
             className="relative rounded-2xl shadow-2xl w-full max-w-[420px] mx-4 overflow-hidden"
             style={{
               backgroundColor: colors.bgSecondary,
-              border: `2px solid #0071e3`,
+              border: `2px solid ${colors.blue}`,
             }}
           >
             <div className="p-6">
@@ -786,8 +786,8 @@ export default function FridgeShelfPage() {
                 <button
                   onClick={handlePlace}
                   disabled={!placeSpec || !placeSerial || saving}
-                  className="flex-1 h-[44px] rounded-xl text-[15px] font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center"
-                  style={{ backgroundColor: colors.blue }}
+                  className="flex-1 h-[44px] rounded-xl text-[15px] font-medium transition-colors disabled:opacity-50 flex items-center justify-center"
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
                 >
                   {saving ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -803,13 +803,13 @@ export default function FridgeShelfPage() {
 
       {/* ═══════════ View Slot Modal ═══════════ */}
       {modal?.type === 'view' && modal.slot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: `${colors.bg}B3`, backdropFilter: 'blur(4px)' }}>
           <div className="absolute inset-0 backdrop-blur-md" />
           <div
             className="relative rounded-2xl shadow-2xl w-full max-w-[380px] mx-4 overflow-hidden"
             style={{
               backgroundColor: colors.bgSecondary,
-              border: `2px solid #0071e3`,
+              border: `2px solid ${colors.blue}`,
             }}
           >
             <div className="p-6">
@@ -845,8 +845,8 @@ export default function FridgeShelfPage() {
                 </button>
                 <button
                   onClick={() => handleRemove(modal.slot!.id)}
-                  className="flex-1 h-[44px] rounded-xl text-[15px] font-medium text-white transition-colors"
-                  style={{ backgroundColor: colors.red }}
+                  className="flex-1 h-[44px] rounded-xl text-[15px] font-medium transition-colors"
+                  style={{ backgroundColor: colors.red, color: colors.white }}
                 >
                   {t('p_valve.fridgeShelf.removeProduct')}
                 </button>
@@ -858,9 +858,10 @@ export default function FridgeShelfPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-2xl text-[14px] font-medium text-white"
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-2xl text-[14px] font-medium"
           style={{
             backgroundColor: toast.type === 'ok' ? colors.green : colors.red,
+            color: colors.white,
           }}
         >
           {toast.msg}

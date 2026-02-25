@@ -3,9 +3,10 @@
 import type { Site, SpecOption, DSOption, LineItem, PickedProduct, ClinicalCase } from './types';
 import ProductLine from './ProductLine';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface NewTripModalProps {
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   sites: Site[];
   siteId: string;
   setSiteId: (v: string) => void;
@@ -206,8 +207,8 @@ export default function NewTripModal({
           <button
             onClick={onSubmit}
             disabled={submitting || !siteId || !tripDate || !hasPicked || selectedCaseIds.length === 0}
-            className="px-6 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
-            style={{ backgroundColor: colors.controlAccent }}
+            className="px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
           >
             {submitting ? 'Creating...' : `Create Trip (${selectedCaseIds.length} Cases)`}
           </button>

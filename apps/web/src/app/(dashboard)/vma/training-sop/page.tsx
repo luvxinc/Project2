@@ -287,8 +287,8 @@ export default function TrainingSopPage() {
           </div>
           <button
             onClick={openAdd}
-            style={{ backgroundColor: colors.controlAccent }}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition"
           >
             <IconPlus /> {t('trainingSop.actions.add')}
           </button>
@@ -391,7 +391,9 @@ export default function TrainingSopPage() {
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50 ${toast.type === 'ok' ? 'bg-green-500' : 'bg-red-500'}`}>
+        <div className="fixed bottom-6 right-6 px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50"
+          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red, color: colors.white }}
+        >
           {toast.msg}
         </div>
       )}
@@ -1077,8 +1079,8 @@ function SopFormModal({
               <button
                 type="submit"
                 disabled={saving || !sopNo.trim() || !name.trim() || !version.trim() || !effectiveDate}
-                style={{ backgroundColor: colors.controlAccent }}
-                className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+                className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
               >
                 {saving ? '...' : (t('sopRequirementsModal.save') || 'Save')}
               </button>

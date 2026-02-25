@@ -486,8 +486,8 @@ export default function InventoryPage() {
           </p>
           <div className="flex items-center gap-2">
             <button onClick={() => setReceiveModalOpen(true)}
-              style={{ backgroundColor: colors.blue }}
-              className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5">
+              style={{ backgroundColor: colors.blue, color: colors.white }}
+              className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
               {t('p_valve.inventory.actions.receiveFromChina')}
             </button>
@@ -599,8 +599,8 @@ export default function InventoryPage() {
             </div>
             <div className="flex justify-end mt-4">
               <button onClick={handleSubmit} disabled={!formData.specNo}
-                className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
-                style={{ backgroundColor: colors.blue }}>
+                className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
+                style={{ backgroundColor: colors.blue, color: colors.white }}>
                 {t('p_valve.inventory.actions.saveTransaction')}
               </button>
             </div>
@@ -961,8 +961,8 @@ function LedgerEntry({
                   <button
                     onClick={() => onSave(txn)}
                     disabled={saving}
-                    className="text-[11px] font-medium px-2.5 py-1 rounded-lg text-white disabled:opacity-40"
-                    style={{ backgroundColor: colors.blue }}
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-lg disabled:opacity-40"
+                    style={{ backgroundColor: colors.blue, color: colors.white }}
                   >{saving ? 'Saving...' : 'Save'}</button>
                 </>
               )

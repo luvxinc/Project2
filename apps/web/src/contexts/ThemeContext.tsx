@@ -392,6 +392,9 @@ export const themeColors = {
   },
 };
 
+/** 主题色集类型 — 用于组件 props 代替 Record<string, string> */
+export type ThemeColorSet = typeof themeColors.dark;
+
 // 导出完整 token 供高级用途
 export { colorTokens };
 

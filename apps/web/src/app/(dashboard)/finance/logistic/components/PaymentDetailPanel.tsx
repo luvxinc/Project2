@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { financeApi } from '@/lib/api';
+import { hexToRgba } from '@/lib/status-colors';
 import type { LogisticListItem, LogisticSendVersion, LogisticPaymentVersion, FieldChange } from '@/lib/api';
 import type { PaymentGroup } from './PaidPaymentCard';
 
@@ -84,7 +85,7 @@ export default function PaymentDetailPanel({
             <button
               onClick={() => onRestorePayment(group.pmtNo)}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}
+              style={{ backgroundColor: hexToRgba(colors.green, 0.12), color: colors.green }}
             >
               {t('logistic.actions.restore')}
             </button>
@@ -92,7 +93,7 @@ export default function PaymentDetailPanel({
             <button
               onClick={() => onDeletePayment(group.pmtNo)}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+              style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
             >
               {t('logistic.actions.delete')}
             </button>
@@ -105,7 +106,7 @@ export default function PaymentDetailPanel({
         className="rounded-xl mb-5"
         style={{
           backgroundColor: colors.bgSecondary,
-          border: `1px solid ${group.isDeleted ? 'rgba(142,142,147,0.3)' : colors.border}`,
+          border: `1px solid ${group.isDeleted ? hexToRgba(colors.gray, 0.3) : colors.border}`,
           opacity: group.isDeleted ? 0.7 : 1,
         }}
       >
@@ -121,7 +122,7 @@ export default function PaymentDetailPanel({
             {group.isDeleted && (
               <span
                 className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: 'rgba(142,142,147,0.14)', color: colors.gray, boxShadow: '0 0 0 1px rgba(142,142,147,0.25)' }}
+                style={{ backgroundColor: hexToRgba(colors.gray, 0.14), color: colors.gray, boxShadow: `0 0 0 1px ${hexToRgba(colors.gray, 0.25)}` }}
               >
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: colors.gray }} />
                 {t('logistic.status.deleted')}
@@ -285,7 +286,7 @@ export default function PaymentDetailPanel({
 
 function FieldBlock({ label, value, suffix, colors, mono }: {
   label: string; value: string; suffix?: string;
-  colors: Record<string, string>; mono?: boolean;
+  colors: Record<string, any>; mono?: boolean;
 }) {
   return (
     <div>
@@ -296,8 +297,8 @@ function FieldBlock({ label, value, suffix, colors, mono }: {
           <span
             className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded"
             style={{
-              backgroundColor: suffix === 'Auto' || suffix === '自动'
-                ? 'rgba(10,132,255,0.14)' : 'rgba(142,142,147,0.14)',
+               backgroundColor: suffix === 'Auto' || suffix === '自动'
+                ? hexToRgba(colors.blue, 0.14) : hexToRgba(colors.gray, 0.14),
               color: suffix === 'Auto' || suffix === '自动'
                 ? colors.blue : colors.gray,
             }}
@@ -314,7 +315,7 @@ function HistoryContent({ sendVersions, paymentVersions, isLoading, colors }: {
   sendVersions: LogisticSendVersion[];
   paymentVersions: LogisticPaymentVersion[];
   isLoading: boolean;
-  colors: Record<string, string>;
+  colors: Record<string, any>;
 }) {
   const t = useTranslations('finance');
 
@@ -386,7 +387,7 @@ function VersionCard({ type, version: v, idx, colors, fmtNum }: {
   type: 'send' | 'payment';
   version: LogisticSendVersion | LogisticPaymentVersion;
   idx: number;
-  colors: Record<string, string>;
+  colors: Record<string, any>;
   fmtNum: (val: number, d?: number) => string;
 }) {
   const t = useTranslations('finance');
@@ -471,7 +472,7 @@ function VersionCard({ type, version: v, idx, colors, fmtNum }: {
 function OrdersContent({ orders, isLoading, colors }: {
   orders: { poNum: string; supplierCode: string; orderDate: string; currency: string; exchangeRate: number; items: { sku: string; qty: number; unitPrice: number; currency: string; valueRmb: number; valueUsd: number }[]; totalRmb: number; totalUsd: number }[];
   isLoading: boolean;
-  colors: Record<string, string>;
+  colors: Record<string, any>;
   onClickOrder: (item: LogisticListItem) => void;
   shipmentItems: LogisticListItem[];
 }) {

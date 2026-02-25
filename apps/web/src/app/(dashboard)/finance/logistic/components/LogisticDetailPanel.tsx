@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { financeApi } from '@/lib/api';
-import { paymentStatusStyle } from '@/lib/status-colors';
+import { paymentStatusStyle, hexToRgba } from '@/lib/status-colors';
 import type { LogisticListItem, LogisticSendVersion, LogisticPaymentVersion, FieldChange } from '@/lib/api';
 
 interface LogisticDetailPanelProps {
@@ -196,7 +196,7 @@ export default function LogisticDetailPanel({
                     <span style={{ color: colors.textTertiary }}>{child.dateSent}</span>
                     {child.isPaid && (
                       <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ backgroundColor: 'rgba(48,209,88,0.12)', color: colors.green }}>
+                        style={{ backgroundColor: hexToRgba(colors.green, 0.12), color: colors.green }}>
                         {t('logistic.status.paid')}
                       </span>
                     )}
@@ -271,7 +271,7 @@ export default function LogisticDetailPanel({
 
 function DetailField({ label, value, suffix, colors, mono }: {
   label: string; value: string; suffix?: string;
-  colors: Record<string, string>; mono?: boolean;
+  colors: (typeof themeColors)['dark']; mono?: boolean;
 }) {
   return (
     <div>
@@ -290,7 +290,7 @@ function HistoryTabContent({ sendVersions, paymentVersions, isLoading, colors }:
   sendVersions: LogisticSendVersion[];
   paymentVersions: LogisticPaymentVersion[];
   isLoading: boolean;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
 }) {
   const t = useTranslations('finance');
 
@@ -383,7 +383,7 @@ function HistoryTabContent({ sendVersions, paymentVersions, isLoading, colors }:
 }
 
 function SendVersionCard({ version: v, idx, colors }: {
-  version: LogisticSendVersion; idx: number; colors: Record<string, string>;
+  version: LogisticSendVersion; idx: number; colors: (typeof themeColors)['dark'];
 }) {
   const t = useTranslations('finance');
   const dateStr = v.dateRecord ? new Date(v.dateRecord).toLocaleString() : '';
@@ -453,7 +453,7 @@ function SendVersionCard({ version: v, idx, colors }: {
 }
 
 function PaymentVersionCard({ version: v, idx, colors }: {
-  version: LogisticPaymentVersion; idx: number; colors: Record<string, string>;
+  version: LogisticPaymentVersion; idx: number; colors: (typeof themeColors)['dark'];
 }) {
   const t = useTranslations('finance');
   const dateStr = v.dateRecord ? new Date(v.dateRecord).toLocaleString() : '';
@@ -522,7 +522,7 @@ function PaymentVersionCard({ version: v, idx, colors }: {
   );
 }
 
-function ChangeRow({ change, colors }: { change: FieldChange; colors: Record<string, string> }) {
+function ChangeRow({ change, colors }: { change: FieldChange; colors: (typeof themeColors)['dark'] }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: colors.bgTertiary }}>
       <span className="w-24 shrink-0 font-medium" style={{ color: colors.textTertiary }}>{change.field}</span>
@@ -538,7 +538,7 @@ function ChangeRow({ change, colors }: { change: FieldChange; colors: Record<str
 function OrdersTabContent({ orders, isLoading, colors }: {
   orders: { poNum: string; supplierCode: string; orderDate: string; currency: string; exchangeRate: number; items: { sku: string; qty: number; unitPrice: number; currency: string; valueRmb: number; valueUsd: number }[]; totalRmb: number; totalUsd: number }[];
   isLoading: boolean;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
 }) {
   const t = useTranslations('finance');
   const fmtNum = (val: number, d = 2) => val.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });

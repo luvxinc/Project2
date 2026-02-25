@@ -276,11 +276,11 @@ export default function EmployeeCareerRoadmap({
 
   const getEventColor = (type: string) => {
     switch (type) {
-        case 'HIRED': return 'bg-emerald-500 text-white';
-        case 'JOINED': return 'bg-blue-500 text-white';
-        case 'LEFT': return 'bg-orange-500 text-white';
-        case 'STATUS': return 'bg-purple-500 text-white';
-        default: return 'bg-gray-500 text-white';
+        case 'HIRED': return 'bg-emerald-500';
+        case 'JOINED': return 'bg-blue-500';
+        case 'LEFT': return 'bg-orange-500';
+        case 'STATUS': return 'bg-purple-500';
+        default: return 'bg-gray-500';
     }
   };
   const getEventIcon = (type: string) => {
@@ -368,7 +368,7 @@ export default function EmployeeCareerRoadmap({
                                     <div className="p-0 overflow-y-auto h-[calc(50vh-60px)]">
                                         {group.events.map((evt, ei) => (
                                             <div key={ei} className="px-6 py-5 border-b border-dashed border-gray-500/10 hover:bg-black/5 flex items-start gap-4">
-                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-md text-xs font-bold ${getEventColor(evt.type)}`}>
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-md text-xs font-bold ${getEventColor(evt.type)}`} style={{ color: colors.white }}>
                                                     {getEventIcon(evt.type)}
                                                 </div>
                                                 <div className="flex-1">
@@ -412,7 +412,8 @@ export default function EmployeeCareerRoadmap({
                         <div className="ms-add-node absolute top-1/2 left-0 -translate-y-1/2 opacity-0" 
                              style={{ transform: `translateX(${history.length * SLOT_W + CARD_W / 2}px)` }}>
                             <div onClick={openNewEditor}
-                                 className="w-14 h-14 -ml-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 hover:bg-blue-500 transition-all z-20">
+                                 className="w-14 h-14 -ml-7 rounded-full flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-all z-20"
+                                 style={{ backgroundColor: colors.blue, color: colors.white }}>
                                 <span className="text-3xl font-light mb-1">+</span>
                             </div>
                             <div className="absolute top-16 left-1/2 -translate-x-1/2 text-center w-[120px] opacity-60 text-xs font-bold uppercase tracking-widest text-blue-500">
@@ -440,10 +441,10 @@ export default function EmployeeCareerRoadmap({
                         // CREATE MODE
                         <>
                             <div className="grid grid-cols-3 gap-3 mb-6">
-                                <button onClick={() => setActionType('ASSIGN')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${actionType === 'ASSIGN' ? 'bg-blue-500 text-white border-blue-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`}>{t('employees.career.addDuty') || 'Add Duty +'}</button>
+                                <button onClick={() => setActionType('ASSIGN')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${actionType === 'ASSIGN' ? 'border-blue-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`} style={actionType === 'ASSIGN' ? { backgroundColor: colors.blue, color: colors.white } : undefined}>{t('employees.career.addDuty') || 'Add Duty +'}</button>
                                 <button onClick={() => setActionType('REMOVE')} disabled={!canRemoveDuty}
-                                        className={`py-3 rounded-xl text-sm font-bold border transition-all ${!canRemoveDuty ? 'opacity-30 cursor-not-allowed bg-gray-100' : actionType === 'REMOVE' ? 'bg-orange-500 text-white border-orange-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`}>{t('employees.career.removeDuty') || 'Remove Duty -'}</button>
-                                <button onClick={() => setActionType('STATUS')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${actionType === 'STATUS' ? 'bg-purple-500 text-white border-purple-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`}>{t('employees.career.terminateStatus') || 'Terminate / Status'}</button>
+                                        className={`py-3 rounded-xl text-sm font-bold border transition-all ${!canRemoveDuty ? 'opacity-30 cursor-not-allowed bg-gray-100' : actionType === 'REMOVE' ? 'border-orange-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`} style={actionType === 'REMOVE' && canRemoveDuty ? { backgroundColor: colors.orange, color: colors.white } : undefined}>{t('employees.career.removeDuty') || 'Remove Duty -'}</button>
+                                <button onClick={() => setActionType('STATUS')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${actionType === 'STATUS' ? 'border-purple-500 shadow-lg' : 'bg-gray-100 dark:bg-white/5 border-transparent opacity-60'}`} style={actionType === 'STATUS' ? { backgroundColor: colors.indigo, color: colors.white } : undefined}>{t('employees.career.terminateStatus') || 'Terminate / Status'}</button>
                             </div>
 
                             {!canRemoveDuty && actionType === 'REMOVE' && (
@@ -487,7 +488,7 @@ export default function EmployeeCareerRoadmap({
                                 )}
                             </div>
                             <div className="mt-8">
-                                <button onClick={handleCreate} disabled={saving || (!canRemoveDuty && actionType === 'REMOVE')} className="w-full py-4 rounded-xl font-bold text-lg text-white shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: actionType === 'ASSIGN' ? colors.blue : actionType === 'REMOVE' ? colors.orange : colors.indigo }}>{saving ? (t('employees.career.processing') || 'Processing...') : (t('employees.career.confirmPlan') || 'Confirm Plan')}</button>
+                                <button onClick={handleCreate} disabled={saving || (!canRemoveDuty && actionType === 'REMOVE')} className="w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: actionType === 'ASSIGN' ? colors.blue : actionType === 'REMOVE' ? colors.orange : colors.indigo, color: colors.white }}>{saving ? (t('employees.career.processing') || 'Processing...') : (t('employees.career.confirmPlan') || 'Confirm Plan')}</button>
                             </div>
                         </>
                     ) : (
@@ -501,7 +502,7 @@ export default function EmployeeCareerRoadmap({
                                              <div className="text-xs opacity-60">{evt.subtitle}</div>
                                          </div>
                                          {evt.type === 'JOINED' && evt.assignmentId && editingEventId !== evt.assignmentId && (
-                                             <button onClick={() => startEditEvent(evt)} className="px-3 py-1.5 bg-blue-500/10 text-blue-500 text-xs font-bold rounded-lg hover:bg-blue-500 hover:text-white transition">{t('employees.career.changeDuty') || 'Change Duty'}</button>
+                                             <button onClick={() => startEditEvent(evt)} className="px-3 py-1.5 text-xs font-bold rounded-lg transition" style={{ backgroundColor: `${colors.blue}1a`, color: colors.blue }}>{t('employees.career.changeDuty') || 'Change Duty'}</button>
                                          )}
                                      </div>
                                      {editingEventId === evt.assignmentId && (
@@ -511,7 +512,7 @@ export default function EmployeeCareerRoadmap({
                                                   <select value={updateDeptId} onChange={e => setUpdateDeptId(e.target.value)} className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-sm">
                                                       {departments.map(d => (<option key={d.id} value={d.id}>{d.code} - {d.duties}</option>))}
                                                   </select>
-                                                  <button onClick={handleUpdateEvent} disabled={saving} className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">{t('employees.career.save') || 'Save'}</button>
+                                                  <button onClick={handleUpdateEvent} disabled={saving} className="px-4 py-2 text-sm font-bold rounded-lg hover:opacity-90" style={{ backgroundColor: colors.blue, color: colors.white }}>{t('employees.career.save') || 'Save'}</button>
                                                   <button onClick={() => setEditingEventId(null)} className="px-4 py-2 bg-gray-200 dark:bg-white/10 text-sm font-bold rounded-lg hover:opacity-70">{t('employees.career.cancel') || 'Cancel'}</button>
                                               </div>
                                               <div className="mt-2 text-[10px] text-orange-500 font-medium">{t('employees.career.historyAdjustment') || '* History adjustment: This will update the official record for this date.'}</div>

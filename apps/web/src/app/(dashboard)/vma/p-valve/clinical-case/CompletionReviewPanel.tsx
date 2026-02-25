@@ -3,13 +3,14 @@
 import type { ClinicalCase, CaseTransaction, CompletionItem } from './types';
 import { CONDITIONAL_NOTES_ITEMS } from './types';
 import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 interface CompletionReviewPanelProps {
   selectedCase: ClinicalCase;
   caseDetail: CaseTransaction[];
   completionItems: CompletionItem[];
   setCompletionItems: (fn: (prev: CompletionItem[]) => CompletionItem[]) => void;
-  colors: Record<string, string>;
+  colors: ThemeColorSet;
   closeCompletionReview: () => void;
   setConfirmModalOpen: (v: boolean) => void;
 }

@@ -6,20 +6,10 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { animate, stagger } from 'animejs';
 
-// 产品模块功能配置
-const productFeatures = [
-  {
-    key: 'cogs',
-    href: '/products/cogs',
-    icon: 'cogs',
-    accent: '#0071e3', // Apple Blue
-  },
-  {
-    key: 'barcode',
-    href: '/products/barcode',
-    icon: 'barcode',
-    accent: '#ff9f0a', // Apple Orange
-  },
+// 产品模块功能配置 — accent colors resolved dynamically from theme
+const featureKeys = [
+  { key: 'cogs', href: '/products/cogs', icon: 'cogs', accentKey: 'blue' as const },
+  { key: 'barcode', href: '/products/barcode', icon: 'barcode', accentKey: 'orange' as const },
 ];
 
 // Apple 风格大图标
@@ -163,7 +153,9 @@ export default function ProductsHubPage() {
           {/* Left spacer */}
           <div className="flex-shrink-0 w-[max(0px,calc((100vw-1200px)/2-24px))]" />
           
-          {productFeatures.map((feature) => (
+          {featureKeys.map((feature) => {
+            const accent = colors[feature.accentKey];
+            return (
             <div
               key={feature.key}
               className="feature-item flex-shrink-0 opacity-0"
@@ -182,12 +174,12 @@ export default function ProductsHubPage() {
                   <div 
                     className="absolute inset-0 opacity-[0.08]"
                     style={{ 
-                      background: `radial-gradient(ellipse at 50% 100%, ${feature.accent}, transparent 60%)` 
+                      background: `radial-gradient(ellipse at 50% 100%, ${accent}, transparent 60%)` 
                     }}
                   />
                   
                   {/* Icon */}
-                  <FeatureIcon name={feature.icon} accent={feature.accent} />
+                  <FeatureIcon name={feature.icon} accent={accent} />
                 </div>
               </Link>
               
@@ -219,7 +211,8 @@ export default function ProductsHubPage() {
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
           
           {/* Right spacer */}
           <div className="flex-shrink-0 w-[max(24px,calc((100vw-1200px)/2))]" />

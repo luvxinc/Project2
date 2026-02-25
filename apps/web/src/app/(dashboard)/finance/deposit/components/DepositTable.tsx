@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { DepositListItem, DepositPaymentDetail } from '@/lib/api';
 import { themeColors } from '@/contexts/ThemeContext';
-import { paymentStatusStyle, rateModeStyle, currencyBadgeStyle } from '@/lib/status-colors';
+import { paymentStatusStyle, rateModeStyle, currencyBadgeStyle, hexToRgba } from '@/lib/status-colors';
 
 // ── Types ────────────────────────────────────────
 
@@ -401,7 +401,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         {/* Paid Deposit */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span
-                            style={{ color: item.actualPaid > 0 ? '#30d158' : colors.textTertiary }}
+                            style={{ color: item.actualPaid > 0 ? colors.green : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
                             {item.actualPaid > 0 ? `$${fmtAmt(item.actualPaid)}` : '—'}
@@ -411,7 +411,7 @@ function UnpaidView({ groups, colors, selectedPoNums, onSelectionChange, onPoRow
                         {/* Deposit Pending */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <span
-                            style={{ color: item.depositPending > 0 ? '#ff9f0a' : colors.textTertiary }}
+                            style={{ color: item.depositPending > 0 ? colors.orange : colors.textTertiary }}
                             className="text-sm font-mono tabular-nums"
                           >
                             {item.depositPending > 0 ? `$${fmtAmt(item.depositPending)}` : '—'}
@@ -734,7 +734,7 @@ function PaidRow({ item, pmtNo, isExpanded, isLast, colors, t, onToggle, onViewD
                         {det.depOverride === 1 ? (
                           <span
                             className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+                            style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
                           >
                             {t('deposit.detail.depOverride')}
                           </span>

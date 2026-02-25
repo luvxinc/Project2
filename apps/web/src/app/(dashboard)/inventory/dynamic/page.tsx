@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { dynamicInventoryApi } from '@/lib/api/inventory';
+import { hexToRgba } from '@/lib/status-colors';
 import { animate, stagger } from 'animejs';
 import type { DynamicInvRow } from '@/lib/api/inventory';
 
@@ -142,8 +143,8 @@ export default function DynamicInventoryPage() {
   };
 
   // ─── Apple-style helpers ───
-  const cardBg = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
-  const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const cardBg = colors.bgSecondary;
+  const borderColor = colors.separator;
 
   const SortHeader = ({ field, children, align = 'right', minW = '80px' }: { field: SortField; children: React.ReactNode; align?: string; minW?: string }) => (
     <th
@@ -280,7 +281,7 @@ export default function DynamicInventoryPage() {
       >
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center"
-            style={{ backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.6)', backdropFilter: 'blur(4px)' }}>
+            style={{ backgroundColor: hexToRgba(colors.bg, 0.7), backdropFilter: 'blur(4px)' }}>
             <div className="text-center">
               <div className="w-8 h-8 border-2 rounded-full animate-spin mx-auto mb-2"
                 style={{ borderColor: `${colors.controlAccent} transparent ${colors.controlAccent} ${colors.controlAccent}` }} />

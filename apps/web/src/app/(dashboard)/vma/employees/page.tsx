@@ -254,8 +254,8 @@ export default function EmployeesPage() {
           </p>
           <button
             onClick={() => { setEditingEmp(null); setShowEmpModal(true); }}
-            style={{ backgroundColor: colors.controlAccent }}
-            className="px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition"
+            style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+            className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition"
           >
             + {t('employees.actions.add')}
           </button>
@@ -453,7 +453,7 @@ export default function EmployeesPage() {
 
       {/* Termination Date Modal */}
       {showTermModal && termTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${colors.bg}B3`, backdropFilter: 'blur(4px)' }}>
           <div
             className="w-full max-w-sm rounded-2xl shadow-2xl p-6"
             style={{ backgroundColor: colors.bgElevated }}
@@ -489,12 +489,13 @@ export default function EmployeesPage() {
                 style={{ color: colors.textSecondary }}
                 className="px-4 py-2 rounded-xl text-sm hover:opacity-70 transition"
               >
-                Cancel
+                {t('employees.actions.cancel') || 'Cancel'}
               </button>
               <button
                 disabled={!termDate}
                 onClick={handleConfirmTermination}
-                className="px-5 py-2 rounded-xl text-white text-sm font-medium bg-red-500 hover:bg-red-600 transition disabled:opacity-50"
+                className="px-5 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
+                style={{ backgroundColor: colors.red, color: colors.white }}
               >
                 {t('employees.actions.deactivate')}
               </button>
@@ -521,10 +522,10 @@ export default function EmployeesPage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50 transition-all ${
+          className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all ${
             toast.type === 'ok' ? '' : ''
           }`}
-          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red }}
+          style={{ backgroundColor: toast.type === 'ok' ? colors.green : colors.red, color: colors.white }}
         >
           {toast.msg}
         </div>
@@ -561,7 +562,7 @@ function EmployeeCardModal({
   const isActive = employee.status === 'ACTIVE';
 
   // 首字母头像颜色
-  const avatarColors = [colors.blue, colors.indigo, colors.pink || '#ec4899', colors.orange, colors.green, colors.cyan || '#06b6d4'];
+  const avatarColors = [colors.blue, colors.indigo, colors.pink, colors.orange, colors.green, colors.cyan];
   const colorIdx = employee.employeeNo.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % avatarColors.length;
 
   return (
@@ -572,8 +573,8 @@ function EmployeeCardModal({
           backgroundColor: colors.bgSecondary,
           borderColor: colors.border,
           boxShadow: theme === 'dark'
-            ? '0 25px 60px rgba(0,0,0,0.5)'
-            : '0 25px 60px rgba(0,0,0,0.15)',
+            ? `0 25px 60px ${colors.bg}80`
+            : `0 25px 60px ${colors.bg}26`,
         }}
         className="w-full max-w-sm rounded-3xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
@@ -587,7 +588,8 @@ function EmployeeCardModal({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition"
+            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition"
+            style={{ color: `${colors.white}CC` }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -598,10 +600,11 @@ function EmployeeCardModal({
         {/* Avatar overlapping */}
         <div className="relative px-6 -mt-10">
           <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-lg"
             style={{
               backgroundColor: avatarColors[colorIdx],
               border: `3px solid ${colors.bgSecondary}`,
+              color: colors.white,
             }}
           >
             {employee.lastName.charAt(0)}{employee.firstName.charAt(0)}
@@ -992,8 +995,8 @@ function EmployeeFormModal({
             <button
               type="submit"
               disabled={saving || selectedDeptIds.length === 0}
-              style={{ backgroundColor: colors.controlAccent }}
-              className="px-5 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+              style={{ backgroundColor: colors.controlAccent, color: colors.white }}
+              className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
             >
               {saving ? '...' : isEdit ? (t('employees.career.save') || 'Save') : (t('employees.career.create') || 'Create')}
             </button>

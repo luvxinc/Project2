@@ -6,7 +6,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import type { PurchaseOrder, Shipment, ShipmentEvent } from '@/lib/api/purchase';
 import { purchaseApi } from '@/lib/api/purchase';
-import { shipmentStatusStyle, currencyBadgeStyle } from '@/lib/status-colors';
+import { shipmentStatusStyle, currencyBadgeStyle, hexToRgba } from '@/lib/status-colors';
 import type { DepositPaymentDetail, POPaymentDetail } from '@/lib/api/finance';
 
 // ── Types ────────────────────────────────────────
@@ -208,7 +208,7 @@ export default function DepositPODetailPanel({
           <button
             onClick={onDeletePayment}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:opacity-90"
-            style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}
+            style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}
           >
             {tF('deposit.actions.delete')}
           </button>
@@ -403,7 +403,7 @@ export default function DepositPODetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.depOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}>{tF('deposit.detail.depOverride')}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}>{tF('deposit.detail.depOverride')}</span>
                         ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">
@@ -497,7 +497,7 @@ export default function DepositPODetailPanel({
                       </td>
                       <td className="py-2 px-4 text-center whitespace-nowrap">
                         {det.poOverride === 1 ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,69,58,0.12)', color: colors.red }}>{tF('po.detail.poPmtOverride')}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: hexToRgba(colors.red, 0.12), color: colors.red }}>{tF('po.detail.poPmtOverride')}</span>
                         ) : <span style={{ color: colors.textTertiary }} className="text-xs">—</span>}
                       </td>
                       <td className="py-2 px-4 text-right whitespace-nowrap">

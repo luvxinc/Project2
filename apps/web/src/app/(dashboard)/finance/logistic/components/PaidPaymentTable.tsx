@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { paymentStatusStyle } from '@/lib/status-colors';
 import type { PaymentGroup } from './PaidPaymentCard';
 
 interface Props {
@@ -69,9 +70,12 @@ export default function PaidPaymentTable({ groups, isLoading, onRowClick }: Prop
         </thead>
         <tbody>
           {groups.map((group, index) => {
-            const badge = group.isDeleted
-              ? { label: t('logistic.status.deleted'), bg: 'rgba(142,142,147,0.14)', color: colors.gray, dot: colors.gray, ring: 'rgba(142,142,147,0.25)' }
-              : { label: t('logistic.status.paid'), bg: 'rgba(48,209,88,0.12)', color: colors.green, dot: colors.green, ring: 'rgba(48,209,88,0.3)' };
+            const statusKey = group.isDeleted ? 'deleted' : 'paid';
+            const style = paymentStatusStyle(statusKey, colors);
+            const badge = {
+              label: t(`logistic.status.${statusKey}`),
+              ...style,
+            };
 
             return (
               <tr

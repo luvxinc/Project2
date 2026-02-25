@@ -66,7 +66,7 @@ export default function OrdersPanel({ pmtNo, t, theme }: OrdersPanelProps) {
 
 function OrderCard({ order, colors, t }: {
   order: DepositOrderDetail;
-  colors: Record<string, string>;
+  colors: (typeof themeColors)['dark'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (key: string, params?: any) => string;
 }) {
