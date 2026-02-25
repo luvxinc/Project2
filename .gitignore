@@ -42,6 +42,11 @@ logs/
 data/records/
 data/exports/
 
+# Database dumps (sensitive, large)
+docker/postgres/*.dump
+*.dump
+*.sql.gz
+
 # Cache
 .pytest_cache/
 .mypy_cache/

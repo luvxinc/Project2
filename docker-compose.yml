@@ -5,11 +5,12 @@
 #   docker compose up -d              # Start all services
 #   docker compose logs -f backend    # View backend logs
 #   docker compose down               # Stop all services
+#   docker compose down -v            # Stop + delete all data
 # ══════════════════════════════════════════════════════════════
 
 services:
 
-  # ─── PostgreSQL ───
+  # ─── PostgreSQL 16 ───
   postgres:
     image: postgres:16-alpine
     container_name: esplus-postgres
@@ -22,13 +23,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Init scripts run on FIRST START only (when volume is empty)
+      - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+      - ./docker/postgres/mgmt_v2.dump:/docker-entrypoint-initdb.d/mgmt_v2.dump:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aaron} -d ${POSTGRES_DB:-mgmt_v2}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ─── Redis ───
+  # ─── Redis 7 ───
   redis:
     image: redis:7-alpine
     container_name: esplus-redis
@@ -94,6 +98,10 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
   app_data:
+    driver: local
   app_logs:
+    driver: local
