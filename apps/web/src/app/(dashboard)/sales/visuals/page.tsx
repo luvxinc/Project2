@@ -415,8 +415,30 @@ function FilterGroup({ title, titleColor, items, selected, onToggle, activeColor
 }
 
 // ═══════════════════════════════════════════════
-// ECharts Render — Line
+// ECharts Render — Line (Premium)
 // ═══════════════════════════════════════════════
+
+function fmtNum(val: number, mode: ChartMode): string {
+  const abs = Math.abs(val);
+  if (mode === 'Amount') {
+    if (abs >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `$${(val / 1_000).toFixed(1)}K`;
+    return `$${val.toFixed(0)}`;
+  }
+  if (mode === 'Percentage') return `${val.toFixed(1)}%`;
+  if (abs >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+  return `${val}`;
+}
+
+function fmtDateLabel(raw: string): string {
+  // "2025-12-01" → "Dec 1" ; "2025-12-15" → "Dec 15"
+  const parts = raw.split('-');
+  if (parts.length < 3) return raw;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  return `${months[m] || parts[1]} ${d}`;
+}
 
 function renderLine(
   chart: echarts.ECharts,
@@ -427,80 +449,181 @@ function renderLine(
 ) {
   const textColor = isDark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
   const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  const isSingle = series.length === 1;
+  const sfFont = '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif';
+  const monoFont = 'ui-monospace, "SF Mono", monospace';
 
-  const yFormatter = (val: number) => {
-    if (mode === 'Amount') return `$${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val}`;
-    if (mode === 'Quantity') return `${val}`;
-    if (mode === 'Order') return `${val}`;
-    if (mode === 'Percentage') return `${val}%`;
-    return `${val}`;
-  };
+  // Tooltip value formatter per mode
+  const tooltipPrefix = mode === 'Amount' ? '$' : '';
+  const tooltipSuffix = mode === 'Percentage' ? '%' : mode === 'Quantity' ? ' units' : mode === 'Order' ? ' orders' : '';
 
   const option: echarts.EChartsCoreOption = {
     backgroundColor: 'transparent',
-    grid: { top: 45, left: 55, right: 20, bottom: 55 },
+    grid: { top: 50, left: 62, right: 24, bottom: 58, containLabel: false },
+
+    // ── Crosshair tooltip with glow ──
     tooltip: {
       trigger: 'axis',
-      backgroundColor: isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.96)',
-      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      axisPointer: {
+        type: 'cross',
+        lineStyle: { color: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', width: 1, type: 'dashed' },
+        crossStyle: { color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+        label: {
+          backgroundColor: isDark ? 'rgba(50,50,52,0.9)' : 'rgba(245,245,247,0.92)',
+          color: isDark ? '#fff' : '#1d1d1f',
+          fontSize: 10, fontFamily: monoFont,
+          borderWidth: 0,
+          shadowBlur: 4, shadowColor: 'rgba(0,0,0,0.1)',
+        },
+      },
+      backgroundColor: isDark ? 'rgba(28,28,30,0.92)' : 'rgba(255,255,255,0.96)',
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
       borderWidth: 0.5,
-      textStyle: { color: isDark ? '#fff' : '#1d1d1f', fontSize: 11,
-        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
-      extraCssText: 'border-radius: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0,0,0,0.15);',
+      padding: [10, 14],
+      textStyle: { color: isDark ? '#f5f5f7' : '#1d1d1f', fontSize: 11, fontFamily: sfFont },
+      extraCssText: `border-radius: 12px; backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); box-shadow: 0 8px 32px rgba(0,0,0,${isDark ? '0.35' : '0.12'}), 0 0 0 0.5px ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'};`,
+      formatter: (params: any) => {
+        if (!Array.isArray(params) || params.length === 0) return '';
+        const dateStr = fmtDateLabel(params[0].axisValue);
+        let html = `<div style="font-size:10px;opacity:0.45;margin-bottom:6px;font-family:${monoFont}">${dateStr}</div>`;
+        params.forEach((p: any) => {
+          const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:8px;box-shadow:0 0 6px ${p.color}60"></span>`;
+          const val = typeof p.value === 'number' ? `${tooltipPrefix}${p.value.toLocaleString()}${tooltipSuffix}` : p.value;
+          html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:20px;padding:2px 0">${dot}<span style="flex:1;font-size:11px">${p.seriesName}</span><span style="font-weight:600;font-family:${monoFont};font-size:12px">${val}</span></div>`;
+        });
+        return html;
+      },
     },
+
+    // ── Legend ──
     legend: {
       show: true,
-      textStyle: { color: textColor, fontSize: 11,
-        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' },
-      top: 5, right: 10,
-      itemWidth: 10, itemHeight: 10,
-      itemGap: 14,
+      textStyle: { color: textColor, fontSize: 11, fontFamily: sfFont },
+      top: 8, right: 12,
+      itemWidth: 14, itemHeight: 3,
+      itemGap: 16,
+      icon: 'roundRect',
     },
+
+    // ── X Axis — compact date labels ──
     xAxis: {
       type: 'category',
       data: categories,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: textColor, fontSize: 10, margin: 12,
-        fontFamily: 'ui-monospace, "SF Mono", monospace' },
+      axisLabel: {
+        color: textColor, fontSize: 10, margin: 14,
+        fontFamily: monoFont,
+        formatter: (v: string) => fmtDateLabel(v),
+        interval: categories.length > 30 ? Math.floor(categories.length / 12) : 'auto',
+      },
+      splitLine: { show: false },
     },
+
+    // ── Y Axis ──
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: gridColor } },
+      splitLine: { lineStyle: { color: gridColor, type: 'dashed' } },
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: textColor, fontSize: 10,
-        fontFamily: 'ui-monospace, "SF Mono", monospace', formatter: yFormatter },
+      axisLabel: {
+        color: textColor, fontSize: 10, fontFamily: monoFont,
+        formatter: (val: number) => fmtNum(val, mode),
+      },
     },
+
+    // ── DataZoom — Apple-style slider ──
     dataZoom: [
-      { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
-      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 18, bottom: 6,
-        textStyle: { color: textColor, fontSize: 9 },
+      { type: 'inside', xAxisIndex: 0, start: 0, end: 100, minValueSpan: 3 },
+      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20, bottom: 4,
+        textStyle: { color: textColor, fontSize: 9, fontFamily: monoFont },
         borderColor: 'transparent',
-        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-        fillerColor: isDark ? 'rgba(0,122,255,0.12)' : 'rgba(0,122,255,0.08)',
-        handleStyle: { color: '#007AFF', borderColor: '#007AFF' },
+        backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+        fillerColor: isDark ? 'rgba(0,122,255,0.10)' : 'rgba(0,122,255,0.06)',
+        handleIcon: 'M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+        handleSize: '60%',
+        handleStyle: { color: '#007AFF', borderColor: '#007AFF', borderWidth: 1 },
+        dataBackground: {
+          lineStyle: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', width: 1 },
+          areaStyle: { color: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' },
+        },
+        selectedDataBackground: {
+          lineStyle: { color: 'rgba(0,122,255,0.3)', width: 1 },
+          areaStyle: { color: 'rgba(0,122,255,0.05)' },
+        },
       },
     ],
-    series: series.map((s, idx) => ({
-      name: s.name,
-      type: 'line' as const,
-      data: s.data,
-      smooth: 0.4,
-      showSymbol: false,
-      symbolSize: 6,
-      lineStyle: { width: 2, color: CHART_PALETTE[idx % CHART_PALETTE.length] },
-      itemStyle: { color: CHART_PALETTE[idx % CHART_PALETTE.length] },
-      emphasis: { focus: 'series', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
-      areaStyle: series.length === 1 ? {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: CHART_PALETTE[idx] + '30' },
-          { offset: 1, color: CHART_PALETTE[idx] + '03' },
-        ]),
-      } : undefined,
-    })),
-    animationDuration: 800,
-    animationEasing: 'cubicOut',
+
+    // ── Series — gradient fills for all + glow emphasis ──
+    series: series.map((s, idx) => {
+      const color = CHART_PALETTE[idx % CHART_PALETTE.length];
+      const fillOpacity = isSingle ? '35' : '12';
+      const fillEnd = isSingle ? '05' : '02';
+
+      return {
+        name: s.name,
+        type: 'line' as const,
+        data: s.data,
+        smooth: 0.35,
+        showSymbol: false,
+        symbolSize: 7,
+        symbol: 'circle',
+        sampling: 'lttb',
+        lineStyle: { width: isSingle ? 2.5 : 2, color, cap: 'round' as const, join: 'round' as const },
+        itemStyle: { color, borderWidth: 2, borderColor: isDark ? '#1c1c1e' : '#fff' },
+
+        // Gradient area fill on every series
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: color + fillOpacity },
+            { offset: 0.65, color: color + '08' },
+            { offset: 1, color: color + fillEnd },
+          ]),
+        },
+
+        // Hover: highlight self, fade others
+        emphasis: {
+          focus: 'series' as const,
+          blurScope: 'coordinateSystem' as const,
+          lineStyle: { width: 3, shadowBlur: 8, shadowColor: color + '60' },
+          itemStyle: { borderWidth: 3, borderColor: '#fff', shadowBlur: 12, shadowColor: color + '50' },
+        },
+
+        // Mark points on single series
+        ...(isSingle ? {
+          markPoint: {
+            symbol: 'circle', symbolSize: 8,
+            label: {
+              show: true, fontSize: 10, fontWeight: 'bold' as const,
+              fontFamily: monoFont, position: 'top' as const, distance: 8,
+              color: isDark ? '#f5f5f7' : '#1d1d1f',
+              formatter: (p: any) => fmtNum(p.value, mode),
+            },
+            itemStyle: { color: '#fff', borderColor: color, borderWidth: 2,
+              shadowBlur: 8, shadowColor: color + '50' },
+            data: [
+              { type: 'max', name: 'Max' },
+              { type: 'min', name: 'Min' },
+            ],
+          },
+          markLine: {
+            silent: true, symbol: 'none',
+            lineStyle: { color: color + '30', type: 'dashed' as const, width: 1 },
+            label: {
+              show: true, position: 'insideEndTop' as const,
+              fontSize: 9, fontFamily: monoFont,
+              color: color + '80',
+              formatter: (p: any) => `avg ${fmtNum(p.value, mode)}`,
+            },
+            data: [{ type: 'average', name: 'Avg' }],
+          },
+        } : {}),
+      };
+    }),
+
+    animationDuration: 900,
+    animationEasing: 'cubicInOut',
+    animationDelay: (idx: number) => idx * 50,
   };
 
   chart.clear();
