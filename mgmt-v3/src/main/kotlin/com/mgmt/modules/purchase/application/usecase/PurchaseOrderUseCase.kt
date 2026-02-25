@@ -349,10 +349,9 @@ class PurchaseOrderUseCase(
     private fun generatePoNum(supplierCode: String, poDate: LocalDate): String {
         val dateStr = poDate.format(DateTimeFormatter.BASIC_ISO_DATE)  // 20260103
         val prefix = "${supplierCode}${dateStr}-S"
-        // Find existing POs with same prefix to determine sequence
-        val existingPos = poRepo.findAllByDeletedAtIsNullOrderByPoDateDesc()
-            .filter { it.poNum.startsWith(prefix) }
-        val seq = existingPos.size + 1
+        // Count existing POs with same prefix in DB (was: findAll + filter in memory)
+        val existingCount = poRepo.countByPoNumStartingWithAndDeletedAtIsNull(prefix)
+        val seq = existingCount + 1
         return "$prefix${String.format("%02d", seq)}"
     }
 

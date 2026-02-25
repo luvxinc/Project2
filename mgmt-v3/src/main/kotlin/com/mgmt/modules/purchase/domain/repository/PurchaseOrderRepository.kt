@@ -18,5 +18,8 @@ interface PurchaseOrderRepository : JpaRepository<PurchaseOrder, Long>, JpaSpeci
 
     fun existsByPoNumAndDeletedAtIsNull(poNum: String): Boolean
 
+    /** Count POs matching a prefix — for generatePoNum sequence (N+1 fix: replaces findAll + filter). */
+    fun countByPoNumStartingWithAndDeletedAtIsNull(prefix: String): Long
+
     fun countByDeletedAtIsNull(): Long
 }

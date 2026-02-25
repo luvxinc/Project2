@@ -276,11 +276,21 @@ class ShipmentUseCase(
             poRepo.findAllByDeletedAtIsNullOrderByPoDateDesc()
         }
 
+        if (pos.isEmpty()) return emptyList()
+
+        // Batch-load ALL PO items and ALL shipment items in 2 queries (N+1 fix)
+        val poIds = pos.map { it.id }
+        val allPoItems = poItemRepo.findAllByPoIdInAndDeletedAtIsNull(poIds)
+            .groupBy { it.poId }
+        val allShipItems = shipmentItemRepo.findAllByPoIdInAndDeletedAtIsNull(poIds)
+        // Pre-compute shipped qty: (poId, sku) → total shipped
+        val shippedMap = allShipItems.groupBy { it.poId to it.sku }
+            .mapValues { (_, items) -> items.sumOf { it.quantity } }
+
         return pos.mapNotNull { po ->
-            val poItems = poItemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(po.id)
+            val poItems = allPoItems[po.id] ?: emptyList()
             val availableItems = poItems.mapNotNull { poItem ->
-                val shippedQty = shipmentItemRepo.findAllByPoIdAndSkuAndDeletedAtIsNull(po.id, poItem.sku)
-                    .sumOf { it.quantity }
+                val shippedQty = shippedMap[po.id to poItem.sku] ?: 0
                 val remainingQty = poItem.quantity - shippedQty
                 if (remainingQty > 0) {
                     ShipmentAvailablePoItem(
@@ -314,15 +324,30 @@ class ShipmentUseCase(
     @Transactional(readOnly = true)
     fun prepareExportContexts(shipmentId: Long): List<com.mgmt.modules.purchase.infrastructure.excel.ShipmentExcelService.ItemExportContext> {
         val items = getItems(shipmentId)
+        if (items.isEmpty()) return emptyList()
+
+        // Batch-load all referenced POs in ONE query (N+1 fix)
+        val poNums = items.map { it.poNum }.distinct()
+        val poMap = poNums.mapNotNull { poRepo.findByPoNumAndDeletedAtIsNull(it) }
+            .associateBy { it.poNum }
+
+        // Batch-load all PO items for these POs in ONE query
+        val poIds = poMap.values.map { it.id }
+        val poItemMap = poItemRepo.findAllByPoIdInAndDeletedAtIsNull(poIds)
+            .groupBy { it.poNum to it.sku }
+            .mapValues { (_, list) -> list.first() }
+
+        // Batch-load all shipment items for these poNums to compute sent totals
+        val allShipItems = shipmentItemRepo.findAllByPoNumInAndDeletedAtIsNull(poNums)
+        val sentMap = allShipItems.groupBy { it.poNum to it.sku }
+            .mapValues { (_, list) -> list.sumOf { it.quantity } }
+
         return items.map { item ->
-            val po = poRepo.findByPoNumAndDeletedAtIsNull(item.poNum)
-            val poItem = po?.let {
-                poItemRepo.findAllByPoIdAndDeletedAtIsNullOrderBySkuAsc(it.id)
-                    .find { pi -> pi.sku == item.sku }
-            }
+            val po = poMap[item.poNum]
+            val poItem = poItemMap[item.poNum to item.sku]
 
             // Total sent across ALL shipments for (poNum, sku)
-            val totalSent = shipmentItemRepo.sumSentByPoNumAndSku(item.poNum, item.sku)
+            val totalSent = sentMap[item.poNum to item.sku] ?: 0
             // Already sent = total - current shipment's quantity
             val alreadySentExclCurrent = totalSent - item.quantity
 

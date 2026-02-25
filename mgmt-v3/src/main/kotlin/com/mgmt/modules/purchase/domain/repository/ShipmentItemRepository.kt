@@ -13,6 +13,12 @@ interface ShipmentItemRepository : JpaRepository<ShipmentItem, Long> {
 
     fun findAllByPoIdAndDeletedAtIsNull(poId: Long): List<ShipmentItem>
 
+    /** Batch-load shipment items for multiple PO IDs (N+1 fix for getAvailablePos). */
+    fun findAllByPoIdInAndDeletedAtIsNull(poIds: Collection<Long>): List<ShipmentItem>
+
+    /** Batch-load shipment items for multiple PO numbers (N+1 fix for prepareExportContexts). */
+    fun findAllByPoNumInAndDeletedAtIsNull(poNums: Collection<String>): List<ShipmentItem>
+
     fun findAllByLogisticNumAndDeletedAtIsNull(logisticNum: String): List<ShipmentItem>
 
     @Query("SELECT COUNT(i) FROM ShipmentItem i WHERE i.shipmentId = :shipmentId AND i.deletedAt IS NULL")
