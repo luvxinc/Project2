@@ -22,7 +22,6 @@ import java.time.LocalDate
 /**
  * VmaPackingListPdfService — 临床案例 Packing List PDF 生成
  *
- * V2 parity: packing-list-pdf.service.ts (164 lines)
  *
  * Fills AcroForm template with site info, case reference, and product table.
  * Template supports 28 rows across 2 pages (Row1–Row14, Row1_2–Row14_2).

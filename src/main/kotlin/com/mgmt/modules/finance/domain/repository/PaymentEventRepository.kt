@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository
 /**
  * PaymentEventRepository — append-only event store for payment audit trail.
  *
- * V1 parity: in_pmt_prepay mutation log (each tran_seq row = one event).
  */
 @Repository
 interface PaymentEventRepository : JpaRepository<PaymentEvent, Long> {

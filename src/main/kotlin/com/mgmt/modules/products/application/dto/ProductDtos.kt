@@ -13,7 +13,7 @@ data class ProductQueryParams(
     val status: String? = null,
 )
 
-// ═══════════ Create DTOs (V1 parity: 5 fields) ═══════════
+// ═══════════ Create DTOs ═══════════
 
 data class CreateProductRequest(
     @field:jakarta.validation.constraints.NotBlank(message = "SKU is required")
@@ -40,7 +40,7 @@ data class BatchCreateProductRequest(
     val products: List<CreateProductRequest>,
 )
 
-// ═══════════ Update DTOs (V1 parity) ═══════════
+// ═══════════ Update DTOs ═══════════
 
 data class UpdateProductRequest(
     val name: String? = null,
@@ -61,7 +61,6 @@ data class UpdateProductRequest(
     val moq: Int? = null,
 )
 
-// V1 parity: COGS batch update sends {id, cogs}
 data class CogsItem(
     val id: String,
     val cogs: BigDecimal,
@@ -71,7 +70,7 @@ data class BatchUpdateCogsRequest(
     val items: List<CogsItem>,
 )
 
-// ═══════════ Barcode DTOs (V1 parity) ═══════════
+// ═══════════ Barcode DTOs ═══════════
 
 data class GenerateBarcodeRequest(
     val items: List<BarcodeItem>,
@@ -92,7 +91,7 @@ data class ProductMetadataResponse(
     val existingSkus: List<String>,
 )
 
-// ═══════════ Response DTOs (V1 parity) ═══════════
+// ═══════════ Response DTOs ═══════════
 
 data class ProductResponse(
     val id: String,

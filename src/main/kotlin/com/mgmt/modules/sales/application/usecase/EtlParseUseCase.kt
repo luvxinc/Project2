@@ -19,7 +19,6 @@ import java.time.Instant
 /**
  * EtlParseUseCase — SKU 正则解析 + 校验。
  *
- * V1 对应: parser.py EbayParser
  * 职责: 读取 raw_transactions → 正则解析 Custom Label → 写入 raw_transaction_items
  *       识别无法匹配数据库的 SKU → 返回待修正列表
  */
@@ -49,7 +48,7 @@ class EtlParseUseCase(
             .map { it.sku.uppercase() }
             .toSet()
 
-        // Build correction fast-fix map (V1 parity: parser._build_fast_fix_map)
+        // Build correction fast-fix map
         val allCorrections = skuCorrectionRepo.findAll()
         val correctionMap = allCorrections.associateBy { it.badSku.uppercase() }
 

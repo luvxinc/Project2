@@ -10,7 +10,6 @@ import java.nio.file.Paths
 /**
  * PrepaymentFileService — file management for prepayment records.
  *
- * V1 parity:
  *   - file_info_api (api.py L836-886)
  *   - serve_file_api (api.py L891-952)
  *   - upload_file_api (api.py L957-1028)
@@ -26,7 +25,6 @@ class PrepaymentFileService {
 
     /**
      * Get file info for a prepayment record.
-     * V1 parity: file_info_api (api.py L836-886)
      */
     fun getFileInfo(paymentNo: String): FileInfoResponse {
         val year = parseYear(paymentNo)
@@ -64,7 +62,6 @@ class PrepaymentFileService {
 
     /**
      * Get the resolved file path for serving/downloading.
-     * V1 parity: serve_file_api (api.py L891-952)
      *
      * Returns null if file doesn't exist or path traversal detected.
      */
@@ -82,7 +79,6 @@ class PrepaymentFileService {
 
     /**
      * Save an uploaded file with versioning.
-     * V1 parity: upload_file_api (api.py L957-1028)
      *
      * @return the saved filename
      */
@@ -117,7 +113,6 @@ class PrepaymentFileService {
 
     /**
      * Delete a file.
-     * V1 parity: delete_file_api (api.py L1033-1078)
      */
     fun deleteFile(paymentNo: String, filename: String): Boolean {
         val path = resolveFilePath(paymentNo, filename) ?: return false
@@ -127,7 +122,6 @@ class PrepaymentFileService {
 
     /**
      * Check if a file is HEIC/HEIF format (needs conversion).
-     * V1 parity: serve_file_api (api.py L924-944) does HEIC→JPEG conversion.
      */
     fun isHeicFormat(filename: String): Boolean {
         val ext = filename.substringAfterLast(".").lowercase()

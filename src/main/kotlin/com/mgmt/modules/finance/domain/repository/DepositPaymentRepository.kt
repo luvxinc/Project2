@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository
 /**
  * DepositPaymentRepository — queries scoped to payment_type='deposit'.
  *
- * V1 parity: in_pmt_deposit_final table (denormalized current state).
  * Reuses the Payment entity from purchase module.
  */
 @Repository
@@ -19,7 +18,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find all active deposit payments for given PO numbers.
-     * V1 parity: SELECT * FROM in_pmt_deposit_final WHERE po_num IN (:poNums)
      */
     @Query("""
         SELECT p FROM Payment p
@@ -32,7 +30,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find active deposit payments by paymentNo.
-     * V1 parity: SELECT * FROM in_pmt_deposit_final WHERE pmt_no = :pmtNo
      */
     @Query("""
         SELECT p FROM Payment p
@@ -54,7 +51,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find active deposit payments for a specific PO.
-     * V1 parity: SELECT * FROM in_pmt_deposit_final WHERE po_num = :poNum
      */
     @Query("""
         SELECT p FROM Payment p
@@ -67,7 +63,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find the latest paymentNo sequence for a given date prefix.
-     * V1 parity: SELECT COUNT(*) FROM in_pmt_deposit WHERE pmt_no LIKE 'DPMT_{date}_N%'
      */
     @Query("""
         SELECT p.paymentNo FROM Payment p
@@ -79,7 +74,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find prepay 'usage' records linked to a deposit payment via note.
-     * V1 parity: SELECT * FROM in_pmt_prepay WHERE tran_note LIKE 'Deposit_{pmtNo}%'
      */
     @Query("""
         SELECT p FROM Payment p
@@ -91,7 +85,6 @@ interface DepositPaymentRepository : JpaRepository<Payment, Long>, JpaSpecificat
 
     /**
      * Find latest prepay out sequence for a supplier/date pattern.
-     * V1 parity: SELECT COUNT(*) FROM in_pmt_prepay WHERE tran_num LIKE '{code}_{date}_out_%'
      */
     @Query("""
         SELECT p.paymentNo FROM Payment p

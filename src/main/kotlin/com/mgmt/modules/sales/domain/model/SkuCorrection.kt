@@ -6,7 +6,6 @@ import java.time.Instant
 /**
  * SkuCorrection — SKU 修正记忆库。
  *
- * V1 对应: sku_correction_memory.csv
  * V3: DB 表 + UNIQUE(custom_label, bad_sku) 去重
  */
 @Entity

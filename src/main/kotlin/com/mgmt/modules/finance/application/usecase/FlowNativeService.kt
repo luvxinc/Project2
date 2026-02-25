@@ -15,8 +15,6 @@ import java.math.RoundingMode
 /**
  * FlowNativeService — builds the flow overview (订收发总览) natively in V3.
  *
- * Replaces FlowProxyService (which proxied to V1 Django).
- * V1 parity: flow/api.py flow_list_api + landed_price.py calculate_landed_prices_for_display
  *
  * Two endpoints:
  *   1. getFlowList()        — 11-step aggregation for all POs
@@ -957,7 +955,6 @@ class FlowNativeService(
 
     /**
      * Extract parent logistics number.
-     * V1 parity: _delay_ and _V suffixed logistics are children of the base number.
      */
     private fun getParentLogistic(logisticNum: String): String {
         if ("_delay_" in logisticNum || "_V" in logisticNum) {

@@ -7,7 +7,6 @@ import java.math.BigDecimal
 /**
  * SkuSlot — 从 CleanedTransaction 的 10-slot 结构中提取的单个 SKU 及其数量。
  *
- * V1 parity: profit_sku.py L47-60 → sku{i}/qty{i} 遍历
  * V3: CleanedTransaction.sku1..sku10 / quantity1..quantity10
  */
 data class SkuSlot(
@@ -18,7 +17,6 @@ data class SkuSlot(
 /**
  * Extract SKU slots from a CleanedTransaction.
  *
- * V1 parity: for i in range(1, 11): sku = row.get(f"sku{i}"), qty = row.get(f"qty{i}")
  */
 fun CleanedTransaction.extractSkuSlots(): List<SkuSlot> {
     val slots = mutableListOf<SkuSlot>()
@@ -39,7 +37,6 @@ fun CleanedTransaction.extractSkuSlots(): List<SkuSlot> {
 /**
  * Accumulate fee values from a CleanedTransaction row.
  *
- * V1 parity: ProfitAnalyzerBase._accumulate_fees() → iterates 25 FEE_COLUMNS.
  * V3 adaptation: V3 stores fees in typed columns, not TEXT.
  *   V1 has separate "Refund X" columns → V3 stores them in the same column
  *   (e.g., NN row has positive fee, RE row has the refund fee value).
@@ -58,30 +55,29 @@ data class FeeBreakdown(
     var disputeFee: BigDecimal = BigDecimal.ZERO,
     var labelCost: BigDecimal = BigDecimal.ZERO,
     var labelReturn: BigDecimal = BigDecimal.ZERO,
-    // V1 parity: base.py L317-320 — V3 cleaned_transactions 不存这些列，值始终为 0
     // 但字段必须存在以保持 profit 公式和报表列完整性
     var highReturnFee: BigDecimal = BigDecimal.ZERO,
     var lowRatingFee: BigDecimal = BigDecimal.ZERO,
 ) {
-    /** V1 parity: net_platform_fee = sum of PLATFORM_FEE_GROUP columns */
+    /** net_platform_fee = sum of PLATFORM_FEE_GROUP columns */
     val netPlatformFee: BigDecimal
         get() = fvfFeeFixed + fvfFeeVariable + regulatoryFee + intlFee
 
-    /** V1 parity: net_shipping = Shipping and handling + Refund Shipping and handling */
+    /** net_shipping = Shipping and handling + Refund Shipping and handling */
     val netShipping: BigDecimal get() = shippingFee
-    /** V1 parity: net_tax = all tax columns summed */
+    /** net_tax = all tax columns summed */
     val netTax: BigDecimal get() = sellerTax + ebayTax
-    /** V1 parity: net_ad_fee */
+    /** net_ad_fee */
     val netAdFee: BigDecimal get() = adFee
-    /** V1 parity: net_postage_cost = Shipping label-Earning data */
+    /** net_postage_cost = Shipping label-Earning data */
     val netPostageCost: BigDecimal get() = labelCost
-    /** V1 parity: net_return_postage = Shipping label-Return */
+    /** net_return_postage = Shipping label-Return */
     val netReturnPostage: BigDecimal get() = labelReturn
-    /** V1 parity: net_third_party_fee = Payments dispute fee */
+    /** net_third_party_fee = Payments dispute fee */
     val netThirdPartyFee: BigDecimal get() = disputeFee
-    /** V1 parity: base.py L317-318 — Very high 'item not as described' fee */
+    /** base.py L317-318 — Very high 'item not as described' fee */
     val netHighReturnFee: BigDecimal get() = highReturnFee
-    /** V1 parity: base.py L319-320 — Below standard performance fee */
+    /** base.py L319-320 — Below standard performance fee */
     val netLowRatingFee: BigDecimal get() = lowRatingFee
 
     fun addFrom(tx: CleanedTransaction, weight: BigDecimal) {

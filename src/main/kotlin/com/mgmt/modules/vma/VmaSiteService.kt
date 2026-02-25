@@ -11,7 +11,6 @@ import java.time.Instant
 
 /**
  * VmaSiteService — 站点 CRUD
- * V2 parity: site.service.ts (34 lines)
  */
 @Service
 @Transactional

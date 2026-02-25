@@ -13,7 +13,6 @@ import java.util.UUID
 /**
  * VmaPValveProductService — P-Valve + Delivery System + Fit 产品管理
  *
- * V2 parity: pvalve-product.service.ts (289 lines)
  */
 @Service
 @Transactional

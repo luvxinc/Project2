@@ -41,7 +41,6 @@ class ProfitMetrics {
     // ═══ Computed Fields (V1: _calculate_net_profit) ═══
 
     /**
-     * V1 parity: base.py L299-306
      * net_qty = total_qty - cancel_qty
      *     - return_qty * R['RETURN'] - request_qty * R['REQUEST']
      *     - claim_qty * R['CASE'] - dispute_qty * R['DISPUTE']
@@ -55,14 +54,12 @@ class ProfitMetrics {
     }
 
     /**
-     * V1 parity: base.py L307-310
      * net_rev = total_rev + cancel_rev + return_rev + request_rev + claim_rev + dispute_rev
      * (cancel/return/claim/dispute revs are negative or refund amounts)
      */
     val netRev: BigDecimal get() = totalRev + cancelRev + returnRev + requestRev + claimRev + disputeRev
 
     /**
-     * V1 parity: base.py L326-330
      * profit = net_rev + cog_value + net_shipping + net_platform_fee
      *        + net_high_return_fee + net_low_rating_fee + net_third_party_fee
      *        + net_ad_fee + net_postage_cost + net_return_postage
@@ -89,7 +86,6 @@ class ProfitMetrics {
 class ProfitReportBuilder(private val config: ReportConfig) {
 
     /**
-     * V1 parity: generate_full_report_suite() → base.py L333-363
      */
     fun build(
         metricsCur: Map<String, ProfitMetrics>,
@@ -158,7 +154,6 @@ class ProfitReportBuilder(private val config: ReportConfig) {
     }
 
     /**
-     * V1 parity: _calc_pct() → base.py L365-371
      * Returns formatted percentage strings.
      */
     private fun calcPctTable(table: CsvTable, baseCol: String): CsvTable {
@@ -196,7 +191,6 @@ class ProfitReportBuilder(private val config: ReportConfig) {
     }
 
     /**
-     * V1 parity: _calc_mom() → base.py L380-403
      * MoM% = (v1 - v0) / |v0|
      */
     private fun calcMomTable(cur: CsvTable, prev: CsvTable, keyCol: String): CsvTable {

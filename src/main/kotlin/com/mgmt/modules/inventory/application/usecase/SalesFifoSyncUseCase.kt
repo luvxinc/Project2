@@ -15,7 +15,6 @@ import java.time.Instant
 /**
  * SalesFifoSyncUseCase — 销售 FIFO 出入库引擎。
  *
- * V1 对应: sales_sync.py SalesSyncService
  * 职责:
  *   NN  → FIFO 出库 (in_date ASC, layer_id ASC — 严格 FIFO)
  *   CA  → 100% 精确还原原层 (_fifo_return_full)
@@ -45,7 +44,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * Sync a batch: process all cleaned_transactions for the batch's date range.
-     * V1 parity: sales_sync.py process_batch()
      *
      * @param ratios map of action → percentage (0-100). CA/PD are fixed.
      */
@@ -60,7 +58,7 @@ class SalesFifoSyncUseCase(
         batch.updatedAt = Instant.now()
         batchRepo.save(batch)
 
-        // Build return ratio map (V1 parity: sales_sync.py return_ratios)
+        // Build return ratio map
         val returnRatios = mapOf(
             SalesAction.NN to 100,
             SalesAction.CA to 100,  // Fixed
@@ -120,12 +118,10 @@ class SalesFifoSyncUseCase(
                             outCount++
                         }
                         SalesAction.CA -> {
-                            // V1 parity: _fifo_return_full() — 100% exact restore to original layers
                             processCancelRestore(sku, qtyp, ct)
                             returnCount++
                         }
                         else -> {
-                            // V1 parity: _fifo_return_partial() — int() truncation, NOT round()
                             val returnQty = qtyp * ratio / 100
                             if (returnQty > 0) {
                                 processReturn(sku, returnQty, ct)
@@ -154,7 +150,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * Build ref_key in V1 format: SALES:{seller}:{order_number}:{item_id}:{action}
-     * V1 parity: sales_sync.py _build_ref_key()
      */
     private fun buildRefKey(ct: CleanedTransaction): String {
         val seller = (ct.seller ?: "").trim()
@@ -166,7 +161,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * FIFO outbound: consume from oldest layers first.
-     * V1 parity: sales_sync.py _process_outbound()
      * Order: in_date ASC, layer_id ASC
      */
     private fun processOutbound(sku: String, qty: Int, ct: CleanedTransaction) {
@@ -202,7 +196,6 @@ class SalesFifoSyncUseCase(
             }
             fifoLayerRepo.save(layer)
 
-            // V1 parity: uses unit_cost directly, no landedCost fallback
             val unitCost = layer.unitCost
             fifoAllocRepo.save(FifoAllocation(
                 outTranId = fifoTran.id,
@@ -224,7 +217,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * CA cancel restore: 100% exact restore to original NN allocation layers.
-     * V1 parity: sales_sync.py _fifo_return_full()
      *
      * Finds the original NN outbound transaction's allocations and restores
      * the EXACT quantities to the EXACT same layers.
@@ -235,7 +227,6 @@ class SalesFifoSyncUseCase(
         // Skip if already processed (idempotent)
         if (fifoTranRepo.findByRefKey(refKey) != null) return
 
-        // V1 parity: find original NN transaction by constructing NN ref_key
         val seller = (ct.seller ?: "").trim()
         val orderNumber = (ct.orderNumber ?: "").trim()
         val itemId = (ct.itemId ?: "").trim()
@@ -269,7 +260,6 @@ class SalesFifoSyncUseCase(
         )
         fifoTranRepo.save(fifoTran)
 
-        // V1 parity: restore EXACT quantities to EXACT original layers
         for (alloc in allocations) {
             val layer = fifoLayerRepo.findById(alloc.layerId).orElse(null)
             if (layer == null) {
@@ -295,7 +285,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * FIFO return: restore to most expensive layers first.
-     * V1 parity: sales_sync.py _fifo_return_partial()
      * Order: unit_cost DESC
      */
     private fun processReturn(sku: String, qty: Int, ct: CleanedTransaction) {
@@ -330,7 +319,6 @@ class SalesFifoSyncUseCase(
             layer.closedAt = null // Re-open if it was closed
             fifoLayerRepo.save(layer)
 
-            // V1 parity: uses unit_cost directly, no landedCost fallback
             val unitCost = layer.unitCost
             fifoAllocRepo.save(FifoAllocation(
                 outTranId = fifoTran.id,
@@ -352,7 +340,6 @@ class SalesFifoSyncUseCase(
 
     /**
      * Extract (sku, qtyp) pairs from CleanedTransaction's 10 slots.
-     * V1 parity: qtyp = qty * quantity (already computed during transform)
      */
     private fun extractSkuSlots(ct: CleanedTransaction): List<Pair<String, Int>> {
         val result = mutableListOf<Pair<String, Int>>()

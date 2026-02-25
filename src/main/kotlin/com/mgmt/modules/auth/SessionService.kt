@@ -197,7 +197,6 @@ class SessionService(
 
     /**
      * Get required tokens for an action from the action registry.
-     * V1 parity: SecurityPolicyManager.get_required_tokens(actionKey)
      *
      * Returns list of required token types (e.g., ["password", "securityCode"]).
      * Returns empty list if no tokens required (action is unprotected).
@@ -259,7 +258,6 @@ class SessionService(
 
     /**
      * Batch-save all action policies to Redis.
-     * V1 parity: UserAdminService.update_all_policies()
      * Returns the count of policies saved.
      */
     @Transactional

@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * SecurityPolicyController — CRUD for the dynamic security policy matrix.
  *
- * V1 parity: policy_update() in user_admin/views/actions.py
- * V1 stored policies in data/security_overrides.json.
  * V3 stores policies in Redis (action_registry:{actionKey} → List<tokenType>).
  *
  * Security: PUT requires L0 (user password) + L4 (nuclear code) verification.
@@ -51,7 +49,6 @@ class SecurityPolicyController(
      * PUT /auth/security-policies
      * Batch-save all action registry entries to Redis.
      *
-     * V1 parity: update_all_policies() in UserAdminService.
      * Security: Requires superuser + L0 (user password) + L4 (nuclear code).
      */
     @PutMapping
@@ -76,7 +73,6 @@ class SecurityPolicyController(
 
     /**
      * Verify L0 — user's current login password.
-     * V1 parity: SecurityPolicyManager.validate_single_token("user", ...)
      */
     private fun verifyL0Password(claims: JwtTokenProvider.TokenClaims, password: String?) {
         if (password.isNullOrBlank()) {
@@ -92,7 +88,6 @@ class SecurityPolicyController(
 
     /**
      * Verify L4 — system nuclear code.
-     * V1 parity: SecurityPolicyManager.validate_single_token("system", ...)
      */
     private fun verifyL4SystemCode(code: String?) {
         if (code.isNullOrBlank()) {
@@ -118,7 +113,6 @@ class SecurityPolicyController(
      * Used by frontend to dynamically show/skip SecurityCodeDialog
      * based on the current policy configuration.
      *
-     * V1 parity: SecurityPolicyManager.get_required_tokens(actionKey) was
      * used by {% security_inputs %} template tag to conditionally render inputs.
      */
     @GetMapping("/action/{actionKey}")

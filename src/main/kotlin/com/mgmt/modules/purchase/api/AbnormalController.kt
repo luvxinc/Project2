@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*
  * V3 architecture §6: "Controller 禁止写业务逻辑"
  * All business logic delegated to [AbnormalUseCase].
  *
- * V1 parity endpoints:
+ *  endpoints:
  *   abnormal.py:abnormal_list_api      → GET  /purchase/abnormal
  *   abnormal.py:abnormal_detail_api    → GET  /purchase/abnormal/{logisticNum}
  *   abnormal.py:abnormal_history_api   → GET  /purchase/abnormal/{logisticNum}/history

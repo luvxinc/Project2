@@ -43,7 +43,6 @@ class UserService(
         val SYSTEM_USERS = setOf("superuser")
 
         /**
-         * V1 parity: SecurityInventory.WHITELIST_PERMISSIONS
          * Default permission keys — used as fallback when Redis has no whitelist.
          * At runtime, the active whitelist is loaded from Redis via SessionService.
          */
@@ -245,7 +244,6 @@ class UserService(
     // ─── Permissions ─────────────────────────────────────────────
 
     /**
-     * V1 parity: user_update_permissions() in user_admin/views/actions.py
      *
      * V1 had 5 guards:
      *   ① SecurityPolicyManager.verify_action_request → now @SecurityLevel on Controller
@@ -283,7 +281,6 @@ class UserService(
     }
 
     /**
-     * V1 parity: admin cannot grant permissions they don't have themselves.
      * SecurityPolicyManager: forbidden_perms = req_perms - op_perms
      */
     private fun validateInheritance(actorId: String, requestedPermissions: Map<String, Any>) {

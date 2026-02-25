@@ -17,7 +17,6 @@ import java.time.Instant
  * UpdateProductUseCase — single update + COGS batch update.
  *
  * V3 DDD: application/usecase layer.
- * V1 parity: update({name, category, cogs, upc, status}),
  *            batchUpdateCogs({items: [{id, cogs}]}).
  */
 @Service
@@ -71,7 +70,6 @@ class UpdateProductUseCase(
     }
 
     /**
-     * V1 parity: _sync_fifo_init_cost()
      * When COGS changes, update all INIT-type FIFO records for this SKU.
      * INIT records represent:
      *   - INIT_20241231: 2024年底期初库存
@@ -98,7 +96,6 @@ class UpdateProductUseCase(
     }
 
     /**
-     * V1 parity: batch update COGS.
      * Accepts {id, cogs} per item.
      */
     fun batchUpdateCogs(dto: BatchUpdateCogsRequest, username: String): BatchResult {

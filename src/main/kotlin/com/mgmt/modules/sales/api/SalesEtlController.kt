@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * SalesEtlController — ETL 上传 + 向导 REST API。
  *
- * V1 对应: views.py etl_views (Django)
  * 6 阶段向导: Upload → Parse → Clean (SKU Fix) → Transform → FIFO Sync → Done
  */
 @RestController

@@ -18,9 +18,8 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 
 /**
- * BarcodeGeneratorService — Strict V1 parity. Zero creative deviation.
+ * BarcodeGeneratorService
  *
- * V1 source of truth: backend/apps/products/services/barcode_generator.py
  *
  * V1 layout (4" × 6" thermal label):
  * ─────────────────────────
@@ -42,12 +41,10 @@ class BarcodeGeneratorService {
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        // V1 parity: 4" × 6" label (1 inch = 72 pt)
         const val INCH = 72f
         val PAGE_WIDTH = 4f * INCH     // 288pt
         val PAGE_HEIGHT = 6f * INCH    // 432pt
 
-        // V1 parity: 0.25" margins
         val MARGIN = 0.25f * INCH      // 18pt
 
         // V1 content area
@@ -100,7 +97,6 @@ class BarcodeGeneratorService {
      * V1-compatible batch API: generates one 4"×6" PDF per item.
      * All PDFs are merged into a single multi-page document.
      *
-     * V1 source: BarcodeGeneratorService.generate_batch()
      */
     fun generateBatch(items: List<BarcodeItem>): BarcodeResult {
         if (items.isEmpty()) {
@@ -178,7 +174,6 @@ class BarcodeGeneratorService {
     /**
      * Generate a single 4"×6" label page. Strict V1 layout.
      *
-     * V1 source: BarcodeGeneratorService.generate_single_pdf()
      */
     private fun generateSingleLabel(
         doc: PDDocument,
@@ -286,7 +281,6 @@ class BarcodeGeneratorService {
     }
 
     /**
-     * V1 parity: draw_barcode_centered()
      * Draws a label text + Code128 barcode, centered at the given position.
      */
     private fun drawBarcodeCentered(

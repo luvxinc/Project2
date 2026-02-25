@@ -20,7 +20,6 @@ import java.time.LocalDate
 /**
  * DynamicInventoryController — Real-time inventory status API.
  *
- * V1 parity: dynamic_inv_api
  * Returns per-SKU: actual_qty, theory_qty, avg_cost, current_cost,
  *                  order_qty, transit_qty, inv_value, order_value, transit_value.
  */

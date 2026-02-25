@@ -17,7 +17,6 @@ import java.time.ZoneId
 /**
  * CleanedTransactionUseCase — 读取清洗后的交易数据 + 仪表板统计。
  *
- * V1 对应:
  *   - ETLRepository.get_transactions_by_date() → SELECT * FROM Data_Clean_Log WHERE order_date BETWEEN
  *   - views.py _get_data_cutoff_date() → SELECT MAX(order_date)
  *   - views.py _get_db_stats_before() → count/min_date/max_date

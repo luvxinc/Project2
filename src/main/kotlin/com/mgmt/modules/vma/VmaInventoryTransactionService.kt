@@ -14,7 +14,6 @@ import java.util.UUID
 /**
  * VmaInventoryTransactionService — 库存事务管理
  *
- * V2 parity: inventory-transaction.service.ts (505 lines)
  *
  * Available = REC_CN + REC_CASE - OUT_CASE - OUT_CN - MOVE_DEMO + RETURN_DEMO
  * WIP       = OUT_CASE - REC_CASE - USED_CASE

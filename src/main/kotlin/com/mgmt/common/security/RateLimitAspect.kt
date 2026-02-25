@@ -18,7 +18,6 @@ import java.time.Duration
 /**
  * RateLimitAspect — AOP implementation for @RateLimit.
  *
- * V2 parity: express-rate-limit on login + security verification endpoints.
  *
  * Uses Redis sliding-window counter:
  *   Key: rate:{key}:{identifier}  (identifier = IP or userId)

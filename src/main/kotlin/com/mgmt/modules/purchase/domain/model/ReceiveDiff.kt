@@ -6,7 +6,6 @@ import java.time.Instant
 /**
  * ReceiveDiff — discrepancy record when sent ≠ received.
  *
- * V1 source: in_diff + in_diff_final merged.
  * status: pending → resolved (with resolution_note).
  */
 @Entity

@@ -21,10 +21,9 @@ import java.util.*
 /**
  * EtlIngestUseCase — CSV 数据摄入。
  *
- * V1 对应: ingest.py IngestService
  * 职责: 接收前端解析好的 CSV JSON → 去重(hash) → 写入 raw 表 → 创建 batch
  *
- * V1 parity fixes applied:
+ * 
  *   P1:  hash 包含 seller (防止跨店铺碰撞)
  *   P8:  FVF fixed/variable 分别存储
  *   P9:  Seller/eBay tax 分别存储
@@ -69,7 +68,6 @@ class EtlIngestUseCase(
             val rowSeller = row.seller?.trim()?.ifEmpty { null } ?: request.seller
 
             // P1: hash includes seller to prevent cross-seller collision
-            // V1 parity: str(v).strip() — null → empty string
             val allValues = listOf(
                 rowSeller,                           // ← P1: seller in hash
                 row.transactionCreationDate ?: "",
@@ -100,7 +98,6 @@ class EtlIngestUseCase(
             )
             val rowHash = csvParser.computeRowHashFull(allValues)
 
-            // V1 parity: ON CONFLICT(row_hash) DO NOTHING
             if (rawTransRepo.existsByRowHash(rowHash)) {
                 dupTransCount++
                 continue
@@ -160,7 +157,7 @@ class EtlIngestUseCase(
             transCount++
         }
 
-        // P16: Date validation — V1 parity: views.py line 396-398
+        // P16: Date validation: views.py line 396-398
         // Must check AFTER processing all rows (dateMax is computed during loop)
         // @Transactional ensures automatic rollback on exception
         val pacificToday = LocalDate.now(pacificZone)
@@ -179,7 +176,6 @@ class EtlIngestUseCase(
             // P12: per-row seller
             val rowSeller = row.seller?.trim()?.ifEmpty { null } ?: request.seller
 
-            // V1 parity: 7-column business key hash (includes seller)
             val earningHash = csvParser.computeEarningHash(
                 row.orderCreationDate, row.orderNumber, row.itemId,
                 row.itemTitle, row.buyerName, row.customLabel, rowSeller,
@@ -199,7 +195,6 @@ class EtlIngestUseCase(
                 synced = false,                                 // P13: Working Set — mark as pending
             )
 
-            // V1 parity: ON CONFLICT(row_hash) DO UPDATE — 覆盖模式, 更新全部字段
             val existing = rawEarnRepo.findByRowHash(earningHash)
             if (existing != null) {
                 existing.uploadBatchId = earning.uploadBatchId

@@ -19,7 +19,6 @@ import java.math.RoundingMode
 /**
  * LandedPriceRecalcService — recalculate landed prices after payment changes.
  *
- * V1 parity: landed_price.py recalculate_landed_prices() (L1041-1116)
  * + calculate_landed_prices() (L22-381) core algorithm.
  *
  * Key business rule #11: Landed price = actual_price * payment_ratio + fee_per_unit
@@ -48,7 +47,6 @@ class LandedPriceRecalcService(
 
     /**
      * Recalculate landed prices for all POs affected by a logistics payment change.
-     * V1 parity: recalculate_landed_prices(logistic_num=...) (landed_price.py:1062-1086)
      */
     @Transactional
     fun recalculate(logisticNum: String): Int {
@@ -65,7 +63,6 @@ class LandedPriceRecalcService(
 
     /**
      * Recalculate landed prices for a specific PO.
-     * V1 parity: recalculate_landed_prices(po_num=...) (landed_price.py:1059-1060)
      *
      * Called after PO payment or deposit payment submit/delete.
      */
@@ -125,7 +122,6 @@ class LandedPriceRecalcService(
 
     /**
      * Core landed price calculation for a single PO.
-     * V1 parity: calculate_landed_prices(po_num) (landed_price.py:22-381)
      *
      * Full algorithm:
      *   Step 1: Get PO strategy (currency, exchange rate)
@@ -418,7 +414,6 @@ class LandedPriceRecalcService(
 
     /**
      * Extract parent logistic num from a potentially-child logistic num.
-     * V1 parity: get_parent_logistic() (landed_price.py:184-189)
      *
      * V1 logic: if '_delay_' in logistic_num or '_V' in logistic_num → parts[0]
      * Examples:

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * RawTransactionController — 原始交易数据 REST API (只读)。
  *
- * V1 对应: views.py tab_transaction (读 Data_Transaction)
  * ETL 写入 API (Upload/Parse/Transform) 在后续块中实现。
  */
 @RestController

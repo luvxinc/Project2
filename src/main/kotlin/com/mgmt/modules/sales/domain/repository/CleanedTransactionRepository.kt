@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository
 import java.time.Instant
 
 /**
- * V1 对应: ETLRepository.get_transactions_by_date()
  *   → SELECT * FROM Data_Clean_Log WHERE `order date` BETWEEN :start AND :end
  *
  * V1 查询模式:
@@ -39,7 +38,7 @@ interface CleanedTransactionRepository : JpaRepository<CleanedTransaction, Long>
     @Query("SELECT MAX(c.orderDate) FROM CleanedTransaction c")
     fun findMaxOrderDate(): Instant?
 
-    /** 4D dedup query — V1 parity: (order_number, seller, item_id, action) unique lookup */
+    /** 4D dedup query: (order_number, seller, item_id, action) unique lookup */
     @Query(
         value = """
             SELECT * FROM cleaned_transactions

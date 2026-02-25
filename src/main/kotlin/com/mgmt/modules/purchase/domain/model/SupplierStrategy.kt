@@ -8,7 +8,6 @@ import java.time.LocalDate
 /**
  * SupplierStrategy entity — supplier's contract terms snapshot.
  *
- * V1 source: in_supplier_strategy.
  * Each supplier can have multiple strategies (versioned by effective_date).
  */
 @Entity

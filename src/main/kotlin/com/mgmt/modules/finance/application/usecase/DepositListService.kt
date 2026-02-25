@@ -15,7 +15,6 @@ import java.math.RoundingMode
 /**
  * DepositListService — builds the deposit payment list view.
  *
- * V1 parity: deposit_list_api (api.py:37-395)
  *
  * Key business rules:
  *   1. Only show POs where latest strategy has requireDeposit=true (cur_deposit>0)
@@ -300,7 +299,6 @@ class DepositListService(
 
     /**
      * Parse PO date from po_num format: AAYYYYMMDD-S## → YYYY-MM-DD
-     * V1 parity: parse_po_date (api.py:398-412)
      */
     private fun parsePoDate(poNum: String): String {
         val match = Regex("^[A-Za-z]{2}(\\d{4})(\\d{2})(\\d{2})").find(poNum)

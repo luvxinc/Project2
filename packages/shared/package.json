@@ -1,7 +1,7 @@
 {
   "name": "@mgmt/shared",
   "version": "0.0.1",
-  "description": "Shared types, constants, and utilities for MGMT ERP V2",
+  "description": "Shared types, constants, and utilities for ESPLUS ERP V3",
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

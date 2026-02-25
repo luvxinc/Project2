@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.stereotype.Repository
 
 /**
- * V1 对应: ETLRepository.get_raw_transaction_data()
  *   → SELECT * FROM Data_Transaction
  *
  * V1 查询模式:

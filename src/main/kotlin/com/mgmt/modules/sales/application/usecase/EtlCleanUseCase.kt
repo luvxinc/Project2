@@ -15,7 +15,6 @@ import java.time.Instant
 /**
  * EtlCleanUseCase — SKU 修正应用。
  *
- * V1 对应: views.py step_fix_sku + correction.py
  * 职责: 用户提交 SKU 修正 → 更新 raw_transaction_items → 保存到记忆库
  */
 @Service
@@ -74,7 +73,7 @@ class EtlCleanUseCase(
             }
             rawTransRepo.save(tx)
 
-            // Save to correction memory (V1 parity: correction.py save_correction_memory)
+            // Save to correction memory
             skuCorrectionUseCase.saveCorrection(
                 customLabel = fix.customLabel,
                 badSku = fix.badSku,

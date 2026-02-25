@@ -15,7 +15,6 @@ import java.time.Instant
 /**
  * BackupService — Core backup/restore logic for PostgreSQL databases.
  *
- * V1 parity: DatabaseService (backup/restore/delete/list)
  * V3 evolution:
  *   - PostgreSQL (pg_dump/pg_restore) instead of MySQL (mysqldump/mysql)
  *   - JSON config for database list (backup-databases.json)
@@ -103,7 +102,6 @@ class BackupService(
     /**
      * List all backup files, sorted by time descending (newest first).
      *
-     * V1 parity: DatabaseService.list_backups()
      */
     fun listBackups(): List<BackupInfo> {
         val dir = backupDir.toFile()
@@ -129,7 +127,6 @@ class BackupService(
     /**
      * Create a backup of all configured databases.
      *
-     * V1 parity: DatabaseService.create_backup()
      * V3 evolution: pg_dump custom format + FIFO cleanup
      *
      * @param tag User-provided tag/note (can be empty)
@@ -188,7 +185,6 @@ class BackupService(
     /**
      * Restore a backup file.
      *
-     * V1 parity: DatabaseService.restore_backup_with_progress()
      * V3: pg_restore for custom format files.
      *
      * ⚠️ CRITICAL operation — restores entire database.
@@ -243,7 +239,6 @@ class BackupService(
     /**
      * Delete a backup file.
      *
-     * V1 parity: DatabaseService.delete_backup()
      */
     fun deleteBackup(filename: String): Pair<Boolean, String> {
         val filepath = backupDir.resolve(filename)
@@ -290,7 +285,6 @@ class BackupService(
 
     /**
      * Find pg_dump/pg_restore binary.
-     * V1 parity: DatabaseService._find_binary()
      */
     private fun findBinary(name: String): String {
         // Check if available in PATH

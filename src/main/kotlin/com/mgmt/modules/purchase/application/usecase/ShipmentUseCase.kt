@@ -20,7 +20,6 @@ import java.time.LocalDate
 /**
  * ShipmentUseCase — logistics shipment management.
  *
- * V1 parity: send_submit, send_list, send_detail, send_modify, send_delete/undelete.
  */
 @Service
 class ShipmentUseCase(
@@ -122,7 +121,6 @@ class ShipmentUseCase(
     // ═══════════ Update ═══════════
 
     /**
-     * V1 parity: edit.py + edit_items/ — logistics + items modification.
      * Creates a new version event. Supports both params and item editing in one call.
      * Editable params: etaDate, pallets, totalWeight, priceKg, exchangeRate, note.
      * Editable items: quantity, poChange. Can add new items and soft-delete removed ones.
@@ -200,7 +198,7 @@ class ShipmentUseCase(
                 objectMapper.writeValueAsString(logisticsChanges), null, username)
         }
 
-        // ── V1 parity: item-level editing (send_mgmt/edit_items) ──
+        // ── item-level editing (send_mgmt/edit_items) ──
         dto.items?.let { incomingItems ->
             val existing = shipmentItemRepo.findAllByShipmentIdAndDeletedAtIsNullOrderBySkuAsc(saved.id)
             val existingById = existing.associateBy { it.id }
@@ -318,7 +316,6 @@ class ShipmentUseCase(
     // ═══════════ Export Context ═══════════
 
     /**
-     * V1 parity: detail.py → prepare data for MGMT/warehouse export.
      * For each item: poDate, currency, orderedQty, alreadySent(excl current), isAdjusted.
      */
     @Transactional(readOnly = true)
@@ -380,7 +377,7 @@ class ShipmentUseCase(
 
         // ETL-migrated shipments: no CREATE event was recorded at import time.
         // Synthesise a transient CREATE entry from the shipment itself so
-        // the History tab always shows at least the initial version (V1 parity:
+        // the History tab always shows at least the initial version (:
         // in_send always has at least one S01 row per logistic_num).
         val shipment = shipmentRepo.findById(shipmentId).orElse(null) ?: return events
         val syntheticCreate = ShipmentEvent(

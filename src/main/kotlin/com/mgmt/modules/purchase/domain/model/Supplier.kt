@@ -7,7 +7,6 @@ import java.time.Instant
  * Supplier entity — aggregate root for Supplier subdomain.
  *
  * V3 DDD: domain/model layer → maps to 'suppliers' table.
- * V1 source: in_supplier (Django Supplier model).
  */
 @Entity
 @Table(name = "suppliers")

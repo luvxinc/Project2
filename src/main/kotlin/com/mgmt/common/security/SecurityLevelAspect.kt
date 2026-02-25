@@ -25,9 +25,7 @@ import com.mgmt.common.web.CachedBodyRequestWrapper
 /**
  * SecurityLevelAspect — AOP interceptor for @SecurityLevel annotation.
  *
- * V1 parity: SecurityPolicyManager.verify_action_request(request, actionKey)
  *
- * V1 token model (5 levels):
  *   user   → L0 → 用户当前密码         → sec_code_l0
  *   query  → L1 → 查询安保码            → sec_code_l1
  *   modify → L2 → 修改安保码            → sec_code_l2
@@ -62,7 +60,6 @@ class SecurityLevelAspect(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * V1 parity: TOKEN_MAP — maps tokenType to (level, code_key)
      */
     companion object {
         val TOKEN_MAP = mapOf(
@@ -88,7 +85,7 @@ class SecurityLevelAspect(
         val claims = auth?.principal as? JwtTokenProvider.TokenClaims
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required")
 
-        // Superuser bypass (V1 parity: superusers bypass all security levels)
+        // Superuser bypass
         // ⚠️ SECURITY DESIGN DECISION: Superuser bypasses ALL security level checks.
         // This matches V1 behavior where superusers (is_superuser=True) skip SecurityPolicyManager.
         // Rationale: Superuser is the system owner and must retain emergency access.
@@ -112,7 +109,7 @@ class SecurityLevelAspect(
 
         val jsonBody = readJsonBody(request)
 
-        // Verify each required token independently (V1 parity: multi-token support)
+        // Verify each required token independently
         for (tokenType in requiredTokens) {
             val meta = TOKEN_MAP[tokenType]
             if (meta == null) {
@@ -148,7 +145,6 @@ class SecurityLevelAspect(
 
     /**
      * Validate a single security token.
-     * V1 parity: SecurityPolicyManager.validate_single_token()
      *
      * L0 (user): verify against user's bcrypt password hash in DB
      * L1-L4:     verify against security_codes table (bcrypt hash)

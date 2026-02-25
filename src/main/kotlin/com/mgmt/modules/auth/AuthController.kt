@@ -85,7 +85,6 @@ class AuthController(
     /**
      * GET /auth/role-check
      * Lightweight endpoint for frontend polling to detect role changes.
-     * V1 parity: check_role_version() in user_admin/views/actions.py
      * Returns current roles so frontend can compare with cached state.
      */
     @GetMapping("/role-check")

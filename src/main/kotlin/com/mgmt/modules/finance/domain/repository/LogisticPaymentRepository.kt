@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository
 /**
  * LogisticPaymentRepository — queries scoped to payment_type='logistics'.
  *
- * V1 parity: in_pmt_logistic_final table (denormalized current state).
  * Reuses the Payment entity from purchase module.
  */
 @Repository
@@ -19,7 +18,6 @@ interface LogisticPaymentRepository : JpaRepository<Payment, Long>, JpaSpecifica
 
     /**
      * Find all active logistics payments.
-     * V1 parity: SELECT * FROM in_pmt_logistic_final WHERE logistic_num IN (...)
      */
     @Query("""
         SELECT p FROM Payment p
@@ -31,7 +29,6 @@ interface LogisticPaymentRepository : JpaRepository<Payment, Long>, JpaSpecifica
 
     /**
      * Find by paymentNo (active only).
-     * V1 parity: SELECT * FROM in_pmt_logistic_final WHERE pmt_no = :pmt_no
      */
     @Query("""
         SELECT p FROM Payment p
@@ -43,7 +40,6 @@ interface LogisticPaymentRepository : JpaRepository<Payment, Long>, JpaSpecifica
 
     /**
      * Find by paymentNo including deleted (for restore).
-     * V1 parity: needed for restore_payment_api
      */
     @Query("""
         SELECT p FROM Payment p
@@ -54,13 +50,11 @@ interface LogisticPaymentRepository : JpaRepository<Payment, Long>, JpaSpecifica
 
     /**
      * Find by logisticNum (active only).
-     * V1 parity: SELECT * FROM in_pmt_logistic_final WHERE logistic_num = :logistic_num
      */
     fun findByPaymentTypeAndLogisticNumAndDeletedAtIsNull(paymentType: String, logisticNum: String): Payment?
 
     /**
      * Find the latest paymentNo sequence for a given date prefix.
-     * V1 parity: SELECT pmt_no FROM in_pmt_logistic WHERE pmt_no LIKE '{date}_S%' ORDER BY pmt_no DESC LIMIT 1
      */
     @Query("""
         SELECT p.paymentNo FROM Payment p

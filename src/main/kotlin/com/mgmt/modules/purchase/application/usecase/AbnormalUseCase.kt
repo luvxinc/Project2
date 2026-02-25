@@ -19,7 +19,6 @@ import java.time.LocalDate
  * Extracted from AbnormalController per V3 architecture §6 rule:
  * "Controller 禁止写业务逻辑 — 只做入参校验 + 调用 UseCase + 返回结果"
  *
- * V1 parity: abnormal.py — 4 strategies (M1-M4) + rollback
  */
 @Service
 class AbnormalUseCase(

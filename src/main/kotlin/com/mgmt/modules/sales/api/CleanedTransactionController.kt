@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * CleanedTransactionController — 清洗后交易数据 REST API (只读 + 统计)。
  *
- * V1 对应:
  *   - views.py tab_transaction → 展示 Data_Clean_Log 数据
  *   - views.py _get_data_cutoff_date → 最新日期
  *   - views.py _get_db_stats_before → 统计信息

@@ -3,7 +3,6 @@ package com.mgmt.common.security
 /**
  * RateLimit — method-level rate limiting annotation.
  *
- * V2 parity: Express-rate-limit on login/security endpoints.
  * Processed by [RateLimitAspect].
  *
  * @param key Key prefix for rate limit counter (e.g., "auth:login", "auth:verify")

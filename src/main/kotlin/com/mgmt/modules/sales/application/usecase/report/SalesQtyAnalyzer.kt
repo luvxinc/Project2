@@ -44,7 +44,6 @@ class SalesQtyAnalyzer(
         }
         log.info("📊 已加载原始记录: {} 条", transactions.size)
 
-        // V1 parity: stats = defaultdict(lambda: defaultdict(int))
         val stats = mutableMapOf<String, SkuSalesStats>()
 
         for (tx in transactions) {
@@ -61,7 +60,6 @@ class SalesQtyAnalyzer(
         val prefixes = listOf("88", "plus", "total")
         val metrics = listOf("Canceled", "Returned", "Cased", "Request", "Dispute")
 
-        // V1 parity: cols order (sales.py L89-96)
         val headers = mutableListOf("SKU")
         for (p in prefixes) {
             headers.addAll(listOf(
@@ -72,7 +70,6 @@ class SalesQtyAnalyzer(
             ))
         }
 
-        // V1 parity: calculate Net and percentages (sales.py L57-86)
         val rows = stats.entries.sortedByDescending { it.value.totalSold }.map { (sku, s) ->
             val row = mutableListOf<Any?>(sku)
             for (p in prefixes) {
@@ -83,7 +80,6 @@ class SalesQtyAnalyzer(
                 val request = s.getRequest(p)
                 val dispute = s.getDispute(p)
 
-                // V1 parity: Net = Sold - Canceled - Returned * R['RETURN'] - ...
                 val net = (sold - canceled
                     - (returned * config.lrReturn).toInt()
                     - (cased * config.lrCase).toInt()
@@ -102,7 +98,6 @@ class SalesQtyAnalyzer(
             row
         }
 
-        // V1 parity: footer (sales.py L105-112)
         val footer = listOf(
             " ", "备注说明：",
             "1. 取消的订单不算库存消耗",
@@ -121,7 +116,6 @@ class SalesQtyAnalyzer(
     }
 
     /**
-     * V1 parity: sales.py _process_row() L116-170
      *
      * 处理单行数据，按 seller 归属到 88/plus/total 三个维度。
      */
@@ -130,10 +124,8 @@ class SalesQtyAnalyzer(
         val action = tx.action
         val quantity = tx.quantity
 
-        // V1 parity: 解析 SKU 列表 (sales.py L127-143)
         val skuList = extractSkuSlots(tx)
 
-        // V1 parity: 特殊 SKU 规则 (sales.py L146-147)
         val hasSpecial = skuList.any { it.sku in SpecialSkuRules.SOURCE_SKUS }
         val finalSkuList = if (hasSpecial) {
             skuList + SkuSlot(SpecialSkuRules.TARGET_SKU, SpecialSkuRules.TARGET_QTY)
@@ -141,7 +133,6 @@ class SalesQtyAnalyzer(
             skuList
         }
 
-        // V1 parity: 归属判定 (sales.py L150-170)
         // action_map: 88 → ["esparts88"], plus → ["espartsplus"], total → null
         // code_map: Canceled=CA, Returned=RE, Cased=CC, Request=CR, Dispute=PD
         for ((sku, qtyp) in finalSkuList) {
@@ -169,7 +160,6 @@ class SalesQtyAnalyzer(
     private fun extractSkuSlots(tx: CleanedTransaction): List<SkuSlot> = tx.extractSkuSlots()
 
     /**
-     * V1 parity: sales.py L168-170
      * for label, code in code_map.items():
      *     if action == code: stats_dict[sku][f"{prefix}_{label}"] += total_qty
      */
@@ -210,7 +200,6 @@ class SalesQtyAnalyzer(
 
 /**
  * Per-SKU sales statistics across 3 seller dimensions.
- * V1 parity: defaultdict(int) with keys like "88_Sold", "total_Canceled" etc.
  */
 private data class SkuSalesStats(
     var s88Sold: Int = 0, var s88Canceled: Int = 0, var s88Returned: Int = 0,

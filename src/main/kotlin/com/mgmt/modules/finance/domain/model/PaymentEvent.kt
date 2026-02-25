@@ -7,7 +7,6 @@ import java.time.Instant
  * PaymentEvent entity — append-only audit trail for payment changes.
  *
  * Consistent with purchase_order_events (V10) and shipment_events (V12).
- * V1 source: in_pmt_prepay mutation log (each row = one event).
  *
  * Event types:
  *   CREATE       — initial record

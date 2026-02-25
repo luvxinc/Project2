@@ -36,11 +36,9 @@ class PredictionAnalyzer(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    // V1 parity: prediction.py L36-37
     private val recentWeight = 0.6
     private val olderWeight = 0.4
 
-    // V1 parity: prediction.py L39-53 — 季节性月份权重
     private val seasonalFactors = mapOf(
         1 to 0.85, 2 to 0.80, 3 to 0.95, 4 to 1.00, 5 to 1.00, 6 to 0.95,
         7 to 0.90, 8 to 0.90, 9 to 1.05, 10 to 1.10, 11 to 1.20, 12 to 1.15,
@@ -50,7 +48,6 @@ class PredictionAnalyzer(
     fun run(config: ReportConfig, csvWriter: ReportCsvWriter): AnalyzerResult {
         log.info("🚀 启动企业级销量预测引擎...")
 
-        // V1 parity: prediction.py _aggregate_monthly_sales() — 加载24个月数据
         val monthlyMatrix = aggregateMonthlySales(config)
         if (monthlyMatrix.isEmpty()) {
             log.warn("⚠️ 预测数据为空")
@@ -95,7 +92,6 @@ class PredictionAnalyzer(
         val zeroCount = results.count { it.forecast == 0.0 }
         val avgConfidence = if (results.isNotEmpty()) results.map { it.confidence }.average() else 0.0
 
-        // V1 parity: 保存详细报告
         val headers = listOf("SKU", "预测值", "预测方法", "置信度", "SKU类型",
             "月均销量", "销售覆盖率", "波动系数", "近3月均值", "前3月均值", "趋势")
         val rows = results.map { r ->
@@ -119,7 +115,6 @@ class PredictionAnalyzer(
         csvWriter.saveCsv(headers, rows, detailFilename, footer)
         filenames.add(detailFilename)
 
-        // V1 parity: prediction.py L394-399 — 生成兼容格式 (供 OrderingService 使用)
         val compatHeaders = listOf("SKU", "BestForecast", "Best_Algo")
         val compatRows = results.map { listOf<Any?>(it.sku, it.forecast.r(), it.method) }
         val compatFilename = "Estimated_Monthly_SKU.csv"
@@ -151,7 +146,6 @@ class PredictionAnalyzer(
     }
 
     // ═══════════════════════════════════════════════════════
-    // V1 parity: prediction.py _aggregate_monthly_sales() L71-131
     // ═══════════════════════════════════════════════════════
 
     private fun aggregateMonthlySales(config: ReportConfig): Map<String, List<Double>> {
@@ -184,7 +178,6 @@ class PredictionAnalyzer(
                 val skuMonths = monthlyData.getOrPut(slot.sku) { mutableMapOf() }
                 skuMonths[monthKey] = (skuMonths[monthKey] ?: 0) + netQty
 
-                // V1 parity: prediction.py L124-126 — special SKU
                 if (slot.sku in SpecialSkuRules.SOURCE_SKUS) {
                     val specialQty = (quantity * 2 * effectiveRatio).toInt()
                     val targetMonths = monthlyData.getOrPut(SpecialSkuRules.TARGET_SKU) { mutableMapOf() }
@@ -211,7 +204,7 @@ class PredictionAnalyzer(
     }
 
     // ═══════════════════════════════════════════════════════
-    // Classification + Forecasting — V1 parity: prediction.py L133-306
+    // Classification + Forecasting: prediction.py L133-306
     // ═══════════════════════════════════════════════════════
 
     private data class SkuStats(val avgMonthly: Double, val coverage: Double, val cv: Double)

@@ -17,7 +17,6 @@ import java.time.LocalDate
 /**
  * SupplierUseCase — CRUD for suppliers + strategy management.
  *
- * V1 parity: supplier_add, supplier_list, modify_supplier_strategy,
  *            check_supplier_code_exists, check_strategy_date_conflict.
  */
 @Service
@@ -70,7 +69,7 @@ class SupplierUseCase(
         )
         val saved = supplierRepo.save(supplier)
 
-        // Create initial default strategy (V1 parity)
+        // Create initial default strategy
         val strategy = SupplierStrategy(
             supplierId = saved.id,
             supplierCode = saved.supplierCode,
@@ -126,19 +125,19 @@ class SupplierUseCase(
     fun getStrategiesByCode(supplierCode: String): List<SupplierStrategy> =
         strategyRepo.findAllBySupplierCodeAndDeletedAtIsNullOrderByEffectiveDateDesc(supplierCode.uppercase())
 
-    /** V1 parity: find strategy effective on a given date */
+    /** find strategy effective on a given date */
     @Transactional(readOnly = true)
     fun getEffectiveStrategy(supplierCode: String, date: LocalDate): SupplierStrategy? =
         strategyRepo.findFirstBySupplierCodeAndEffectiveDateLessThanEqualAndDeletedAtIsNullOrderByEffectiveDateDesc(
             supplierCode.uppercase(), date
         )
 
-    /** V1 parity: check date conflict before modifying strategy */
+    /** check date conflict before modifying strategy */
     @Transactional(readOnly = true)
     fun strategyDateConflict(supplierCode: String, effectiveDate: LocalDate): Boolean =
         strategyRepo.existsBySupplierCodeAndEffectiveDateAndDeletedAtIsNull(supplierCode.uppercase(), effectiveDate)
 
-    /** V1 parity: modify (create/update) strategy for a supplier */
+    /** modify (create/update) strategy for a supplier */
     @Transactional
     fun modifyStrategy(dto: ModifyStrategyRequest, username: String): SupplierStrategy {
         val supplier = findByCode(dto.supplierCode)

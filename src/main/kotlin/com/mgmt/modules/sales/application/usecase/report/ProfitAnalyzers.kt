@@ -33,7 +33,6 @@ class ListingProfitAnalyzer(
         }
         log.info("📊 已加载原始记录: {} 条", curTx.size)
 
-        // V1 parity: profit_listing.py L62-63 — _load_basics() loads prev period
         val prevRange = computePrevRange(config.startDate, config.endDate)
         val prevTx = reportData.findTransactionsByDateRange(prevRange.first, prevRange.second)
 
@@ -170,7 +169,6 @@ class SkuProfitAnalyzer(
 // ═══════════════════════════════════════════════════════
 
 /**
- * V1 parity: base.py L161-168
  * prev_end = start - 1day, prev_start = prev_end - delta
  */
 fun computePrevRange(startDate: LocalDate, endDate: LocalDate): Pair<LocalDate, LocalDate> {

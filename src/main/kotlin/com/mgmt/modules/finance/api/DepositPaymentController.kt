@@ -25,7 +25,6 @@ import java.nio.file.Files
 /**
  * DepositPaymentController — Finance deposit payment REST API.
  *
- * V1 parity: backend/apps/finance/views/deposit/api.py (10 API endpoints)
  *
  * Endpoints:
  *   1. GET    /finance/deposits                                  — Deposit list

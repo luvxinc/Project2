@@ -24,7 +24,6 @@ import com.mgmt.domain.log.AuditLogRepository
 /**
  * AuditLogAspect — AOP implementation for @AuditLog.
  *
- * V2 parity: NestJS LogWriterService.logBusiness() + logAudit().
  *
  * Flow:
  *   1. Read @AuditLog annotation from method

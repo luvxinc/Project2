@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * RawTransactionItem — 原始交易的行项目 (SKU + Quantity)。
  *
- * V1 对应: Data_Transaction 表中 Parser 解析出的 P_SKU1..P_SKU10 + P_Quantity1..P_Quantity10
  * V3 重构: 从 denormalized 10 列 → normalized 子表 (1:N)
  *
  * CASCADE DELETE from parent RawTransaction.

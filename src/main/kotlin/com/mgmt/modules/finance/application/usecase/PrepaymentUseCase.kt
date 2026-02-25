@@ -23,7 +23,6 @@ import java.time.temporal.ChronoUnit
 /**
  * PrepaymentUseCase — core business logic for prepayment management.
  *
- * V1 parity: backend/apps/finance/views/prepay/api.py (1115 lines)
  */
 @Service
 class PrepaymentUseCase(
@@ -38,7 +37,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // TRANSACTION LIST
-    // V1 parity: transaction_list_api (api.py L119-289)
     // ═══════════════════════════════════════════════
 
     @Transactional(readOnly = true)
@@ -160,7 +158,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // CREATE PREPAYMENT
-    // V1 parity: submit_prepay_api (api.py L292-443)
     // ═══════════════════════════════════════════════
 
     @Transactional
@@ -242,7 +239,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // SOFT DELETE
-    // V1 parity: prepay_delete_api (api.py L660-733)
     // ═══════════════════════════════════════════════
 
     @Transactional
@@ -281,7 +277,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // RESTORE
-    // V1 parity: prepay_restore_api (api.py L736-827)
     // ═══════════════════════════════════════════════
 
     @Transactional
@@ -320,7 +315,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // HISTORY (3-column layout)
-    // V1 parity: prepay_history_api (api.py L446-657)
     // ═══════════════════════════════════════════════
 
     @Transactional(readOnly = true)
@@ -471,7 +465,6 @@ class PrepaymentUseCase(
 
     // ═══════════════════════════════════════════════
     // EXCHANGE RATE
-    // V1 parity: prepay_rate_api (api.py L1081-1115)
     // ═══════════════════════════════════════════════
 
     @Transactional(readOnly = true)
@@ -499,7 +492,6 @@ class PrepaymentUseCase(
 
     /**
      * Convert amount to supplier's settlement currency.
-     * V1 parity: api.py L89-98
      */
     private fun convertToSupplierCurrency(
         amount: BigDecimal,
@@ -520,7 +512,6 @@ class PrepaymentUseCase(
 
     /**
      * Check if files exist for a prepayment record.
-     * V1 parity: api.py L228-237
      */
     private fun checkFileExists(paymentNo: String, dateStr: String): Boolean {
         return try {

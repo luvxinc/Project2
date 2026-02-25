@@ -1,5 +1,5 @@
 /**
- * Standardized error codes for the MGMT ERP V2 API
+ * Standardized error codes for the ESPLUS ERP API
  */
 export const ErrorCodes = {
   // Common errors

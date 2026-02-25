@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
 
 /**
- * VisualAggregateUseCase — V1 parity: core/services/visual_service.py
+ * VisualAggregateUseCase: core/services/visual_service.py
  *
  * Loads cleaned_transactions, aggregates by time grain + action,
  * produces line chart series and pie chart breakdown data.
@@ -29,7 +29,6 @@ class VisualAggregateUseCase(
 ) {
     private val log = LoggerFactory.getLogger(VisualAggregateUseCase::class.java)
 
-    // V1 parity: views.py L20-27
     private val ACTION_LABELS = mapOf(
         SalesAction.NN to "Sales",
         SalesAction.CA to "Cancel",
@@ -266,7 +265,6 @@ class VisualAggregateUseCase(
         }
         val vRetMag = retByAction.values.fold(BigDecimal.ZERO) { acc, v -> acc + v }
 
-        // V1 parity: |Regular| + |Fine| - |Overpay| + |ReturnLabel|
         val vShipReg = rows.sumOf { it.shipRegular }
         val vShipFine = rows.sumOf { it.shipUnder }
         val vShipOver = rows.sumOf { it.shipOver }
@@ -276,7 +274,6 @@ class VisualAggregateUseCase(
         val vCogs = rows.sumOf { it.cogs }
         val vFees = rows.sumOf { it.platformFee }
 
-        // V1 parity: net = sales - returns - shipping - cogs - fees
         val vNetSales = vSales - vRetMag - vShipVal - vCogs - vFees
         val denom = if (vSales != BigDecimal.ZERO) vSales else BigDecimal.ONE
 

@@ -25,7 +25,6 @@ import java.time.LocalDate
 /**
  * ShipmentController — Logistics shipment REST API.
  *
- * V1 parity: send_submit, send_list, send_detail, send_delete/undelete.
  */
 @RestController
 @RequestMapping("/purchase/shipments")
@@ -147,7 +146,6 @@ class ShipmentController(
     // ═══════════ Helpers ═══════════
 
     /**
-     * V1 parity: compute receive status from receives + diffs.
      * IN_TRANSIT       — no active receives or all receiveQty = 0
      * ALL_RECEIVED     — sentQty == receivedQty across all rows
      * DIFF_UNRESOLVED  — mismatch && any diff is pending

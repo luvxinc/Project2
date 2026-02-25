@@ -31,7 +31,7 @@ interface ShipmentItemRepository : JpaRepository<ShipmentItem, Long> {
     @Query("SELECT i FROM ShipmentItem i WHERE i.poId = :poId AND i.sku = :sku AND i.deletedAt IS NULL")
     fun findAllByPoIdAndSkuAndDeletedAtIsNull(poId: Long, sku: String): List<ShipmentItem>
 
-    /** V1 parity: total sent for (poNum, sku) across ALL shipments */
+    /** total sent for (poNum, sku) across ALL shipments */
     @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM ShipmentItem i WHERE i.poNum = :poNum AND i.sku = :sku AND i.deletedAt IS NULL")
     fun sumSentByPoNumAndSku(poNum: String, sku: String): Int
 

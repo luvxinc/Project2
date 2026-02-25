@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ErrorCodes = void 0;
 /**
- * Standardized error codes for the MGMT ERP V2 API
+ * Standardized error codes for the ESPLUS ERP API
  */
 exports.ErrorCodes = {
     // Common errors

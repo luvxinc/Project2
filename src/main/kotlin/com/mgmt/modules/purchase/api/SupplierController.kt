@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * SupplierController — Supplier management REST API.
  *
- * V1 parity: supplier_add, supplier_list, strategy_modify, code_check, strategy_date_check.
  *
  * Endpoints (9):
  *   GET    /purchase/suppliers              - All suppliers

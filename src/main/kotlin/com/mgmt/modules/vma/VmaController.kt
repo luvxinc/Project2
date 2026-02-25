@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 /**
  * VmaController — REST API for Employees, Departments, SOP Requirements/History
  *
- * Endpoints (19 total — matching V2 parity):
+ * Endpoints (19 total):
  *
  *   Employees:
  *     GET    /vma/employees                          - 员工列表 (分页+搜索)

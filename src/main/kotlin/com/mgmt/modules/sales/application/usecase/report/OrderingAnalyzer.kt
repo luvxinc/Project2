@@ -39,10 +39,8 @@ class OrderingAnalyzer(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    // V1 parity: ordering.py L27 — Z-Score 按服务水平
     private val zScoreMap = mapOf(0.98 to 2.05, 0.95 to 1.65, 0.90 to 1.28, 0.85 to 1.04)
 
-    // V1 parity: ordering.py L30-35 — 紧急程度阈值
     private val criticalThreshold = 0.3
     private val highThreshold = 0.6
     private val mediumThreshold = 0.9
@@ -66,11 +64,11 @@ class OrderingAnalyzer(
         val volatilityMap = reportData.findHistoricalVolatility()
         val supplyChainData = reportData.findSupplyChainData()
 
-        // 3. ABC 分类 — V1 parity: ordering.py L103-120
+        // 3. ABC 分类: ordering.py L103-120
         // V1 用 预估销售额 = 预测 × Cog 做金额 Pareto
         val abcResult = classifyAbc(forecasts, skuCostMap)
 
-        // 4. 逐 SKU 补货计算 — V1 parity: ordering.py L122-209
+        // 4. 逐 SKU 补货计算: ordering.py L122-209
         val results = mutableListOf<OrderingRow>()
         val leadTime = config.leadTime    // 月数
         val minSafety = config.safetyStock // 月数
@@ -82,17 +80,14 @@ class OrderingAnalyzer(
             val moq = moqMap[sku] ?: 100
             val sc = supplyChainData[sku]
 
-            // V1 parity: ordering.py L133
             var volatility = volatilityMap[sku] ?: (monthForecast * 0.5)
             if (volatility <= 0) volatility = monthForecast * 0.5
 
-            // V1 parity: ordering.py L138-141 — 安全库存
             val zScore = zScoreMap[serviceLevel] ?: 1.28
             val ssStat = zScore * sqrt(leadTime) * volatility
             val ssMin = minSafety * monthForecast
             val safetyStock = max(ssStat, ssMin)
 
-            // V1 parity: ordering.py L143-146 — 目标库存 & 可用库存
             val targetStock = leadTime * monthForecast + safetyStock
             val theoryInv = (currentStock[sku] ?: 0).toDouble()
             val orderQty = (sc?.orderQty ?: 0).toDouble()
@@ -100,7 +95,6 @@ class OrderingAnalyzer(
             val availableStock = theoryInv + orderQty + transitQty
             val gap = targetStock - availableStock
 
-            // V1 parity: ordering.py L148-185 — 决策
             var suggestQty = 0
             var urgency: String
             var note: String
@@ -112,13 +106,11 @@ class OrderingAnalyzer(
                 urgency = "不需要"
                 note = "销量过低 (6月预测 < MOQ:$moq)"
             } else {
-                // V1 parity: ordering.py L163-167 — MOQ 向上取整 (0.33 阈值)
                 val factor = gap / moq
                 val remainder = factor - factor.toInt()
                 val rounds = if (remainder >= 0.33) ceil(factor).toInt() else floor(factor).toInt()
                 suggestQty = max(rounds * moq, 0)
 
-                // V1 parity: ordering.py L169-181 — 紧急程度
                 val stockRatio = if (targetStock > 0) availableStock / targetStock else 1.0
                 when {
                     stockRatio < criticalThreshold -> {
@@ -139,14 +131,12 @@ class OrderingAnalyzer(
                     }
                 }
 
-                // V1 parity: ordering.py L183-185
                 if (suggestQty == 0) {
                     urgency = "不需要"
                     note = "缺口微小"
                 }
             }
 
-            // V1 parity: ordering.py L188-192
             val invValue = theoryInv * cog.toDouble()
             val orderValue = suggestQty * cog.toDouble()
             val turnoverDays = if (monthForecast > 0) theoryInv / monthForecast * 30 else 999.0
@@ -164,7 +154,6 @@ class OrderingAnalyzer(
             ))
         }
 
-        // V1 parity: ordering.py L249-252 — 排序
         val urgencyOrder = mapOf(
             "🔴 紧急" to 0, "🟠 高优" to 1, "🟡 建议" to 2,
             "🟢 可延迟" to 3, "不需要" to 4
@@ -173,7 +162,7 @@ class OrderingAnalyzer(
             urgencyOrder[it.urgency] ?: 4
         }.thenByDescending { it.suggestQty })
 
-        // Build CSV — V1 parity: ordering.py L216-220
+        // Build CSV: ordering.py L216-220
         val headers = listOf(
             "SKU", "ABC等级", "紧急程度", "建议订货", "备注",
             "预测月消耗", "目标服务水平", "安全库存", "目标库存",
@@ -196,7 +185,6 @@ class OrderingAnalyzer(
         val totalOrderValue = results.sumOf { it.orderValue }
         val totalInvValue = results.sumOf { it.invValue }
 
-        // V1 parity: ordering.py L265-273
         val footer = listOf(
             "📘 企业级智能补货系统说明:",
             "1. 参数: Lead=${config.leadTime}月, MinSafety=${config.safetyStock}月",
@@ -207,7 +195,6 @@ class OrderingAnalyzer(
             "6. 建议订货金额: \$%,.2f".format(totalOrderValue),
         )
 
-        // V1 parity: filename = Smart_Ordering_Plan_{suffix}.csv
         val filename = "Smart_Ordering_Plan_${config.fileSuffix}.csv"
         val path = csvWriter.saveCsv(headers, rows, filename, footer)
         return if (path != null) {
@@ -219,7 +206,6 @@ class OrderingAnalyzer(
     }
 
     /**
-     * V1 parity: ordering.py _calc_abc_classification() L103-120
      * ABC 分类用金额 Pareto (预测 × Cog), 阈值 80/95
      */
     data class AbcEntry(val abc: String, val serviceLevel: Double)

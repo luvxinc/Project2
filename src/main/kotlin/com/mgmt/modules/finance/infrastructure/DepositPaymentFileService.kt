@@ -10,7 +10,6 @@ import java.nio.file.Paths
 /**
  * DepositPaymentFileService — file management for deposit payment records.
  *
- * V1 parity: backend/apps/finance/views/deposit/api.py (file endpoints)
  *
  * Storage path: data/records/finance/deposit/{YYYY}/{pmt_no}/
  * File naming: {pmt_no}_V{02d}.{ext}
@@ -30,7 +29,6 @@ class DepositPaymentFileService {
 
     /**
      * Get file info for a deposit payment record.
-     * V1 parity: deposit_file_list_api (api.py:911-965)
      */
     fun getFileInfo(paymentNo: String): FileInfoResponse {
         val year = parseYear(paymentNo)
@@ -68,7 +66,6 @@ class DepositPaymentFileService {
 
     /**
      * Get the resolved file path for serving/downloading.
-     * V1 parity: deposit_file_serve_api (api.py:968-1010)
      *
      * Returns null if file doesn't exist or path traversal detected.
      * Security: filename must start with paymentNo (V1: api.py:984).
@@ -90,7 +87,6 @@ class DepositPaymentFileService {
 
     /**
      * Save an uploaded file with versioning.
-     * V1 parity: deposit_receipt_upload_api (api.py:722-784)
      *
      * File naming: {pmt_no}_V{##}.{ext} — V1 uses _V prefix
      *
@@ -131,7 +127,6 @@ class DepositPaymentFileService {
 
     /**
      * Delete a file.
-     * V1 parity: deposit_file_delete_api (api.py:1013-1069)
      */
     fun deleteFile(paymentNo: String, filename: String): Boolean {
         val path = resolveFilePath(paymentNo, filename) ?: return false
@@ -153,7 +148,6 @@ class DepositPaymentFileService {
 
     /**
      * Parse year from pmt_no.
-     * V1 parity: api.py:748 — pmt_no format: DPMT_YYYYMMDD_N## (e.g. DPMT_20260109_N01)
      * Extract YYYY from the 5th-8th characters (after "DPMT_").
      */
     private fun parseYear(paymentNo: String): String {

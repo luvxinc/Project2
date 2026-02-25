@@ -15,7 +15,6 @@ import java.time.Instant
 /**
  * PaymentUseCase — unified payment management.
  *
- * V1 parity: 4 payment types (PO / deposit / logistic / prepay)
  * V3: unified into single table with type discriminator.
  */
 @Service

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository
 /**
  * POPaymentRepository — queries scoped to payment_type='po'.
  *
- * V1 parity: in_pmt_po_final table (denormalized current state).
  * Reuses the Payment entity from purchase module.
  */
 @Repository

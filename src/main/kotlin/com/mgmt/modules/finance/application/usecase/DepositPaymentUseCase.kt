@@ -21,7 +21,6 @@ import java.time.LocalDate
 /**
  * DepositPaymentUseCase — deposit payment submit and delete.
  *
- * V1 parity: deposit_payment_submit (api.py:415-719) + deposit_payment_delete_api (api.py:1436-1619)
  *
  * Key business rules:
  *   4. pmt_no format: DPMT_YYYYMMDD_N## (V1: api.py:513-519)
@@ -45,7 +44,7 @@ class DepositPaymentUseCase(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * Submit deposit payment — V1 parity: deposit_payment_submit (api.py:415-719)
+     * Submit deposit payment: deposit_payment_submit (api.py:415-719)
      */
     @Transactional
     fun submitPayment(request: SubmitDepositPaymentRequest, username: String): SubmitDepositPaymentResponse {
@@ -277,7 +276,7 @@ class DepositPaymentUseCase(
     }
 
     /**
-     * Delete deposit payment — V1 parity: deposit_payment_delete_api (api.py:1436-1619)
+     * Delete deposit payment: deposit_payment_delete_api (api.py:1436-1619)
      */
     @Transactional
     fun deletePayment(paymentNo: String, username: String): DeleteDepositPaymentResponse {
@@ -347,7 +346,6 @@ class DepositPaymentUseCase(
 
     /**
      * Create prepay usage (out) record for deposit prepay deduction.
-     * V1 parity: api.py:625-679
      *
      * tran_num format: {supplierCode}_{YYYYMMDD}_out_{##}
      */
@@ -431,7 +429,6 @@ class DepositPaymentUseCase(
 
     /**
      * Restore prepay balance by creating a reverse 'deposit' (in) record.
-     * V1 parity: api.py:1543-1605
      *
      * tran_num format: {supplierCode}_{YYYYMMDD}_in_{##}
      */

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component
 /**
  * EbayCSVParser — eBay Custom Label → SKU 解析引擎。
  *
- * V1 对应: parser.py 3 层正则
  *   Pattern1: 单品 (P_Flag=1)
  *   Pattern2: 双品 (P_Flag=2)
  *   Complex:  兜底分割 (P_Flag=5)
@@ -19,13 +18,13 @@ class EbayCSVParser {
 
     private val log = LoggerFactory.getLogger(EbayCSVParser::class.java)
 
-    // ── V1 parity: pat1 (single SKU) ──
+    // ── pat1 (single SKU) ──
     // ^(?:[A-Za-z]{1}[A-Za-z0-9]{0,2}\.)?(?P<SKU>[A-Za-z0-9\-_/]{7,})\.(?P<Quantity>\d{1,3})(?P<QuantityKey>\+2K)?(?:\.[A-Za-z0-9_]*){0,2}$
     private val pat1 = Regex(
         """^(?:[A-Za-z][A-Za-z0-9]{0,2}\.)?([A-Za-z0-9\-_/]{7,})\.(\d{1,3})(\+2K)?(?:\.[A-Za-z0-9_]*){0,2}$"""
     )
 
-    // ── V1 parity: pat2 (dual SKU) ──
+    // ── pat2 (dual SKU) ──
     // ^(?:[A-Za-z]{1}[A-Za-z0-9]{0,2}\.)?(?P<S1>[A-Za-z0-9/\-_]{7,})\.(?P<Q1>\d{1,3})(?P<K1>\+2K)?[\+\.](?P<S2>[A-Za-z0-9/\-_]{7,})\.(?P<Q2>\d{1,3})(?P<K2>\+2K)?(?:\.[A-Za-z0-9_]*){0,2}$
     private val pat2 = Regex(
         """^(?:[A-Za-z][A-Za-z0-9]{0,2}\.)?([A-Za-z0-9/\-_]{7,})\.(\d{1,3})(\+2K)?[+.]([A-Za-z0-9/\-_]{7,})\.(\d{1,3})(\+2K)?(?:\.[A-Za-z0-9_]*){0,2}$"""
@@ -43,7 +42,6 @@ class EbayCSVParser {
 
     /**
      * Parse a Custom Label into SKU + Quantity pairs.
-     * V1 parity: parser.py parse_labels() 3-stage pipeline.
      *
      * @param customLabel the raw Custom Label string from eBay CSV
      * @param corrections map of (badSku → SkuCorrection) for fast-fix during complex parse
@@ -57,7 +55,7 @@ class EbayCSVParser {
         if (customLabel.isNullOrBlank()) return ParseResult(0, emptyList(), emptyList())
         val label = customLabel.trim()
 
-        // Stage 1: try Pattern1 first (single) — V1 parity: parser.py tries pat1 before pat2
+        // Stage 1: try Pattern1 first (single): parser.py tries pat1 before pat2
         pat1.matchEntire(label)?.let { m ->
             val sku = m.groupValues[1]
             val qty = m.groupValues[2]
@@ -81,7 +79,6 @@ class EbayCSVParser {
     }
 
     /**
-     * V1 parity: parser.py _process_complex_rows()
      * Strip optional prefix, split on '+', each segment split on '.' for code.qty
      */
     private fun parseComplex(
@@ -116,7 +113,7 @@ class EbayCSVParser {
 
             if (code.uppercase() in junkValues) continue
 
-            // Fast-fix from correction memory (V1 parity)
+            // Fast-fix from correction memory
             if (validSkus.isNotEmpty() && code !in validSkus) {
                 corrections[code]?.let { fix ->
                     code = fix.correctSku.uppercase()
@@ -137,7 +134,6 @@ class EbayCSVParser {
 
     /**
      * Compute MD5 hash of all values joined with '|' separator.
-     * V1 parity: ingest.py compute_row_hash_full()
      */
     fun computeRowHashFull(values: List<String>): String {
         val content = values.joinToString("|") { it.trim() }
@@ -148,7 +144,6 @@ class EbayCSVParser {
 
     /**
      * Compute MD5 hash of 7 business key columns for Earning dedup.
-     * V1 parity: ingest.py compute_row_hash_key()
      * Keys: order_creation_date, order_number, item_id, item_title, buyer_name, custom_label, seller
      */
     fun computeEarningHash(vararg keyValues: String?): String {
@@ -160,7 +155,6 @@ class EbayCSVParser {
 
     /**
      * Levenshtein distance for fuzzy SKU matching.
-     * V1 parity: correction.py get_fuzzy_suggestions() uses difflib cutoff=0.4
      */
     fun findSimilarSkus(target: String, validSkus: Set<String>, limit: Int = 5): List<String> {
         val upper = target.uppercase()

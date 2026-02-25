@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * RawEarning — eBay Earning CSV 原始数据。
  *
- * V1 对应: Data_Order_Earning (MySQL)
  * 去重策略: row_hash = MD5(7 业务键列) — 覆盖模式 (ON CONFLICT DO UPDATE)
  */
 @Entity
@@ -49,7 +48,7 @@ class RawEarning(
     @Column(name = "row_hash", length = 64, unique = true)
     var rowHash: String? = null,
 
-    /** V1 parity P13: Processed_E equivalent — false = pending transform */
+    /** Processed_E equivalent — false = pending transform */
     @Column(name = "synced", nullable = false)
     var synced: Boolean = false,
 

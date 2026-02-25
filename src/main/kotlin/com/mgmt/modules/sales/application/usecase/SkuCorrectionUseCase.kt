@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * SkuCorrectionUseCase — SKU 修正记忆库管理。
  *
- * V1 对应: correction.py CorrectionService (CSV 文件读写)
  * V3: DB 表 + UNIQUE(custom_label, bad_sku) 去重
  */
 @Service
@@ -24,7 +23,7 @@ class SkuCorrectionUseCase(
         repo.findAll().map { it.toResponse() }
 
     /**
-     * Save a correction. V1 parity: correction.py save_correction_memory()
+     * Save a correction. correction.py save_correction_memory()
      * UNIQUE(custom_label, bad_sku) → keeps latest (upsert).
      */
     @Transactional
@@ -63,7 +62,7 @@ class SkuCorrectionUseCase(
     }
 
     /**
-     * Auto-fix lookup. V1 parity: correction.py find_auto_fix()
+     * Auto-fix lookup. correction.py find_auto_fix()
      */
     @Transactional(readOnly = true)
     fun findAutoFix(customLabel: String, badSku: String): SkuCorrection? =

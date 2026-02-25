@@ -12,7 +12,6 @@ import java.time.Instant
  * DeleteProductUseCase — soft delete.
  *
  * V3 DDD: application/usecase layer.
- * V1 parity: products never hard-deleted, only soft-deleted with timestamp.
  */
 @Service
 @Transactional

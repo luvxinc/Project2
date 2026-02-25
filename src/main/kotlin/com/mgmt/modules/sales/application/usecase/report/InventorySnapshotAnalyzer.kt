@@ -93,7 +93,6 @@ class InventorySnapshotAnalyzer(
             )
         }.sortedByDescending { (it[10] as BigDecimal).toDouble() }
 
-        // V1 parity: inventory_snapshot.py L279-293
         val totalPipeline = totalFifoQty + totalOrderQty + totalTransitQty
         val totalPipelineValue = totalFifoValue + totalOrderValue + totalTransitValue
 

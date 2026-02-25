@@ -4,7 +4,6 @@ import java.math.BigDecimal
 
 // ═══════════════════════════════════════════════
 // DEPOSIT LIST
-// V1 parity: deposit_list_api (api.py:37-395)
 // ═══════════════════════════════════════════════
 
 /**
@@ -71,7 +70,6 @@ data class DepositPaymentDetail(
 
 // ═══════════════════════════════════════════════
 // SUBMIT DEPOSIT PAYMENT
-// V1 parity: deposit_payment_submit (api.py:415-719)
 // ═══════════════════════════════════════════════
 
 /**
@@ -113,7 +111,6 @@ data class SubmitDepositPaymentResponse(
 
 // ═══════════════════════════════════════════════
 // DELETE DEPOSIT PAYMENT
-// V1 parity: deposit_payment_delete_api (api.py:1436-1619)
 // ═══════════════════════════════════════════════
 
 data class DeleteDepositPaymentResponse(
@@ -124,7 +121,6 @@ data class DeleteDepositPaymentResponse(
 
 // ═══════════════════════════════════════════════
 // VENDOR BALANCE
-// V1 parity: get_vendor_balance_api (api.py:787-908)
 // ═══════════════════════════════════════════════
 
 /**
@@ -141,7 +137,6 @@ data class VendorBalanceDto(
 
 // ═══════════════════════════════════════════════
 // DEPOSIT HISTORY
-// V1 parity: deposit_history_api (api.py:1220-1434)
 // ═══════════════════════════════════════════════
 
 /**
@@ -182,7 +177,6 @@ data class DepositPaymentVersion(
 
 // ═══════════════════════════════════════════════
 // DEPOSIT ORDERS
-// V1 parity: deposit_orders_api (api.py:1072-1217)
 // ═══════════════════════════════════════════════
 
 /**

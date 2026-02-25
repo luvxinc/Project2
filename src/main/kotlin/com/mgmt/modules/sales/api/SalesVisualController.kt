@@ -9,7 +9,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * SalesVisualController — V1 parity: apps/visuals/views.py get_chart_data()
+ * SalesVisualController: apps/visuals/views.py get_chart_data()
  *
  * Single endpoint that returns line or pie chart data.
  * V3 security: @RequirePermission + @AuditLog (V1 used session unlock).
@@ -23,7 +23,6 @@ class SalesVisualController(
     /**
      * GET /sales/visuals/chart-data
      *
-     * V1 parity: GET /visuals/data/
      *
      * Query params:
      *   start   — YYYY-MM-DD

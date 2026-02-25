@@ -24,7 +24,6 @@ object ProfitAggregator {
     /**
      * 按指定 key 聚合交易数据，weight = 1.0。
      *
-     * V1 parity: profit_listing.py _aggregate / profit_combo.py _aggregate
      * 唯一的差异是 keyExtractor 返回的值不同。
      *
      * @param transactions 清洗后的交易数据
@@ -47,7 +46,6 @@ object ProfitAggregator {
 
             val m = metrics.getOrPut(key) { ProfitMetrics() }
 
-            // V1 parity: 记录 Title (profit_listing.py L40-41)
             if (titleExtractor != null && m.title.isBlank()) {
                 m.title = (titleExtractor(tx) ?: "").trim()
             }
@@ -58,14 +56,11 @@ object ProfitAggregator {
             val refund = tx.refundAmount
             val weight = BigDecimal.ONE
 
-            // V1 parity: _accumulate_action_metrics (base.py L182-221, weight=1.0)
             accumulateActionMetrics(m, action, qtySets.toDouble(), revenue, refund, weight)
 
-            // V1 parity: _calculate_row_cost (base.py L223-260, include_special_sku=true)
             val rowCost = calculateRowCost(tx, qtySets, skuCostMap, includeSpecialSku = true)
             m.cogValue += -rowCost  // V1: cog_value += -row_cost (成本是负支出)
 
-            // V1 parity: _accumulate_fees (base.py L172-176, weight=1.0)
             m.fees.addFrom(tx, weight)
         }
         return metrics
@@ -90,7 +85,6 @@ object ProfitAggregator {
             val revenue = tx.saleAmount
             val refund = tx.refundAmount
 
-            // V1 parity: profit_sku.py L43-69
             // 1. 解析当前行包含的所有 SKU 及其价值
             val skuSlots = tx.extractSkuSlots()
             if (skuSlots.isEmpty()) continue
@@ -109,7 +103,6 @@ object ProfitAggregator {
                 orderTotalCost += value
             }
 
-            // V1 parity: profit_sku.py L73-78
             // 防御：如果总成本为0，按数量均摊
             if (orderTotalCost.compareTo(BigDecimal.ZERO) == 0) {
                 val totalUnits = skuUnits.values.sum()
@@ -119,7 +112,6 @@ object ProfitAggregator {
                 orderTotalCost = BigDecimal.valueOf(totalUnits)
             }
 
-            // V1 parity: profit_sku.py L81-118
             for ((sku, units) in skuUnits) {
                 val m = metrics.getOrPut(sku) { ProfitMetrics() }
 
@@ -145,7 +137,6 @@ object ProfitAggregator {
     }
 
     /**
-     * V1 parity: base.py L182-221 _accumulate_action_metrics
      */
     private fun accumulateActionMetrics(
         m: ProfitMetrics,
@@ -168,7 +159,6 @@ object ProfitAggregator {
     }
 
     /**
-     * V1 parity: base.py L223-260 _calculate_row_cost
      *
      * 计算单行的总成本。
      * includeSpecialSku: NU1C8E51C/K → +NU1C8SKT7 成本 × 2
@@ -186,7 +176,6 @@ object ProfitAggregator {
             val unitCost = skuCostMap[slot.sku] ?: BigDecimal.ZERO
             totalCost += unitCost * BigDecimal.valueOf((slot.perQty * qtySets).toLong())
 
-            // V1 parity: base.py L256-258
             if (includeSpecialSku && slot.sku in SpecialSkuRules.SOURCE_SKUS) {
                 val extraCost = skuCostMap[SpecialSkuRules.TARGET_SKU] ?: BigDecimal.ZERO
                 totalCost += extraCost * BigDecimal.valueOf((2 * qtySets).toLong())

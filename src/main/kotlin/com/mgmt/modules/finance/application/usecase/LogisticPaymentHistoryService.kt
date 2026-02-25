@@ -17,7 +17,6 @@ import java.math.RoundingMode
 /**
  * LogisticPaymentHistoryService — payment history and orders query.
  *
- * V1 parity: history.py (payment_history_api, payment_orders_api)
  *
  * History builds two columns:
  *   - Send versions: shipment event history (CREATE → UPDATE_LOGISTICS → UPDATE_ITEMS → DELETE/RESTORE)
@@ -41,7 +40,6 @@ class LogisticPaymentHistoryService(
 
     /**
      * Get payment history for a payment batch.
-     * V1 parity: payment_history_api (history.py:92-183)
      */
     fun getPaymentHistory(paymentNo: String, filterLogisticNum: String? = null): PaymentHistoryResponse {
         val payments = logisticPaymentRepository.findByPaymentNoIncludeDeleted(paymentNo)
@@ -62,7 +60,7 @@ class LogisticPaymentHistoryService(
     }
 
     /**
-     * Get payment orders — V1 parity: payment_orders_api (history.py:186-249)
+     * Get payment orders: payment_orders_api (history.py:186-249)
      */
     fun getPaymentOrders(paymentNo: String, filterLogisticNum: String? = null): PaymentOrdersResponse {
         val payments = logisticPaymentRepository.findByPaymentNoIncludeDeleted(paymentNo)

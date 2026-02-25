@@ -19,7 +19,7 @@ interface RawEarningRepository : JpaRepository<RawEarning, Long> {
     /** P13: Working Set — fetch all raw earnings for a set of order numbers */
     fun findAllByOrderNumberIn(orderNumbers: List<String>): List<RawEarning>
 
-    /** V1 parity: upsert — 覆盖模式, 更新全部字段 (V1: DELETE+INSERT) */
+    /** upsert — 覆盖模式, 更新全部字段 (V1: DELETE+INSERT) */
     @Modifying
     @Query(
         value = """

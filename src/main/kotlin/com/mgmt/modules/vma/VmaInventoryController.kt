@@ -150,7 +150,6 @@ class VmaInventoryController(
     /**
      * Re-download receiving PDF by transaction ID.
      *
-     * V2 parity: regenerateReceivingPdf() in inventory-transaction.controller.ts
      * - Loads only the single transaction + its related batch
      * - Generates a 1-page PDF for that single product line
      * - Filename: receiving_inspection_{specNo}_{serialNo}_{date}.pdf
@@ -164,7 +163,6 @@ class VmaInventoryController(
         val batch = invService.findBatchByBatchNo(batchNo)
             ?: return ResponseEntity.notFound().build()
 
-        // V2 parity: generate single-product PDF (1 page), NOT entire batch
         val pdfBytes = receivingPdfService.fillOnePdf(batch, txn)
         val dateReceived = batch.dateReceived.toString()  // LocalDate.toString() = "yyyy-MM-dd"
         val filename = "receiving_inspection_${txn.specNo}_${txn.serialNo ?: "N-A"}_${dateReceived}.pdf"

@@ -17,7 +17,6 @@ import org.springframework.web.server.ResponseStatusException
 /**
  * PermissionCheckAspect — AOP implementation for @RequirePermission.
  *
- * V2 parity: NestJS PermissionsGuard + @Permissions decorator.
  *
  * Flow:
  *   1. Read @RequirePermission annotation from method
@@ -48,7 +47,6 @@ class PermissionCheckAspect(
         val claims = auth?.principal as? JwtTokenProvider.TokenClaims
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required")
 
-        // V2 parity: superuser bypass (same as NestJS PermissionsGuard)
         if (claims.roles.contains("superuser")) {
             return joinPoint.proceed()
         }

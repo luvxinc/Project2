@@ -14,7 +14,6 @@ import java.util.UUID
 /**
  * VmaTrainingRecordService — Training Record CRUD + Session + Status/Matrix/Roadmap
  *
- * V2 parity: training-record.service.ts (701 lines)
  *
  * Features:
  *   - Training Record CRUD

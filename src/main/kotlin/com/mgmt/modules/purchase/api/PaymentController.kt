@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*
 /**
  * PaymentController — Unified payment REST API.
  *
- * V1 parity: 4 payment types unified.
  * Endpoints filter by paymentType query param.
  */
 @RestController

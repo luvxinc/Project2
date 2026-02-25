@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter
 /**
  * PurchaseOrderUseCase — PO lifecycle management.
  *
- * V1 parity: po_submit, po_list, po_detail, po_modify, po_delete/undelete.
  * V3: auto-generates po_num from supplier_code + date + sequence.
  */
 @Service
@@ -145,7 +144,6 @@ class PurchaseOrderUseCase(
     @Transactional
     fun update(id: Long, dto: UpdatePurchaseOrderRequest, username: String): PurchaseOrder {
         val po = findOne(id)
-        // V1 parity: cannot modify if shipped
         val (canModify, shippingStatus) = canModifyOrDelete(id)
         if (!canModify) {
             throw IllegalStateException("Cannot modify order with shipping status: $shippingStatus")
@@ -223,7 +221,6 @@ class PurchaseOrderUseCase(
     // ═══════════ Shipping Status ═══════════
 
     /**
-     * V1 parity: calculate shipping status from actual shipment_items data.
      * Returns: "not_shipped" | "partially_shipped" | "fully_shipped"
      */
     @Transactional(readOnly = true)
@@ -245,7 +242,6 @@ class PurchaseOrderUseCase(
     }
 
     /**
-     * V1 parity: check if PO can be deleted/modified.
      * Cannot delete if any items have been shipped.
      */
     @Transactional(readOnly = true)
@@ -262,7 +258,6 @@ class PurchaseOrderUseCase(
     @Transactional
     fun softDelete(id: Long, username: String): Boolean {
         val po = findOne(id)
-        // V1 parity: cannot delete if shipped
         val (canDelete, shippingStatus) = canModifyOrDelete(id)
         if (!canDelete) {
             throw IllegalStateException("Cannot delete order with shipping status: $shippingStatus")
@@ -316,7 +311,6 @@ class PurchaseOrderUseCase(
 
     /**
      * Record an audit event. Append-only — never updated or deleted.
-     * V1 parity: maps to in_po table's seq-based history chain.
      */
     private fun recordEvent(
         poId: Long, poNum: String, eventType: String,
@@ -358,7 +352,6 @@ class PurchaseOrderUseCase(
     private fun buildSpec(params: PurchaseOrderQueryParams): Specification<PurchaseOrder> {
         @Suppress("DEPRECATION")
         return Specification.where<PurchaseOrder> { root, _, cb ->
-            // V1 parity: list shows ALL POs including deleted ones
             if (params.includeDeleted) cb.conjunction()
             else cb.isNull(root.get<Instant>("deletedAt"))
         }.let { spec ->

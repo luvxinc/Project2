@@ -22,7 +22,6 @@ import java.util.*
  *   - JPA Specification for dynamic search (no raw `where: any = {}`)
  *   - Pacific Date utility inlined as Kotlin extension
  *   - Stack-edit rule preserved with cleaner Kotlin code
- *   - All responses use typed DTOs instead of Prisma spread objects
  */
 @Service
 @Transactional

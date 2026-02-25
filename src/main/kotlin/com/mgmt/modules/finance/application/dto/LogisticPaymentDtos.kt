@@ -5,7 +5,6 @@ import java.math.BigDecimal
 /**
  * LogisticPaymentDtos — DTOs for logistics cost management.
  *
- * V1 parity: logistic.py build_order_item(), submit.py, history.py, file_ops.py
  */
 
 // ═══════════════════════════════════════════════
@@ -13,7 +12,7 @@ import java.math.BigDecimal
 // ═══════════════════════════════════════════════
 
 /**
- * Single logistic shipment item — V1 parity: build_order_item() (logistic.py:175-278)
+ * Single logistic shipment item: build_order_item() (logistic.py:175-278)
  * All 30 fields from V1 response faithfully reproduced.
  */
 data class LogisticListItemDto(
@@ -57,7 +56,6 @@ data class LogisticListResponse(
 // ═══════════════════════════════════════════════
 
 /**
- * V1 parity: submit_payment_api request body (submit.py:22-206)
  */
 data class SubmitPaymentRequest(
     val logisticNums: List<String>,
@@ -94,7 +92,6 @@ data class DeleteRestoreResponse(
 // ═══════════════════════════════════════════════
 
 /**
- * V1 parity: payment_history_api response (history.py:92-183)
  */
 data class PaymentHistoryResponse(
     val pmtNo: String,
@@ -151,7 +148,6 @@ data class FieldChangeDto(
 // ═══════════════════════════════════════════════
 
 /**
- * V1 parity: payment_orders_api response (history.py:186-249)
  */
 data class PaymentOrdersResponse(
     val pmtNo: String,

@@ -7,7 +7,6 @@ import java.time.LocalDate
 /**
  * EtlBatch — ETL 批次追踪。
  *
- * V1 对应: _etl_tasks in-memory dict + session state
  * V3: DB 表，持久化可恢复，支持轮询进度
  */
 @Entity

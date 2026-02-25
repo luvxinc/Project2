@@ -16,7 +16,6 @@ import java.util.UUID
  * CreateProductUseCase — product creation.
  *
  * V3 DDD: application/usecase layer.
- * V1 parity: create({sku, name, category, cogs, upc}).
  */
 @Service
 @Transactional

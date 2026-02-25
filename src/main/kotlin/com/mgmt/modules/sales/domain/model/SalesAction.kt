@@ -3,7 +3,6 @@ package com.mgmt.modules.sales.domain.model
 /**
  * SalesAction — PostgreSQL sales_action 枚举。
  *
- * V1 对应: transformer.py 中的 action_code 逻辑:
  *   NN = Normal (type='order', 默认)
  *   CA = Cancel (type='refund', reference_id 含 'cancel')
  *   RE = Return (type='refund', reference_id 含 'return')

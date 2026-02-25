@@ -4,7 +4,6 @@ import java.math.BigDecimal
 
 // ═══════════════════════════════════════════════
 // PO PAYMENT LIST
-// V1 parity: po_payment_list_api
 // ═══════════════════════════════════════════════
 
 /**

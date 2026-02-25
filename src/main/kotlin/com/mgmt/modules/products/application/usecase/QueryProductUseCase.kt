@@ -16,7 +16,6 @@ import java.time.Instant
  * QueryProductUseCase — read-only product queries.
  *
  * V3 DDD: application/usecase layer.
- * V1 parity: cogs_load_table (list), cogs_get_form (metadata/dropdowns).
  */
 @Service
 @Transactional(readOnly = true)
@@ -44,7 +43,7 @@ class QueryProductUseCase(
     fun getActiveSkuList(): List<Product> =
         repo.findAllByStatusAndDeletedAtIsNullOrderBySkuAsc(ProductStatus.ACTIVE)
 
-    /** V1 parity: dropdown options for category / subcategory / type + existing SKU list */
+    /** dropdown options for category / subcategory / type + existing SKU list */
     fun getMetadata(): ProductMetadataResponse = ProductMetadataResponse(
         categories = repo.findDistinctCategories(),
         subcategories = repo.findDistinctSubcategories(),

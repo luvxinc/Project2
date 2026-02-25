@@ -12,7 +12,6 @@ import java.time.ZoneOffset
 /**
  * ReportDataRepository — Read-only data access for report analyzers.
  *
- * V1 parity:
  *   - ETLRepository.get_transactions_by_date()  → findTransactionsByDateRange()
  *   - InventoryRepository.get_all_cogs()         → findAllCogs()
  *   - InventoryRepository.get_fifo_avg_cost()     → findFifoAvgCost()
@@ -32,7 +31,6 @@ class ReportDataRepository {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: ETLRepository.get_transactions_by_date()
      *   → SELECT * FROM Data_Clean_Log WHERE `order date` BETWEEN :start AND :end
      */
     fun findTransactionsByDateRange(startDate: LocalDate, endDate: LocalDate): List<CleanedTransaction> {
@@ -51,7 +49,6 @@ class ReportDataRepository {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: ProfitAnalyzerBase._load_basics() → FIFO landed_price
      *
      * Returns: Map<SKU, avgLandedCost>
      * V1 SQL: SELECT f.sku, SUM(f.qty_remaining * COALESCE(p.landed_price_usd, f.unit_cost)) / SUM(f.qty_remaining)
@@ -80,7 +77,6 @@ class ReportDataRepository {
     }
 
     /**
-     * V1 parity: InventoryRepository.get_all_cogs() → SELECT * FROM Data_COGS
      *
      * V3: products table has sku + cog columns.
      * Returns: Map<SKU, cog>
@@ -101,7 +97,6 @@ class ReportDataRepository {
     /**
      * Build the merged cost map: FIFO first, COGS fallback.
      *
-     * V1 parity: ProfitAnalyzerBase._load_basics() L140-155
      *   "FIFO优先, DATA_COGS 回退"
      */
     fun buildSkuCostMap(): Map<String, BigDecimal> {
@@ -128,7 +123,6 @@ class ReportDataRepository {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: InventoryRepository.get_inventory_latest()
      *
      * V3: inventory_transactions → compute current stock per SKU.
      *     SUM(qty where action='in') - SUM(qty where action='out')
@@ -157,7 +151,6 @@ class ReportDataRepository {
     data class ProductMeta(val sku: String, val category: String?)
 
     /**
-     * V1 parity: inventory_snapshot.py L31-32
      * SELECT DISTINCT SKU FROM Data_COGS ORDER BY SKU
      */
     fun findAllProductsMeta(): List<ProductMeta> {
@@ -177,7 +170,6 @@ class ReportDataRepository {
     data class FifoInventoryRow(val qty: Int, val value: BigDecimal)
 
     /**
-     * V1 parity: inventory_snapshot.py L46-80
      * FIFO理论库存数量和价值
      */
     fun findFifoInventoryData(): Map<String, FifoInventoryRow> {
@@ -208,7 +200,6 @@ class ReportDataRepository {
     )
 
     /**
-     * V1 parity: inventory_snapshot.py L82-220
      * 下订数 = PO qty - Shipped qty
      * 在途数 = Shipped qty - Received qty
      *
@@ -268,7 +259,6 @@ class ReportDataRepository {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: InventoryRepository.get_sku_moq()
      * → SELECT SKU, COALESCE(MOQ, 100) as MOQ FROM Data_COGS
      */
     fun findSkuMoq(): Map<String, Int> {
@@ -285,7 +275,6 @@ class ReportDataRepository {
     }
 
     /**
-     * V1 parity: InventoryRepository.get_historical_volatility(months=12)
      *
      * 计算每个 SKU 的月销量标准差（用于安全库存计算）。
      * Returns: Map<SKU, stddev>

@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * ShipmentItem — per-SKU line item within a shipment.
  *
- * V1 source: in_send_list + in_send_final merged.
  * Tracks which PO each item belongs to.
  */
 @Entity

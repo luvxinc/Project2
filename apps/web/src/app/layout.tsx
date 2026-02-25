@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MGMT V2 - Enterprise Management System",
+  title: "ESPLUS ERP - Enterprise Management System",
   description: "Next-generation enterprise resource planning system",
 };
 

@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * CleanedTransaction — 清洗后的交易记录 (ETL Pipeline 输出)。
  *
- * V1 对应: Data_Clean_Log (MySQL, TEXT 列)
  * V3 对应: cleaned_transactions (PostgreSQL, 强类型)
  *
  * V1 Transformer 输出列 (transformer.py output_cols):
@@ -137,11 +136,11 @@ class CleanedTransaction(
     @Column(name = "tax_amount", precision = 12, scale = 2, nullable = false)
     var taxAmount: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P9: Seller collected tax (拆分) */
+    /** Seller collected tax (拆分) */
     @Column(name = "seller_tax", precision = 12, scale = 2, nullable = false)
     var sellerTax: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P9: eBay collected tax (拆分) */
+    /** eBay collected tax (拆分) */
     @Column(name = "ebay_tax", precision = 12, scale = 2, nullable = false)
     var ebayTax: BigDecimal = BigDecimal.ZERO,
 
@@ -163,11 +162,11 @@ class CleanedTransaction(
     @Column(name = "fvf_fee", precision = 12, scale = 2, nullable = false)
     var fvfFee: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P8: Final Value Fee - fixed (拆分) */
+    /** Final Value Fee - fixed (拆分) */
     @Column(name = "fvf_fee_fixed", precision = 12, scale = 2, nullable = false)
     var fvfFeeFixed: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P8: Final Value Fee - variable (拆分) */
+    /** Final Value Fee - variable (拆分) */
     @Column(name = "fvf_fee_variable", precision = 12, scale = 2, nullable = false)
     var fvfFeeVariable: BigDecimal = BigDecimal.ZERO,
 

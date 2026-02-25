@@ -6,7 +6,6 @@ import java.time.LocalDate
 
 // ═══════════════════════════════════════════════
 // SUPPLIER BALANCE DTOs
-// V1 parity: supplier_balance_api
 // ═══════════════════════════════════════════════
 
 data class SupplierBalanceResponse(
@@ -18,7 +17,6 @@ data class SupplierBalanceResponse(
 
 // ═══════════════════════════════════════════════
 // TRANSACTION LIST DTOs
-// V1 parity: transaction_list_api
 // ═══════════════════════════════════════════════
 
 data class TransactionQueryParams(
@@ -63,7 +61,6 @@ data class TransactionFilter(
 
 // ═══════════════════════════════════════════════
 // CREATE PREPAYMENT DTOs
-// V1 parity: submit_prepay_api
 // ═══════════════════════════════════════════════
 
 data class CreatePrepaymentRequest(
@@ -86,7 +83,6 @@ data class CreatePrepaymentResponse(
 
 // ═══════════════════════════════════════════════
 // HISTORY DTOs
-// V1 parity: prepay_history_api (3-column layout)
 // ═══════════════════════════════════════════════
 
 data class PrepaymentHistoryResponse(
@@ -144,7 +140,6 @@ data class FieldChange(
 
 // ═══════════════════════════════════════════════
 // FILE MANAGEMENT DTOs
-// V1 parity: file_info_api / serve_file_api / upload_file_api / delete_file_api
 // ═══════════════════════════════════════════════
 
 data class FileInfoResponse(
@@ -163,7 +158,6 @@ data class FileItem(
 
 // ═══════════════════════════════════════════════
 // EXCHANGE RATE DTOs
-// V1 parity: rate_api
 // ═══════════════════════════════════════════════
 
 data class ExchangeRateResponse(

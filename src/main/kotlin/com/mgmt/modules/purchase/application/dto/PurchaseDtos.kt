@@ -97,7 +97,6 @@ data class PurchaseOrderResponse(
     val supplierCode: String,
     val poDate: LocalDate,
     val status: String,
-    // V1 parity: summary fields for list view
     val itemCount: Int? = null,
     val totalAmount: Double? = null,
     val totalRmb: Double? = null,
@@ -106,7 +105,6 @@ data class PurchaseOrderResponse(
     val exchangeRate: Double? = null,
     val isDeleted: Boolean = false,
     val shippingStatus: String? = null,
-    // V1 parity: version seqs displayed as L01/V01
     val detailSeq: String? = null,
     val strategySeq: String? = null,
     val createdBy: String? = null,
@@ -211,7 +209,7 @@ data class ShipmentResponse(
     val updatedBy: String? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
-    /** V1 parity: computed receive status — IN_TRANSIT / ALL_RECEIVED / DIFF_UNRESOLVED / DIFF_RESOLVED */
+    /** computed receive status — IN_TRANSIT / ALL_RECEIVED / DIFF_UNRESOLVED / DIFF_RESOLVED */
     val receiveStatus: String = "IN_TRANSIT",
 )
 
@@ -223,14 +221,13 @@ data class ShipmentItemResponse(
     val unitPrice: Double,
     val poChange: Boolean,
     val note: String?,
-    /** V1 parity: ordered qty from PO for this (poNum, sku, unitPrice) */
+    /** ordered qty from PO for this (poNum, sku, unitPrice) */
     val orderedQty: Int? = null,
-    /** V1 parity: total shipped across ALL shipments for this (poNum, sku) */
+    /** total shipped across ALL shipments for this (poNum, sku) */
     val totalShipped: Int? = null,
 )
 
 /**
- * V1 parity: query.py L267-286 → get_shipment_items_api
  * Items grouped by (po_num, po_sku) with SUM(sent_quantity).
  * Different price tiers for same SKU are merged — matches V1 GROUP BY behavior.
  */
@@ -273,7 +270,7 @@ data class UpdateShipmentRequest(
     val priceKg: BigDecimal? = null,
     val exchangeRate: BigDecimal? = null,
     val note: String? = null,
-    /** V1 parity: optional item edits — full replacement of items list */
+    /** optional item edits — full replacement of items list */
     val items: List<UpdateShipmentItemRequest>? = null,
 )
 
@@ -441,7 +438,6 @@ data class ResolveReceiveDiffRequest(
 
 // ═══════════════════════════════════════════════
 // RECEIVE MANAGEMENT DTOs (入库管理)
-// V1 parity: receive_mgmt/{list,detail,edit,delete,history}.py
 // ═══════════════════════════════════════════════
 
 /** V1: receive_list_api response item */
@@ -449,8 +445,8 @@ data class ReceiveManagementItemResponse(
     val logisticNum: String,
     val sentDate: String,            // 发货日期 — from shipment.sentDate
     val receiveDate: String,
-    val detailSeq: String,           // V1 parity: detail_seq — current version number (e.g. V01, V02)
-    val updateDate: String,          // V1 parity: update_date — most recent update timestamp
+    val detailSeq: String,           // detail_seq — current version number (e.g. V01, V02)
+    val updateDate: String,          // update_date — most recent update timestamp
     val status: String,              // IN_TRANSIT | ALL_RECEIVED | DIFF_UNRESOLVED | DIFF_RESOLVED | DELETED
     val canModify: Boolean,
     val canDelete: Boolean,
@@ -506,7 +502,7 @@ data class DeleteReceiveRequest(
 )
 
 
-/** V1 parity history.py — one SEQ version of receive records */
+/**  history.py — one SEQ version of receive records */
 data class ReceiveHistoryVersion(
     val seq: String,                         // V1: seq field e.g. "V01", "R02"
     val versionDate: String,                 // V1: receive_date
@@ -519,7 +515,7 @@ data class ReceiveHistoryVersion(
     val changes: List<ReceiveHistoryChange>, // V1: changes (only for non-initial versions)
 )
 
-/** V1 parity: one changed field from adjust action */
+/** one changed field from adjust action */
 data class ReceiveHistoryChange(
     val type: String,        // "adjust" | "delete" | "restore"
     val poNum: String,
@@ -543,7 +539,7 @@ data class ReceiveHistoryItem(
     val action: String,      // V1: action field ("new" | "adjust")
 )
 
-/** V1 parity: one SEQ version of diff records */
+/** one SEQ version of diff records */
 data class ReceiveDiffHistoryVersion(
     val seq: String,
     val receiveDate: String,
@@ -583,7 +579,6 @@ data class ReceiveHistoryResponse(
 
 // ═══════════════════════════════════════════════
 // RECEIVE GOODS DTOs (货物入库)
-// V1 parity: receive/query.py + receive/submit.py
 // ═══════════════════════════════════════════════
 
 /** V1: get_pending_shipments_api — a pending shipment to receive */
@@ -606,7 +601,6 @@ data class PendingShipmentItemResponse(
 
 // ═══════════════════════════════════════════════
 // ABNORMAL (RECEIVE DIFF) MANAGEMENT DTOs
-// V1 parity: abnormal.py — list/detail/history/process/delete
 // ═══════════════════════════════════════════════
 
 /** V1: abnormal_list_api — grouped by (logisticNum, receiveDate) */

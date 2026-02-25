@@ -48,7 +48,7 @@ class VmaReceivingPdfService {
     companion object {
         private val DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-        // Checkbox field names (V2 parity — exact match)
+        // Checkbox field names
         val CHECKBOX_NAMES = listOf(
             "undefined",      // Item 1 PASS
             "undefined_2",    // Item 1 FAIL
@@ -99,7 +99,6 @@ class VmaReceivingPdfService {
     /**
      * Fill one receiving-inspection PDF for a single product line.
      *
-     * V2 parity: fillOnePdf(shared, line) in receiving-inspection-pdf.service.ts
      */
     fun fillOnePdf(
         batch: VmaReceivingBatch,
@@ -120,7 +119,7 @@ class VmaReceivingPdfService {
             return baos.toByteArray()
         }
 
-        // ── Text fields (V2 parity) ──
+        // ── Text fields ──
         setTextField(form, "ManufacturerVendor", "Venus Medtech (Hangzhou)")
         setTextField(form, "PO No", batch.poNo ?: "")
         setTextField(form, "Manufacturer Lot", txn.serialNo ?: "")
@@ -160,7 +159,7 @@ class VmaReceivingPdfService {
             checkBox(form, REJECT_CHECKBOX)
         }
 
-        // Flatten to bake values into page content (V2 parity: form.flatten())
+        // Flatten to bake values into page content
         form.flattenFields()
 
         pdfDoc.close()
@@ -170,7 +169,6 @@ class VmaReceivingPdfService {
     /**
      * Generate merged PDF for all product lines in a receiving shipment.
      *
-     * V2 parity: generateReceivingPdf(dto) in receiving-inspection-pdf.service.ts
      * Each product line → one filled template page → merge all into one PDF.
      */
     fun generateReceivingPdf(
@@ -204,7 +202,7 @@ class VmaReceivingPdfService {
         return baos.toByteArray()
     }
 
-    // ═══════════ Helpers (V2 parity) ═══════════
+    // ═══════════ Helpers ═══════════
 
     private fun setTextField(form: PdfAcroForm, name: String, value: String) {
         try {

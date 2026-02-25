@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile
 /**
  * PurchaseOrderController — PO lifecycle REST API.
  *
- * V1 parity: po_create, po_list, po_detail, po_edit, po_delete/undelete.
  *
  * Endpoints (8):
  *   GET    /purchase/orders                - PO list (paginated)
@@ -126,7 +125,7 @@ class PurchaseOrderController(
         }))
     }
 
-    // ═══════════ Exchange Rate (V1 parity: 4-source cascade) ═══════════
+    // ═══════════ Exchange Rate ═══════════
 
     /**
      * V1: get_exchange_rate_api — auto-fetch USD/CNY rate from multiple sources.
@@ -138,7 +137,6 @@ class PurchaseOrderController(
         val poDate = java.time.LocalDate.parse(date)
         val today = java.time.LocalDate.now()
 
-        // V1 parity: future dates require manual entry
         if (poDate.isAfter(today)) {
             return ResponseEntity.ok(ApiResponse.ok(mapOf(
                 "rate" to null,
@@ -215,7 +213,7 @@ class PurchaseOrderController(
         )))
     }
 
-    // ═══════════ Excel (V1 parity) ═══════════
+    // ═══════════ Excel ═══════════
 
     /** V1: generate_prefilled_template_api — reads V1 template, fills metadata, locks cells, adds protection */
     @GetMapping("/template")
@@ -283,7 +281,6 @@ class PurchaseOrderController(
     // ═══════════ Helpers ═══════════
 
     /**
-     * V1 parity: list response includes summary data (total, currency, isDeleted, shippingStatus).
      */
     private fun toListResponse(po: PurchaseOrder): PurchaseOrderResponse {
         val isDeleted = po.deletedAt != null
@@ -292,7 +289,6 @@ class PurchaseOrderController(
         val exchangeRate = strategy?.exchangeRate?.toDouble() ?: 1.0
         val currency = strategy?.currency ?: "USD"
 
-        // V1 parity: compute totals
         var totalAmount = 0.0
         items.forEach { totalAmount += it.quantity * it.unitPrice.toDouble() }
         val totalRmb: Double
@@ -305,7 +301,6 @@ class PurchaseOrderController(
             totalUsd = if (exchangeRate > 0) Math.round(totalAmount / exchangeRate * 100000.0) / 100000.0 else 0.0
         }
 
-        // V1 parity: calculate shipping status from actual shipment_items data
         val shippingStatus = if (isDeleted) "deleted" else poUseCase.calculateShippingStatus(po.id)
 
         return PurchaseOrderResponse(

@@ -8,7 +8,6 @@ import java.time.LocalDate
 /**
  * Receive entity — inbound receipt record.
  *
- * V1 source: in_receive + in_receive_final merged.
  * Tracks actual qty vs sent qty per SKU per shipment.
  */
 @Entity

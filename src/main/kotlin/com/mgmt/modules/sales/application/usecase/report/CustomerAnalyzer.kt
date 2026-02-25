@@ -37,7 +37,6 @@ class CustomerAnalyzer(
     fun run(config: ReportConfig, csvWriter: ReportCsvWriter): AnalyzerResult {
         log.info("🚀 启动 R-F-P-L-D 客户聚类分析...")
 
-        // V1 parity: crm.py L96-101 — 加载过去一年交易数据
         val endDt = config.endDate
         val startDt = endDt.minusDays(365)
         log.info("加载过去一年 (365天) 交易数据: {} -> {}...", startDt, endDt)
@@ -48,7 +47,6 @@ class CustomerAnalyzer(
             return AnalyzerResult("Customer", false, error = "过去一年无交易数据")
         }
 
-        // V1 parity: crm.py L108-109 — 计算 RFM
         log.info("正在计算动态净值 RFM 模型...")
         val rfmData = calculateRfm(transactions, endDt)
 
@@ -57,7 +55,6 @@ class CustomerAnalyzer(
             return AnalyzerResult("Customer", false, error = "无有效客户数据")
         }
 
-        // V1 parity: crm.py L125 — sort by Net_Monetary desc
         val sorted = rfmData.sortedByDescending { it.netMonetary }
 
         // Build CSV
@@ -86,7 +83,6 @@ class CustomerAnalyzer(
     }
 
     /**
-     * V1 parity: crm.py _calculate_rfm_1y() L25-89
      *
      * RFM = Recency + Frequency + Monetary (Net)
      * + BadCount (退货相关 action 计数) + DisputeCount (CC/PD)
@@ -97,11 +93,9 @@ class CustomerAnalyzer(
     ): List<CustomerRfm> {
         val analysisEndInstant = analysisEndDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
 
-        // V1 parity: crm.py L45-46
         val badActions = setOf(SalesAction.CA, SalesAction.RE, SalesAction.CR, SalesAction.CC, SalesAction.PD)
         val disputeActions = setOf(SalesAction.CC, SalesAction.PD)
 
-        // V1 parity: crm.py L58-71 — groupby("buyer username")
         data class BuyerAgg(
             var orderNumbers: MutableSet<String> = mutableSetOf(),
             var grossRevenue: BigDecimal = BigDecimal.ZERO,
@@ -132,7 +126,6 @@ class CustomerAnalyzer(
             if (tx.action in disputeActions) agg.disputeCount++
         }
 
-        // V1 parity: crm.py L78-88 — build RFM rows
         return buyerMap.map { (buyer, agg) ->
             val frequency = agg.orderNumbers.size
             val netMonetary = agg.grossRevenue + agg.refundTotal  // V1: Refund 是负数

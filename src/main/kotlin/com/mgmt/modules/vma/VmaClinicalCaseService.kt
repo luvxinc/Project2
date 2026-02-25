@@ -15,7 +15,6 @@ import java.util.UUID
 /**
  * VmaClinicalCaseService — 临床案例管理
  *
- * V2 parity: clinical-case.service.ts (514 lines)
  *
  * Case lifecycle: IN_PROGRESS → COMPLETED (reversible)
  * Product flow: OUT_CASE → {USED_CASE | REC_CASE + optional MOVE_DEMO}

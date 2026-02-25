@@ -8,7 +8,6 @@ import java.time.LocalDate
 /**
  * PurchaseOrderStrategy — contract terms snapshot for a specific PO.
  *
- * V1 source: in_po_strategy.
  * Captures the currency/deposit/exchange config at PO creation time.
  */
 @Entity
@@ -51,7 +50,7 @@ class PurchaseOrderStrategy(
     @Column(length = 500)
     var note: String? = null,
 
-    /** V1 parity: strategy edit version counter (V01, V02, ...) */
+    /** strategy edit version counter (V01, V02, ...) */
     @Column(name = "strategy_seq", nullable = false)
     var strategySeq: Int = 1,
 

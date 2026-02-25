@@ -88,7 +88,6 @@ class ReportGeneratorUseCase(
         val csvWriter = ReportCsvWriter(resolvedDir)
         val results = mutableListOf<AnalyzerResult>()
 
-        // V1 parity: report_generator.py 按顺序调用 9 个脚本
         val analyzers: List<Pair<String, () -> AnalyzerResult>> = listOf(
             "1/9 SKU销量统计" to { salesQtyAnalyzer.run(config, csvWriter) },
             "2/9 SKU利润分析" to { skuProfitAnalyzer.run(config, csvWriter) },

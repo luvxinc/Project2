@@ -23,7 +23,6 @@ import java.nio.file.Files
 /**
  * PrepaymentController — Finance prepayment REST API.
  *
- * V1 parity: backend/apps/finance/views/prepay/api.py (1115 lines, 11 endpoints)
  *
  * Endpoints:
  *   GET    /finance/prepayments/balances              — All supplier balances

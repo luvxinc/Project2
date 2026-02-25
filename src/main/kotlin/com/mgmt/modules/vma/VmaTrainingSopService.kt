@@ -12,7 +12,6 @@ import java.util.UUID
 /**
  * VmaTrainingSopService — Training SOP 文档管理
  *
- * V2 parity: training-sop.service.ts (213 lines)
  *
  * Features:
  *   - SOP 主文档 CRUD (两表架构: 主表 + 版本表)

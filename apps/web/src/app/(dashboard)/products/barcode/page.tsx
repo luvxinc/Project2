@@ -23,7 +23,7 @@ interface SkuItem {
   name: string | null;
 }
 
-/** V1 parity: each row = { sku, qtyPerBox, boxPerCtn } */
+/** each row = { sku, qtyPerBox, boxPerCtn } */
 interface BarcodeRow {
   id: number;
   sku: string;
@@ -45,7 +45,7 @@ export default function BarcodePage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isClient, setIsClient] = useState(false);
 
-  // V1 wizard: input rows
+  // Wizard: input rows
   const [rows, setRows] = useState<BarcodeRow[]>(() => [createEmptyRow()]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -79,7 +79,7 @@ export default function BarcodePage() {
     }
   }, [isClient]);
 
-  // V1: SKU dropdown list
+  // SKU dropdown list
   const { data: skuList = [] } = useQuery({
     queryKey: ['products-sku-list'],
     queryFn: () => productsApi.getSkuList(),

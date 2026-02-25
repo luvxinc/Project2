@@ -18,7 +18,6 @@ import java.time.LocalDate
 /**
  * LogisticPaymentUseCase — logistics payment submit / delete / restore.
  *
- * V1 parity: submit.py (submit_payment_api, delete_payment_api, restore_payment_api)
  *
  * Key business rules:
  *   6. pmt_no format: {YYYY-MM-DD}_S## (V1: submit.py:72-88)
@@ -38,7 +37,7 @@ class LogisticPaymentUseCase(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * Submit logistics payment — V1 parity: submit_payment_api (submit.py:22-206)
+     * Submit logistics payment: submit_payment_api (submit.py:22-206)
      */
     @Transactional
     fun submitPayment(request: SubmitPaymentRequest, username: String): SubmitPaymentResponse {
@@ -156,7 +155,7 @@ class LogisticPaymentUseCase(
     }
 
     /**
-     * Delete logistics payment — V1 parity: delete_payment_api (submit.py:211-283)
+     * Delete logistics payment: delete_payment_api (submit.py:211-283)
      *
      * V3 uses soft delete (deletedAt), V1 did hard delete.
      */
@@ -205,7 +204,7 @@ class LogisticPaymentUseCase(
     }
 
     /**
-     * Restore deleted logistics payment — V1 parity: restore_payment_api (submit.py:286-397)
+     * Restore deleted logistics payment: restore_payment_api (submit.py:286-397)
      */
     @Transactional
     fun restorePayment(paymentNo: String, username: String): DeleteRestoreResponse {

@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * RawTransactionUseCase — 读取原始交易数据。
  *
- * V1 对应:
  *   - views.py tab_transaction → 读 Data_Transaction, 显示统计
  *   - ETLRepository.get_raw_transaction_data() → SELECT * FROM Data_Transaction
  *

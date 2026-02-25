@@ -16,9 +16,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
- * V1 parity: Shipment Excel operations with Apache POI.
  *
- * V1 source files (cell-by-cell faithful replication):
+ * * Excel template specification:
  *   - send_create/template.py → generateTemplate() + parseUploadedExcel()
  *   - send_mgmt/detail.py     → exportMgmt() + exportWarehouse()
  *
@@ -77,7 +76,6 @@ class ShipmentExcelService {
     // ═══════════ 1. Template Generation ═══════════
 
     /**
-     * V1 parity: template.py → download_send_template_api
      *
      * Cell map (from V1 lines 208-254):
      *   C2 = sentDate
@@ -177,7 +175,6 @@ class ShipmentExcelService {
     // ═══════════ 2. Upload Parsing ═══════════
 
     /**
-     * V1 parity: template.py → validate_send_excel_api
      *
      * 3-stage validation (V1 lines 302-521):
      *   Stage 1: Data consistency check (B,C,D,E,G columns match template_data)
@@ -309,7 +306,6 @@ class ShipmentExcelService {
     // ═══════════ 3. Export — Management Format ═══════════
 
     /**
-     * V1 parity: detail.py → download_po_excel_api (type=mgmt)
      * Template: in_send_output_mgmt.xlsx
      *
      * Cell map (V1 lines 535-600):
@@ -410,7 +406,6 @@ class ShipmentExcelService {
     // ═══════════ 4. Export — Warehouse Format ═══════════
 
     /**
-     * V1 parity: detail.py → download_po_excel_api (type=warehouse)
      * Template: in_send_output_warehouse.xlsx
      *
      * Cell map (V1 lines 474-528):

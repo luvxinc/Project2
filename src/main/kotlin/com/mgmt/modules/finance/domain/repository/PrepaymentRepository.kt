@@ -18,7 +18,6 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
 
     /**
      * Find all active prepayment records for a supplier.
-     * V1 parity: transaction_list_api — reads from in_pmt_prepay_final WHERE supplier_code = ?
      */
     @Query("""
         SELECT p FROM Payment p 
@@ -31,7 +30,6 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
 
     /**
      * Find ALL prepayment records for a supplier (including deleted, for history/balance).
-     * V1 parity: reads ALL from in_pmt_prepay_final (deleted records have amount=0, but in V3 they have deletedAt set)
      */
     @Query("""
         SELECT p FROM Payment p 
@@ -63,7 +61,6 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
 
     /**
      * Get all unique supplier codes that have prepayment records.
-     * V1 parity: supplier_balance_api queries in_supplier then cross-references.
      */
     @Query("""
         SELECT DISTINCT p.supplierCode FROM Payment p 
@@ -74,7 +71,6 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
 
     /**
      * Find all active prepayments for balance calculation.
-     * V1 parity: balance uses in_pmt_prepay_final (only non-deleted rows).
      */
     @Query("""
         SELECT p FROM Payment p 
@@ -102,7 +98,6 @@ interface PrepaymentRepository : JpaRepository<Payment, Long>, JpaSpecificationE
 
     /**
      * Find the most recent auto-rate prepayment for exchange rate lookup.
-     * V1 parity: rate_api — SELECT usd_rmb FROM in_pmt_prepay_final
      *   WHERE tran_curr_type='A' AND usd_rmb>0 ORDER BY tran_date DESC LIMIT 1
      * BUG-4 fix: push filter to SQL instead of loading all records.
      */

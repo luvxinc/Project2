@@ -8,7 +8,6 @@ import java.time.LocalDate
 /**
  * Shipment entity — logistics shipment header.
  *
- * V1 source: in_send (3 tables merged to 2).
  * V3: shipments + shipment_items.
  */
 @Entity
@@ -42,7 +41,7 @@ class Shipment(
     @Column(name = "exchange_rate", precision = 10, scale = 4, nullable = false)
     var exchangeRate: BigDecimal = BigDecimal("7.0"),
 
-    /** V1 parity: in_send.mode — 'A' = auto (API-fetched), 'M' = manual (user-entered) */
+    /** in_send.mode — 'A' = auto (API-fetched), 'M' = manual (user-entered) */
     @Column(name = "rate_mode", length = 1, nullable = false)
     var rateMode: String = "M",
 

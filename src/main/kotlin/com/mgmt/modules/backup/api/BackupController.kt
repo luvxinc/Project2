@@ -16,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException
 /**
  * BackupController — REST API for database backup management.
  *
- * V1 parity: db_admin/views.py (backup/restore/delete actions)
  * V3 evolution: RESTful JSON API, DDD layering, declarative security.
  *
  * Security:
@@ -42,7 +41,6 @@ class BackupController(
     /**
      * List all backups (desensitized display).
      *
-     * V1 parity: backup_page() → _get_backup_context() → service.list_backups()
      * V3: Returns structured JSON with displayDate + tag, not raw filenames.
      */
     @GetMapping
@@ -68,7 +66,6 @@ class BackupController(
     /**
      * Create a new backup.
      *
-     * V1 parity: create_backup() → btn_create_backup (L3)
      * V3: @SecurityLevel(L3) + @AuditLog + @RequirePermission
      */
     @PostMapping
@@ -101,7 +98,6 @@ class BackupController(
     /**
      * Restore a backup.
      *
-     * V1 parity: restore_backup() → btn_restore_db (CRITICAL / L4)
      * V3: @SecurityLevel(L4) — system-level nuclear operation.
      */
     @PostMapping("/{id}/restore")
@@ -132,7 +128,6 @@ class BackupController(
     /**
      * Delete a backup.
      *
-     * V1 parity: delete_backup() → btn_delete_backup (L3)
      */
     @DeleteMapping("/{id}")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_backup")

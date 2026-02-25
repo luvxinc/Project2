@@ -5,7 +5,7 @@ import java.time.Instant
 
 // ═══════════════════════════════════════════════
 // RAW TRANSACTION DTOs
-// V1 对应: views.py tab_transaction → Data_Transaction 查询结果
+
 // ═══════════════════════════════════════════════
 
 data class RawTransactionResponse(
@@ -67,7 +67,7 @@ data class RawTransactionQueryParams(
 
 // ═══════════════════════════════════════════════
 // CLEANED TRANSACTION DTOs
-// V1 对应: ETLRepository.get_transactions_by_date() + Data_Clean_Log 结构
+
 // ═══════════════════════════════════════════════
 
 data class CleanedTransactionResponse(
@@ -108,7 +108,7 @@ data class CleanedTransactionQueryParams(
 
 // ═══════════════════════════════════════════════
 // DASHBOARD STATS DTO
-// V1 对应: views.py _get_data_cutoff_date() + _get_db_stats_before()
+
 // ═══════════════════════════════════════════════
 
 data class SalesStatsResponse(

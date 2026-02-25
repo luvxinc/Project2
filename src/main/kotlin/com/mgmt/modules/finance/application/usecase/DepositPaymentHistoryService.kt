@@ -14,7 +14,6 @@ import java.math.RoundingMode
 /**
  * DepositPaymentHistoryService — history and order details for deposit payments.
  *
- * V1 parity:
  *   - deposit_history_api (api.py:1220-1434)
  *   - deposit_orders_api (api.py:1072-1217)
  */
@@ -29,7 +28,6 @@ class DepositPaymentHistoryService(
 
     /**
      * Get payment history — strategy versions + payment versions.
-     * V1 parity: deposit_history_api (api.py:1220-1434)
      *
      * Left column: strategy versions (currency, deposit%, rate, mode changes)
      * Right column: payment versions (amount, rate, override changes)
@@ -157,7 +155,6 @@ class DepositPaymentHistoryService(
 
     /**
      * Get payment orders — PO details for a payment batch.
-     * V1 parity: deposit_orders_api (api.py:1072-1217)
      */
     @Transactional(readOnly = true)
     fun getPaymentOrders(paymentNo: String): DepositOrdersResponse {

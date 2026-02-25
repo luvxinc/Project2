@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter
 /**
  * BackupInfo — Value object representing a backup file's metadata.
  *
- * V1 parity: DatabaseService.parse_filename_to_display()
  * V3 evolution: structured data instead of display string formatting.
  *
  * Filename convention: {yyyyMMdd_HHmmss}_{tag}.pgdump
@@ -31,7 +30,6 @@ data class BackupInfo(
         /**
          * Parse a backup filename into BackupInfo.
          *
-         * V1 parity: parse_filename_to_display()
          * Input:  20260224_201500_Monthly_Auto.pgdump
          * Output: BackupInfo(backupTime=..., tag="Monthly Auto")
          */

@@ -18,10 +18,9 @@ import java.time.Instant
 /**
  * EtlTransformUseCase — 业务转换 + 4D 去重写入 cleaned_transactions。
  *
- * V1 对应: transformer.py TransformerService
  * 职责:
- *   1. P13: Working Set 跨批次重算 (V1 parity: Processed_T/E=0 → pending_orders)
- *   2. P12: Seller 多店铺优先级选择 (V1 parity: esparts* first)
+ *   1. P13: Working Set 跨批次重算
+ *   2. P12: Seller 多店铺优先级选择
  *   3. Action 映射 (type + reference_id → NN/CA/RE/CR/CC/PD)
  *   4. P8/P9: Fee/Tax 分别存储
  *   5. Fee 分摊 (item_subtotal / order_subtotal)
@@ -50,7 +49,7 @@ class EtlTransformUseCase(
         batchRepo.save(batch)
 
         // ══════════════════════════════════════════════════════════════
-        // P13: Working Set — V1 parity: transformer.py L90-140
+        // P13: Working Set: transformer.py L90-140
         //
         // V1 logic:
         //   pending_orders = DISTINCT(order_number)
@@ -91,10 +90,9 @@ class EtlTransformUseCase(
         log.info("ETL batch {} Working Set: {} pending orders from {} unsynced trans + {} unsynced earn",
             batchId, pendingOrders.size, unsyncedTrans.size, unsyncedEarnings.size)
 
-        // V1 parity: DELETE existing cleaned records for pending orders (will be re-created)
         cleanedRepo.deleteAllByOrderNumberIn(pendingOrders)
 
-        // Fetch ALL raw data for pending orders (not just unsynced — V1 parity)
+        // Fetch ALL raw data for pending orders (not just unsynced)
         val allTx = rawTransRepo.findAllByOrderNumberIn(pendingOrders)
         val allEarn = rawEarnRepo.findAllByOrderNumberIn(pendingOrders)
 
@@ -118,12 +116,12 @@ class EtlTransformUseCase(
             }
         }
 
-        // ── Step 2: P12 — Seller priority map (V1 parity: transformer.py L199-205) ──
+        // ── Step 2: P12 — Seller priority map ──
         // V1: for each order_number, pick the seller with highest priority
         //   Priority: esparts* first (is_prio=1), then alphabetically
         val sellerMap = computeSellerMap(allTx)
 
-        // ── Step 3: Compute shipping label by order (V1 parity) ──
+        // ── Step 3: Compute shipping label by order ──
         val shippingByOrder = computeShippingLabels(shippingTxs)
 
         // ── Step 4: Load earning shipping data ──
@@ -154,7 +152,6 @@ class EtlTransformUseCase(
         }
 
         // ── Step 7: Transform return rows ──
-        // V1 parity: for each return, find matching NN order and copy items
         for (tx in returnTxs) {
             val action = mapAction(tx.transactionType, tx.referenceId)
             if (action == SalesAction.PD) continue // Payment disputes skipped
@@ -183,7 +180,6 @@ class EtlTransformUseCase(
         }
 
         // ── Step 8: P13 — Mark all processed records as synced ──
-        // V1 parity: UPDATE Data_Transaction SET Processed_T = 1 WHERE row_hash IN (...)
         for (tx in unsyncedTrans) {
             tx.synced = true
         }
@@ -216,7 +212,7 @@ class EtlTransformUseCase(
     }
 
     /**
-     * P12: V1 parity — transformer.py L199-205 seller priority logic.
+     * P12: transformer.py L199-205 seller priority logic.
      *
      * For each order_number, select the best seller:
      *   1. Clean seller string (strip quotes)
@@ -247,7 +243,6 @@ class EtlTransformUseCase(
     }
 
     /**
-     * V1 parity: transformer.py action mapping logic
      */
     private fun mapAction(type: String?, referenceId: String?): SalesAction {
         val typeLower = (type ?: "").lowercase()
@@ -264,7 +259,6 @@ class EtlTransformUseCase(
     }
 
     /**
-     * V1 parity: transformer.py shipping label classification (5 types)
      */
     private fun computeShippingLabels(shippingTxs: List<RawTransaction>): Map<String, ShippingLabels> {
         val result = mutableMapOf<String, ShippingLabels>()
@@ -296,7 +290,6 @@ class EtlTransformUseCase(
 
     /**
      * Build a CleanedTransaction from a RawTransaction.
-     * V1 parity: transformer.py output_cols mapping.
      *
      * P8: FVF split into fixed + variable
      * P9: Tax split into seller + ebay
@@ -312,7 +305,7 @@ class EtlTransformUseCase(
     ): CleanedTransaction {
         val orderNum = tx.orderNumber ?: ""
 
-        // Fee proration ratio (V1 parity: item_subtotal / order_subtotal)
+        // Fee proration ratio
         val orderTotal = orderTotals[orderNum] ?: BigDecimal.ONE
         val ratio = if (orderTotal.compareTo(BigDecimal.ZERO) != 0) {
             tx.saleAmount.divide(orderTotal, 10, RoundingMode.HALF_UP)
@@ -337,7 +330,6 @@ class EtlTransformUseCase(
             action = action,
             quantity = tx.quantity,
             itemTitle = tx.itemTitle,
-            // V1 parity: full_sku = "SKU1.QTY1+SKU2.QTY2" (computed from parsed items)
             fullSku = tx.items
                 .filter { !it.sku.isBlank() }
                 .joinToString("+") { "${it.sku}.${it.quantity}" }
@@ -368,7 +360,7 @@ class EtlTransformUseCase(
             labelRegular = prorate(labels?.regular ?: BigDecimal.ZERO, ratio),
         )
 
-        // Copy SKU slots from items (V1 parity: sku1..10, qty1..10, qtyp1..10)
+        // Copy SKU slots from items
         val items = tx.items
         for (i in items.indices) {
             if (i >= 10) break
@@ -393,7 +385,6 @@ class EtlTransformUseCase(
 
     /**
      * 4D upsert: ON CONFLICT(order_number, COALESCE(seller,''), COALESCE(item_id,''), action) DO UPDATE
-     * V1 parity: transformer.py staging table DELETE+INSERT hack → PG UNIQUE + ON CONFLICT
      */
     private fun upsertCleaned(ct: CleanedTransaction) {
         val orderNumber = ct.orderNumber ?: run {

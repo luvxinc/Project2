@@ -15,7 +15,6 @@ import java.util.UUID
 /**
  * VmaSmartFillService — 智能补训自动生成
  *
- * V2 parity: smart-fill.service.ts (801 lines)
  *
  * Features:
  *   - Go-Live baseline (2025-06-15) logic

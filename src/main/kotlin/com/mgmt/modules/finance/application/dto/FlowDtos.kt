@@ -1,7 +1,7 @@
 package com.mgmt.modules.finance.application.dto
 
 /**
- * Flow Overview DTOs — V1 parity: flow/api.py flow_list_api + flow_detail_api
+ * Flow Overview DTOs: flow/api.py flow_list_api + flow_detail_api
  *
  * The flow overview shows the full lifecycle of each PO:
  *   - Order total, deposit status, PO payment, balance remaining

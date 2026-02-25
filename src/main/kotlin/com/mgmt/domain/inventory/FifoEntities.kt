@@ -6,7 +6,6 @@ import java.time.Instant
 
 /**
  * FifoTransaction — maps to fifo_transactions table.
- * V1 parity: in_dynamic_tran
  */
 @Entity
 @Table(name = "fifo_transactions")
@@ -47,7 +46,6 @@ class FifoTransaction(
 
 /**
  * FifoLayer — maps to fifo_layers table.
- * V1 parity: in_dynamic_fifo_layers + in_dynamic_landed_price merged.
  */
 @Entity
 @Table(name = "fifo_layers")
@@ -89,7 +87,6 @@ class FifoLayer(
 
 /**
  * LandedPrice — maps to landed_prices table.
- * V1 parity: in_dynamic_landed_price.
  * Created by Purchase (receive submit), Updated by Finance (payment recalculation).
  */
 @Entity
@@ -178,7 +175,7 @@ interface FifoTransactionRepository : org.springframework.data.jpa.repository.Jp
     )
     fun findInitTransactionsBySku(sku: String): List<FifoTransaction>
 
-    /** Check if a receive transaction already exists (idempotent guard, V1 parity) */
+    /** Check if a receive transaction already exists (idempotent guard, ) */
     fun findByRefKey(refKey: String): FifoTransaction?
 }
 
@@ -216,7 +213,7 @@ interface FifoAllocationRepository : org.springframework.data.jpa.repository.Jpa
 }
 
 interface LandedPriceRepository : org.springframework.data.jpa.repository.JpaRepository<LandedPrice, Long> {
-    /** Idempotent check — V1 parity: existing_price check before INSERT */
+    /** Idempotent check: existing_price check before INSERT */
     fun findByLogisticNumAndPoNumAndSku(logisticNum: String, poNum: String, sku: String): LandedPrice?
 
     /** For Finance recalculation: find all landed prices for a PO */

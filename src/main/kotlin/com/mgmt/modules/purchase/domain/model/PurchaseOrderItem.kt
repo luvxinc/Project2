@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * PurchaseOrderItem — line item within a PO.
  *
- * V1 source: in_po_final (per-SKU rows).
  * V3: child of purchase_orders via po_id FK.
  */
 @Entity

@@ -141,14 +141,13 @@ class ProductController(
     fun delete(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(mapOf("success" to deleteUseCase.delete(id, SecurityUtils.currentUsername()))))
 
-    // ═══════════ Barcode (V1 parity) ═══════════
+    // ═══════════ Barcode ═══════════
 
     @PostMapping("/barcode/generate")
     @RequirePermission("module.products.barcode.generate")
     @SecurityLevel(level = "L3", actionKey = "btn_generate_barcode")
     @AuditLog(module = "PRODUCTS", action = "GENERATE_BARCODE", riskLevel = "LOW")
     fun generateBarcode(@RequestBody dto: GenerateBarcodeRequest): ResponseEntity<ByteArray> {
-        // V1 parity: convert DTO items to service items
         val serviceItems = dto.items.map { item ->
             BarcodeGeneratorService.BarcodeItem(
                 sku = item.sku.trim().uppercase(),

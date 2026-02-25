@@ -50,17 +50,14 @@ class ShelfBarcodePdfService(
         val PAGE_WIDTH = 4f * INCH       // 288pt
         val PAGE_HEIGHT = 6f * INCH      // 432pt
 
-        // V1 parity: DataMatrix = 1.2" × 1.2"
         val DM_SIZE = 1.2f * INCH
         val DM_X = 0.4f * INCH
         val DM_Y = 0.4f * INCH
 
-        // V1 parity: Text field column positions (in rotated coordinate space)
         val X_COL1 = 2.0f * INCH
         val X_COL2 = 3.5f * INCH
         val X_COL3 = 4.7f * INCH
 
-        // V1 parity: Text field row positions (in rotated coordinate space)
         val Y_ROW1 = 1.4f * INCH
         val Y_ROW2 = 0.9f * INCH
         val Y_ROW3 = 0.4f * INCH
@@ -73,7 +70,7 @@ class ShelfBarcodePdfService(
         const val DM_IMG_SIZE = 400
     }
 
-    // ═══════════ Display Mapping (V1 parity) ═══════════
+    // ═══════════ Display Mapping ═══════════
 
     private fun mapSide(v: String?): String = when (v) {
         "L" -> "Left"
@@ -177,10 +174,9 @@ class ShelfBarcodePdfService(
         return generatePairedLabelsPdf(locations)
     }
 
-    // ═══════════ Internal: 2-labels-per-page layout (V1 parity) ═══════════
+    // ═══════════ Internal: 2-labels-per-page layout ═══════════
 
     /**
-     * V1 parity: generate PDF with 2 labels per page (left + right halves).
      * Each label is rotated -90° within its half.
      */
     private fun generatePairedLabelsPdf(locations: List<WarehouseLocation>): ByteArray {
@@ -213,10 +209,10 @@ class ShelfBarcodePdfService(
         }
     }
 
-    // ═══════════ Internal: draw one label on one half (V1 parity) ═══════════
+    // ═══════════ Internal: draw one label on one half ═══════════
 
     /**
-     * Exact V1 parity:
+     * Exact :
      *   Left half:  translate(0, 6") then rotate(-90°)
      *   Right half: translate(2", 6") then rotate(-90°)
      *
@@ -303,7 +299,6 @@ class ShelfBarcodePdfService(
     }
 
     /**
-     * V1 parity: draw a field label + bold value.
      * Label in Helvetica 10pt, value in Helvetica-Bold 14pt, right after label.
      */
     private fun drawField(
@@ -331,7 +326,6 @@ class ShelfBarcodePdfService(
     }
 
     /**
-     * V1 parity: dashed center line at x = 2" (divides page into L/R halves).
      */
     private fun drawDashedCenterLine(cs: PDPageContentStream) {
         cs.setStrokingColor(0f, 0f, 0f)

@@ -6,7 +6,6 @@ import java.time.Instant
 /**
  * WarehouseLocation — physical warehouse bin/slot address.
  *
- * V1 source: in_mgmt_barcode (6-column composite PK → BIGSERIAL).
  * barcode is a GENERATED ALWAYS AS stored column — NOT mapped to JPA (read-only).
  */
 @Entity

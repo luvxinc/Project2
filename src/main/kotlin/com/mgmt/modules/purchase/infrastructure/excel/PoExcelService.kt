@@ -17,7 +17,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
- * V1 parity: PO Excel operations with Apache POI.
  * - Template generation (with formatting + sheet protection)
  * - Upload parsing (with header/supplier/date/currency/SKU validation)
  * - Export (with V1-exact cell layout + formatting)
@@ -34,7 +33,6 @@ class PoExcelService(
     // ═══════════ 1. Template Generation ═══════════
 
     /**
-     * V1 parity: generate_prefilled_template_api
      * Reads in_po_upload.xlsx template, fills metadata, locks + protects.
      *
      * Actual V1 template cell map:
@@ -145,7 +143,6 @@ class PoExcelService(
     )
 
     /**
-     * V1 parity: parse_po_excel_api
      * Validates: B1=header, C2=supplier, E2=date, G2=currency
      * Parses: B5+ data rows (SKU/Qty/Price)
      * SKU validation against products table with fuzzy suggestions
@@ -232,7 +229,6 @@ class PoExcelService(
                 dataErrors.add("Row $excelRow: $sku — unit price must be > 0")
             }
 
-            // V1 parity: SKU validation against product database
             if (validSkus.isNotEmpty() && !validSkus.contains(sku)) {
                 val suggestions = findSimilarSkus(sku, validSkus, limit = 5)
                 skuErrors.add(SkuError(excelRow, sku, suggestions))
@@ -266,7 +262,6 @@ class PoExcelService(
     // ═══════════ 3. Export PO to Excel ═══════════
 
     /**
-     * V1 parity: download_po_excel_api — reads in_po_output.xlsx template, fills cells.
      *
      * V1 output template cell map:
      *   C4=supplier, F4=date, C6=PO#
@@ -399,7 +394,6 @@ class PoExcelService(
     }
 
     /**
-     * V1 parity: date parsing with multiple format support.
      */
     private fun tryParseDate(value: String): LocalDate? {
         // Handle Excel serial date number
@@ -422,7 +416,6 @@ class PoExcelService(
     }
 
     /**
-     * V1 parity: fuzzy SKU matching using Levenshtein-like similarity.
      */
     private fun findSimilarSkus(target: String, validSkus: Set<String>, limit: Int = 5): List<String> {
         return validSkus

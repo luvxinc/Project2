@@ -6,14 +6,13 @@ import java.time.LocalDate
 /**
  * Report generation configuration — passed from Controller to all analyzers.
  *
- * V1 parity: settings.LOSS_RATES + start_date/end_date + file_suffix
  */
 data class ReportConfig(
     val startDate: LocalDate,
     val endDate: LocalDate,
     val fileSuffix: String = "${startDate}_${endDate}",
 
-    // Loss rates — V1 parity: settings.LOSS_RATES (settings.py L157)
+    // Loss rates: settings.LOSS_RATES (settings.py L157)
     // V1 值: {"CASE": 0.6, "REQUEST": 0.5, "RETURN": 0.3, "DISPUTE": 1.0}
     val lrCase: Double = 0.6,
     val lrRequest: Double = 0.5,

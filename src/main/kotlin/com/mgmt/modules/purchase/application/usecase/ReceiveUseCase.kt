@@ -15,9 +15,9 @@ import java.time.Instant
 import java.time.LocalDate
 
 /**
- * ReceiveUseCase — 100% V1 parity (Iron Rule R7: ZERO functional deviation).
+ * ReceiveUseCase — 100%  (Iron Rule R7: ZERO functional deviation).
  *
- * V1 source files:
+ * * Source files:
  *   receive/query.py        → findPendingShipments, findShipmentItems
  *   receive/submit.py       → submitReceive
  *   receive_mgmt/list.py    → findForManagement
@@ -48,11 +48,9 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 1 — Query: Pending Shipments (货物入库 - 查询)
-    // V1 parity: receive/query.py → get_pending_shipments_api
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: query.py L22-229
      * Returns shipments whose sent_date <= receiveDate that have NOT been received yet.
      * "Not received" = no active receive records exist, OR all qty == 0 (V1 L186-200).
      *
@@ -66,7 +64,7 @@ class ReceiveUseCase(
             it.sentDate <= receiveDate && it.status != "cancelled"
         }
         return eligible.filter { shipment ->
-            // V1 parity query.py L186-200:
+            //  query.py L186-200:
             // "if not receive_data: return (True, 'none')"
             // "if total_receive > 0: return (False, 'received')"
             // Only ACTIVE (non-deleted) receives count as "received"
@@ -80,7 +78,6 @@ class ReceiveUseCase(
     }
 
     /**
-     * V1 parity: query.py L232-295 → get_shipment_items_api
      *
      * CRITICAL FIX (P2-2): V1 groups by (po_num, po_sku) and SUM(sent_quantity).
      * Different price tiers of the same SKU are MERGED into one row for display.
@@ -93,7 +90,6 @@ class ReceiveUseCase(
 
         val items = shipmentItemRepo.findAllByShipmentIdAndDeletedAtIsNullOrderBySkuAsc(shipment.id)
 
-        // V1 parity: GROUP BY (po_num, po_sku), SUM(sent_quantity) — query.py L267-286
         return items
             .groupBy { "${it.poNum}|${it.sku}" }
             .map { (_, rows) ->
@@ -110,11 +106,9 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 2 — Submit Receive (货物入库 - 提交)
-    // V1 parity: receive/submit.py → submit_receive_api
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: submit.py L28-376
      *
      * Algorithm:
      *   ① Duplicate check: reject if any active receive with qty > 0 exists.
@@ -131,7 +125,7 @@ class ReceiveUseCase(
         val shipment = shipmentRepo.findByLogisticNumAndDeletedAtIsNull(dto.logisticNum)
             ?: throw NotFoundException("purchase.errors.shipmentNotFound")
 
-        // V1 parity P0-2: duplicate check (submit.py L87-100)
+        //  P0-2: duplicate check (submit.py L87-100)
         val existing = receiveRepo.findAllByShipmentIdAndDeletedAtIsNull(shipment.id)
         if (existing.any { it.receiveQuantity > 0 }) {
             throw IllegalStateException("purchase.errors.alreadyReceived: ${dto.logisticNum}")
@@ -144,7 +138,6 @@ class ReceiveUseCase(
             val inputSku = input.sku.trim().uppercase()
             val inputReceiveQty = input.receiveQuantity
 
-            // V1 parity: all rows for this SKU sorted DESC by price (submit.py L132-140)
             val skuRows = allShipmentItems
                 .filter { it.sku == inputSku }
                 .sortedByDescending { it.unitPrice }
@@ -156,7 +149,6 @@ class ReceiveUseCase(
 
             val totalSentQty = skuRows.sumOf { it.quantity }
 
-            // V1 parity: multi-price tier allocation (submit.py L162-251)
             val allocations = allocateReceiveQty(
                 rows = skuRows.map { PriceTierRow(it.unitPrice, it.quantity) },
                 receiveQty = inputReceiveQty,
@@ -185,7 +177,6 @@ class ReceiveUseCase(
                 val saved = receiveRepo.save(receive)
                 receives.add(saved)
 
-                // V1 parity: auto-diff creation (submit.py L281-344)
                 val diff = item.quantity - allocatedQty
                 if (diff != 0) {
                     receiveDiffRepo.save(ReceiveDiff(
@@ -211,7 +202,7 @@ class ReceiveUseCase(
         shipment.updatedBy = username
         shipmentRepo.save(shipment)
 
-        // V1 parity P0-3 (submit.py L358-365): landed price creation
+        //  P0-3 (submit.py L358-365): landed price creation
         triggerLandedPriceCreation(dto.logisticNum)
 
         return receives
@@ -219,14 +210,12 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 3 — Management List (入库管理 - 列表)
-    // V1 parity: receive_mgmt/list.py → receive_list_api
     // ═══════════════════════════════════════════════════════
 
     @Transactional(readOnly = true)
     fun findAll(): List<Receive> = receiveRepo.findAllByDeletedAtIsNullOrderByReceiveDateDesc()
 
     /**
-     * V1 parity: list.py L48-280
      * Returns all logistic nums with status + can_modify + can_delete + detail_seq + update_date.
      *
      * Status rules (list.py L202-237):
@@ -266,11 +255,9 @@ class ReceiveUseCase(
             // Lookup sentDate from pre-loaded shipment map
             val sentDate = shipmentMap[logisticNum]?.sentDate?.toString() ?: "-"
 
-            // V1 parity: detail_seq = max version across active records
             val maxVersion = activeRecords.maxOfOrNull { it.version } ?: 0
             val detailSeq = "V${String.format("%02d", maxVersion + 1)}"
 
-            // V1 parity: update_date = most recent updatedAt
             val updateDate = activeRecords.maxByOrNull { it.updatedAt }?.updatedAt?.toString() ?: "-"
 
             val sentQty = activeRecords.sumOf { it.sentQuantity }
@@ -288,7 +275,7 @@ class ReceiveUseCase(
                         else ReceiveStatus.DIFF_RESOLVED
             }
 
-            // V1 parity (list.py L207/L223-226):
+            //  (list.py L207/L223-226):
             //   IN_TRANSIT → can_modify=True, can_delete=True
             //   ALL_RECEIVED / DIFF_UNRESOLVED / DIFF_RESOLVED → can_modify=False, can_delete=False
             //   DELETED → can_modify=False, can_delete=False
@@ -308,7 +295,7 @@ class ReceiveUseCase(
             )
         }
 
-        // V1 parity P1-3: honor sortBy / sortOrder (list.py L67-75)
+        //  P1-3: honor sortBy / sortOrder (list.py L67-75)
         val allowedSort = setOf("logisticNum", "receiveDate", "sentDate")
         val safeSortBy = if (sortBy in allowedSort) sortBy else "receiveDate"
         val descending = sortOrder != "asc"
@@ -326,7 +313,6 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 4 — Management Detail (入库管理 - 详情)
-    // V1 parity: receive_mgmt/detail.py
     // ═══════════════════════════════════════════════════════
 
     @Transactional(readOnly = true)
@@ -392,11 +378,9 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 5 — Edit Receive (入库管理 - 修改)
-    // V1 parity: receive_mgmt/edit.py → receive_edit_submit_api
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: edit.py L70-458
      *
      * Algorithm:
      *   ① Find ALL receive rows for (po_num, sku) sorted by price DESC.
@@ -409,7 +393,7 @@ class ReceiveUseCase(
         val allReceives = receiveRepo.findByLogisticNumAndDeletedAtIsNull(logisticNum)
         if (allReceives.isEmpty()) throw NotFoundException("purchase.errors.receiveNotFound")
 
-        // V1 parity guard (list.py L207/L223-226): edit is only allowed for IN_TRANSIT status.
+        //  guard (list.py L207/L223-226): edit is only allowed for IN_TRANSIT status.
         // IN_TRANSIT = totalReceivedQty == 0 (no active receiving has been submitted yet).
         // Any other status (ALL_RECEIVED, DIFF_UNRESOLVED, DIFF_RESOLVED) → reject.
         val totalReceivedQty = allReceives.sumOf { it.receiveQuantity }
@@ -433,7 +417,6 @@ class ReceiveUseCase(
 
             val totalSentQty = matchingReceives.sumOf { it.sentQuantity }
 
-            // V1 parity: multi-price tier allocation (edit.py L172-258)
             val allocations = allocateReceiveQty(
                 rows = matchingReceives.map { PriceTierRow(it.unitPrice, it.sentQuantity) },
                 receiveQty = newReceiveQty,
@@ -449,7 +432,6 @@ class ReceiveUseCase(
                 receiveRepo.save(receive)
                 updatedRows++
 
-                // V1 parity: diff upsert / resolution (edit.py L260-297)
                 val diff = receive.sentQuantity - allocatedQty
                 val existingDiffs = receiveDiffRepo.findAllByReceiveId(receive.id)
 
@@ -481,7 +463,7 @@ class ReceiveUseCase(
                     }
                     diffRows++
                 } else {
-                    // V1 parity edit.py L291-297: differential cleared → resolve
+                    //  edit.py L291-297: differential cleared → resolve
                     existingDiffs.forEach { d ->
                         d.receiveQuantity = allocatedQty
                         d.diffQuantity = 0
@@ -495,7 +477,7 @@ class ReceiveUseCase(
             }
         }
 
-        // V1 parity P0-5 (edit.py L438-443)
+        //  P0-5 (edit.py L438-443)
         triggerLandedPriceRecalculation(logisticNum)
 
         return EditReceiveResult(updatedRows = updatedRows, diffRows = diffRows)
@@ -524,11 +506,9 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 7 — Delete / Restore
-    // V1 parity: receive_mgmt/delete.py
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: delete.py L26-216 → submit_receive_delete_api
      *
      * V1 mechanism: writes qty=0 record to in_receive (audit log), DELETEs in_receive_final.
      * V3 equivalent: sets deletedAt (soft-delete). Semantically identical for:
@@ -556,7 +536,6 @@ class ReceiveUseCase(
             receiveRepo.save(r)
         }
 
-        // V1 parity: mark pending diffs as deleted and zero out diff_quantity
         receiveDiffRepo.findAllByLogisticNum(logisticNum)
             .filter { it.status == "pending" }
             .forEach { d ->
@@ -572,7 +551,6 @@ class ReceiveUseCase(
     }
 
     /**
-     * V1 parity: delete.py L219-526 → submit_receive_undelete_api
      *
      * V1 mechanism: finds deleted records, backtracks to previous valid seq, re-inserts into finals.
      * V3 equivalent: clears deletedAt on all soft-deleted records.
@@ -595,7 +573,7 @@ class ReceiveUseCase(
             receiveRepo.save(r)
         }
 
-        // V1 parity delete.py L412-503: restore diffs with non-zero diff
+        //  delete.py L412-503: restore diffs with non-zero diff
         receiveDiffRepo.findAllByLogisticNum(logisticNum)
             .filter { it.status == "deleted" && it.sentQuantity != it.receiveQuantity }
             .forEach { d ->
@@ -612,7 +590,6 @@ class ReceiveUseCase(
 
     // ═══════════════════════════════════════════════════════
     // SECTION 8 — History (入库管理 - 历史记录)
-    // V1 parity: receive_mgmt/history.py → get_receive_history_api
     // ═══════════════════════════════════════════════════════
 
     /**
@@ -731,7 +708,7 @@ class ReceiveUseCase(
             val changes: List<ReceiveDiffHistoryChange>
 
             if (isInitial) {
-                // V1 parity history.py L157-159: initial diff version
+                //  history.py L157-159: initial diff version
                 items = diffs.map { d ->
                     val key = Pair(d.poNum, d.sku)
                     prevDiffState[key] = d.diffQuantity
@@ -750,7 +727,7 @@ class ReceiveUseCase(
                 }
                 changes = emptyList()
             } else {
-                // V1 parity history.py L161-174: diff delta changes
+                //  history.py L161-174: diff delta changes
                 items = emptyList()
                 val changeList = mutableListOf<ReceiveDiffHistoryChange>()
 
@@ -811,7 +788,6 @@ class ReceiveUseCase(
     // ═══════════════════════════════════════════════════════
 
     /**
-     * V1 parity: submit.py L165-251 / edit.py L172-258
      *
      * Exact algorithm:
      *   Single row → direct 1:1 mapping.
@@ -861,7 +837,7 @@ class ReceiveUseCase(
     }
 
     /**
-     * V1 parity submit.py L286-292:
+     *  submit.py L286-292:
      * Query po_quantity = SUM(quantity) FROM purchase_order_items
      * WHERE po_num=? AND sku=? (equiv. in_po_final SUM(po_quantity))
      */
@@ -871,7 +847,6 @@ class ReceiveUseCase(
             .sumOf { it.quantity }
 
     /**
-     * V1 parity: submit.py L358-365 → create_landed_price_records(logistic_num)
      *
      * For each received SKU with qty > 0:
      *   ① INSERT fifo_transactions (action=IN, tran_type=purchase)
@@ -895,7 +870,7 @@ class ReceiveUseCase(
         for (recv in receives) {
             val refKey = "receive_${logisticNum}_${recv.poNum}_${recv.sku}_${recv.unitPrice}"
 
-            // Idempotent guard — V1 parity: existing_tran check
+            // Idempotent guard: existing_tran check
             if (fifoTranRepo.findByRefKey(refKey) != null) {
                 log.debug("[LandedPrice:CREATE] skip duplicate: $refKey")
                 continue
@@ -954,7 +929,7 @@ class ReceiveUseCase(
     }
 
     /**
-     * V1 parity edit.py L438-443: recalculate_landed_prices(logistic_num=)
+     *  edit.py L438-443: recalculate_landed_prices(logistic_num=)
      * TODO [FINANCE-INTEGRATION]: Full implementation when Finance module is migrated.
      */
     private fun triggerLandedPriceRecalculation(logisticNum: String) {

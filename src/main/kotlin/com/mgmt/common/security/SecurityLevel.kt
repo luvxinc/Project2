@@ -4,7 +4,6 @@ package com.mgmt.common.security
  * Security Level annotation — dynamic security policy enforcement.
  *
  * V3 enhanced: adds actionKey for dynamic policy lookup.
- * V1 parity: SecurityPolicyManager.verify_action_request(request, 'btn_batch_update_cogs')
  *
  * Usage:
  *   @SecurityLevel(level = "L3", actionKey = "btn_batch_update_cogs")

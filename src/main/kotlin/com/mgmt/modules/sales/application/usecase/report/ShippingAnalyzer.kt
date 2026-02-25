@@ -33,7 +33,6 @@ class ShippingAnalyzer(
         val prevRange = computePrevRange(config.startDate, config.endDate)
         val prevTx = reportData.findTransactionsByDateRange(prevRange.first, prevRange.second)
 
-        // V1 parity: logistics.py L32-38
         val df3Cur = computeComboDetails(curTx)
         val df3Prev = computeComboDetails(prevTx)
 
@@ -62,7 +61,6 @@ class ShippingAnalyzer(
     }
 
     // ═══════════════════════════════════════════════════════
-    // V1 parity: _compute_df3() → logistics.py L52-108
     // ═══════════════════════════════════════════════════════
 
     private data class ComboRow(
@@ -136,7 +134,7 @@ class ShippingAnalyzer(
     }
 
     // ═══════════════════════════════════════════════════════
-    // Table builders — V1 parity: logistics.py L110-142
+    // Table builders: logistics.py L110-142
     // ═══════════════════════════════════════════════════════
 
     /** V1: _table1() → 费用汇总 (logistics.py L110-121) */

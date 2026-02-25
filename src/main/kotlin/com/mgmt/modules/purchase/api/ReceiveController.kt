@@ -19,7 +19,7 @@ import java.time.LocalDate
 /**
  * ReceiveController — Inbound receiving + discrepancy management REST API.
  *
- * V1 parity endpoints:
+ *  endpoints:
  *   receive/query.py         → GET  /purchase/receives/pending-shipments        (货物入库 - 待入库列表)
  *                            → GET  /purchase/receives/shipment-items           (货物入库 - 发货明细)
  *   receive/submit.py        → POST /purchase/receives                          (货物入库 - 提交入库)
@@ -57,7 +57,6 @@ class ReceiveController(
     /**
      * V1: get_shipment_items_api
      * Returns items GROUPED BY (po_num, po_sku) with SUM(sent_quantity).
-     * V1 parity: query.py L267-286 — different price tiers merged into single rows.
      */
     @GetMapping("/shipment-items")
     @RequirePermission("module.purchase.receive")
@@ -83,7 +82,7 @@ class ReceiveController(
     /**
      * V1: receive_list_api
      * Returns all logistic nums with computed status (IN_TRANSIT/ALL_RECEIVED/DIFF_UNRESOLVED/DIFF_RESOLVED/DELETED).
-     * V1 parity P1-3: supports ?sort_by=logisticNum&sort_order=asc
+     *  P1-3: supports ?sort_by=logisticNum&sort_order=asc
      */
     @GetMapping("/management")
     @RequirePermission("module.purchase.receive.mgmt")

@@ -3,7 +3,6 @@ package com.mgmt.common.logging
 /**
  * AuditLog — method-level audit logging annotation.
  *
- * V2 parity: `LogWriterService.logBusiness()` + `logAudit()` calls in NestJS controllers.
  * Applied to CUD controller methods. Processed by [AuditLogAspect].
  *
  * After successful execution, writes:

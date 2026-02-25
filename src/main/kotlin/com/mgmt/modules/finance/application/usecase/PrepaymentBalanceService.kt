@@ -14,9 +14,8 @@ import java.math.RoundingMode
 /**
  * PrepaymentBalanceService — calculates supplier prepayment balance.
  *
- * V1 parity: supplier_balance_api (api.py L21-116)
  *
- * Balance calculation rules (from V1 source code):
+ * * Balance calculation rules:
  *   1. Read all suppliers from in_supplier
  *   2. Read latest strategy per supplier for settlement currency
  *   3. For each supplier's prepay records from in_pmt_prepay_final:
@@ -39,7 +38,6 @@ class PrepaymentBalanceService(
 
     /**
      * Get all supplier balances.
-     * V1 parity: supplier_balance_api → returns list of {supplier_code, supplier_name, currency, balance}
      */
     @Transactional(readOnly = true)
     fun getAllBalances(): List<SupplierBalanceResponse> {
@@ -81,7 +79,6 @@ class PrepaymentBalanceService(
 
     /**
      * Get balance for a single supplier.
-     * V1 parity: deposit/vendor_balance_api and po/vendor_balance_api
      */
     @Transactional(readOnly = true)
     fun getBalanceForSupplier(supplierCode: String): SupplierBalanceResponse {
@@ -107,7 +104,6 @@ class PrepaymentBalanceService(
     /**
      * Calculate balance from a list of prepayment records.
      *
-     * V1 parity: api.py L82-104
      * Rules:
      *   - deposit/refund → ADD (V1: tran_type='in')
      *   - usage/withdraw → SUBTRACT (V1: tran_type='out')

@@ -7,7 +7,6 @@ import java.time.Instant
 /**
  * RawTransaction — 从 eBay CSV 上传的原始交易记录。
  *
- * V1 对应: Data_Transaction (MySQL, 全 TEXT 列)
  * V3 对应: raw_transactions (PostgreSQL, 强类型)
  *
  * 去重策略: row_hash (MD5 of all columns) — 见 V1 ingest.py compute_row_hash_full()
@@ -60,11 +59,11 @@ class RawTransaction(
     @Column(name = "tax_amount", precision = 12, scale = 2, nullable = false)
     var taxAmount: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P9: Seller collected tax (拆分) */
+    /** Seller collected tax (拆分) */
     @Column(name = "seller_tax", precision = 12, scale = 2, nullable = false)
     var sellerTax: BigDecimal = BigDecimal.ZERO,
 
-    /** V1 parity P9: eBay collected tax (拆分) */
+    /** eBay collected tax (拆分) */
     @Column(name = "ebay_tax", precision = 12, scale = 2, nullable = false)
     var ebayTax: BigDecimal = BigDecimal.ZERO,
 
@@ -88,11 +87,11 @@ class RawTransaction(
     @Column(name = "listing_fee", columnDefinition = "text")
     var listingFee: String? = null,
 
-    /** V1 parity P8: Final Value Fee - fixed (TEXT, 拆分) */
+    /** Final Value Fee - fixed (TEXT, 拆分) */
     @Column(name = "fvf_fee_fixed", columnDefinition = "text")
     var fvfFeeFixed: String? = null,
 
-    /** V1 parity P8: Final Value Fee - variable (TEXT, 拆分) */
+    /** Final Value Fee - variable (TEXT, 拆分) */
     @Column(name = "fvf_fee_variable", columnDefinition = "text")
     var fvfFeeVariable: String? = null,
 
@@ -150,7 +149,7 @@ class RawTransaction(
     @Column(name = "row_hash", length = 64, unique = true)
     var rowHash: String? = null,
 
-    /** V1 parity P13: Processed_T equivalent — false = pending transform */
+    /** Processed_T equivalent — false = pending transform */
     @Column(name = "synced", nullable = false)
     var synced: Boolean = false,
 

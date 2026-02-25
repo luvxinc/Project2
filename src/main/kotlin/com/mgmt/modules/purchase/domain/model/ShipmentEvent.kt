@@ -6,7 +6,6 @@ import java.time.Instant
 /**
  * ShipmentEvent — append-only audit trail for shipment changes.
  *
- * V1 parity: maps to in_send history chain.
  * Each event records what changed (before/after JSONB), who did it, and when.
  * This entity is NEVER updated or deleted — only inserted.
  */

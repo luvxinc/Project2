@@ -17,9 +17,8 @@ import java.time.temporal.ChronoUnit
 /**
  * LogisticListService — logistics cost list query.
  *
- * V1 parity: logistic_list_api (logistic.py:31-316)
  *
- * Key business rules (100% V1 parity):
+ * Key business rules (100% ):
  *   1. Payment status 4-state: unpaid / paid / partial / deleted (tolerance 0.01)
  *   2. Parent-child relationship: regex ^(.+)_delay_V\d+$
  *   3. Children don't show independently; attached to parent's children[]
@@ -111,7 +110,7 @@ class LogisticListService(
     }
 
     /**
-     * Build a single logistic list item — V1 parity: build_order_item() (logistic.py:175-278)
+     * Build a single logistic list item: build_order_item() (logistic.py:175-278)
      */
     private fun buildOrderItem(
         logisticNum: String,
@@ -228,7 +227,6 @@ class LogisticListService(
 
     /**
      * Build receive date map: logisticNum -> MIN(receiveDate)
-     * V1 parity: logistic.py:144-155
      */
     private fun buildReceiveDateMap(logisticNums: List<String>): Map<String, java.time.LocalDate> {
         if (logisticNums.isEmpty()) return emptyMap()

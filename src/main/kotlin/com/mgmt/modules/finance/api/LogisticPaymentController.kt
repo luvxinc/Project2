@@ -24,7 +24,6 @@ import java.nio.file.Files
 /**
  * LogisticPaymentController — Finance logistics cost REST API.
  *
- * V1 parity: logistic.py + payment/submit.py + payment/history.py + payment/file_ops.py
  *
  * Endpoints:
  *   GET    /finance/logistics                                  — Logistics cost list

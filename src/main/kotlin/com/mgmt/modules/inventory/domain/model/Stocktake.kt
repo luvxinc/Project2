@@ -7,7 +7,6 @@ import java.time.LocalDate
 /**
  * Stocktake — physical inventory count event.
  *
- * V1 source: Data_Inventory (25 date-columns wide table → normalised)
  * V3: Each stocktake_date is one row; items are in stocktake_items.
  */
 @Entity

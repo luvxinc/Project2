@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter
 /**
  * SalesReportController — Report Center & Generator API.
  *
- * V1 parity: backend/apps/reports/views.py (602 lines)
  *
  * ⚠️ V3 变更: 报表生成 100% Kotlin 原生实现，不再调用 Python subprocess。
  *   所有 9 个分析器已用 Kotlin 重写并通过 ReportGeneratorUseCase 协调。
@@ -50,7 +49,6 @@ class SalesReportController(
     data class GenerateRequest(
         val startDate: String,
         val endDate: String,
-        // V1 parity: settings.LOSS_RATES (settings.py L157)
         val lrCase: Double? = 0.6,
         val lrRequest: Double? = 0.5,
         val lrReturn: Double? = 0.3,

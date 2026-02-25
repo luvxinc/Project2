@@ -8,7 +8,6 @@ import java.time.LocalDate
 /**
  * Payment entity — unified payment record.
  *
- * V1 source: 8 tables (in_pmt_po/_final + in_pmt_deposit/_final
  *            + in_pmt_logistic/_final + in_pmt_prepay/_final) → 1 table.
  * Discriminated by payment_type ENUM.
  */

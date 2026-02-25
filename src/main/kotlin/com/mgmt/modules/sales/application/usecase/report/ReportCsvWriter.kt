@@ -12,7 +12,6 @@ import java.nio.file.StandardCopyOption
 /**
  * ReportCsvWriter — Atomic CSV writer with multi-table and footer support.
  *
- * V1 parity: DataProcessingService.save_csv_atomic() + ProfitAnalyzerBase.save_multi_table_csv()
  *
  * Features:
  * - Atomic write: tmp file → rename (prevents partial writes)
@@ -33,7 +32,6 @@ class ReportCsvWriter(private val outputDir: Path) {
 
     /**
      * Save a single table to CSV.
-     * V1 parity: save_csv_atomic()
      */
     fun saveCsv(
         headers: List<String>,
@@ -77,7 +75,6 @@ class ReportCsvWriter(private val outputDir: Path) {
 
     /**
      * Save multiple named tables to a single CSV file.
-     * V1 parity: save_multi_table_csv()
      */
     fun saveMultiTableCsv(
         filename: String,

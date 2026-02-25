@@ -7,7 +7,6 @@ import java.time.LocalDate
 /**
  * PurchaseOrder entity — aggregate root for PO subdomain.
  *
- * V1 source: in_po + in_po_final merged.
  * V3: single table with @Version optimistic locking, history via audit_log.
  */
 @Entity
@@ -48,7 +47,7 @@ class PurchaseOrder(
     @Column(name = "deleted_at")
     var deletedAt: Instant? = null,
 
-    /** V1 parity: item edit version counter (L01, L02, ...) */
+    /** item edit version counter (L01, L02, ...) */
     @Column(name = "detail_seq", nullable = false)
     var detailSeq: Int = 1,
 

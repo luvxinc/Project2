@@ -6,7 +6,6 @@ import java.time.Instant
 /**
  * PurchaseOrderEvent — append-only audit trail for PO changes.
  *
- * V1 parity: maps to in_po table's seq-based history chain.
  * Each event records what changed (before/after JSONB), who did it, and when.
  * This entity is NEVER updated or deleted — only inserted.
  */

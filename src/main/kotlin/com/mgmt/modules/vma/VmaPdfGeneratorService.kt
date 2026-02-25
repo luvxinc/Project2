@@ -21,7 +21,6 @@ import java.time.format.DateTimeFormatter
 /**
  * VmaPdfGeneratorService — PDF 模板填充 + SOP 列表页 + 合并
  *
- * V2 parity: pdf-generator.service.ts (339 lines)
  * Uses iText 9 (Java) instead of pdf-lib (JS).
  *
  * Features:
@@ -39,7 +38,7 @@ class VmaPdfGeneratorService {
         .resolve("./apps/web/src/app/(dashboard)/vma/data")
         .normalize()
 
-    // Dropdown field name map (V2 parity)
+    // Dropdown field name map
     private val deptDropdownMap = mapOf(
         1 to "Dropdown2", 2 to "Dropdown3", 3 to "Dropdown4", 4 to "Dropdown5",
         5 to "Dropdown6", 6 to "Dropdown7", 7 to "Dropdown8", 8 to "Dropdown9",
