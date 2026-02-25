@@ -1,12 +1,27 @@
 {
   "title": "企业资源管理系统",
-  "subtitle": "V2 架构",
-  "description": "基于 TypeScript 全栈重构。更安全，更快速，更可靠。",
-  "getStarted": "开始使用",
-  "apiDocs": "API 文档",
-  "enter": "进入",
+  "description": "优化运营流程，助力智能决策。",
+  "greeting": {
+    "morning": "早上好",
+    "afternoon": "下午好",
+    "evening": "晚上好",
+    "welcome": "欢迎回来，{name}",
+    "role": "角色：{role}",
+    "lastLogin": "上次登录：{time}",
+    "sessionActive": "会话活跃"
+  },
+  "environment": {
+    "title": "环境信息",
+    "version": "版本",
+    "server": "服务器状态",
+    "serverOnline": "在线",
+    "serverOffline": "离线",
+    "database": "数据库",
+    "dbConnected": "已连接",
+    "uptime": "运行时间",
+    "timezone": "时区"
+  },
   "footer": {
-    "phase": "阶段 3",
-    "module": "用户模块"
+    "brand": "ESPLUS ERP"
   }
 }

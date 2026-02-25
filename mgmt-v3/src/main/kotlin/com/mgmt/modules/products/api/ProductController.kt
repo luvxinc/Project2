@@ -52,7 +52,7 @@ class ProductController(
     // ═══════════ Query ═══════════
 
     @GetMapping
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") limit: Int,
@@ -71,16 +71,16 @@ class ProductController(
     }
 
     @GetMapping("/categories")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun getCategories(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(queryUseCase.getMetadata().categories))
 
     @GetMapping("/hierarchy")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun getHierarchy(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(queryUseCase.getCategoryHierarchy()))
     @GetMapping("/sku-list")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun getSkuList(): ResponseEntity<Any> {
         val skuList = queryUseCase.getActiveSkuList().map {
             mapOf("id" to it.id, "sku" to it.sku, "name" to it.name)
@@ -89,12 +89,12 @@ class ProductController(
     }
 
     @GetMapping("/{id}")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun findOne(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(queryUseCase.findOne(id))))
 
     @GetMapping("/sku/{sku}")
-    @RequirePermission("module.products.catalog.view")
+    @RequirePermission("module.products.catalog")
     fun findBySku(@PathVariable sku: String): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(queryUseCase.findBySku(sku))))
 
@@ -135,7 +135,7 @@ class ProductController(
     // ═══════════ Delete ═══════════
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.products.catalog.delete")
+    @RequirePermission("module.products.catalog.cogs")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_product")
     @AuditLog(module = "PRODUCTS", action = "DELETE_PRODUCT", riskLevel = "HIGH")
     fun delete(@PathVariable id: String): ResponseEntity<Any> =

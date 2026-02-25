@@ -24,7 +24,7 @@ class WarehouseLocationController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "50") limit: Int,
@@ -41,12 +41,12 @@ class WarehouseLocationController(
     }
 
     @GetMapping("/{id}")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(warehouseLocationUseCase.findOne(id))))
 
     @GetMapping("/barcode/{barcode}")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun findByBarcode(@PathVariable barcode: String): ResponseEntity<Any> {
         val loc = warehouseLocationUseCase.findByBarcode(barcode)
             ?: return ResponseEntity.notFound().build()
@@ -54,7 +54,7 @@ class WarehouseLocationController(
     }
 
     @PostMapping
-    @RequirePermission("module.inventory.warehouse.create")
+    @RequirePermission("module.inventory.shelf.create")
     @SecurityLevel(level = "L3", actionKey = "btn_add_warehouse_location")
     @AuditLog(module = "INVENTORY", action = "CREATE_WAREHOUSE_LOCATION", riskLevel = "MEDIUM")
     fun create(@RequestBody dto: CreateWarehouseLocationRequest): ResponseEntity<Any> =
@@ -62,7 +62,7 @@ class WarehouseLocationController(
             .body(ApiResponse.ok(toResponse(warehouseLocationUseCase.create(dto, SecurityUtils.currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.inventory.warehouse.delete")
+    @RequirePermission("module.inventory.shelf.delete")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_warehouse_location")
     @AuditLog(module = "INVENTORY", action = "DELETE_WAREHOUSE_LOCATION", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> {

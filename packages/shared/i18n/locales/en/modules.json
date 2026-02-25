@@ -122,10 +122,13 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve Management",
       "inventory": "Inventory",
       "clinical_case": "Clinical Cases",
+      "overview": "Overview",
+      "demo_inventory": "Demo Inventory",
+      "delivery_system": "Delivery System",
       "fridge_shelf": "Fridge Shelf",
+      "product_management": "Product Management",
       "site_management": "Site Management"
     },
     "employees": {

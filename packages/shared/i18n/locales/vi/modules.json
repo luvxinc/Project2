@@ -122,10 +122,13 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve Management",
       "inventory": "Kho hàng",
       "clinical_case": "Ca lâm sàng",
+      "overview": "Tổng quan",
+      "demo_inventory": "Kho demo",
+      "delivery_system": "Hệ thống giao hàng",
       "fridge_shelf": "Tủ lạnh",
+      "product_management": "Quản lý sản phẩm",
       "site_management": "Quản lý địa điểm"
     },
     "employees": {

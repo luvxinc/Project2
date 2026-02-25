@@ -70,7 +70,7 @@ const modules = [
     href: '/vma',
     groups: [
       { key: 'truvalve', items: ['manage'] },
-      { key: 'p_valve', items: ['inventory', 'clinical_case', 'fridge_shelf', 'site_management'] },
+      { key: 'p_valve', items: ['inventory', 'clinical_case', 'overview', 'demo_inventory', 'delivery_system', 'fridge_shelf', 'product_management', 'site_management'] },
       { key: 'employees', items: ['manage'] },
       { key: 'duties', items: ['manage'] },
       { key: 'training', items: ['manage'] },
@@ -91,10 +91,10 @@ const modules = [
   },
   {
     key: 'db_admin',
-    enabled: false,
+    enabled: true,
+    href: '/backup',
     groups: [
       { key: 'backup', items: ['create', 'restore', 'manage'] },
-      { key: 'cleanup', items: ['delete'] }
     ]
   },
   {
@@ -128,10 +128,14 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'purchase.abnormal':           '/purchase/abnormal',
   'purchase.abnormal.manage':    '/purchase/abnormal',
   'vma.truvalve':                '/vma/truvalve',
-  'vma.p_valve.inventory':       '/vma/p-valve/inventory',
-  'vma.p_valve.clinical_case':   '/vma/p-valve/clinical-case',
-  'vma.p_valve.fridge_shelf':    '/vma/p-valve/fridge-shelf',
-  'vma.p_valve.site_management': '/vma/p-valve/site-management',
+  'vma.p_valve.inventory':          '/vma/p-valve/inventory',
+  'vma.p_valve.clinical_case':      '/vma/p-valve/clinical-case',
+  'vma.p_valve.overview':            '/vma/p-valve/overview',
+  'vma.p_valve.demo_inventory':      '/vma/p-valve/demo-inventory',
+  'vma.p_valve.delivery_system':     '/vma/p-valve/delivery-system',
+  'vma.p_valve.fridge_shelf':        '/vma/p-valve/fridge-shelf',
+  'vma.p_valve.product_management':  '/vma/p-valve/product-management',
+  'vma.p_valve.site_management':     '/vma/p-valve/site-management',
   'vma.employees':               '/vma/employees',
   'vma.duties':                  '/vma/duties',
   'vma.training':                '/vma/training',
@@ -159,6 +163,11 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'finance.deposit.manage':      '/finance/deposit',
   'finance.po_payment':          '/finance/po-payment',
   'finance.po_payment.manage':   '/finance/po-payment',
+  // Database Admin module
+  'db_admin.backup':              '/backup',
+  'db_admin.backup.create':       '/backup',
+  'db_admin.backup.restore':      '/backup',
+  'db_admin.backup.manage':       '/backup',
 };
 
 

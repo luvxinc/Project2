@@ -16,21 +16,21 @@ class VmaClinicalTripController(
 ) {
 
     @GetMapping("/clinical-trips")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     fun listTrips() = tripService.findAll()
 
     @GetMapping("/clinical-trips/{tripId}")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     fun getTrip(@PathVariable tripId: String) = tripService.findOne(tripId)
 
     @PostMapping("/clinical-trips")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "CREATE_TRIP", riskLevel = "HIGH")
     fun createTrip(@RequestBody dto: CreateTripRequest) = tripService.createTrip(dto)
 
     @PostMapping("/clinical-trips/{tripId}/assign")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "ASSIGN_TRIP_ITEMS", riskLevel = "MEDIUM")
     fun assignItems(
         @PathVariable tripId: String,
@@ -38,7 +38,7 @@ class VmaClinicalTripController(
     ) = tripService.assignItemsToCase(tripId, dto)
 
     @PostMapping("/clinical-trips/{tripId}/return")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "RETURN_TRIP_ITEMS", riskLevel = "MEDIUM")
     fun returnItems(
         @PathVariable tripId: String,
@@ -46,12 +46,12 @@ class VmaClinicalTripController(
     ) = tripService.returnItems(tripId, dto)
 
     @PostMapping("/clinical-trips/{tripId}/complete")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "COMPLETE_TRIP", riskLevel = "HIGH")
     fun completeTrip(@PathVariable tripId: String) = tripService.completeTrip(tripId)
 
     @PostMapping("/clinical-trips/{tripId}/add-case")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "ADD_CASE_TO_TRIP", riskLevel = "MEDIUM")
     fun addCase(
         @PathVariable tripId: String,
@@ -59,7 +59,7 @@ class VmaClinicalTripController(
     ) = tripService.addCaseToTrip(tripId, dto)
 
     @PostMapping("/clinical-trips/{tripId}/remove-case")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "REMOVE_CASE_FROM_TRIP", riskLevel = "MEDIUM")
     fun removeCase(
         @PathVariable tripId: String,
@@ -67,7 +67,7 @@ class VmaClinicalTripController(
     ) = tripService.removeCaseFromTrip(tripId, dto)
 
     @DeleteMapping("/clinical-trips/{tripId}")
-    @RequirePermission("vma.clinical.manage")
+    @RequirePermission("vma.pvalve.clinical_case")
     @AuditLog(module = "VMA", action = "DELETE_TRIP", riskLevel = "HIGH")
     fun deleteTrip(@PathVariable tripId: String) = tripService.deleteTrip(tripId)
 }

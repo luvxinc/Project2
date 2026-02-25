@@ -22,18 +22,18 @@ class VmaSiteController(
 ) {
 
     @GetMapping("/sites")
-    @RequirePermission("vma.sites.manage")
+    @RequirePermission("vma.pvalve.site_mgmt")
     fun findAll(): ResponseEntity<Any> =
         ResponseEntity.ok(siteService.findAll())
 
     @PostMapping("/sites")
-    @RequirePermission("vma.sites.manage")
+    @RequirePermission("vma.pvalve.site_mgmt")
     @AuditLog(module = "VMA", action = "CREATE_SITE")
     fun create(@RequestBody dto: CreateSiteRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(siteService.create(dto))
 
     @PatchMapping("/sites/{siteId}")
-    @RequirePermission("vma.sites.manage")
+    @RequirePermission("vma.pvalve.site_mgmt")
     @AuditLog(module = "VMA", action = "UPDATE_SITE")
     fun update(@PathVariable siteId: String, @RequestBody dto: UpdateSiteRequest): ResponseEntity<Any> =
         ResponseEntity.ok(siteService.update(siteId, dto))

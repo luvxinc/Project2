@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 import { useModal } from '@/components/modal/GlobalModal';
 import { api } from '@/lib/api';
 import { invalidateSecurityActionCache } from '@/hooks/useSecurityAction';
@@ -10,7 +11,7 @@ import { invalidateSecurityActionCache } from '@/hooks/useSecurityAction';
 /**
  * 安全等级定义 (L0-L4) — 需传入 colors 以获取主题色
  */
-function getSecurityLevels(c: typeof themeColors.light) {
+function getSecurityLevels(c: ThemeColorSet) {
   return [
     { key: 'user', level: 'L0', levelKey: 'l0', color: c.blue },
     { key: 'query', level: 'L1', levelKey: 'l1', color: c.orange },
@@ -31,8 +32,8 @@ const actionRegistry = {
         {
           key: 'transactions',
           actions: [
-            { key: 'btn_commit_sku_fix', tokens: ['modify'] },
-            { key: 'btn_run_transform', tokens: ['modify'] },
+            { key: 'btn_etl_fix_sku', tokens: ['modify'] },
+            { key: 'btn_etl_transform', tokens: ['modify'] },
           ],
         },
         {
@@ -77,6 +78,7 @@ const actionRegistry = {
             { key: 'btn_submit_send', tokens: ['db'] },
             { key: 'btn_edit_send', tokens: ['db'] },
             { key: 'btn_delete_send', tokens: ['db'] },
+            { key: 'btn_restore_send', tokens: ['modify'] },
           ],
         },
         {
@@ -86,6 +88,7 @@ const actionRegistry = {
             { key: 'btn_receive_mgmt_edit', tokens: ['db'] },
             { key: 'btn_receive_delete', tokens: ['db'] },
             { key: 'btn_receive_undelete', tokens: ['db'] },
+            { key: 'btn_delete_receive', tokens: ['db'] },
           ],
         },
         {
@@ -110,10 +113,11 @@ const actionRegistry = {
         {
           key: 'logistic',
           actions: [
-            { key: 'logistic_payment_confirm', tokens: ['modify'] },
-            { key: 'logistic_payment_delete', tokens: ['db'] },
-            { key: 'logistic_payment_file_delete', tokens: ['modify'] },
-            { key: 'logistic_payment_file_upload', tokens: [] },
+            { key: 'btn_logistic_payment_submit', tokens: ['modify'] },
+            { key: 'btn_logistic_payment_delete', tokens: ['db'] },
+            { key: 'btn_logistic_payment_restore', tokens: ['modify'] },
+            { key: 'btn_logistic_payment_upload_file', tokens: [] },
+            { key: 'btn_logistic_payment_delete_file', tokens: ['modify'] },
           ],
         },
         {
@@ -129,19 +133,19 @@ const actionRegistry = {
         {
           key: 'deposit',
           actions: [
-            { key: 'deposit_payment_submit', tokens: ['modify'] },
-            { key: 'deposit_payment_delete', tokens: ['db'] },
-            { key: 'deposit_receipt_upload', tokens: [] },
-            { key: 'deposit_receipt_delete', tokens: ['modify'] },
+            { key: 'btn_deposit_payment_submit', tokens: ['modify'] },
+            { key: 'btn_deposit_payment_delete', tokens: ['db'] },
+            { key: 'btn_deposit_upload_file', tokens: [] },
+            { key: 'btn_deposit_delete_file', tokens: ['modify'] },
           ],
         },
         {
           key: 'po_payment',
           actions: [
-            { key: 'po_payment_submit', tokens: ['modify'] },
-            { key: 'po_payment_delete', tokens: ['db'] },
-            { key: 'po_receipt_upload', tokens: [] },
-            { key: 'po_receipt_delete', tokens: ['modify'] },
+            { key: 'btn_po_payment_submit', tokens: ['modify'] },
+            { key: 'btn_po_payment_delete', tokens: ['db'] },
+            { key: 'btn_po_payment_upload_file', tokens: [] },
+            { key: 'btn_po_payment_delete_file', tokens: ['modify'] },
           ],
         },
       ],
@@ -155,6 +159,19 @@ const actionRegistry = {
             { key: 'btn_sync_inventory', tokens: ['modify'] },
             { key: 'btn_update_single_inv', tokens: ['modify'] },
             { key: 'btn_drop_inv_col', tokens: ['db'] },
+            { key: 'btn_add_stocktake', tokens: ['db'] },
+            { key: 'btn_edit_stocktake', tokens: ['db'] },
+            { key: 'btn_delete_stocktake', tokens: ['db'] },
+          ],
+        },
+        {
+          key: 'warehouse',
+          actions: [
+            { key: 'btn_create_warehouse', tokens: ['modify'] },
+            { key: 'btn_update_warehouse', tokens: ['modify'] },
+            { key: 'btn_delete_warehouse', tokens: ['db'] },
+            { key: 'btn_add_warehouse_location', tokens: ['db'] },
+            { key: 'btn_delete_warehouse_location', tokens: ['db'] },
           ],
         },
       ],
@@ -210,6 +227,12 @@ const actionRegistry = {
             { key: 'btn_reset_pwd', tokens: ['db'] },
             { key: 'btn_update_perms', tokens: ['modify'] },
             { key: 'btn_delete_user', tokens: ['system'] },
+          ],
+        },
+        {
+          key: 'roles',
+          actions: [
+            { key: 'btn_manage_roles', tokens: ['modify'] },
           ],
         },
       ],
@@ -577,11 +600,12 @@ export default function PasswordPolicyPage() {
             <button 
               onClick={handleSave}
               disabled={saving}
-              style={{ 
+              className="w-full h-[44px] mb-4 hover:opacity-90 text-[15px] font-medium rounded-lg transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+              style={{
                 backgroundColor: saving ? colors.textTertiary : colors.blue,
                 opacity: saving ? 0.6 : 1,
+                color: colors.white,
               }}
-              className="w-full h-[44px] mb-4 hover:opacity-90 text-white text-[15px] font-medium rounded-lg transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

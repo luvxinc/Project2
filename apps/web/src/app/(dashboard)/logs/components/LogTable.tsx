@@ -2,32 +2,13 @@
 
 import { useState } from 'react';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { TableColumn, LogType } from './tableColumns';
 import LogDetailModal from './LogDetailModal';
-
-// ── Badge color resolvers (theme-aware) ──
-type ColorSet = typeof themeColors.light;
-
-function severityColorMap(c: ColorSet): Record<string, string> {
-  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
-}
-function riskColorMap(c: ColorSet): Record<string, string> {
-  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
-}
-function resultColorMap(c: ColorSet): Record<string, string> {
-  return { SUCCESS: c.green, DENIED: c.orange, FAILED: c.red };
-}
-function methodColorMap(c: ColorSet): Record<string, string> {
-  return { GET: c.green, POST: c.blue, PUT: c.orange, PATCH: c.yellow, DELETE: c.red };
-}
-
-const badgeResolvers: Record<string, (c: ColorSet) => Record<string, string>> = {
-  severity: severityColorMap,
-  risk: riskColorMap,
-  result: resultColorMap,
-  method: methodColorMap,
-};
+import {
+  badgeColorResolvers as badgeResolvers,
+  httpStatusColor as getStatusCodeColor,
+} from './logColors';
 
 // ================================
 // Types
@@ -42,16 +23,6 @@ interface LogTableProps {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   emptyMessage?: string;
-}
-
-// ================================
-// HTTP 状态码颜色
-// ================================
-function getStatusCodeColor(code: number, c: typeof themeColors.light): string {
-  if (code >= 500) return c.red;
-  if (code >= 400) return c.orange;
-  if (code >= 300) return c.yellow;
-  return c.green;
 }
 
 // ================================
@@ -72,6 +43,7 @@ export default function LogTable({
   const colors = themeColors[theme];
   const t = useTranslations('logs');
   const tc = useTranslations('common');
+  const locale = useLocale();
   
   // LogType 到 i18n namespace 的映射（处理单复数差异）
   const logTypeI18nMap: Record<LogType, string> = {
@@ -89,7 +61,7 @@ export default function LogTable({
   // 格式化日期
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString(locale === 'zh' ? 'zh-CN' : locale === 'vi' ? 'vi-VN' : 'en-US', {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',

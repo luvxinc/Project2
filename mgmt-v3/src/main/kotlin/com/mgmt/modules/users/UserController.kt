@@ -81,7 +81,7 @@ class UserController(
     ): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.delete(id, claims.userId, claims.roles, reason)
-        return ApiResponse.ok(mapOf("message" to "用户已删除"))
+        return ApiResponse.ok(mapOf("message" to "User deleted"))
     }
 
     @PostMapping("/{id}/lock")
@@ -91,7 +91,7 @@ class UserController(
     fun lock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.lock(id, claims.userId, claims.roles)
-        return ApiResponse.ok(mapOf("message" to "用户已锁定"))
+        return ApiResponse.ok(mapOf("message" to "User locked"))
     }
 
     @PostMapping("/{id}/unlock")
@@ -101,7 +101,7 @@ class UserController(
     fun unlock(@PathVariable id: String, httpRequest: HttpServletRequest): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.unlock(id, claims.userId, claims.roles)
-        return ApiResponse.ok(mapOf("message" to "用户已解锁"))
+        return ApiResponse.ok(mapOf("message" to "User unlocked"))
     }
 
     @PutMapping("/{id}/permissions")
@@ -115,7 +115,7 @@ class UserController(
     ): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.updatePermissions(id, request.permissions, claims.userId, claims.roles)
-        return ApiResponse.ok(mapOf("message" to "权限已更新"))
+        return ApiResponse.ok(mapOf("message" to "Permissions updated"))
     }
 
     @GetMapping("/check-username")
@@ -139,7 +139,7 @@ class UserController(
     ): ApiResponse<Map<String, String>> {
         val claims = extractClaims(httpRequest)
         userService.resetPassword(id, request.newPassword, claims.userId, claims.roles)
-        return ApiResponse.ok(mapOf("message" to "密码已重置"))
+        return ApiResponse.ok(mapOf("message" to "Password reset"))
     }
 
     private fun extractClaims(request: HttpServletRequest): JwtTokenProvider.TokenClaims {

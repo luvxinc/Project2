@@ -31,6 +31,15 @@ class JwtAuthenticationFilter(
         if (token != null) {
             val claims = jwtTokenProvider.parseToken(token)
             if (claims != null && sessionService.isSessionActive(claims.userId)) {
+                // Check if permissions have been revoked (admin changed this user's permissions/role)
+                val revokeReason = sessionService.checkAndClearRevoked(claims.userId)
+                if (revokeReason != null) {
+                    response.status = HttpServletResponse.SC_UNAUTHORIZED
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write("""{"error":"PERMISSION_REVOKED","reason":"$revokeReason"}""")
+                    return
+                }
+
                 val authorities = claims.roles.map { SimpleGrantedAuthority("ROLE_$it") }
                 val auth = UsernamePasswordAuthenticationToken(claims, null, authorities)
                 SecurityContextHolder.getContext().authentication = auth

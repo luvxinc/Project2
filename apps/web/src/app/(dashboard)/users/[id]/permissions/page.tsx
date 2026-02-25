@@ -384,7 +384,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
     if (primaryRole === 'superuser') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-          style={{ background: 'linear-gradient(135deg, rgba(220,53,69,0.2), rgba(255,193,7,0.2))', color: '#ffc107', border: '1px solid rgba(255,193,7,0.3)' }}>
+          style={{ background: `linear-gradient(135deg, ${colors.red}33, ${colors.yellow}33)`, color: colors.yellow, border: `1px solid ${colors.yellow}4D` }}>
           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" /></svg>
           {t(`roleNames.${primaryRole}`)}
         </span>
@@ -393,7 +393,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
     if (primaryRole === 'admin') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-          style={{ backgroundColor: 'rgba(13,202,240,0.15)', color: colors.teal, border: '1px solid rgba(13,202,240,0.25)' }}>
+          style={{ backgroundColor: `${colors.teal}26`, color: colors.teal, border: `1px solid ${colors.teal}40` }}>
           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
           {t(`roleNames.${primaryRole}`)}
         </span>
@@ -401,7 +401,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
     }
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-        style={{ backgroundColor: 'rgba(108,117,125,0.15)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(108,117,125,0.25)' }}>
+        style={{ backgroundColor: `${colors.gray}26`, color: colors.textSecondary, border: `1px solid ${colors.gray}40` }}>
         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
         {t(`roleNames.${primaryRole}`)}
       </span>
@@ -461,8 +461,8 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
                 <button
                   onClick={handleSave}
                   disabled={!hasChanges || updateMutation.isPending}
-                  style={{ backgroundColor: colors.blue }}
-                  className="h-9 px-4 text-white text-[13px] font-medium rounded-full hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
+                  className="h-9 px-4 text-[13px] font-medium rounded-full hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                 >
                   {updateMutation.isPending && (
                     <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

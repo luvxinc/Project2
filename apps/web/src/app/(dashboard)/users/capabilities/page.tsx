@@ -292,7 +292,7 @@ function RoleModal({
         {error && (
           <div 
             className="mt-4 p-3 rounded-lg text-sm"
-            style={{ backgroundColor: '#ff453a20', color: colors.red }}
+            style={{ backgroundColor: `${colors.red}20`, color: colors.red }}
           >
             {error}
           </div>
@@ -309,8 +309,8 @@ function RoleModal({
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 h-10 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-80"
-            style={{ backgroundColor: colors.blue }}
+            className="flex-1 h-10 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
           >
             {editingRole ? tc('save') : t('roles.addRole')}
           </button>
@@ -601,10 +601,10 @@ export default function CapabilitiesPage() {
       <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
           <div
-            style={{ backgroundColor: `${colors.red || '#ff3b30'}15` }}
+            style={{ backgroundColor: `${colors.red}15` }}
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
           >
-            <svg className="w-10 h-10" fill="none" stroke={colors.red || '#ff3b30'} viewBox="0 0 24 24" strokeWidth={1.5}>
+            <svg className="w-10 h-10" fill="none" stroke={colors.red} viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
@@ -637,8 +637,8 @@ export default function CapabilitiesPage() {
               <button 
                 onClick={handleSave}
                 disabled={saving}
-                style={{ backgroundColor: colors.blue }}
-                className="h-9 px-5 hover:opacity-90 text-white text-[14px] font-medium rounded-lg transition-opacity disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: colors.blue, color: colors.white }}
+                className="h-9 px-5 hover:opacity-90 text-[14px] font-medium rounded-lg transition-opacity disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <>
@@ -743,8 +743,8 @@ export default function CapabilitiesPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
-                        style={{ backgroundColor: role.color || colors.gray }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold"
+                        style={{ backgroundColor: role.color || colors.gray, color: colors.white }}
                       >
                         L{role.level}
                       </div>
@@ -804,7 +804,7 @@ export default function CapabilitiesPage() {
                         <div className="flex items-center gap-2.5">
                           <CapIcon 
                             name={cap.icon} 
-                            color={cap.level === 'danger' ? '#ff3b30' : cap.level === 'warning' ? '#ff9f0a' : colors.blue}
+                            color={cap.level === 'danger' ? colors.red : cap.level === 'warning' ? colors.orange : colors.blue}
                           />
                           <span style={{ color: colors.text }} className="text-[14px]">
                             {t(`capabilities.items.${cap.i18nKey}.title`).replace('允许', '').replace('Allow ', '')}

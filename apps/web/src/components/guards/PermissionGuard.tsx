@@ -6,11 +6,15 @@ import { useTranslations } from 'next-intl';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 
 const ROUTE_TO_PERMISSION: Record<string, string> = {
+  '/sales':    'module.sales',
   '/purchase': 'module.purchase',
+  '/inventory':'module.inventory',
+  '/finance':  'module.finance',
   '/products': 'module.products',
   '/vma':      'module.vma',
   '/users':    'module.user_admin',
   '/logs':     'module.audit',
+  '/backup':   'module.db_admin',
 };
 
 function evaluatePermission(pathname: string): 'allowed' | 'denied' {

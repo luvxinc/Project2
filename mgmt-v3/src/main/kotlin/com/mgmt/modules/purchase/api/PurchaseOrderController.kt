@@ -42,7 +42,7 @@ class PurchaseOrderController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.purchase.po.view")
+    @RequirePermission("module.purchase.po")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") limit: Int,
@@ -69,7 +69,7 @@ class PurchaseOrderController(
     }
 
     @GetMapping("/{id}")
-    @RequirePermission("module.purchase.po.view")
+    @RequirePermission("module.purchase.po")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> {
         val po = poUseCase.findOne(id)
         val items = poUseCase.getItems(id)
@@ -78,7 +78,7 @@ class PurchaseOrderController(
     }
 
     @PostMapping
-    @RequirePermission("module.purchase.po.create")
+    @RequirePermission("module.purchase.po.add")
     @SecurityLevel(level = "L3", actionKey = "btn_submit_po")
     @AuditLog(module = "PURCHASE", action = "CREATE_PO", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreatePurchaseOrderRequest): ResponseEntity<Any> =
@@ -86,21 +86,21 @@ class PurchaseOrderController(
             .body(ApiResponse.ok(toResponse(poUseCase.create(dto, currentUsername()))))
 
     @PatchMapping("/{id}")
-    @RequirePermission("module.purchase.po.update")
+    @RequirePermission("module.purchase.po.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_po_modify")
     @AuditLog(module = "PURCHASE", action = "UPDATE_PO", riskLevel = "HIGH")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdatePurchaseOrderRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(poUseCase.update(id, dto, currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.purchase.po.delete")
+    @RequirePermission("module.purchase.po.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_po")
     @AuditLog(module = "PURCHASE", action = "DELETE_PO", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(mapOf("success" to poUseCase.softDelete(id, currentUsername()))))
 
     @PostMapping("/{id}/restore")
-    @RequirePermission("module.purchase.po.update")
+    @RequirePermission("module.purchase.po.mgmt")
     @SecurityLevel(level = "L2", actionKey = "btn_restore_po")
     @AuditLog(module = "PURCHASE", action = "RESTORE_PO", riskLevel = "MEDIUM")
     fun restore(@PathVariable id: Long): ResponseEntity<Any> =
@@ -110,7 +110,7 @@ class PurchaseOrderController(
 
     /** Get full audit history for a PO — append-only event chain */
     @GetMapping("/{id}/history")
-    @RequirePermission("module.purchase.po.view")
+    @RequirePermission("module.purchase.po")
     fun getHistory(@PathVariable id: Long): ResponseEntity<Any> {
         val events = poUseCase.getHistory(id)
         return ResponseEntity.ok(ApiResponse.ok(events.map { ev ->
@@ -133,7 +133,7 @@ class PurchaseOrderController(
      * Sources: fawazahmed0 CDN → Frankfurter → open.er-api → manual fallback.
      */
     @GetMapping("/exchange-rate")
-    @RequirePermission("module.purchase.po.create")
+    @RequirePermission("module.purchase.po.add")
     fun getExchangeRate(@RequestParam date: String): ResponseEntity<Any> {
         val poDate = java.time.LocalDate.parse(date)
         val today = java.time.LocalDate.now()
@@ -219,7 +219,7 @@ class PurchaseOrderController(
 
     /** V1: generate_prefilled_template_api — reads V1 template, fills metadata, locks cells, adds protection */
     @GetMapping("/template")
-    @RequirePermission("module.purchase.po.create")
+    @RequirePermission("module.purchase.po.add")
     fun downloadTemplate(
         @RequestParam supplierCode: String,
         @RequestParam date: String,
@@ -251,7 +251,7 @@ class PurchaseOrderController(
 
     /** V1: parse_po_excel_api — upload & validate Excel with SKU/supplier/date/currency checks */
     @PostMapping("/parse-excel")
-    @RequirePermission("module.purchase.po.create")
+    @RequirePermission("module.purchase.po.add")
     fun parseExcel(
         @RequestParam file: MultipartFile,
         @RequestParam supplierCode: String,
@@ -267,7 +267,7 @@ class PurchaseOrderController(
 
     /** V1: download_po_excel_api — export PO with formatted cells */
     @GetMapping("/{id}/export")
-    @RequirePermission("module.purchase.po.view")
+    @RequirePermission("module.purchase.po")
     fun exportExcel(@PathVariable id: Long): ResponseEntity<ByteArray> {
         val po = poUseCase.findOne(id)
         val items = poUseCase.getItems(id)

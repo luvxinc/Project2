@@ -52,7 +52,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getPOPaymentList(
         @RequestParam(defaultValue = "po_date") sortBy: String,
         @RequestParam(defaultValue = "desc") sortOrder: String,
@@ -66,7 +66,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/po-payments/payments")
-    @RequirePermission("module.finance.po_payment.manage")
+    @RequirePermission("module.finance.po.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_po_payment_submit")
     @AuditLog(module = "FINANCE", action = "CREATE_PO_PAYMENT", riskLevel = "HIGH")
     fun submitPayment(@RequestBody request: SubmitPOPaymentRequest): ResponseEntity<Any> {
@@ -79,7 +79,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @DeleteMapping("/po-payments/payments/{pmtNo}")
-    @RequirePermission("module.finance.po_payment.manage")
+    @RequirePermission("module.finance.po.manage")
     @SecurityLevel(level = "L3", actionKey = "btn_po_payment_delete")
     @AuditLog(module = "FINANCE", action = "DELETE_PO_PAYMENT", riskLevel = "HIGH")
     fun deletePayment(@PathVariable pmtNo: String): ResponseEntity<Any> {
@@ -92,7 +92,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments/vendor-balance")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getVendorBalance(
         @RequestParam supplierCode: String,
         @RequestParam(required = false) paymentDate: String?,
@@ -113,7 +113,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments/payments/{pmtNo}/history")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getPaymentHistory(
         @PathVariable pmtNo: String,
         @RequestParam poNum: String,
@@ -127,7 +127,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments/payments/{pmtNo}/orders")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getPaymentOrders(@PathVariable pmtNo: String): ResponseEntity<Any> {
         val result = historyService.getPaymentOrders(pmtNo)
         return ResponseEntity.ok(ApiResponse.ok(result))
@@ -138,7 +138,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments/payments/{pmtNo}/files")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getFileInfo(@PathVariable pmtNo: String): ResponseEntity<Any> {
         val result = fileService.getFileInfo(pmtNo)
         return ResponseEntity.ok(ApiResponse.ok(result))
@@ -149,7 +149,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/po-payments/payments/{pmtNo}/files/{filename}")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun serveFile(
         @PathVariable pmtNo: String,
         @PathVariable filename: String,
@@ -173,7 +173,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/po-payments/payments/{pmtNo}/files")
-    @RequirePermission("module.finance.po_payment.manage")
+    @RequirePermission("module.finance.po.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_po_payment_upload_file")
     @AuditLog(module = "FINANCE", action = "UPLOAD_PO_PAYMENT_FILE", riskLevel = "MEDIUM")
     fun uploadFile(
@@ -198,7 +198,7 @@ class POPaymentController(
     // ═══════════════════════════════════════════════
 
     @DeleteMapping("/po-payments/payments/{pmtNo}/files/{filename}")
-    @RequirePermission("module.finance.po_payment.manage")
+    @RequirePermission("module.finance.po.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_po_payment_delete_file")
     @AuditLog(module = "FINANCE", action = "DELETE_PO_PAYMENT_FILE", riskLevel = "MEDIUM")
     fun deleteFile(

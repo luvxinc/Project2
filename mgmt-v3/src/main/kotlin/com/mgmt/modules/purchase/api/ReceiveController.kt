@@ -71,7 +71,7 @@ class ReceiveController(
      * Security: L3 (btn_receive_confirm)
      */
     @PostMapping
-    @RequirePermission("module.purchase.receive.create")
+    @RequirePermission("module.purchase.receive.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_receive_confirm")
     @AuditLog(module = "PURCHASE", action = "SUBMIT_RECEIVE", riskLevel = "HIGH")
     fun submit(@RequestBody dto: SubmitReceiveRequest): ResponseEntity<Any> =
@@ -109,7 +109,7 @@ class ReceiveController(
      * Security: L3 (btn_receive_mgmt_edit)
      */
     @PutMapping("/management/{logisticNum}")
-    @RequirePermission("module.purchase.receive.update")
+    @RequirePermission("module.purchase.receive.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_receive_mgmt_edit")
     @AuditLog(module = "PURCHASE", action = "EDIT_RECEIVE", riskLevel = "HIGH")
     fun editReceive(
@@ -124,7 +124,7 @@ class ReceiveController(
      * Security: L3 (btn_receive_delete)
      */
     @DeleteMapping("/management/{logisticNum}")
-    @RequirePermission("module.purchase.receive.delete")
+    @RequirePermission("module.purchase.receive.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_receive_delete")
     @AuditLog(module = "PURCHASE", action = "DELETE_RECEIVE", riskLevel = "HIGH")
     fun deleteReceive(
@@ -139,7 +139,7 @@ class ReceiveController(
      * Security: L3 (btn_receive_undelete)
      */
     @PostMapping("/management/{logisticNum}/restore")
-    @RequirePermission("module.purchase.receive.update")
+    @RequirePermission("module.purchase.receive.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_receive_undelete")
     @AuditLog(module = "PURCHASE", action = "RESTORE_RECEIVE", riskLevel = "HIGH")
     fun restoreReceive(@PathVariable logisticNum: String): ResponseEntity<Any> =
@@ -157,17 +157,17 @@ class ReceiveController(
     // ═══════════ Discrepancies — 差异管理 ═══════════
 
     @GetMapping("/diffs/pending")
-    @RequirePermission("module.purchase.receive.view")
+    @RequirePermission("module.purchase.receive")
     fun getPendingDiffs(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(receiveUseCase.getPendingDiffs().map { toDiffResponse(it) }))
 
     @GetMapping("/{id}/diffs")
-    @RequirePermission("module.purchase.receive.view")
+    @RequirePermission("module.purchase.receive")
     fun getDiffsByReceive(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(receiveUseCase.getDiffsByReceive(id).map { toDiffResponse(it) }))
 
     @PostMapping("/diffs/{diffId}/resolve")
-    @RequirePermission("module.purchase.receive.update")
+    @RequirePermission("module.purchase.receive.mgmt")
     @AuditLog(module = "PURCHASE", action = "RESOLVE_DIFF", riskLevel = "MEDIUM")
     fun resolveDiff(
         @PathVariable diffId: Long,
@@ -178,22 +178,22 @@ class ReceiveController(
     // ═══════════ Legacy — simple by-ID endpoints ═══════════
 
     @GetMapping
-    @RequirePermission("module.purchase.receive.view")
+    @RequirePermission("module.purchase.receive")
     fun findAll(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(receiveUseCase.findAll().map { toResponse(it) }))
 
     @GetMapping("/{id}")
-    @RequirePermission("module.purchase.receive.view")
+    @RequirePermission("module.purchase.receive")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(receiveUseCase.findOne(id))))
 
     @GetMapping("/shipment/{shipmentId}")
-    @RequirePermission("module.purchase.receive.view")
+    @RequirePermission("module.purchase.receive")
     fun findByShipment(@PathVariable shipmentId: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(receiveUseCase.findByShipment(shipmentId).map { toResponse(it) }))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.purchase.receive.delete")
+    @RequirePermission("module.purchase.receive.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_receive")
     @AuditLog(module = "PURCHASE", action = "DELETE_RECEIVE", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> =

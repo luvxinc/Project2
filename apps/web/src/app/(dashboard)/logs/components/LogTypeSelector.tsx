@@ -161,7 +161,7 @@ export default function LogTypeSelector() {
                 padding: '10px 24px',
                 color: isActive 
                   ? colors.segmentText
-                  : (theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6e6e73'),
+                  : (theme === 'dark' ? 'rgba(255,255,255,0.5)' : colors.textTertiary),
                 fontSize: '14px',
                 fontWeight: 400,
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',

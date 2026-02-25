@@ -39,7 +39,7 @@ class ShipmentController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") limit: Int,
@@ -63,7 +63,7 @@ class ShipmentController(
     }
 
     @GetMapping("/{id}")
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> {
         val shipment = shipmentUseCase.findOne(id)
         val items = shipmentUseCase.getItems(id)
@@ -71,7 +71,7 @@ class ShipmentController(
     }
 
     @PostMapping
-    @RequirePermission("module.purchase.shipment.create")
+    @RequirePermission("module.purchase.send.add")
     @SecurityLevel(level = "L3", actionKey = "btn_submit_send")
     @AuditLog(module = "PURCHASE", action = "CREATE_SHIPMENT", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreateShipmentRequest): ResponseEntity<Any> =
@@ -79,33 +79,33 @@ class ShipmentController(
             .body(ApiResponse.ok(toListResponse(shipmentUseCase.create(dto, currentUsername()))))
 
     @PatchMapping("/{id}")
-    @RequirePermission("module.purchase.shipment.update")
+    @RequirePermission("module.purchase.send.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_edit_send")
     @AuditLog(module = "PURCHASE", action = "UPDATE_SHIPMENT", riskLevel = "HIGH")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdateShipmentRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toListResponse(shipmentUseCase.update(id, dto, currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.purchase.shipment.delete")
+    @RequirePermission("module.purchase.send.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_send")
     @AuditLog(module = "PURCHASE", action = "DELETE_SHIPMENT", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(mapOf("success" to shipmentUseCase.softDelete(id, currentUsername()))))
 
     @PostMapping("/{id}/restore")
-    @RequirePermission("module.purchase.shipment.update")
+    @RequirePermission("module.purchase.send.mgmt")
     @SecurityLevel(level = "L2", actionKey = "btn_restore_send")
     @AuditLog(module = "PURCHASE", action = "RESTORE_SHIPMENT", riskLevel = "MEDIUM")
     fun restore(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toListResponse(shipmentUseCase.restore(id, currentUsername()))))
 
     @GetMapping("/available-pos")
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun getAvailablePos(@RequestParam(required = false) sentDate: LocalDate?): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(shipmentUseCase.getAvailablePos(sentDate)))
 
     @GetMapping("/template")
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun downloadTemplate(@RequestParam sentDate: LocalDate): ResponseEntity<ByteArray> {
         val availablePos = shipmentUseCase.getAvailablePos(sentDate)
         val bytes = shipmentExcelService.generateTemplate(sentDate, availablePos)
@@ -113,7 +113,7 @@ class ShipmentController(
     }
 
     @GetMapping("/{id}/export")
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun exportShipment(
         @PathVariable id: Long,
         @RequestParam(defaultValue = "mgmt") type: String,
@@ -126,7 +126,7 @@ class ShipmentController(
     }
 
     @GetMapping("/{id}/history")
-    @RequirePermission("module.purchase.shipment.view")
+    @RequirePermission("module.purchase.send")
     fun getHistory(@PathVariable id: Long): ResponseEntity<Any> {
         val events = shipmentUseCase.getHistory(id)
         return ResponseEntity.ok(ApiResponse.ok(events.map { e ->

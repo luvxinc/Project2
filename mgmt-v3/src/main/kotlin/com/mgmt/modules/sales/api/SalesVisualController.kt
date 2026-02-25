@@ -36,7 +36,7 @@ class SalesVisualController(
      *   fees    — comma-separated: "cogs,platformFee"
      */
     @GetMapping("/chart-data")
-    @RequirePermission("module.sales.visuals.view")
+    @RequirePermission("module.sales.visuals.dashboard")
     @AuditLog(module = "SALES", action = "VIEW_CHART_DATA")
     fun getChartData(
         @RequestParam start: String,

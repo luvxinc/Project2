@@ -31,9 +31,11 @@ class SessionService(
         private const val SESS_PREFIX = "sess:"
         private const val LOCK_PREFIX = "sec:lock:"
         private const val FAIL_PREFIX = "sec:fail:"
+        private const val REVOKE_PREFIX = "revoke:"
         private const val WHITELIST_KEY = "perm:whitelist"
         private val PERM_TTL = Duration.ofMinutes(5)
         private val LOCK_TTL = Duration.ofMinutes(30)
+        private val REVOKE_TTL = Duration.ofMinutes(10)
         private const val MAX_SECURITY_FAILURES = 3
         /** Sliding session idle timeout — session expires after this duration of no interaction */
         private val IDLE_TIMEOUT = Duration.ofHours(1)
@@ -116,6 +118,44 @@ class SessionService(
         val keys = userIds.map { "$PERM_PREFIX$it" }
         redis.delete(keys)
         return userIds.size
+    }
+
+    // ─── Permission Revoke (Force Re-Login) ─────────────────────
+
+    /**
+     * Set permission-revoked flag for a user.
+     * JwtAuthenticationFilter checks this flag on every request.
+     * If set → returns 401 PERMISSION_REVOKED → frontend shows modal → redirect to login.
+     * Also clears session + permission cache so the user must re-authenticate.
+     */
+    fun setPermissionRevoked(userId: String, reason: String = "PERMISSION_CHANGED") {
+        redis.opsForValue().set("$REVOKE_PREFIX$userId", reason, REVOKE_TTL)
+        redis.delete(listOf("$SESS_PREFIX$userId", "$PERM_PREFIX$userId"))
+        log.info("Permission revoked for user {}: {}", userId, reason)
+    }
+
+    /**
+     * Check if user has been permission-revoked. Returns the reason if revoked, null otherwise.
+     * Atomic: deletes the flag after reading so the 401 is only sent once.
+     */
+    fun checkAndClearRevoked(userId: String): String? {
+        val key = "$REVOKE_PREFIX$userId"
+        val reason = redis.opsForValue().get(key) ?: return null
+        redis.delete(key)
+        return reason
+    }
+
+    /**
+     * Batch-revoke permissions for multiple users (e.g., after role boundary changes).
+     */
+    fun revokePermissionsBatch(userIds: List<String>, reason: String = "ROLE_BOUNDARY_CHANGED") {
+        if (userIds.isEmpty()) return
+        userIds.forEach { userId ->
+            redis.opsForValue().set("$REVOKE_PREFIX$userId", reason, REVOKE_TTL)
+        }
+        val sessionKeys = userIds.flatMap { listOf("$SESS_PREFIX$it", "$PERM_PREFIX$it") }
+        redis.delete(sessionKeys)
+        log.info("Batch permission-revoke: {} users, reason: {}", userIds.size, reason)
     }
 
     // ─── Security Lockout ────────────────────────────────────────

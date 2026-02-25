@@ -26,7 +26,7 @@ class FlowController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/flow")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getFlowList(): ResponseEntity<Any> {
         val result = flowNativeService.getFlowList()
         return ResponseEntity.ok(ApiResponse.ok(result))
@@ -37,7 +37,7 @@ class FlowController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/flow/{poNum}")
-    @RequirePermission("module.finance.po_payment")
+    @RequirePermission("module.finance.po")
     fun getFlowDetail(@PathVariable poNum: String): ResponseEntity<Any> {
         val result = flowNativeService.getFlowDetail(poNum)
         return ResponseEntity.ok(ApiResponse.ok(result))

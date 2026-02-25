@@ -192,8 +192,8 @@ class UserService(
         // Force logout when roles change — invalidate JWT and Redis session
         if (rolesChanged) {
             refreshTokenRepo.revokeAllByUserId(id)
-            sessionService.forceLogout(id)
-            log.info("Roles changed for user {}, forced logout", user.username)
+            sessionService.setPermissionRevoked(id, "ROLE_CHANGED")
+            log.info("Roles changed for user {}, forced re-login", user.username)
         }
 
         return mapToSummary(user)
@@ -263,7 +263,7 @@ class UserService(
         val whitelist = getActiveWhitelist()
         val invalidKeys = permissions.keys.filter { it !in whitelist }
         if (invalidKeys.isNotEmpty()) {
-            throw ForbiddenException("非法权限键: ${invalidKeys.joinToString(", ")}")
+            throw ForbiddenException("Invalid permission keys: ${invalidKeys.joinToString(", ")}")
         }
 
         // Guard ⑤: Inheritance — non-superuser cannot grant permissions they don't have
@@ -277,6 +277,9 @@ class UserService(
 
         // Clear cached permissions so next request re-fetches
         sessionService.clearPermissions(id)
+
+        // Force re-login: set revoke flag → user's next API call returns 401 PERMISSION_REVOKED
+        sessionService.setPermissionRevoked(id, "PERMISSION_CHANGED")
     }
 
     /**
@@ -290,7 +293,7 @@ class UserService(
             // Actor has no permissions → cannot grant any
             val grantedKeys = requestedPermissions.filter { it.value == true }.keys
             if (grantedKeys.isNotEmpty()) {
-                throw ForbiddenException("不能授予自己没有的权限: ${grantedKeys.joinToString(", ")}")
+                throw ForbiddenException("Cannot grant permissions not held by actor: ${grantedKeys.joinToString(", ")}")
             }
             return
         }
@@ -307,7 +310,7 @@ class UserService(
         }.keys
 
         if (forbidden.isNotEmpty()) {
-            throw ForbiddenException("不能授予自己没有的权限: ${forbidden.joinToString(", ")}")
+            throw ForbiddenException("Cannot grant permissions not held by actor: ${forbidden.joinToString(", ")}")
         }
     }
 

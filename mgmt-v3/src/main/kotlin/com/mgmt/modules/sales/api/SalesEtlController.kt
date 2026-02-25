@@ -33,7 +33,7 @@ class SalesEtlController(
      * Frontend parses CSV client-side, sends JSON rows.
      */
     @PostMapping("/upload")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     @AuditLog(module = "SALES", action = "ETL_UPLOAD")
     fun upload(
         @RequestBody request: EtlUploadRequest,
@@ -47,7 +47,7 @@ class SalesEtlController(
      * POST /sales/etl/{batchId}/parse — Trigger SKU parsing.
      */
     @PostMapping("/{batchId}/parse")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     @AuditLog(module = "SALES", action = "ETL_PARSE")
     fun parse(@PathVariable batchId: String): ResponseEntity<Map<String, Any>> {
         val result = parseUseCase.parse(batchId)
@@ -58,7 +58,7 @@ class SalesEtlController(
      * GET /sales/etl/{batchId}/pending — Get pending SKU corrections.
      */
     @GetMapping("/{batchId}/pending")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     fun getPending(@PathVariable batchId: String): ResponseEntity<Map<String, Any>> {
         val result = parseUseCase.parse(batchId)
         return ResponseEntity.ok(mapOf(
@@ -74,7 +74,7 @@ class SalesEtlController(
      * POST /sales/etl/{batchId}/fix-sku — Submit SKU corrections.
      */
     @PostMapping("/{batchId}/fix-sku")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     @AuditLog(module = "SALES", action = "ETL_FIX_SKU")
     @SecurityLevel(level = "L3", actionKey = "btn_etl_fix_sku")
     fun fixSku(
@@ -91,7 +91,7 @@ class SalesEtlController(
      * POST /sales/etl/{batchId}/transform — Confirm transform + FIFO sync.
      */
     @PostMapping("/{batchId}/transform")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     @AuditLog(module = "SALES", action = "ETL_TRANSFORM")
     @SecurityLevel(level = "L3", actionKey = "btn_etl_transform")
     fun transform(
@@ -117,7 +117,7 @@ class SalesEtlController(
      * GET /sales/etl/{batchId}/status — Poll batch progress.
      */
     @GetMapping("/{batchId}/status")
-    @RequirePermission("module.sales.etl.upload")
+    @RequirePermission("module.sales.transactions.upload")
     fun getStatus(@PathVariable batchId: String): ResponseEntity<Map<String, Any>> {
         val batch = batchRepo.findByBatchId(batchId)
             ?: return ResponseEntity.notFound().build()

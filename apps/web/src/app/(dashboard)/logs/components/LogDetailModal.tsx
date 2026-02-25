@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useTranslations } from 'next-intl';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
+import { useTranslations, useLocale } from 'next-intl';
 
 // ================================
 // Types
@@ -32,37 +33,16 @@ interface FieldConfig {
   badgeColorKey?: string;
 }
 
-// ── Badge color resolvers (theme-aware) ──
-type ColorSet = typeof themeColors.light;
+// ── Badge color resolvers (theme-aware) — shared module ──
+import {
+  badgeColorResolvers as badgeColorResolverMap,
+  httpMethodColorMap,
+  httpStatusColor,
+} from './logColors';
 
-function severityColors(c: ColorSet): Record<string, string> {
-  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
-}
-function riskColors(c: ColorSet): Record<string, string> {
-  return { CRITICAL: c.red, HIGH: c.orange, MEDIUM: c.yellow, LOW: c.green };
-}
-function resultColors(c: ColorSet): Record<string, string> {
-  return { SUCCESS: c.green, DENIED: c.orange, FAILED: c.red };
-}
-function logStatusColors(c: ColorSet): Record<string, string> {
-  return { SUCCESS: c.green, FAILED: c.red, PENDING: c.yellow };
-}
-function httpMethodColors(c: ColorSet): Record<string, string> {
-  return { GET: c.green, POST: c.blue, PUT: c.orange, PATCH: c.yellow, DELETE: c.red };
-}
-function httpStatusColor(code: number, c: ColorSet): string {
-  if (code >= 500) return c.red;
-  if (code >= 400) return c.orange;
-  if (code >= 300) return c.yellow;
-  return c.green;
-}
+type ColorSet = ThemeColorSet;
 
-const badgeColorResolvers: Record<string, (c: ColorSet) => Record<string, string>> = {
-  severity: severityColors,
-  risk: riskColors,
-  result: resultColors,
-  status: logStatusColors,
-};
+const badgeColorResolvers = badgeColorResolverMap;
 
 // ================================
 // 各日志类型的字段配置
@@ -151,7 +131,7 @@ const fieldConfigs: Record<LogType, FieldConfig[]> = {
 // 复制按钮组件
 // ================================
 
-function CopyButton({ text, colors }: { text: string; colors: typeof themeColors.light }) {
+function CopyButton({ text, colors, copyLabel }: { text: string; colors: ThemeColorSet; copyLabel: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -170,7 +150,7 @@ function CopyButton({ text, colors }: { text: string; colors: typeof themeColors
       onClick={handleCopy}
       className="p-1 rounded hover:bg-opacity-80 transition-all"
       style={{ backgroundColor: colors.bgSecondary }}
-      title="复制"
+      title={copyLabel}
     >
       {copied ? (
         <svg className="w-3.5 h-3.5" style={{ color: colors.green }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,6 +173,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
   const { theme } = useTheme();
   const colors = themeColors[theme];
   const t = useTranslations('logs');
+  const locale = useLocale();
   
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -279,7 +260,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
     
     switch (field.type) {
       case 'datetime':
-        return <span>{new Date(value as string).toLocaleString('zh-CN', { 
+        return <span>{new Date(value as string).toLocaleString(locale === 'zh' ? 'zh-CN' : locale === 'vi' ? 'vi-VN' : 'en-US', { 
           year: 'numeric', month: '2-digit', day: '2-digit',
           hour: '2-digit', minute: '2-digit', second: '2-digit',
         })}</span>;
@@ -324,7 +305,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
         if (!isNaN(statusCode) && statusCode >= 100) {
           computedBadgeColor = httpStatusColor(statusCode, colors);
         }
-        const mColors = httpMethodColors(colors);
+        const mColors = httpMethodColorMap(colors);
         if (mColors[strValue]) computedBadgeColor = mColors[strValue];
         
         return (
@@ -355,7 +336,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" />
               </svg>
             )}
-            {isResolved ? '已解决' : '待处理'}
+            {isResolved ? t('detail.status.resolved') : t('detail.status.pending')}
           </span>
         );
       
@@ -481,7 +462,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
                   >
                     {getGroupLabel(groupKey)}
                   </h3>
-                  <CopyButton text={getGroupData(groupFields)} colors={colors} />
+                  <CopyButton text={getGroupData(groupFields)} colors={colors} copyLabel={t('detail.copy')} />
                 </div>
                 
                 <div 
@@ -536,7 +517,7 @@ export default function LogDetailModal({ isOpen, onClose, logType, data }: LogDe
             className="px-3 py-1.5 rounded-lg text-[12px] font-medium"
             style={{ backgroundColor: colors.blue, color: colors.white }}
           >
-            关闭
+            {t('detail.closeButton')}
           </button>
         </div>
       </div>

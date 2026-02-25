@@ -122,10 +122,13 @@
     },
     "p_valve": {
       "title": "P-Valve",
-      "manage": "P-Valve 管理",
       "inventory": "库存管理",
       "clinical_case": "临床案例",
+      "overview": "总览",
+      "demo_inventory": "演示库存",
+      "delivery_system": "配送系统",
       "fridge_shelf": "冰箱管理",
+      "product_management": "产品管理",
       "site_management": "站点管理"
     },
     "employees": {

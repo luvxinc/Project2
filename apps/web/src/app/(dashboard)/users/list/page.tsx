@@ -7,9 +7,10 @@ import { useTranslations } from 'next-intl';
 import { usersApi, User, UserStatus, UserRole } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
 // 角色配置函数：返回主题响应的角色配色（Pattern #9）
-const getRoleConfig = (colors: typeof themeColors.dark): Record<string, { level: number; color: string; icon: string }> => ({
+const getRoleConfig = (colors: ThemeColorSet): Record<string, { level: number; color: string; icon: string }> => ({
   superuser: { level: 0, color: colors.red, icon: 'crown' },
   admin: { level: 1, color: colors.blue, icon: 'shield' },
   manager: { level: 2, color: colors.green, icon: 'chart' },
@@ -41,7 +42,7 @@ function RoleIcon({ type, className }: { type: string; className?: string }) {
 }
 
 // 状态徽章 - 使用 i18n 和动态 colors 确保主题响应性
-function StatusBadge({ status, colors, t }: { status: UserStatus; colors: typeof themeColors.dark; t: any }) {
+function StatusBadge({ status, colors, t }: { status: UserStatus; colors: ThemeColorSet; t: any }) {
   const config: Record<UserStatus, { color: string; bg: string; labelKey: string }> = {
     ACTIVE: { color: colors.green, bg: `${colors.green}26`, labelKey: 'active' },
     DISABLED: { color: colors.textSecondary, bg: `${colors.textSecondary}20`, labelKey: 'disabled' },
@@ -76,7 +77,7 @@ function GroupCarousel({
   roleLabel: string;
   roleColor: string;
   users: User[];
-  colors: typeof themeColors.dark;
+  colors: ThemeColorSet;
   theme: 'light' | 'dark';
   t: any;
   tc: any;
@@ -148,8 +149,8 @@ function GroupCarousel({
       <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
-            style={{ backgroundColor: roleColor }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
+            style={{ backgroundColor: roleColor, color: colors.white }}
           >
             <RoleIcon type={roleConfig[roleKey]?.icon || 'user'} className="w-4 h-4" />
           </div>
@@ -217,8 +218,8 @@ function GroupCarousel({
               <div className="flex items-center gap-3 mb-4">
                 {/* 实心颜色背景的首字母 */}
                 <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold text-white"
-                  style={{ backgroundColor: roleColor }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold"
+                  style={{ backgroundColor: roleColor, color: colors.white }}
                 >
                   {(user.displayName || user.username).charAt(0).toUpperCase()}
                 </div>
@@ -269,8 +270,8 @@ function GroupCarousel({
                 {canOperate(user) && user.status !== 'LOCKED' && (
                   <button
                     onClick={() => onAction(user, 'lock')}
-                    className="h-8 px-3 flex items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.gray }}
+                    className="h-8 px-3 flex items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.gray, color: colors.white }}
                     title={t('actions.lock')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -282,8 +283,8 @@ function GroupCarousel({
                 {canOperate(user) && user.status === 'LOCKED' && (
                   <button
                     onClick={() => onAction(user, 'unlock')}
-                    className="h-8 px-3 flex items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.red }}
+                    className="h-8 px-3 flex items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.red, color: colors.white }}
                     title={t('actions.unlock')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -296,8 +297,8 @@ function GroupCarousel({
                 {(isSelf(user) || canOperate(user)) && (
                   <button
                     onClick={() => onAction(user, 'resetPassword')}
-                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.gray }}
+                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.gray, color: colors.white }}
                     title={t('actions.resetPassword')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -310,8 +311,8 @@ function GroupCarousel({
                 {canPromote(user) && (
                   <button
                     onClick={() => onAction(user, 'promote')}
-                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.blue }}
+                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.blue, color: colors.white }}
                     title={t('actions.promote')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -324,8 +325,8 @@ function GroupCarousel({
                 {canDemote(user) && (
                   <button
                     onClick={() => onAction(user, 'demote')}
-                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.orange }}
+                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.orange, color: colors.white }}
                     title={t('actions.demote')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -338,8 +339,8 @@ function GroupCarousel({
                 {canOperate(user) && !isSuperUser(user) && (
                   <button
                     onClick={() => onAction(user, 'delete')}
-                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90 text-white"
-                    style={{ backgroundColor: colors.red }}
+                    className="h-8 px-3 flex items-center justify-center rounded-lg transition-all hover:opacity-90"
+                    style={{ backgroundColor: colors.red, color: colors.white }}
                     title={t('actions.delete')}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -355,8 +356,8 @@ function GroupCarousel({
               <div className="mt-2 flex justify-center">
                 <Link
                   href={`/users/${user.id}/permissions`}
-                  className="h-8 px-4 inline-flex items-center justify-center rounded-full text-[13px] font-medium transition-all hover:opacity-90 text-white"
-                  style={{ backgroundColor: colors.blue }}
+                  className="h-8 px-4 inline-flex items-center justify-center rounded-full text-[13px] font-medium transition-all hover:opacity-90"
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
                 >
                   {t('actions.permissions')}
                 </Link>
@@ -579,8 +580,8 @@ export default function UsersListPage() {
             {/* 新建用户 */}
             <Link
               href="/users/register"
-              style={{ backgroundColor: colors.blue }}
-              className="h-10 px-5 rounded-xl text-white text-[14px] font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: colors.blue, color: colors.white }}
+              className="h-10 px-5 rounded-xl text-[14px] font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -610,8 +611,8 @@ export default function UsersListPage() {
               const loginBtn = document.querySelector('[data-login-trigger]') as HTMLElement;
               if (loginBtn) loginBtn.click();
             }}
-            style={{ backgroundColor: colors.blue }}
-            className="px-6 py-2 text-white text-[14px] font-medium rounded-lg hover:opacity-90"
+            style={{ backgroundColor: colors.blue, color: colors.white }}
+            className="px-6 py-2 text-[14px] font-medium rounded-lg hover:opacity-90"
           >
             {t('list.signIn')}
           </button>
@@ -686,8 +687,8 @@ export default function UsersListPage() {
                   if (secCode && newPassword) handleSecurityConfirm(secCode);
                 }}
                 disabled={isActionLoading || !newPassword}
-                style={{ backgroundColor: colors.blue }}
-                className="flex-1 h-11 hover:opacity-90 text-white text-[15px] font-medium rounded-xl disabled:opacity-50 transition-colors"
+                style={{ backgroundColor: colors.blue, color: colors.white }}
+                className="flex-1 h-11 hover:opacity-90 text-[15px] font-medium rounded-xl disabled:opacity-50 transition-colors"
               >
                 {tc('confirm')}
               </button>
@@ -791,8 +792,8 @@ export default function UsersListPage() {
                   }
                 }}
                 disabled={isActionLoading || !deleteReason.trim()}
-                style={{ backgroundColor: colors.red }}
-                className="flex-1 h-11 hover:opacity-90 text-white text-[15px] font-medium rounded-xl disabled:opacity-50 transition-colors"
+                style={{ backgroundColor: colors.red, color: colors.white }}
+                className="flex-1 h-11 hover:opacity-90 text-[15px] font-medium rounded-xl disabled:opacity-50 transition-colors"
               >
                 {tc('confirm')}
               </button>

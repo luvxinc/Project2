@@ -41,7 +41,7 @@ class SupplierController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun findAll(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(supplierUseCase.findAllWithStrategy().map { (supplier, strategy) ->
             SupplierWithStrategyResponse(
@@ -56,22 +56,22 @@ class SupplierController(
         }))
 
     @GetMapping("/active")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun findActive(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(supplierUseCase.findActive().map { toResponse(it) }))
 
     @GetMapping("/{id}")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(supplierUseCase.findOne(id))))
 
     @GetMapping("/code-exists")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun codeExists(@RequestParam code: String): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(mapOf("exists" to supplierUseCase.codeExists(code))))
 
     @PostMapping
-    @RequirePermission("module.purchase.supplier.create")
+    @RequirePermission("module.purchase.supplier.add")
     @SecurityLevel(level = "L3", actionKey = "btn_add_supplier")
     @AuditLog(module = "PURCHASE", action = "CREATE_SUPPLIER", riskLevel = "MEDIUM")
     fun create(@RequestBody dto: CreateSupplierRequest): ResponseEntity<Any> =
@@ -79,13 +79,13 @@ class SupplierController(
             .body(ApiResponse.ok(toResponse(supplierUseCase.create(dto, currentUsername()))))
 
     @PatchMapping("/{id}")
-    @RequirePermission("module.purchase.supplier.update")
+    @RequirePermission("module.purchase.supplier.strategy")
     @AuditLog(module = "PURCHASE", action = "UPDATE_SUPPLIER", riskLevel = "MEDIUM")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdateSupplierRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(supplierUseCase.update(id, dto, currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.purchase.supplier.delete")
+    @RequirePermission("module.purchase.supplier")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_supplier")
     @AuditLog(module = "PURCHASE", action = "DELETE_SUPPLIER", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> =
@@ -94,12 +94,12 @@ class SupplierController(
     // ═══════════ Strategy ═══════════
 
     @GetMapping("/{id}/strategies")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun getStrategies(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(supplierUseCase.getStrategies(id).map { toStrategyResponse(it) }))
 
     @PostMapping("/strategies")
-    @RequirePermission("module.purchase.supplier.update")
+    @RequirePermission("module.purchase.supplier.strategy")
     @SecurityLevel(level = "L3", actionKey = "btn_modify_strategy")
     @AuditLog(module = "PURCHASE", action = "MODIFY_SUPPLIER_STRATEGY", riskLevel = "MEDIUM")
     fun modifyStrategy(@RequestBody dto: ModifyStrategyRequest): ResponseEntity<Any> =
@@ -107,7 +107,7 @@ class SupplierController(
             .body(ApiResponse.ok(toStrategyResponse(supplierUseCase.modifyStrategy(dto, currentUsername()))))
 
     @GetMapping("/strategies/check-conflict")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun checkConflict(
         @RequestParam supplierCode: String,
         @RequestParam effectiveDate: String,
@@ -117,7 +117,7 @@ class SupplierController(
     }
 
     @GetMapping("/strategies/effective")
-    @RequirePermission("module.purchase.supplier.view")
+    @RequirePermission("module.purchase.supplier")
     fun getEffectiveStrategy(
         @RequestParam supplierCode: String,
         @RequestParam date: String,

@@ -9,8 +9,9 @@ import { usersApi, User, UserRole } from '@/lib/api';
 import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { useSecurityAction } from '@/hooks/useSecurityAction';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import type { ThemeColorSet } from '@/contexts/ThemeContext';
 
-function userStatusColor(status: string, c: typeof themeColors.light): string {
+function userStatusColor(status: string, c: ThemeColorSet): string {
   switch (status) {
     case 'ACTIVE': return c.green;
     case 'LOCKED': return c.red;
@@ -264,8 +265,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 </button>
                 <button
                   onClick={handleSave}
-                  style={{ backgroundColor: colors.blue }}
-                  className="flex-1 h-11 hover:opacity-90 text-white text-[15px] font-medium rounded-full"
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
+                  className="flex-1 h-11 hover:opacity-90 text-[15px] font-medium rounded-full"
                 >
                   {tc('save')}
                 </button>
@@ -281,8 +282,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 </button>
                 <button
                   onClick={handleEdit}
-                  style={{ backgroundColor: colors.blue }}
-                  className="flex-1 h-11 hover:opacity-90 text-white text-[15px] font-medium rounded-full"
+                  style={{ backgroundColor: colors.blue, color: colors.white }}
+                  className="flex-1 h-11 hover:opacity-90 text-[15px] font-medium rounded-full"
                 >
                   {tc('edit')}
                 </button>

@@ -22,19 +22,19 @@ class StocktakeController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.inventory.stocktake.view")
+    @RequirePermission("module.inventory.stocktake")
     fun findAll(): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(stocktakeUseCase.findAll().map { toListResponse(it) }))
 
     @GetMapping("/{id}")
-    @RequirePermission("module.inventory.stocktake.view")
+    @RequirePermission("module.inventory.stocktake")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> {
         val st = stocktakeUseCase.findOne(id)
         return ResponseEntity.ok(ApiResponse.ok(toDetailResponse(st)))
     }
 
     @PostMapping
-    @RequirePermission("module.inventory.stocktake.create")
+    @RequirePermission("module.inventory.stocktake.upload")
     @SecurityLevel(level = "L3", actionKey = "btn_add_stocktake")
     @AuditLog(module = "INVENTORY", action = "CREATE_STOCKTAKE", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreateStocktakeRequest): ResponseEntity<Any> =
@@ -42,14 +42,14 @@ class StocktakeController(
             .body(ApiResponse.ok(toDetailResponse(stocktakeUseCase.create(dto, SecurityUtils.currentUsername()))))
 
     @PutMapping("/{id}")
-    @RequirePermission("module.inventory.stocktake.edit")
+    @RequirePermission("module.inventory.stocktake.modify")
     @SecurityLevel(level = "L3", actionKey = "btn_edit_stocktake")
     @AuditLog(module = "INVENTORY", action = "UPDATE_STOCKTAKE", riskLevel = "MEDIUM")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdateStocktakeRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toDetailResponse(stocktakeUseCase.update(id, dto, SecurityUtils.currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.inventory.stocktake.delete")
+    @RequirePermission("module.inventory.stocktake.modify")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_stocktake")
     @AuditLog(module = "INVENTORY", action = "DELETE_STOCKTAKE", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> {

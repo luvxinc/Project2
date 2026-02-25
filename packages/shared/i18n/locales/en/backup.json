@@ -1,0 +1,74 @@
+{
+  "title": "Database Backup",
+  "description": "Manage database backups, restore, and schedule.",
+  "list": {
+    "title": "Backup List",
+    "empty": "No backups found",
+    "emptyDescription": "Create your first backup to protect your data.",
+    "date": "Backup Date",
+    "tag": "Note",
+    "size": "Size",
+    "noTag": "No note"
+  },
+  "actions": {
+    "createBackup": "Backup Now",
+    "restore": "Restore",
+    "delete": "Delete",
+    "back": "Back",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "creating": "Creating backup...",
+    "restoring": "Restoring database...",
+    "deleting": "Deleting backup..."
+  },
+  "createModal": {
+    "title": "Create Backup",
+    "description": "Create a full backup of all production databases. This may take a few minutes.",
+    "tagLabel": "Backup Note",
+    "tagPlaceholder": "Enter a note for this backup (optional)",
+    "tagHint": "A brief description to identify this backup later.",
+    "securityCode": "Database Security Code (L3)",
+    "securityCodePlaceholder": "Enter security code",
+    "submit": "Start Backup"
+  },
+  "detail": {
+    "title": "Backup Detail",
+    "backupDate": "Backup Date",
+    "backupTime": "Backup Time",
+    "note": "Note",
+    "fileSize": "File Size",
+    "databases": "Databases Included",
+    "noNote": "No note provided"
+  },
+  "deleteModal": {
+    "title": "Delete Backup",
+    "description": "Are you sure you want to delete this backup? This action cannot be undone.",
+    "warning": "Once deleted, this backup file will be permanently removed.",
+    "securityCode": "Database Security Code (L3)",
+    "securityCodePlaceholder": "Enter security code",
+    "confirm": "Delete Backup"
+  },
+  "restoreModal": {
+    "title": "Restore Database",
+    "description": "Are you sure you want to restore the database from this backup?",
+    "warning": "⚠️ This will overwrite the current database with the backup data. This operation cannot be undone.",
+    "backupInfo": "Restoring from backup:",
+    "securityCode": "System Security Code (L4)",
+    "securityCodePlaceholder": "Enter system security code",
+    "confirm": "Restore Database"
+  },
+  "toast": {
+    "createSuccess": "Backup created successfully",
+    "createError": "Failed to create backup",
+    "restoreSuccess": "Database restored successfully",
+    "restoreError": "Failed to restore database",
+    "deleteSuccess": "Backup deleted successfully",
+    "deleteError": "Failed to delete backup",
+    "loadError": "Failed to load backups"
+  },
+  "info": {
+    "maxBackups": "Maximum 10 backups retained. Oldest backups are automatically removed.",
+    "autoBackup": "Automatic backup runs on the last day of every month at 23:59:59.",
+    "fileFormat": "Backups use PostgreSQL custom format for efficient storage and restore."
+  }
+}

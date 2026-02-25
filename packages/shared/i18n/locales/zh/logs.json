@@ -407,6 +407,12 @@
       "queryParams": "查询参数",
       "responseSize": "响应大小"
     },
-    "close": "按 ESC 关闭"
+    "close": "按 ESC 关闭",
+    "closeButton": "关闭",
+    "copy": "复制",
+    "status": {
+      "resolved": "已解决",
+      "pending": "待处理"
+    }
   }
 }

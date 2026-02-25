@@ -149,11 +149,9 @@ export function LandingPage({ locale }: LandingPageProps) {
           
           {/* 底部链接 */}
           <div className="flex flex-wrap justify-center gap-4 text-[11px] text-[#6e6e73] mb-3">
-            <span>MGMT ERP V2</span>
+            <span>{tLanding('brand')}</span>
             <span>·</span>
             <span>{tLanding('tagline')}</span>
-            <span>·</span>
-            <span>{tLanding('phase')}</span>
             <span>·</span>
             <Link href="#" className="hover:text-white transition-colors">
               {tLanding('privacy')}
@@ -165,7 +163,7 @@ export function LandingPage({ locale }: LandingPageProps) {
           </div>
           
           <p className="text-[11px] text-[#6e6e73] text-center">
-            Copyright © 2026. {tLanding('copyright')}
+            {tLanding('copyright')}
           </p>
         </div>
       </footer>

@@ -100,8 +100,8 @@ export default function RegisterPage() {
     return (
       <div style={{ backgroundColor: colors.bg }} className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#30d158]/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-[#30d158]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${colors.green}33` }}>
+            <svg className="w-8 h-8" fill="none" stroke={colors.green} viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -265,8 +265,8 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                style={{ backgroundColor: colors.blue }}
-                className="w-full h-12 hover:opacity-90 text-white text-[17px] font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: colors.blue, color: colors.white }}
+                className="w-full h-12 hover:opacity-90 text-[17px] font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {createMutation.isPending && (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -12,25 +12,25 @@ const userFeatures = [
     key: 'list',
     href: '/users/list',
     icon: 'users',
-    accent: '#0071e3', // Apple Blue
+    accentKey: 'blue' as const,
   },
   {
     key: 'register',
     href: '/users/register',
     icon: 'plus',
-    accent: '#30d158', // Apple Green
+    accentKey: 'green' as const,
   },
   {
     key: 'password',
     href: '/users/password',
     icon: 'lock',
-    accent: '#ff9f0a', // Apple Orange
+    accentKey: 'orange' as const,
   },
   {
     key: 'capabilities',
     href: '/users/capabilities',
     icon: 'settings',
-    accent: '#bf5af2', // Apple Purple
+    accentKey: 'purple' as const,
   },
 ];
 
@@ -199,12 +199,12 @@ export default function UsersHubPage() {
                   <div 
                     className="absolute inset-0 opacity-[0.08]"
                     style={{ 
-                      background: `radial-gradient(ellipse at 50% 100%, ${feature.accent}, transparent 60%)` 
+                      background: `radial-gradient(ellipse at 50% 100%, ${colors[feature.accentKey]}, transparent 60%)` 
                     }}
                   />
                   
                   {/* Icon */}
-                  <FeatureIcon name={feature.icon} accent={feature.accent} />
+                  <FeatureIcon name={feature.icon} accent={colors[feature.accentKey]} />
                 </div>
               </Link>
               

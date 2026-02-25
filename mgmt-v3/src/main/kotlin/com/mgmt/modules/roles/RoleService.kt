@@ -165,11 +165,11 @@ class RoleService(
         }
         boundaryRepo.saveAll(newBoundaries)
 
-        // ROLE-1/ROLE-2 Fix: Invalidate all users with this role via Pipeline
+        // ROLE-1/ROLE-2 Fix: Revoke all users with this role → force re-login with modal
         val affectedUsers = userRepo.findByRole(role.name)
-        sessionService.invalidatePermissionsBatch(affectedUsers.map { it.id })
+        sessionService.revokePermissionsBatch(affectedUsers.map { it.id }, "ROLE_BOUNDARY_CHANGED")
 
-        log.info("Boundaries updated for role {} — {} users affected", role.name, affectedUsers.size)
+        log.info("Boundaries updated for role {} — {} users affected (forced re-login)", role.name, affectedUsers.size)
     }
 
     @Transactional

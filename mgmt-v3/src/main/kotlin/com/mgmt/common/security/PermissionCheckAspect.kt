@@ -61,15 +61,48 @@ class PermissionCheckAspect(
             permissions = loadAndCachePermissions(claims.userId)
         }
 
-        // Check flat key list — support both "vma.x" and "module.vma.x" formats
-        val hasPermission = permissions.contains(requiredPermission) ||
-            permissions.contains("module.$requiredPermission")
+        // Check permission with hierarchical matching:
+        // 1. Exact match: user has "module.purchase.supplier.create"
+        // 2. Prefix bridge: annotation "vma.x" matches stored "module.vma.x"
+        // 3. Hierarchical: user has "module.purchase.supplier" → covers ".supplier.create"
+        //    This allows the frontend to grant coarse-grained permissions (parent keys)
+        //    while the backend can enforce fine-grained CRUD-level annotations.
+        val hasPermission = hasPermissionMatch(permissions, requiredPermission)
         if (!hasPermission) {
             log.warn("User {} lacks permission '{}' — has: {}", claims.username, requiredPermission, permissions)
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied: $requiredPermission")
         }
 
         return joinPoint.proceed()
+    }
+
+    /**
+     * Hierarchical permission matching.
+     * Given a required permission "module.purchase.supplier.create", returns true if the user has:
+     *   - "module.purchase.supplier.create" (exact)
+     *   - "module.purchase.supplier" (parent covers child)
+     *   - "module.purchase" (grandparent covers all)
+     * Also handles VMA prefix bridge: annotation "vma.x" checks "module.vma.x" in stored perms.
+     */
+    private fun hasPermissionMatch(userPermissions: List<String>, required: String): Boolean {
+        // Exact match
+        if (userPermissions.contains(required)) return true
+
+        // Prefix bridge: "vma.x" → check "module.vma.x"
+        val bridged = if (!required.startsWith("module.")) "module.$required" else required
+        if (bridged != required && userPermissions.contains(bridged)) return true
+
+        // Hierarchical: check all parent prefixes of the required permission
+        // e.g., "module.purchase.supplier.create" → check "module.purchase.supplier", "module.purchase"
+        val target = bridged // always use module-prefixed form for hierarchy
+        var dot = target.lastIndexOf('.')
+        while (dot > 0) {
+            val parent = target.substring(0, dot)
+            if (userPermissions.contains(parent)) return true
+            dot = parent.lastIndexOf('.')
+        }
+
+        return false
     }
 
     /**

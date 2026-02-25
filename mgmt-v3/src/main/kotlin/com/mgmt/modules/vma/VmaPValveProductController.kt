@@ -37,24 +37,24 @@ class VmaPValveProductController(
     // ═══════════ P-Valve Products ═══════════
 
     @GetMapping("/pvalve-products")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     fun findAllPValveProducts(): ResponseEntity<Any> =
         ResponseEntity.ok(productService.findAllPValveProducts())
 
     @PostMapping("/pvalve-products")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "CREATE_PVALVE_PRODUCT")
     fun createPValveProduct(@RequestBody dto: CreatePValveProductRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(productService.createPValveProduct(dto))
 
     @PatchMapping("/pvalve-products/{id}")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "UPDATE_PVALVE_PRODUCT")
     fun updatePValveProduct(@PathVariable id: String, @RequestBody dto: UpdatePValveProductRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updatePValveProduct(id, dto))
 
     @DeleteMapping("/pvalve-products/{id}")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "DELETE_PVALVE_PRODUCT", riskLevel = "HIGH")
     fun deletePValveProduct(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(productService.deletePValveProduct(id))
@@ -62,24 +62,24 @@ class VmaPValveProductController(
     // ═══════════ Delivery System Products ═══════════
 
     @GetMapping("/delivery-system-products")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     fun findAllDeliverySystemProducts(): ResponseEntity<Any> =
         ResponseEntity.ok(productService.findAllDeliverySystemProducts())
 
     @PostMapping("/delivery-system-products")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "CREATE_DS_PRODUCT")
     fun createDeliverySystemProduct(@RequestBody dto: CreateDeliverySystemProductRequest): ResponseEntity<Any> =
         ResponseEntity.status(HttpStatus.CREATED).body(productService.createDeliverySystemProduct(dto))
 
     @PatchMapping("/delivery-system-products/{id}")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "UPDATE_DS_PRODUCT")
     fun updateDeliverySystemProduct(@PathVariable id: String, @RequestBody dto: UpdateDeliverySystemProductRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updateDeliverySystemProduct(id, dto))
 
     @DeleteMapping("/delivery-system-products/{id}")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "DELETE_DS_PRODUCT", riskLevel = "HIGH")
     fun deleteDeliverySystemProduct(@PathVariable id: String): ResponseEntity<Any> =
         ResponseEntity.ok(productService.deleteDeliverySystemProduct(id))
@@ -87,12 +87,12 @@ class VmaPValveProductController(
     // ═══════════ Fit Relationship ═══════════
 
     @GetMapping("/fit-matrix")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     fun getFitMatrix(): ResponseEntity<Any> =
         ResponseEntity.ok(productService.getFitMatrix())
 
     @PatchMapping("/fit-relationship")
-    @RequirePermission("vma.products.manage")
+    @RequirePermission("vma.pvalve.product_mgmt")
     @AuditLog(module = "VMA", action = "UPDATE_FIT_RELATIONSHIP")
     fun updateFitRelationship(@RequestBody dto: UpdateFitRelationshipRequest): ResponseEntity<Any> =
         ResponseEntity.ok(productService.updateFitRelationship(dto))

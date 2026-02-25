@@ -155,6 +155,72 @@ export function AuthSessionGuard() {
     }, refreshInSec * 1000);
   }, [getTokenExp, doRefresh, forceLogout]);
 
+  // Force logout with permission-revoked modal
+  const forceLogoutWithModal = useCallback((reason: string) => {
+    if (redirectingRef.current) return;
+    redirectingRef.current = true;
+
+    // Create modal overlay in DOM (works even if React state is stale)
+    const overlay = document.createElement('div');
+    overlay.id = 'permission-revoked-overlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+    `;
+
+    const reasonText = reason === 'ROLE_CHANGED'
+      ? (document.documentElement.lang === 'zh' ? '您的角色已被管理员变更' : 'Your role has been changed by an administrator')
+      : reason === 'ROLE_BOUNDARY_CHANGED'
+        ? (document.documentElement.lang === 'zh' ? '您的职能边界已被管理员调整' : 'Your role boundaries have been updated by an administrator')
+        : (document.documentElement.lang === 'zh' ? '您的板块权限已被管理员修改' : 'Your module permissions have been updated by an administrator');
+
+    const titleText = document.documentElement.lang === 'zh' ? '权限已变更' : 'Permissions Changed';
+    const subtitleText = document.documentElement.lang === 'zh' ? '请重新登录以加载最新权限配置。' : 'Please re-login to load the latest permission configuration.';
+    const btnText = document.documentElement.lang === 'zh' ? '重新登录' : 'Re-Login';
+
+    overlay.innerHTML = `
+      <div style="
+        background: #1c1c1e; border-radius: 16px; padding: 32px;
+        max-width: 400px; width: 90%; text-align: center;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        animation: modalIn 0.3s ease;
+      ">
+        <div style="
+          width: 56px; height: 56px; border-radius: 50%;
+          background: rgba(255,159,10,0.15); margin: 0 auto 16px;
+          display: flex; align-items: center; justify-content: center;
+        ">
+          <svg width="28" height="28" fill="none" stroke="#FF9F0A" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+        </div>
+        <h2 style="color: #fff; font-size: 20px; font-weight: 600; margin-bottom: 8px;">${titleText}</h2>
+        <p style="color: #FF9F0A; font-size: 14px; margin-bottom: 6px; font-weight: 500;">${reasonText}</p>
+        <p style="color: #98989D; font-size: 13px; margin-bottom: 24px;">${subtitleText}</p>
+        <button id="revoke-confirm-btn" style="
+          width: 100%; height: 44px; border: none; border-radius: 10px;
+          background: #0A84FF; color: #fff; font-size: 15px; font-weight: 600;
+          cursor: pointer; transition: opacity 0.2s;
+        ">${btnText}</button>
+      </div>
+      <style>
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        #revoke-confirm-btn:hover { opacity: 0.85; }
+      </style>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('revoke-confirm-btn')?.addEventListener('click', () => {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      document.cookie = 'auth_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      window.location.href = '/login';
+    });
+  }, []);
+
   useEffect(() => {
     // Store original fetch for internal use (bypasses our interceptor)
     if (!window._originalFetch) {
@@ -202,7 +268,19 @@ export function AuthSessionGuard() {
       const isRefreshCall = url.includes('/auth/refresh');
 
       if (response.status === 401 && isApiCall && !isRefreshCall && !redirectingRef.current) {
-        // Try to refresh first
+        // Check if this is a PERMISSION_REVOKED response (not a normal session expiry)
+        try {
+          const cloned = response.clone();
+          const body = await cloned.json();
+          if (body?.error === 'PERMISSION_REVOKED') {
+            forceLogoutWithModal(body.reason || 'PERMISSION_CHANGED');
+            return response;
+          }
+        } catch {
+          // Not JSON or parse error — fall through to normal 401 handling
+        }
+
+        // Normal 401 — try to refresh first
         const refreshed = await doRefresh();
         if (refreshed) {
           // Retry the original request with new token

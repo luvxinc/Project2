@@ -17,6 +17,7 @@ import zhFinance from '../../../packages/shared/i18n/locales/zh/finance.json';
 import zhVma from '../../../packages/shared/i18n/locales/zh/vma.json';
 import zhInventory from '../../../packages/shared/i18n/locales/zh/inventory.json';
 import zhSales from '../../../packages/shared/i18n/locales/zh/sales.json';
+import zhBackup from '../../../packages/shared/i18n/locales/zh/backup.json';
 
 // English
 import enCommon from '../../../packages/shared/i18n/locales/en/common.json';
@@ -34,6 +35,7 @@ import enFinance from '../../../packages/shared/i18n/locales/en/finance.json';
 import enVma from '../../../packages/shared/i18n/locales/en/vma.json';
 import enInventory from '../../../packages/shared/i18n/locales/en/inventory.json';
 import enSales from '../../../packages/shared/i18n/locales/en/sales.json';
+import enBackup from '../../../packages/shared/i18n/locales/en/backup.json';
 
 // Vietnamese (Only VMA — others fallback to EN per Iron Law R6)
 import viVma from '../../../packages/shared/i18n/locales/vi/vma.json';
@@ -59,6 +61,7 @@ const messages = {
     vma: zhVma,
     inventory: zhInventory,
     sales: zhSales,
+    backup: zhBackup,
   },
   en: {
     common: enCommon,
@@ -76,6 +79,7 @@ const messages = {
     vma: enVma,
     inventory: enInventory,
     sales: enSales,
+    backup: enBackup,
   },
   // Vietnamese: Only VMA has real VI translations.
   // All other namespaces fallback to EN (Iron Law R6).
@@ -94,6 +98,7 @@ const messages = {
     finance: enFinance, // Fallback to EN
     inventory: enInventory, // Fallback to EN (no VI translations per R5)
     sales: enSales, // Fallback to EN
+    backup: enBackup, // Fallback to EN
     vma: viVma, // ← Only VMA uses real Vietnamese
   },
 };

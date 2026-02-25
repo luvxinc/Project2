@@ -446,6 +446,12 @@
       "queryParams": "Query Params",
       "responseSize": "Response Size"
     },
-    "close": "Press ESC to close"
+    "close": "Press ESC to close",
+    "closeButton": "Close",
+    "copy": "Copy",
+    "status": {
+      "resolved": "Resolved",
+      "pending": "Pending"
+    }
   }
 }

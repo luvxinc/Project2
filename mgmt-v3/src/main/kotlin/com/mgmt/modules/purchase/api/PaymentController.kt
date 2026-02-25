@@ -28,7 +28,7 @@ class PaymentController(
 ) {
 
     @GetMapping
-    @RequirePermission("module.purchase.payment.view")
+    @RequirePermission("module.purchase.po")
     fun findAll(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") limit: Int,
@@ -51,12 +51,12 @@ class PaymentController(
     }
 
     @GetMapping("/{id}")
-    @RequirePermission("module.purchase.payment.view")
+    @RequirePermission("module.purchase.po")
     fun findOne(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toResponse(paymentUseCase.findOne(id))))
 
     @PostMapping
-    @RequirePermission("module.purchase.payment.create")
+    @RequirePermission("module.purchase.po.add")
     @SecurityLevel(level = "L3", actionKey = "btn_add_payment")
     @AuditLog(module = "PURCHASE", action = "CREATE_PAYMENT", riskLevel = "HIGH")
     fun create(@RequestBody dto: CreatePaymentRequest): ResponseEntity<Any> =
@@ -64,7 +64,7 @@ class PaymentController(
             .body(ApiResponse.ok(toResponse(paymentUseCase.create(dto, currentUsername()))))
 
     @DeleteMapping("/{id}")
-    @RequirePermission("module.purchase.payment.delete")
+    @RequirePermission("module.purchase.po.mgmt")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_payment")
     @AuditLog(module = "PURCHASE", action = "DELETE_PAYMENT", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> =

@@ -42,7 +42,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @GetMapping
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun getWarehouseTree(): ResponseEntity<Any> {
         val tree = shelfUseCase.getWarehouseTree()
         return ResponseEntity.ok(ApiResponse.ok(tree))
@@ -53,7 +53,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/warehouses")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun getWarehouseNames(): ResponseEntity<Any> {
         val names = shelfUseCase.getWarehouseNames()
         return ResponseEntity.ok(ApiResponse.ok(names))
@@ -64,7 +64,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @PostMapping
-    @RequirePermission("module.inventory.warehouse.create")
+    @RequirePermission("module.inventory.shelf.create")
     @SecurityLevel(level = "L2", actionKey = "btn_create_warehouse")
     @AuditLog(module = "INVENTORY", action = "CREATE_WAREHOUSE", riskLevel = "HIGH")
     fun batchCreate(@Valid @RequestBody request: BatchCreateWarehouseRequest): ResponseEntity<Any> {
@@ -81,7 +81,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @PutMapping("/{warehouse}")
-    @RequirePermission("module.inventory.warehouse.create")
+    @RequirePermission("module.inventory.shelf.create")
     @SecurityLevel(level = "L2", actionKey = "btn_update_warehouse")
     @AuditLog(module = "INVENTORY", action = "UPDATE_WAREHOUSE", riskLevel = "HIGH")
     fun updateWarehouse(
@@ -100,7 +100,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @DeleteMapping("/{warehouse}")
-    @RequirePermission("module.inventory.warehouse.delete")
+    @RequirePermission("module.inventory.shelf.delete")
     @SecurityLevel(level = "L3", actionKey = "btn_delete_warehouse")
     @AuditLog(module = "INVENTORY", action = "DELETE_WAREHOUSE", riskLevel = "HIGH")
     fun deleteWarehouse(@PathVariable warehouse: String): ResponseEntity<Any> {
@@ -116,7 +116,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/barcode/single")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun downloadSingleBarcode(@RequestBody request: DownloadBarcodeRequest): ResponseEntity<ByteArray> {
         val pdfBytes = pdfService.generateCustomLabels(request.barcodes)
         return ResponseEntity.ok()
@@ -131,7 +131,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/barcode/batch")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun downloadBatchZip(): ResponseEntity<ByteArray> {
         val zipBytes = pdfService.generateBatchZip()
         return ResponseEntity.ok()
@@ -146,7 +146,7 @@ class WarehouseShelfController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/barcode/{warehouse}")
-    @RequirePermission("module.inventory.warehouse.view")
+    @RequirePermission("module.inventory.shelf.view")
     fun downloadWarehousePdf(@PathVariable warehouse: String): ResponseEntity<ByteArray> {
         val pdfBytes = pdfService.generateWarehousePdf(warehouse)
         val filename = "${warehouse.trim().uppercase()}_barcodes.pdf"

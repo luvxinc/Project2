@@ -12,31 +12,31 @@ const logFeatures = [
     key: 'errors',
     href: '/logs/errors',
     icon: 'error',
-    accent: '#ff3b30', // Apple Red
+    accentKey: 'red' as const,
   },
   {
     key: 'audits',
     href: '/logs/audits',
     icon: 'shield',
-    accent: '#ff9f0a', // Apple Orange
+    accentKey: 'orange' as const,
   },
   {
     key: 'business',
     href: '/logs/business',
     icon: 'briefcase',
-    accent: '#30d158', // Apple Green
+    accentKey: 'green' as const,
   },
   {
     key: 'access',
     href: '/logs/access',
     icon: 'globe',
-    accent: '#5e5ce6', // Apple Indigo
+    accentKey: 'indigo' as const,
   },
   {
     key: 'maintenance',
     href: '/logs/maintenance',
     icon: 'wrench',
-    accent: '#bf5af2', // Apple Purple
+    accentKey: 'purple' as const,
   },
 ];
 
@@ -251,12 +251,12 @@ export default function LogsHubPage() {
                   <div 
                     className="absolute inset-0 opacity-[0.08]"
                     style={{ 
-                      background: `radial-gradient(ellipse at 50% 100%, ${feature.accent}, transparent 60%)` 
+                      background: `radial-gradient(ellipse at 50% 100%, ${colors[feature.accentKey]}, transparent 60%)` 
                     }}
                   />
                   
                   {/* Icon */}
-                  <FeatureIcon name={feature.icon} accent={feature.accent} />
+                  <FeatureIcon name={feature.icon} accent={colors[feature.accentKey]} />
                 </div>
               </Link>
               

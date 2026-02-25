@@ -1,12 +1,27 @@
 {
   "title": "Enterprise Resource Management",
-  "subtitle": "V2 Architecture",
-  "description": "Rebuilt with TypeScript full-stack. More secure, faster, more reliable.",
-  "getStarted": "Get Started",
-  "apiDocs": "API Docs",
-  "enter": "Enter",
+  "description": "Streamline operations. Make smarter decisions.",
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "welcome": "Welcome back, {name}",
+    "role": "Role: {role}",
+    "lastLogin": "Last login: {time}",
+    "sessionActive": "Session active"
+  },
+  "environment": {
+    "title": "Environment",
+    "version": "Version",
+    "server": "Server Status",
+    "serverOnline": "Online",
+    "serverOffline": "Offline",
+    "database": "Database",
+    "dbConnected": "Connected",
+    "uptime": "Uptime",
+    "timezone": "Timezone"
+  },
   "footer": {
-    "phase": "Phase 3",
-    "module": "Users Module"
+    "brand": "ESPLUS ERP"
   }
 }

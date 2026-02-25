@@ -1,0 +1,10 @@
+{
+  "description": "Production databases to include in backup. Each entry specifies a database name to backup via pg_dump.",
+  "databases": [
+    {
+      "name": "mgmt_v2",
+      "description": "Primary MGMT ERP production database (PostgreSQL)",
+      "include": true
+    }
+  ]
+}

@@ -53,7 +53,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getLogisticList(
         @RequestParam(defaultValue = "date_sent") sortBy: String,
         @RequestParam(defaultValue = "desc") sortOrder: String,
@@ -68,7 +68,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/logistics/payments")
-    @RequirePermission("module.finance.logistics.manage")
+    @RequirePermission("module.finance.logistic.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_logistic_payment_submit")
     @AuditLog(module = "FINANCE", action = "CREATE_LOGISTIC_PAYMENT", riskLevel = "HIGH")
     fun submitPayment(@RequestBody request: SubmitPaymentRequest): ResponseEntity<Any> {
@@ -82,7 +82,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @DeleteMapping("/logistics/payments/{paymentNo}")
-    @RequirePermission("module.finance.logistics.manage")
+    @RequirePermission("module.finance.logistic.manage")
     @SecurityLevel(level = "L3", actionKey = "btn_logistic_payment_delete")
     @AuditLog(module = "FINANCE", action = "DELETE_LOGISTIC_PAYMENT", riskLevel = "HIGH")
     fun deletePayment(@PathVariable paymentNo: String): ResponseEntity<Any> {
@@ -96,7 +96,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/logistics/payments/{paymentNo}/restore")
-    @RequirePermission("module.finance.logistics.manage")
+    @RequirePermission("module.finance.logistic.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_logistic_payment_restore")
     @AuditLog(module = "FINANCE", action = "RESTORE_LOGISTIC_PAYMENT", riskLevel = "MEDIUM")
     fun restorePayment(@PathVariable paymentNo: String): ResponseEntity<Any> {
@@ -110,7 +110,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics/payments/{paymentNo}/history")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getPaymentHistory(
         @PathVariable paymentNo: String,
         @RequestParam(required = false) logisticNum: String?,
@@ -125,7 +125,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics/payments/{paymentNo}/orders")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getPaymentOrders(
         @PathVariable paymentNo: String,
         @RequestParam(required = false) logisticNum: String?,
@@ -139,14 +139,14 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics/{logisticNum}/history")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getShipmentHistory(@PathVariable logisticNum: String): ResponseEntity<Any> {
         val result = historyService.getShipmentHistory(logisticNum)
         return ResponseEntity.ok(ApiResponse.ok(result))
     }
 
     @GetMapping("/logistics/{logisticNum}/orders")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getShipmentOrders(@PathVariable logisticNum: String): ResponseEntity<Any> {
         val result = historyService.getShipmentOrders(logisticNum)
         return ResponseEntity.ok(ApiResponse.ok(result))
@@ -158,7 +158,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics/payments/{paymentNo}/files")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun getFileInfo(@PathVariable paymentNo: String): ResponseEntity<Any> {
         val result = fileService.getFileInfo(paymentNo)
         return ResponseEntity.ok(ApiResponse.ok(result))
@@ -170,7 +170,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @GetMapping("/logistics/payments/{paymentNo}/files/{filename}")
-    @RequirePermission("module.finance.logistics")
+    @RequirePermission("module.finance.logistic")
     fun serveFile(
         @PathVariable paymentNo: String,
         @PathVariable filename: String,
@@ -195,7 +195,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @PostMapping("/logistics/payments/{paymentNo}/files")
-    @RequirePermission("module.finance.logistics.manage")
+    @RequirePermission("module.finance.logistic.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_logistic_payment_upload_file")
     @AuditLog(module = "FINANCE", action = "UPLOAD_LOGISTIC_FILE", riskLevel = "MEDIUM")
     fun uploadFile(
@@ -222,7 +222,7 @@ class LogisticPaymentController(
     // ═══════════════════════════════════════════════
 
     @DeleteMapping("/logistics/payments/{paymentNo}/files/{filename}")
-    @RequirePermission("module.finance.logistics.manage")
+    @RequirePermission("module.finance.logistic.manage")
     @SecurityLevel(level = "L2", actionKey = "btn_logistic_payment_delete_file")
     @AuditLog(module = "FINANCE", action = "DELETE_LOGISTIC_FILE", riskLevel = "MEDIUM")
     fun deleteFile(

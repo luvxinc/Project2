@@ -1,0 +1,74 @@
+{
+  "title": "数据库备份",
+  "description": "管理数据库备份、恢复及调度。",
+  "list": {
+    "title": "备份列表",
+    "empty": "暂无备份",
+    "emptyDescription": "创建您的第一个备份以保护数据安全。",
+    "date": "备份日期",
+    "tag": "备注",
+    "size": "大小",
+    "noTag": "无备注"
+  },
+  "actions": {
+    "createBackup": "立刻备份",
+    "restore": "恢复数据库",
+    "delete": "删除",
+    "back": "返回",
+    "confirm": "确认",
+    "cancel": "取消",
+    "creating": "正在创建备份...",
+    "restoring": "正在恢复数据库...",
+    "deleting": "正在删除备份..."
+  },
+  "createModal": {
+    "title": "创建备份",
+    "description": "将创建所有生产数据库的完整备份。此操作可能需要几分钟。",
+    "tagLabel": "备份备注",
+    "tagPlaceholder": "输入备份备注（可留空）",
+    "tagHint": "简短描述以便日后识别此备份。",
+    "securityCode": "数据库安全码 (L3)",
+    "securityCodePlaceholder": "输入安全码",
+    "submit": "开始备份"
+  },
+  "detail": {
+    "title": "备份详情",
+    "backupDate": "备份日期",
+    "backupTime": "备份时间",
+    "note": "备注",
+    "fileSize": "文件大小",
+    "databases": "包含数据库",
+    "noNote": "无备注"
+  },
+  "deleteModal": {
+    "title": "删除备份",
+    "description": "确定要删除此备份吗？此操作不可撤销。",
+    "warning": "一旦删除，该备份文件将被永久移除。",
+    "securityCode": "数据库安全码 (L3)",
+    "securityCodePlaceholder": "输入安全码",
+    "confirm": "删除备份"
+  },
+  "restoreModal": {
+    "title": "恢复数据库",
+    "description": "确定要从此备份恢复数据库吗？",
+    "warning": "⚠️ 此操作将使用备份数据覆盖当前数据库。操作不可撤销。",
+    "backupInfo": "将从以下备份恢复：",
+    "securityCode": "系统安全码 (L4)",
+    "securityCodePlaceholder": "输入系统安全码",
+    "confirm": "恢复数据库"
+  },
+  "toast": {
+    "createSuccess": "备份创建成功",
+    "createError": "备份创建失败",
+    "restoreSuccess": "数据库恢复成功",
+    "restoreError": "数据库恢复失败",
+    "deleteSuccess": "备份删除成功",
+    "deleteError": "备份删除失败",
+    "loadError": "加载备份列表失败"
+  },
+  "info": {
+    "maxBackups": "最多保留 10 个备份。超出上限时自动删除最早的备份。",
+    "autoBackup": "每月最后一天 23:59:59 自动备份。",
+    "fileFormat": "备份使用 PostgreSQL 自定义格式，存储和恢复效率更高。"
+  }
+}
