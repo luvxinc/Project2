@@ -86,7 +86,7 @@ export default function CreateProductPage() {
   });
 
   const createSecurity = useSecurityAction({
-    actionKey: 'btn_product_create',
+    actionKey: 'btn_create_skus',
     level: 'L2',
     onExecute: (code) => createMutation.mutate({
       sku: formData.sku.toUpperCase(),

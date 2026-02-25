@@ -44,6 +44,7 @@ class StocktakeController(
 
     @PutMapping("/{id}")
     @RequirePermission("module.inventory.stocktake.edit")
+    @SecurityLevel(level = "L3", actionKey = "btn_edit_stocktake")
     @AuditLog(module = "INVENTORY", action = "UPDATE_STOCKTAKE", riskLevel = "MEDIUM")
     fun update(@PathVariable id: Long, @RequestBody dto: UpdateStocktakeRequest): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toDetailResponse(stocktakeUseCase.update(id, dto, currentUsername()))))

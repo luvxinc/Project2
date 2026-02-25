@@ -26,4 +26,10 @@ interface RawTransactionRepository : JpaRepository<RawTransaction, Long>, JpaSpe
     fun countByUploadBatchId(batchId: String): Long
 
     fun findAllByOrderNumberOrderByCreatedAtDesc(orderNumber: String): List<RawTransaction>
+
+    /** P13: Working Set — find all unsynced (Processed_T=0 equivalent) */
+    fun findAllBySyncedFalse(): List<RawTransaction>
+
+    /** P13: Working Set — fetch all raw records for a set of order numbers */
+    fun findAllByOrderNumberIn(orderNumbers: List<String>): List<RawTransaction>
 }

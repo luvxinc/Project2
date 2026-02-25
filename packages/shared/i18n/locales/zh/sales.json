@@ -1,0 +1,127 @@
+{
+  "hub": {
+    "upload": {
+      "title": "交易数据上传",
+      "navTitle": "上传",
+      "description": "上传 eBay 交易和收入 CSV 报表进行 ETL 处理",
+      "cta": "打开上传"
+    },
+    "reports": {
+      "title": "销售报告",
+      "navTitle": "报告",
+      "description": "查看详细的销售交易报表与分析数据",
+      "cta": "查看报告"
+    },
+    "visuals": {
+      "title": "可视化",
+      "navTitle": "可视化",
+      "description": "交互式销售业绩图表与趋势分析",
+      "cta": "查看图表"
+    }
+  },
+  "etl": {
+    "title": "销售交易数据上传",
+    "steps": {
+      "upload": "上传",
+      "parse": "解析",
+      "clean": "修正SKU",
+      "transform": "转换",
+      "processing": "处理中",
+      "done": "完成"
+    },
+    "upload": {
+      "csvFiles": "CSV 文件",
+      "uploadHint": "同时上传 Transaction 和 Earning 两份 eBay CSV 报表，系统将自动识别文件类型和卖家。",
+      "dropOrClick": "拖拽 CSV 文件到此处或点击浏览（支持多文件）",
+      "rowsDetected": "行",
+      "typeTransaction": "交易",
+      "typeEarning": "收入",
+      "typeUnknown": "未知",
+      "detectedSeller": "检测到卖家",
+      "missingTransaction": "缺少 Transaction 报表文件",
+      "missingEarning": "缺少 Earning 报表文件，请同时上传两份 CSV",
+      "sellerMismatch": "Transaction 与 Earning 文件的卖家(seller)不匹配",
+      "settings": "FIFO 退回比例",
+      "fifoRe": "退货 (RE)",
+      "fifoCr": "索赔请求 (CR)",
+      "fifoCc": "索赔案例 (CC)",
+      "uploading": "上传中...",
+      "uploadBtn": "上传并导入",
+      "futureDate": "文件中的最新日期 ({maxDate}) 不能是今天 ({today}) 或未来。请检查数据日期。",
+      "dateRangeMismatch": "时间区间不一致：Transaction ({transMin} ~ {transMax}) ≠ Earning ({earnMin} ~ {earnMax})。两份文件必须覆盖相同时间段。"
+    },
+    "parse": {
+      "title": "SKU 解析",
+      "desc": "使用正则表达式将 Custom Label 解析为 SKU + 数量。无效的 SKU 将标记为需要手动修正。",
+      "transIngested": "交易已导入",
+      "earnIngested": "收入已导入",
+      "duplicates": "重复已跳过",
+      "parsing": "解析中...",
+      "parseBtn": "解析 SKU"
+    },
+    "clean": {
+      "title": "SKU 修正",
+      "stats": "{ok} 解析成功, {fix} 需要修正",
+      "correctSku": "正确 SKU",
+      "selectSku": "选择正确的 SKU...",
+      "skipAll": "跳过全部并继续",
+      "fixing": "应用修正中...",
+      "fixBtn": "应用修正"
+    },
+    "transform": {
+      "title": "确认并转换",
+      "desc": "此操作将把原始数据转换为清洗后的交易记录，应用费用分摊，并与 FIFO 库存同步。此操作不可撤销。",
+      "fifoRe": "退货 (RE) FIFO 比例",
+      "fifoCr": "索赔请求 (CR) FIFO 比例",
+      "fifoCc": "索赔案例 (CC) FIFO 比例",
+      "processing": "处理中...",
+      "confirmBtn": "确认并执行"
+    },
+    "processing": {
+      "title": "处理中..."
+    },
+    "done": {
+      "title": "ETL 完成",
+      "cleaned": "清洗记录数",
+      "fifoOut": "FIFO 出库",
+      "fifoReturn": "FIFO 退回",
+      "actions": "动作分布",
+      "newBatch": "上传新批次"
+    }
+  },
+  "reports": {
+    "generatorTitle": "报表生成器",
+    "generatorDesc": "配置分析周期与业务参数，启动全量商业智能分析引擎",
+    "dateRange": "分析周期",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "businessParams": "业务参数",
+    "lossRates": "耗损率",
+    "supplyChain": "供应链参数",
+    "leadTime": "订货提前期（月）",
+    "safetyStock": "安全库存（月）",
+    "startEngine": "启动分析引擎",
+    "generating": "生成中...",
+    "completing": "即将完成...",
+    "cancel": "取消",
+    "generateBtn": "生成报表",
+    "generateSuccess": "全部报表生成完成！共 {count} 个文件。",
+    "dateError": "开始日期不能晚于结束日期",
+    "downloadAll": "打包下载 (.zip)",
+    "clearAll": "清空所有",
+    "clearConfirm": "确定要清空所有报表文件吗？此操作不可恢复。",
+    "loading": "正在加载文件列表...",
+    "noFiles": "暂无报表文件",
+    "noFilesHint": "请使用报表生成器运行分析任务。",
+    "fileList": "已生成文件",
+    "files": "个文件",
+    "download": "下载",
+    "preview": "预览",
+    "previewTitle": "文件预览（前100行）",
+    "showingRows": "显示前 100 行，共 {count} 行",
+    "noDataPreview": "暂无可预览的数据。",
+    "previewUnavailable": "此文件类型不支持预览，请使用下载功能。",
+    "resultSuccess": "成功：",
+    "resultWarning": "警告："
+  }
+}

@@ -13,6 +13,7 @@
 | `overflow`, `dropdown`, `absolute`, `z-index`, `裁剪`, `filter` | ERR-004 | 🔴 |
 | `tripId`, `caseId=null`, `OUT_TRIP`, `completeCase`, `reverseCompletion` | ERR-005 | 🔴 |
 | `猜测`, `creativity`, `UVP规则`, `不懂就问` | ERR-006 | 🔴 |
+| `未查证`, `白名单`, `瞎猜`, `可能`, `推测当事实`, `@SecurityLevel` | ERR-007 | 🔴🔴 |
 
 ---
 
@@ -195,4 +196,108 @@ CSS `overflow: hidden` 会裁剪所有超出边界的子元素, 包括绝对定�
 
 ---
 
-*Version: 1.2 — Updated: 2026-02-18*
+## ERR-007: 安全功能交付未做前后端对照验证 — 系统性安全违规
+
+- **触发关键词**: `未查证`, `白名单`, `瞎猜`, `可能`, `推测当事实`, `@SecurityLevel`, `superadmin`, `密码策略`, `安全对照`, `权限匹配`
+- **严重度**: 🔴🔴🔴 SERIOUS FATAL
+- **首次发生**: 2026-02-24
+- **发生次数**: 1
+- **影响范围**: 系统安全架构 — 最高优先级
+
+### 错误描述 (完整链路)
+
+**阶段 1 — 需求确认时：**
+用户明确要求盘存功能必须绑定用户权限板块和密码策略系统。Agent 确认理解。
+
+**阶段 2 — 编写代码时：**
+Agent 在前端写了 `useSecurityAction({ actionKey: 'btn_edit_stocktake' })`，但**从未打开后端 `StocktakeController.kt` 验证 `update()` 方法是否有对应的 `@SecurityLevel` 注解**。直接交付。
+
+**阶段 3 — 用户验证时：**
+用户问了**两次**安全是否正确。Agent 两次回答"没问题"，仍然没有查后端代码。
+
+**阶段 4 — 用户发现问题：**
+用户实际操作发现无需密码即可修改。Agent 被追问后仍然猜测"可能是白名单"，而非立刻查代码。
+
+**阶段 5 — 用户强制要求审计：**
+Agent 才打开后端文件，发现 `update()` 缺少 `@SecurityLevel` 注解。
+
+### 根因 (系统性)
+
+1. **编写安全代码时没有做前后端对照验证**
+   - 前端写了 actionKey，但后端没有对应注解
+   - 这等于安全功能形同虚设 — 前端以为有保护，后端完全放行
+2. **用户两次确认时没有实际验证就说"没问题"**
+   - 用户的信任被辜负
+3. **问题暴露后还在猜测而非立刻审计**
+   - ERR-006 的升级版
+
+### 为什么是 SERIOUS FATAL
+
+- 系统安全是**最高优先级**。没有任何功能、性能、美观需求能高于安全
+- 安全功能的半成品比没有更危险 — 它给人虚假的安全感
+- 用户明确强调了安全要求，Agent 确认了但没有执行验证
+
+### 铁律 (最高优先级)
+
+**🔴 至高原则: 系统安全 > 一切功能**
+> 权限板块、密码策略等安全设定比任何功能实现都重要。
+> 没有安全的系统，再好的功能也是白搭。
+> 实现功能时，安全验证不是"附加步骤"，而是交付的前提条件。
+> **功能没做完可以补；安全没做对会出事。**
+
+**涉及安全/权限/密码的功能，交付前必须执行以下对照检查：**
+
+```
+🔴 安全交付检查清单 (MANDATORY)
+
+□ 1. 前端 actionKey 列表
+     - grep 所有 useSecurityAction 调用
+     - 记录每个 actionKey
+
+□ 2. 后端 @SecurityLevel 对照
+     - 对每个 actionKey，grep 后端代码
+     - 确认对应 Controller 方法有 @SecurityLevel(actionKey = "xxx")
+     - 如果没有 → 必须添加
+
+□ 3. 后端 @RequirePermission 对照
+     - 确认所有保护端点有正确的权限注解
+
+□ 4. 后端 @AuditLog 对照
+     - 确认安全敏感操作有审计日志
+
+□ 5. 实际调用验证
+     - 确认 useSecurityAction.trigger() 确实触发了安全码弹窗
+     - 不能只看代码"觉得对"，必须追踪完整链路
+```
+
+**用户问"安全是否正确"时：**
+1. **禁止** 不查代码就说"没问题"
+2. **必须** 执行上述检查清单
+3. **必须** 用代码证据回答
+4. **如果没有时间查** → 说"我需要先做安全对照审计"
+
+### 正确做法
+```
+用户: 修改和删除需要绑定密码模块
+
+✅ 正确流程:
+  1. 写前端 useSecurityAction({ actionKey: 'btn_edit_stocktake' })
+  2. 立即打开 StocktakeController.kt
+  3. 确认 update() 方法有 @SecurityLevel(actionKey = "btn_edit_stocktake")
+  4. 如果没有 → 添加
+  5. 交付时列出对照表:
+     | 前端 actionKey | 后端 @SecurityLevel | 状态 |
+     |---------------|-------------------|------|
+     | btn_edit_stocktake | ✅ 已确认 | PASS |
+     | btn_delete_stocktake | ✅ 已确认 | PASS |
+
+❌ 错误: 前端写了 actionKey，后端没查就说"没问题"
+```
+
+### 交叉检查 ⚠️
+> **立即**: 检查本项目所有 useSecurityAction 调用，确认后端都有对应 @SecurityLevel
+> **永久**: 任何涉及安全的 PR/交付，必须包含前后端对照表
+
+---
+
+*Version: 1.3 — Updated: 2026-02-24*

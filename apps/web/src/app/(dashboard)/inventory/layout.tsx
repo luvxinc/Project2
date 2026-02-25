@@ -6,6 +6,7 @@ import { InventoryModuleNav } from '@/components/layout/InventoryModuleNav';
 import { ThemedBackground } from '@/components/layout/ThemedBackground';
 import { ModalProvider } from '@/components/modal/GlobalModal';
 import { useState } from 'react';
+import InventoryTabSelector from './components/InventoryTabSelector';
 
 export default function InventoryLayout({
   children,
@@ -21,6 +22,12 @@ export default function InventoryLayout({
 
   // 只在 HUB 页面显示图标栏
   const isHubPage = pathname === '/inventory' || pathname?.endsWith('/inventory') || pathname?.match(/^\/[a-z]{2}\/inventory$/);
+  // 子功能页面 (dynamic, stocktake, shelf) 显示 pill nav
+  const isSubPage = !isHubPage && (
+    pathname?.includes('/inventory/dynamic') ||
+    pathname?.includes('/inventory/stocktake') ||
+    pathname?.includes('/inventory/shelf')
+  );
 
   return (
     <ModalProvider>
@@ -35,6 +42,12 @@ export default function InventoryLayout({
         {/* HUB page: 44px (AppleNav) + 60px (ModuleNav) = 104px */}
         {/* Sub-pages: 44px (AppleNav only) */}
         <main className={isHubPage ? 'pt-[104px]' : 'pt-11'}>
+          {/* Pill Tab Selector — shared across all sub-pages, fixed position */}
+          {isSubPage && (
+            <section className="max-w-[1400px] mx-auto px-6 pt-12 pb-6">
+              <InventoryTabSelector />
+            </section>
+          )}
           {children}
         </main>
       </ThemedBackground>

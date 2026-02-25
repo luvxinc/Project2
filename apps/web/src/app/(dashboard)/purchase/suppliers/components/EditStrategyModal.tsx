@@ -203,7 +203,7 @@ export default function EditStrategyModal({ isOpen, supplier, editingStrategy, m
   });
 
   const modifySecurity = useSecurityAction({
-    actionKey: 'btn_edit_strategy',
+    actionKey: 'btn_modify_strategy',
     level: 'L3',
     onExecute: (code) => modifyMutation.mutate(code),
   });

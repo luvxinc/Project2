@@ -63,7 +63,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   });
 
   const saveSecurity = useSecurityAction({
-    actionKey: 'btn_user_update',
+    actionKey: 'btn_update_user',
     level: 'L2',
     onExecute: (code) => updateMutation.mutate({
       displayName: formData.displayName || undefined,

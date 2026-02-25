@@ -50,7 +50,7 @@ export default function EditReceiveModal({ isOpen, logisticNum, detail, onClose,
   });
 
   const editSecurity = useSecurityAction({
-    actionKey: 'btn_receive_edit',
+    actionKey: 'btn_receive_mgmt_edit',
     level: 'L3',
     onExecute: () => editMutation.mutate(),
   });

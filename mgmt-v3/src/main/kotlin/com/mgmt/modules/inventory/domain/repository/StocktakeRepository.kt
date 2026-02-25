@@ -13,4 +13,6 @@ interface StocktakeRepository : JpaRepository<Stocktake, Long> {
     fun existsByStocktakeDate(date: LocalDate): Boolean
 
     fun findAllByOrderByStocktakeDateDesc(): List<Stocktake>
+
+    fun findTopByStocktakeDateLessThanEqualOrderByStocktakeDateDesc(date: LocalDate): Stocktake?
 }

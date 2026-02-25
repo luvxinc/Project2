@@ -58,7 +58,7 @@ export default function DepositDetailPanel({
   const pendingFileRef = useRef<File | null>(null);
 
   const uploadSecurity = useSecurityAction({
-    actionKey: 'btn_deposit_file_upload',
+    actionKey: 'btn_deposit_upload_file',
     level: 'L2',
     onExecute: async (code) => {
       if (!pendingFileRef.current) return;
@@ -97,7 +97,7 @@ export default function DepositDetailPanel({
   });
 
   const deleteFileSecurity = useSecurityAction({
-    actionKey: 'btn_deposit_file_delete',
+    actionKey: 'btn_deposit_delete_file',
     level: 'L2',
     onExecute: (code) => {
       deleteMutation.mutate({ filename: pendingDeleteRef.current, code });

@@ -56,9 +56,17 @@ class RawTransaction(
     @Column(name = "shipping_fee", precision = 12, scale = 2, nullable = false)
     var shippingFee: BigDecimal = BigDecimal.ZERO,
 
-    /** V1: Seller collected tax + eBay collected tax */
+    /** V1: Seller collected tax + eBay collected tax (合计, 保留向后兼容) */
     @Column(name = "tax_amount", precision = 12, scale = 2, nullable = false)
     var taxAmount: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P9: Seller collected tax (拆分) */
+    @Column(name = "seller_tax", precision = 12, scale = 2, nullable = false)
+    var sellerTax: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P9: eBay collected tax (拆分) */
+    @Column(name = "ebay_tax", precision = 12, scale = 2, nullable = false)
+    var ebayTax: BigDecimal = BigDecimal.ZERO,
 
     /** V1: Gross transaction amount */
     @Column(name = "total_amount", precision = 12, scale = 2, nullable = false)
@@ -76,9 +84,17 @@ class RawTransaction(
     @Column(name = "promo_listing", columnDefinition = "text")
     var promoListing: String? = null,
 
-    /** V1: Final Value Fee - fixed + variable (TEXT) */
+    /** V1: Final Value Fee - fixed + variable 合并 (TEXT, 保留向后兼容) */
     @Column(name = "listing_fee", columnDefinition = "text")
     var listingFee: String? = null,
+
+    /** V1 parity P8: Final Value Fee - fixed (TEXT, 拆分) */
+    @Column(name = "fvf_fee_fixed", columnDefinition = "text")
+    var fvfFeeFixed: String? = null,
+
+    /** V1 parity P8: Final Value Fee - variable (TEXT, 拆分) */
+    @Column(name = "fvf_fee_variable", columnDefinition = "text")
+    var fvfFeeVariable: String? = null,
 
     /** V1: International fee (TEXT) */
     @Column(name = "intl_fee", columnDefinition = "text")
@@ -88,9 +104,55 @@ class RawTransaction(
     @Column(name = "other_fee", columnDefinition = "text")
     var otherFee: String? = null,
 
+    // ── V27: ETL pipeline columns ──
+
+    /** V1: Type — order / refund / claim / shipping label / payment dispute */
+    @Column(name = "transaction_type", length = 50)
+    var transactionType: String? = null,
+
+    /** V1: Reference ID (contains return/cancel/case/request keywords) */
+    @Column(name = "reference_id", length = 200)
+    var referenceId: String? = null,
+
+    /** V1: Custom label — SKU 解析源 */
+    @Column(name = "custom_label", length = 500)
+    var customLabel: String? = null,
+
+    /** V1: Item title */
+    @Column(name = "item_title", length = 500)
+    var itemTitle: String? = null,
+
+    /** V1: Quantity (order line quantity) */
+    @Column(name = "quantity", nullable = false)
+    var quantity: Int = 0,
+
+    /** V1: Description — Shipping label 分类用 */
+    @Column(name = "description", columnDefinition = "text")
+    var description: String? = null,
+
+    /** V1: Ship to city */
+    @Column(name = "ship_to_city", length = 200)
+    var shipToCity: String? = null,
+
+    /** V1: Ship to country */
+    @Column(name = "ship_to_country", length = 100)
+    var shipToCountry: String? = null,
+
+    /** V1: Payments dispute fee (TEXT, raw CSV value) */
+    @Column(name = "dispute_fee", columnDefinition = "text")
+    var disputeFee: String? = null,
+
+    /** V1: Refund amount */
+    @Column(name = "refund_amount", precision = 12, scale = 2, nullable = false)
+    var refundAmount: BigDecimal = BigDecimal.ZERO,
+
     /** V1: compute_row_hash_full() — MD5('|'.join(all_values)) */
     @Column(name = "row_hash", length = 64, unique = true)
     var rowHash: String? = null,
+
+    /** V1 parity P13: Processed_T equivalent — false = pending transform */
+    @Column(name = "synced", nullable = false)
+    var synced: Boolean = false,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),

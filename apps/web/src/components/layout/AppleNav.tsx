@@ -12,7 +12,8 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 const modules = [
   {
     key: 'sales',
-    enabled: false,
+    enabled: true,
+    href: '/sales',
     groups: [
       { key: 'transactions', items: ['upload'] },
       { key: 'reports', items: ['generate', 'view'] },
@@ -136,6 +137,9 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   'vma.training':                '/vma/training',
   'vma.training_sop':            '/vma/training-sop',
   'vma.training_records':        '/vma/training-records',
+  // Sales module
+  'sales.transactions':          '/sales/etl',
+  'sales.transactions.upload':   '/sales/etl',
   // Inventory module
   'inventory.shelf':             '/inventory/shelf',
   'inventory.shelf.manage':      '/inventory/shelf',

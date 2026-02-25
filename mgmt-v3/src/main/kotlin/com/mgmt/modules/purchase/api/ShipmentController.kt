@@ -94,6 +94,7 @@ class ShipmentController(
 
     @PostMapping("/{id}/restore")
     @RequirePermission("module.purchase.shipment.update")
+    @SecurityLevel(level = "L2", actionKey = "btn_restore_send")
     @AuditLog(module = "PURCHASE", action = "RESTORE_SHIPMENT", riskLevel = "MEDIUM")
     fun restore(@PathVariable id: Long): ResponseEntity<Any> =
         ResponseEntity.ok(ApiResponse.ok(toListResponse(shipmentUseCase.restore(id, currentUsername()))))

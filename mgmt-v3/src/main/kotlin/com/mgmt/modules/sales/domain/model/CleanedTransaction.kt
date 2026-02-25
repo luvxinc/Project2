@@ -97,6 +97,32 @@ class CleanedTransaction(
     @Column(name = "quantity10") var quantity10: Int? = 0,
     @Column(name = "qtyp10") var qtyp10: Int? = 0,
 
+    // ── V27: Display + metadata columns ──
+
+    /** V1: quantity (order line quantity) */
+    @Column(name = "quantity", nullable = false)
+    var quantity: Int = 0,
+
+    /** V1: Item title */
+    @Column(name = "item_title", length = 500)
+    var itemTitle: String? = null,
+
+    /** V1: full sku (Custom label 原始值) */
+    @Column(name = "full_sku", length = 500)
+    var fullSku: String? = null,
+
+    /** V1: buyer username */
+    @Column(name = "buyer_username", length = 200)
+    var buyerUsername: String? = null,
+
+    /** V1: ship to city */
+    @Column(name = "ship_to_city", length = 200)
+    var shipToCity: String? = null,
+
+    /** V1: ship to country */
+    @Column(name = "ship_to_country", length = 100)
+    var shipToCountry: String? = null,
+
     // ── Financial (V1 TEXT → V3 numeric) ──
 
     /** V1: revenue (= item subtotal) */
@@ -107,21 +133,85 @@ class CleanedTransaction(
     @Column(name = "shipping_fee", precision = 12, scale = 2, nullable = false)
     var shippingFee: BigDecimal = BigDecimal.ZERO,
 
-    /** V1: Seller collected tax + eBay collected tax */
+    /** V1: Seller collected tax + eBay collected tax (合计) */
     @Column(name = "tax_amount", precision = 12, scale = 2, nullable = false)
     var taxAmount: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P9: Seller collected tax (拆分) */
+    @Column(name = "seller_tax", precision = 12, scale = 2, nullable = false)
+    var sellerTax: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P9: eBay collected tax (拆分) */
+    @Column(name = "ebay_tax", precision = 12, scale = 2, nullable = false)
+    var ebayTax: BigDecimal = BigDecimal.ZERO,
 
     /** V1: 计算列 — 净收入 */
     @Column(name = "net_amount", precision = 12, scale = 2, nullable = false)
     var netAmount: BigDecimal = BigDecimal.ZERO,
 
-    /** V1: Promoted Listings fee */
+    /** V1: Promoted Listings fee (primary field for ad/promo fee) */
     @Column(name = "ad_fee", precision = 12, scale = 2, nullable = false)
     var adFee: BigDecimal = BigDecimal.ZERO,
 
-    /** V1: Regulatory operating fee + other fees */
+    /** V1: Regulatory operating fee (primary field) */
     @Column(name = "other_fee", precision = 12, scale = 2, nullable = false)
     var otherFee: BigDecimal = BigDecimal.ZERO,
+
+    // ── V27: Fee breakdown (V1 merged → V3 separated) ──
+
+    /** V1: Final Value Fee (fixed + variable merged, backward compat) */
+    @Column(name = "fvf_fee", precision = 12, scale = 2, nullable = false)
+    var fvfFee: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P8: Final Value Fee - fixed (拆分) */
+    @Column(name = "fvf_fee_fixed", precision = 12, scale = 2, nullable = false)
+    var fvfFeeFixed: BigDecimal = BigDecimal.ZERO,
+
+    /** V1 parity P8: Final Value Fee - variable (拆分) */
+    @Column(name = "fvf_fee_variable", precision = 12, scale = 2, nullable = false)
+    var fvfFeeVariable: BigDecimal = BigDecimal.ZERO,
+
+    /** V1: International fee */
+    @Column(name = "intl_fee", precision = 12, scale = 2, nullable = false)
+    var intlFee: BigDecimal = BigDecimal.ZERO,
+
+    /** P10: Deprecated — same value as adFee. Kept for DB column compatibility. */
+    @Column(name = "promo_fee", precision = 12, scale = 2, nullable = false)
+    var promoFee: BigDecimal = BigDecimal.ZERO,
+
+    /** P11: Deprecated — same value as otherFee. Kept for DB column compatibility. */
+    @Column(name = "regulatory_fee", precision = 12, scale = 2, nullable = false)
+    var regulatoryFee: BigDecimal = BigDecimal.ZERO,
+
+    /** V1: Payments dispute fee */
+    @Column(name = "dispute_fee", precision = 12, scale = 2, nullable = false)
+    var disputeFee: BigDecimal = BigDecimal.ZERO,
+
+    /** V1: Refund amount */
+    @Column(name = "refund_amount", precision = 12, scale = 2, nullable = false)
+    var refundAmount: BigDecimal = BigDecimal.ZERO,
+
+    // ── V27: Shipping label cost breakdown (5 types) ──
+
+    /** Shipping label from Earning CSV */
+    @Column(name = "label_cost", precision = 12, scale = 2, nullable = false)
+    var labelCost: BigDecimal = BigDecimal.ZERO,
+
+    /** Return shipping label */
+    @Column(name = "label_return", precision = 12, scale = 2, nullable = false)
+    var labelReturn: BigDecimal = BigDecimal.ZERO,
+
+    /** Shipping label underpaid adjustment */
+    @Column(name = "label_underpay", precision = 12, scale = 2, nullable = false)
+    var labelUnderpay: BigDecimal = BigDecimal.ZERO,
+
+    /** Shipping label overpaid adjustment */
+    @Column(name = "label_overpay", precision = 12, scale = 2, nullable = false)
+    var labelOverpay: BigDecimal = BigDecimal.ZERO,
+
+    /** Regular shipping label (not underpaid/overpaid/return/voided/bulk) */
+    @Column(name = "label_regular", precision = 12, scale = 2, nullable = false)
+    var labelRegular: BigDecimal = BigDecimal.ZERO,
 
     /** V1: 四维去重 hash (order_number + seller + item_id + action) */
     @Column(name = "row_hash", length = 64, unique = true)

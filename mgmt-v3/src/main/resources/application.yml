@@ -131,3 +131,8 @@ logging:
     org.springframework.security: INFO
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# === App Custom Config ===
+app:
+  project-root: ${MGMT_PROJECT_ROOT:}
+  output-dir: ${REPORT_OUTPUT_DIR:output}

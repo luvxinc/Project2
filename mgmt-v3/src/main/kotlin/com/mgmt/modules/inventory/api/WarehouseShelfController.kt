@@ -82,7 +82,7 @@ class WarehouseShelfController(
 
     @PutMapping("/{warehouse}")
     @RequirePermission("module.inventory.warehouse.create")
-    @SecurityLevel(level = "L2", actionKey = "btn_create_warehouse")
+    @SecurityLevel(level = "L2", actionKey = "btn_update_warehouse")
     @AuditLog(module = "INVENTORY", action = "UPDATE_WAREHOUSE", riskLevel = "HIGH")
     fun updateWarehouse(
         @PathVariable warehouse: String,

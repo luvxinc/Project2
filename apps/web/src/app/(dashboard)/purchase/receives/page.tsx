@@ -209,7 +209,7 @@ export default function ReceivingManagementPage() {
   });
 
   const restoreSecurity = useSecurityAction({
-    actionKey: 'btn_receive_restore',
+    actionKey: 'btn_receive_undelete',
     level: 'L3',
     onExecute: (code) => restoreMutation.mutate(code),
   });

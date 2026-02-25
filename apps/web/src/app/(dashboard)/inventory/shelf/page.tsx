@@ -175,20 +175,9 @@ export default function ShelfPage() {
   // List view — Hub-style horizontal carousel
   return (
     <div style={{ backgroundColor: colors.bg }} className="min-h-screen">
-      {/* Hero Section (matches purchase hub) */}
-      <section className="max-w-[1200px] mx-auto px-6 pt-16 pb-6">
-        <div className="flex items-end justify-between">
-          <div>
-            <h1
-              style={{ color: colors.text }}
-              className="text-[48px] font-semibold tracking-tight leading-none mb-2"
-            >
-              {t('shelf.title')}
-            </h1>
-            <p style={{ color: colors.textSecondary }} className="text-[21px]">
-              {t('shelf.subtitle')}
-            </p>
-          </div>
+      {/* Action bar */}
+      <section className="max-w-[1200px] mx-auto px-6 pb-6">
+        <div className="flex items-end justify-end">
 
           <div className="flex items-center gap-3 pb-1">
             {/* Global action buttons */}

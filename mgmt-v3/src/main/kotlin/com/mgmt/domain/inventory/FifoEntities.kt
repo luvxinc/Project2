@@ -130,6 +130,43 @@ class LandedPrice(
     var updatedAt: Instant = Instant.now(),
 )
 
+/**
+ * FifoAllocation — maps to fifo_allocations table.
+ * Records which FIFO layer was consumed by which outbound transaction.
+ * Used by Sales FIFO sync: NN = out, CA/RE/CR/CC = partial restore.
+ */
+@Entity
+@Table(name = "fifo_allocations")
+class FifoAllocation(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0,
+
+    @Column(name = "out_tran_id", nullable = false)
+    var outTranId: Long = 0,
+
+    @Column(name = "layer_id", nullable = false)
+    var layerId: Long = 0,
+
+    @Column(length = 100, nullable = false)
+    var sku: String = "",
+
+    @Column(name = "out_date", nullable = false)
+    var outDate: Instant = Instant.now(),
+
+    @Column(name = "qty_alloc", nullable = false)
+    var qtyAlloc: Int = 0,
+
+    @Column(name = "unit_cost", precision = 12, scale = 5, nullable = false)
+    var unitCost: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "cost_alloc", precision = 12, scale = 5, nullable = false)
+    var costAlloc: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "created_at", nullable = false)
+    var createdAt: Instant = Instant.now(),
+)
+
 // ─── Repositories ────────────────────────────────────────────
 
 interface FifoTransactionRepository : org.springframework.data.jpa.repository.JpaRepository<FifoTransaction, Long> {
@@ -150,6 +187,18 @@ interface FifoLayerRepository : org.springframework.data.jpa.repository.JpaRepos
 
     fun findByInTranId(tranId: Long): FifoLayer?
 
+    /** FIFO out: find active layers with remaining qty, oldest first */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT l FROM FifoLayer l WHERE l.sku = :sku AND l.qtyRemaining > 0 ORDER BY l.inDate ASC, l.id ASC"
+    )
+    fun findActiveLayersBySku(sku: String): List<FifoLayer>
+
+    /** FIFO return: find layers with space, most expensive first */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT l FROM FifoLayer l WHERE l.sku = :sku AND l.qtyRemaining < l.qtyIn ORDER BY l.unitCost DESC, l.id DESC"
+    )
+    fun findReturnCandidatesBySku(sku: String): List<FifoLayer>
+
     /**
      * Bulk update init layers' costs when COGS changes.
      */
@@ -158,6 +207,12 @@ interface FifoLayerRepository : org.springframework.data.jpa.repository.JpaRepos
         "UPDATE FifoLayer l SET l.unitCost = :cost, l.landedCost = :cost WHERE l.inTranId IN :tranIds"
     )
     fun updateCostByTranIds(tranIds: List<Long>, cost: java.math.BigDecimal): Int
+}
+
+interface FifoAllocationRepository : org.springframework.data.jpa.repository.JpaRepository<FifoAllocation, Long> {
+    fun findByOutTranId(outTranId: Long): List<FifoAllocation>
+    fun findByLayerId(layerId: Long): List<FifoAllocation>
+    fun findBySkuAndOutTranId(sku: String, outTranId: Long): List<FifoAllocation>
 }
 
 interface LandedPriceRepository : org.springframework.data.jpa.repository.JpaRepository<LandedPrice, Long> {

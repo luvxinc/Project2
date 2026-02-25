@@ -19,14 +19,12 @@ const inventoryFeatures = [
     href: '/inventory/dynamic',
     icon: 'dynamic',
     accent: '#30d158', // Apple Green
-    comingSoon: true,
   },
   {
     key: 'stocktake',
     href: '/inventory/stocktake',
     icon: 'stocktake',
     accent: '#ff9f0a', // Apple Orange
-    comingSoon: true,
   },
 ];
 
@@ -173,15 +171,13 @@ export default function InventoryHubPage() {
             >
               {/* Card */}
               <Link
-                href={feature.comingSoon ? '#' : feature.href}
-                className={`block group ${feature.comingSoon ? 'pointer-events-none' : ''}`}
-                onClick={feature.comingSoon ? (e) => e.preventDefault() : undefined}
+                href={feature.href}
+                className="block group"
               >
                 <div
                   style={{
                     backgroundColor: colors.bgSecondary,
                     borderColor: colors.border,
-                    opacity: feature.comingSoon ? 0.5 : 1,
                   }}
                   className="relative overflow-hidden rounded-[28px] border h-[320px] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]"
                 >
@@ -214,22 +210,13 @@ export default function InventoryHubPage() {
                   {t(`hub.${feature.key}.description` as 'hub.shelf.description')}
                 </p>
 
-                {feature.comingSoon ? (
-                  <span
-                    className="inline-flex items-center justify-center px-5 py-2 rounded-full text-[14px] font-medium"
-                    style={{ backgroundColor: colors.bgTertiary, color: colors.textTertiary }}
-                  >
-                    {t(`hub.${feature.key}.cta` as 'hub.shelf.cta')}
-                  </span>
-                ) : (
-                  <Link
-                    href={feature.href}
-                    className="inline-flex items-center justify-center px-5 py-2 rounded-full text-[14px] font-medium transition-all hover:opacity-90"
-                    style={{ backgroundColor: colors.controlAccent, color: '#ffffff' }}
-                  >
-                    {t(`hub.${feature.key}.cta` as 'hub.shelf.cta')}
-                  </Link>
-                )}
+                <Link
+                  href={feature.href}
+                  className="inline-flex items-center justify-center px-5 py-2 rounded-full text-[14px] font-medium transition-all hover:opacity-90"
+                  style={{ backgroundColor: colors.controlAccent, color: '#ffffff' }}
+                >
+                  {t(`hub.${feature.key}.cta` as 'hub.shelf.cta')}
+                </Link>
               </div>
             </div>
           ))}

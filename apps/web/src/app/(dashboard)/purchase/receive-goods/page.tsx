@@ -91,7 +91,7 @@ export default function ReceiveGoodsPage() {
   });
 
   const submitSecurity = useSecurityAction({
-    actionKey: 'btn_receive_submit',
+    actionKey: 'btn_receive_confirm',
     level: 'L3',
     onExecute: () => submitMutation.mutate(),
   });

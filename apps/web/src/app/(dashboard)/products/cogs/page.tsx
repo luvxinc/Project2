@@ -219,7 +219,7 @@ export default function CogsPage() {
   });
 
   const editSecurity = useSecurityAction({
-    actionKey: 'btn_cogs_edit',
+    actionKey: 'btn_update_cogs',
     level: 'L2',
     onExecute: (code) => {
       if (!editingProduct) return;
@@ -237,7 +237,7 @@ export default function CogsPage() {
   });
 
   const createSecurity = useSecurityAction({
-    actionKey: 'btn_cogs_create',
+    actionKey: 'btn_batch_update_cogs',
     level: 'L2',
     onExecute: (code) => {
       createMutation.mutate({

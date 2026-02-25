@@ -218,7 +218,7 @@ export default function EditPOModal({ isOpen, order, onClose, onSuccess }: EditP
   });
 
   const editSecurity = useSecurityAction({
-    actionKey: 'btn_edit_po',
+    actionKey: 'btn_po_modify',
     level: 'L3',
     onExecute: (code) => updateMutation.mutate(code),
   });

@@ -1,0 +1,127 @@
+{
+  "hub": {
+    "upload": {
+      "title": "Transaction Upload",
+      "navTitle": "Upload",
+      "description": "Upload eBay transaction and earning CSV reports for ETL processing",
+      "cta": "Open Upload"
+    },
+    "reports": {
+      "title": "Sales Reports",
+      "navTitle": "Reports",
+      "description": "View detailed sales transaction reports and analytics",
+      "cta": "View Reports"
+    },
+    "visuals": {
+      "title": "Sales Visuals",
+      "navTitle": "Visuals",
+      "description": "Interactive sales performance charts and trend analysis",
+      "cta": "View Visuals"
+    }
+  },
+  "etl": {
+    "title": "Sales Transaction Upload",
+    "steps": {
+      "upload": "Upload",
+      "parse": "Parse",
+      "clean": "Fix SKU",
+      "transform": "Transform",
+      "processing": "Processing",
+      "done": "Done"
+    },
+    "upload": {
+      "csvFiles": "CSV Files",
+      "uploadHint": "Upload both Transaction and Earning eBay CSV reports together. File type and seller are detected automatically.",
+      "dropOrClick": "Drop CSV files here or click to browse (multiple files)",
+      "rowsDetected": "rows",
+      "typeTransaction": "Transaction",
+      "typeEarning": "Earning",
+      "typeUnknown": "Unknown",
+      "detectedSeller": "Detected seller",
+      "missingTransaction": "Missing Transaction report file",
+      "missingEarning": "Missing Earning report file. Please upload both CSVs together.",
+      "sellerMismatch": "Seller mismatch between Transaction and Earning files",
+      "settings": "FIFO Return Ratios",
+      "fifoRe": "Return (RE)",
+      "fifoCr": "Claim Request (CR)",
+      "fifoCc": "Claim Case (CC)",
+      "uploading": "Uploading...",
+      "uploadBtn": "Upload & Ingest",
+      "futureDate": "Data contains today's or future dates ({maxDate}). Latest date must be before today ({today}).",
+      "dateRangeMismatch": "Date range mismatch: Transaction ({transMin} ~ {transMax}) ≠ Earning ({earnMin} ~ {earnMax}). Both files must cover the same period."
+    },
+    "parse": {
+      "title": "SKU Parsing",
+      "desc": "Parse Custom Labels into SKU + Quantity using regex patterns. Invalid SKUs will be flagged for manual correction.",
+      "transIngested": "Transactions ingested",
+      "earnIngested": "Earnings ingested",
+      "duplicates": "duplicates skipped",
+      "parsing": "Parsing...",
+      "parseBtn": "Parse SKUs"
+    },
+    "clean": {
+      "title": "SKU Corrections",
+      "stats": "{ok} parsed OK, {fix} need correction",
+      "correctSku": "Correct SKU",
+      "selectSku": "Select correct SKU...",
+      "skipAll": "Skip All & Continue",
+      "fixing": "Applying fixes...",
+      "fixBtn": "Apply Fixes"
+    },
+    "transform": {
+      "title": "Confirm & Transform",
+      "desc": "This will transform raw data into cleaned transactions, apply fee allocation, and sync with FIFO inventory. This action cannot be undone.",
+      "fifoRe": "Return (RE) FIFO ratio",
+      "fifoCr": "Claim Request (CR) FIFO ratio",
+      "fifoCc": "Claim Case (CC) FIFO ratio",
+      "processing": "Processing...",
+      "confirmBtn": "Confirm & Run"
+    },
+    "processing": {
+      "title": "Processing..."
+    },
+    "done": {
+      "title": "ETL Complete",
+      "cleaned": "Cleaned Records",
+      "fifoOut": "FIFO Outbound",
+      "fifoReturn": "FIFO Returns",
+      "actions": "Action Breakdown",
+      "newBatch": "Upload New Batch"
+    }
+  },
+  "reports": {
+    "generatorTitle": "Report Generator",
+    "generatorDesc": "Configure analysis period and parameters to generate business intelligence reports",
+    "dateRange": "Analysis Period",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "businessParams": "Business Parameters",
+    "lossRates": "Loss Rates",
+    "supplyChain": "Supply Chain",
+    "leadTime": "Lead Time (months)",
+    "safetyStock": "Safety Stock (months)",
+    "startEngine": "Start Analysis Engine",
+    "generating": "Generating...",
+    "completing": "Completing...",
+    "cancel": "Cancel",
+    "generateBtn": "Generate Reports",
+    "generateSuccess": "All reports generated! {count} files created.",
+    "dateError": "Start date must be before end date",
+    "downloadAll": "Download All (.zip)",
+    "clearAll": "Clear All",
+    "clearConfirm": "Are you sure you want to clear all report files? This cannot be undone.",
+    "loading": "Loading files...",
+    "noFiles": "No Report Files",
+    "noFilesHint": "Use the Report Generator to create analysis reports.",
+    "fileList": "Generated Files",
+    "files": "files",
+    "download": "Download",
+    "preview": "Preview",
+    "previewTitle": "File Preview (first 100 rows)",
+    "showingRows": "Showing first 100 of {count} rows",
+    "noDataPreview": "No data to preview.",
+    "previewUnavailable": "Preview not available for this file type. Use download instead.",
+    "resultSuccess": "Success:",
+    "resultWarning": "Warning:"
+  }
+}

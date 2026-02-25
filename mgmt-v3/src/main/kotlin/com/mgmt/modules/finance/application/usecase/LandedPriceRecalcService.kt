@@ -99,12 +99,23 @@ class LandedPriceRecalcService(
                     existing.updatedAt = java.time.Instant.now()
                     landedPriceRepository.save(existing)
 
-                    // Sync fifo_layers.landedCost (V3 enhancement over V1)
+                    // Sync fifo_layers.landedCost
                     if (existing.fifoLayerId != null) {
                         val layer = fifoLayerRepository.findById(existing.fifoLayerId!!).orElse(null)
                         if (layer != null) {
                             layer.landedCost = priceData.landedPriceUsd
                             fifoLayerRepository.save(layer)
+                        }
+                    } else if (existing.fifoTranId != null) {
+                        // FIX: Fallback for migrated data where fifoLayerId is NULL.
+                        // Match via fifoTranId → layer.inTranId, and backfill fifoLayerId.
+                        val layer = fifoLayerRepository.findByInTranId(existing.fifoTranId!!)
+                        if (layer != null) {
+                            layer.landedCost = priceData.landedPriceUsd
+                            fifoLayerRepository.save(layer)
+                            // Backfill the linkage for future recalculations
+                            existing.fifoLayerId = layer.id
+                            landedPriceRepository.save(existing)
                         }
                     }
 

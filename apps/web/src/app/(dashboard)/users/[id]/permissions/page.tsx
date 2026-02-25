@@ -345,7 +345,7 @@ export default function UserPermissionsPage({ params }: { params: Promise<{ id: 
   });
 
   const permsSecurity = useSecurityAction({
-    actionKey: 'btn_user_permissions',
+    actionKey: 'btn_update_perms',
     level: 'L2',
     onExecute: (code) => {
       const permsRecord: Record<string, boolean> = {};

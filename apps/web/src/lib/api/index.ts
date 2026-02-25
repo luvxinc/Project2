@@ -60,3 +60,11 @@ export {
   type BatchCreateWarehouseRequest, type AisleConfig, type BayConfig,
   type DownloadBarcodeRequest,
 } from './inventory';
+export {
+  salesApi,
+  type EtlUploadRequest, type CsvTransactionRow, type CsvEarningRow,
+  type EtlUploadResponse, type EtlBatchStatus,
+  type ParseResult, type PendingSkuItem,
+  type SkuFixRequest, type SkuFixItem, type TransformResult,
+  type ReportFile, type ReportGenerateRequest, type ReportGenerateResult,
+} from './sales';

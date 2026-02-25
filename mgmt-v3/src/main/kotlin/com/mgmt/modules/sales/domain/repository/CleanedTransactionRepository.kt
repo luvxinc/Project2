@@ -4,7 +4,9 @@ import com.mgmt.modules.sales.domain.model.CleanedTransaction
 import com.mgmt.modules.sales.domain.model.SalesAction
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.Instant
 
@@ -36,4 +38,23 @@ interface CleanedTransactionRepository : JpaRepository<CleanedTransaction, Long>
 
     @Query("SELECT MAX(c.orderDate) FROM CleanedTransaction c")
     fun findMaxOrderDate(): Instant?
+
+    /** 4D dedup query — V1 parity: (order_number, seller, item_id, action) unique lookup */
+    @Query(
+        value = """
+            SELECT * FROM cleaned_transactions
+            WHERE order_number = :orderNumber
+              AND COALESCE(seller, '') = :seller
+              AND COALESCE(item_id, '') = :itemId
+              AND action = :action::sales_action
+            LIMIT 1
+        """,
+        nativeQuery = true
+    )
+    fun findBy4DKey(orderNumber: String, seller: String, itemId: String, action: String): CleanedTransaction?
+
+    /** P13: Working Set — bulk delete for re-transform */
+    @Modifying
+    @Query("DELETE FROM CleanedTransaction c WHERE c.orderNumber IN (:orderNumbers)")
+    fun deleteAllByOrderNumberIn(@Param("orderNumbers") orderNumbers: List<String>)
 }
