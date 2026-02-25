@@ -48,9 +48,12 @@ data/exports/
 .coverage
 htmlcov/
 
-# Agent/AI
+# Agent / AI (local only)
 .gemini/
+.agent/
+.claude/
+CLAUDE.md
 
-# Output files
+# Node.js / Frontends
 output/
 generated-pdfs/

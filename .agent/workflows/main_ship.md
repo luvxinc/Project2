@@ -1,1 +1,0 @@
-../core/workflows/ship.md
