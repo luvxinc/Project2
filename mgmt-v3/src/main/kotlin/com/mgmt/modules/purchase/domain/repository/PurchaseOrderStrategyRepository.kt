@@ -16,4 +16,7 @@ interface PurchaseOrderStrategyRepository : JpaRepository<PurchaseOrderStrategy,
 
     /** Find all strategy versions for a PO, ordered by strategySeq ASC (for history). */
     fun findAllByPoNumOrderByStrategySeqAsc(poNum: String): List<PurchaseOrderStrategy>
+
+    /** Batch-load strategies for multiple PO numbers (N+1 fix). */
+    fun findAllByPoNumIn(poNums: Collection<String>): List<PurchaseOrderStrategy>
 }

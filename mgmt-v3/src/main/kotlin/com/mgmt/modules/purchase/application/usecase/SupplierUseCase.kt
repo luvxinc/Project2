@@ -213,12 +213,16 @@ class SupplierUseCase(
     @Transactional(readOnly = true)
     fun findAllWithStrategy(): List<Pair<Supplier, SupplierStrategy?>> {
         val suppliers = supplierRepo.findAllByDeletedAtIsNullOrderBySupplierCodeAsc()
+        // Batch-load ALL applicable strategies in ONE query (N+1 fix)
+        val today = LocalDate.now()
+        val allStrategies = strategyRepo
+            .findAllByEffectiveDateLessThanEqualAndDeletedAtIsNullOrderByEffectiveDateDesc(today)
+        // Group by supplierCode, take first (= latest effectiveDate due to ORDER BY DESC)
+        val latestByCode = allStrategies.groupBy { it.supplierCode }
+            .mapValues { (_, list) -> list.first() }
+
         return suppliers.map { supplier ->
-            val latestStrategy = strategyRepo
-                .findFirstBySupplierCodeAndEffectiveDateLessThanEqualAndDeletedAtIsNullOrderByEffectiveDateDesc(
-                    supplier.supplierCode, LocalDate.now()
-                )
-            supplier to latestStrategy
+            supplier to latestByCode[supplier.supplierCode]
         }
     }
 

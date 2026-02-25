@@ -33,6 +33,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
         format_sql: true
+        default_batch_fetch_size: 20    # N+1 safety net for lazy collections
         jdbc:
           time_zone: America/Los_Angeles  # Pacific Time
 

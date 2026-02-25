@@ -50,15 +50,21 @@ class AbnormalController(
     ): ApiResponse<List<AbnormalListResponse>> {
         val allDiffs = diffRepo.findAll()
 
+        // Pre-load receives for all receiveIds in ONE query (N+1 fix)
+        val allReceiveIds = allDiffs.map { it.receiveId }.distinct()
+        val receiveDateMap = receiveRepo.findAllById(allReceiveIds)
+            .filter { it.deletedAt == null }
+            .associate { it.id to it.receiveDate.toString() }
+
         // Group by logisticNum
         val grouped = allDiffs.groupBy { it.logisticNum }
 
         val items = grouped.map { (logisticNum, diffs) ->
             val derivedStatus = deriveGroupStatus(diffs)
 
-            // Get receiveDate from the first Receive linked to this logisticNum
+            // Lookup receiveDate from pre-loaded map (was: N+1 per group)
             val receiveDate = diffs.firstNotNullOfOrNull { d ->
-                receiveRepo.findByIdAndDeletedAtIsNull(d.receiveId)?.receiveDate?.toString()
+                receiveDateMap[d.receiveId]
             } ?: ""
 
             // Aggregate
@@ -124,17 +130,15 @@ class AbnormalController(
 
         // Build currency map: poNum → currency from PurchaseOrderStrategy
         // V1: SELECT cur_currency FROM in_po_strategy WHERE po_num = :po_num
-        // V3: PurchaseOrderStrategy has poNum + currency directly
+        // V3: batch-load all strategies in ONE query (N+1 fix)
         val poNums = diffs.map { it.poNum }.distinct()
-        val currencyMap = mutableMapOf<String, String>()
-        try {
-            for (poNum in poNums) {
-                val strategy = strategyRepo.findByPoNum(poNum)
-                currencyMap[poNum] = strategy?.currency ?: "RMB"
-            }
+        val currencyMap = try {
+            strategyRepo.findAllByPoNumIn(poNums)
+                .associate { it.poNum to it.currency }
+                .toMutableMap()
+                .also { map -> poNums.forEach { map.putIfAbsent(it, "RMB") } }
         } catch (_: Exception) {
-            // Best-effort — if strategy lookup fails, default to RMB
-            poNums.forEach { currencyMap.putIfAbsent(it, "RMB") }
+            poNums.associateWith { "RMB" }.toMutableMap()
         }
 
         // Build item responses

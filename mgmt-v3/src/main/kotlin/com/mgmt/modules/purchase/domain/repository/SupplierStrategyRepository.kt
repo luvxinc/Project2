@@ -22,4 +22,9 @@ interface SupplierStrategyRepository : JpaRepository<SupplierStrategy, Long> {
     fun findBySupplierCodeAndEffectiveDateAndDeletedAtIsNull(
         supplierCode: String, effectiveDate: LocalDate
     ): SupplierStrategy?
+
+    /** Batch-load all active strategies with effectiveDate <= target (N+1 fix for findAllWithStrategy). */
+    fun findAllByEffectiveDateLessThanEqualAndDeletedAtIsNullOrderByEffectiveDateDesc(
+        targetDate: LocalDate
+    ): List<SupplierStrategy>
 }
