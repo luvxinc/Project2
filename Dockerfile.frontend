@@ -23,7 +23,9 @@ RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules 2>/dev/null || true
+# packages/shared may not have its own node_modules (hoisted to root)
+RUN if [ -d /tmp/shared_nm ]; then cp -r /tmp/shared_nm ./packages/shared/node_modules; fi
+COPY --from=deps /app/packages/shared/. ./packages/shared/
 
 COPY . .
 
@@ -48,7 +50,9 @@ ENV PORT=3000
 # Copy standalone output
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public 2>/dev/null || true
+# Copy public assets if they exist
+RUN mkdir -p ./apps/web/public
+COPY --from=builder /app/apps/web/public/. ./apps/web/public/
 
 USER esplus
 
