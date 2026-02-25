@@ -1,5 +1,6 @@
 package com.mgmt.modules.sales.api
 
+import com.mgmt.common.security.RequirePermission
 import com.mgmt.modules.sales.application.dto.*
 import com.mgmt.modules.sales.application.usecase.CleanedTransactionUseCase
 import com.mgmt.modules.sales.domain.model.CleanedTransaction
@@ -22,6 +23,7 @@ class CleanedTransactionController(
 ) {
 
     @GetMapping
+    @RequirePermission("module.sales.transactions.view")
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "50") limit: Int,
@@ -43,12 +45,14 @@ class CleanedTransactionController(
     }
 
     @GetMapping("/{id}")
+    @RequirePermission("module.sales.transactions.view")
     fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
         val tx = useCase.findOne(id)
         return ResponseEntity.ok(mapOf("success" to true, "data" to tx.toResponse()))
     }
 
     @GetMapping("/by-order/{orderNumber}")
+    @RequirePermission("module.sales.transactions.view")
     fun getByOrderNumber(@PathVariable orderNumber: String): ResponseEntity<Map<String, Any>> {
         val txs = useCase.findByOrderNumber(orderNumber)
         return ResponseEntity.ok(mapOf("success" to true, "data" to txs.map { it.toResponse() }))
@@ -56,6 +60,7 @@ class CleanedTransactionController(
 
     /** V1: _get_db_stats_before + _get_data_cutoff_date */
     @GetMapping("/stats")
+    @RequirePermission("module.sales.transactions.view")
     fun stats(): ResponseEntity<Map<String, Any>> {
         val stats = useCase.getStats()
         return ResponseEntity.ok(mapOf("success" to true, "data" to stats))

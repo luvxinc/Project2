@@ -1,5 +1,6 @@
 package com.mgmt.modules.sales.api
 
+import com.mgmt.common.security.RequirePermission
 import com.mgmt.modules.sales.application.dto.*
 import com.mgmt.modules.sales.application.usecase.RawTransactionUseCase
 import com.mgmt.modules.sales.domain.model.RawTransaction
@@ -19,6 +20,7 @@ class RawTransactionController(
 ) {
 
     @GetMapping
+    @RequirePermission("module.sales.transactions.view")
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "50") limit: Int,
@@ -39,12 +41,14 @@ class RawTransactionController(
     }
 
     @GetMapping("/{id}")
+    @RequirePermission("module.sales.transactions.view")
     fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
         val tx = useCase.findOne(id)
         return ResponseEntity.ok(mapOf("success" to true, "data" to tx.toDetailResponse()))
     }
 
     @GetMapping("/by-order/{orderNumber}")
+    @RequirePermission("module.sales.transactions.view")
     fun getByOrderNumber(@PathVariable orderNumber: String): ResponseEntity<Map<String, Any>> {
         val txs = useCase.findByOrderNumber(orderNumber)
         return ResponseEntity.ok(mapOf("success" to true, "data" to txs.map { it.toListResponse() }))

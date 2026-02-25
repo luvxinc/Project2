@@ -1,5 +1,6 @@
 package com.mgmt.modules.sales.api
 
+import com.mgmt.common.logging.AuditLog
 import com.mgmt.common.security.RequirePermission
 import com.mgmt.common.security.SecurityLevel
 import com.mgmt.modules.inventory.application.usecase.SalesFifoSyncUseCase
@@ -33,6 +34,7 @@ class SalesEtlController(
      */
     @PostMapping("/upload")
     @RequirePermission("module.sales.etl.upload")
+    @AuditLog(module = "SALES", action = "ETL_UPLOAD")
     fun upload(
         @RequestBody request: EtlUploadRequest,
         auth: Authentication,
@@ -46,6 +48,7 @@ class SalesEtlController(
      */
     @PostMapping("/{batchId}/parse")
     @RequirePermission("module.sales.etl.upload")
+    @AuditLog(module = "SALES", action = "ETL_PARSE")
     fun parse(@PathVariable batchId: String): ResponseEntity<Map<String, Any>> {
         val result = parseUseCase.parse(batchId)
         return ResponseEntity.ok(mapOf("success" to true, "data" to result))
@@ -72,6 +75,7 @@ class SalesEtlController(
      */
     @PostMapping("/{batchId}/fix-sku")
     @RequirePermission("module.sales.etl.upload")
+    @AuditLog(module = "SALES", action = "ETL_FIX_SKU")
     @SecurityLevel(level = "L3", actionKey = "btn_etl_fix_sku")
     fun fixSku(
         @PathVariable batchId: String,
@@ -88,6 +92,7 @@ class SalesEtlController(
      */
     @PostMapping("/{batchId}/transform")
     @RequirePermission("module.sales.etl.upload")
+    @AuditLog(module = "SALES", action = "ETL_TRANSFORM")
     @SecurityLevel(level = "L3", actionKey = "btn_etl_transform")
     fun transform(
         @PathVariable batchId: String,

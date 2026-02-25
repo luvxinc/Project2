@@ -1,5 +1,7 @@
 package com.mgmt.modules.sales.api
 
+import com.mgmt.common.logging.AuditLog
+import com.mgmt.common.security.RequirePermission
 import com.mgmt.modules.sales.application.usecase.VisualAggregateUseCase
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -10,7 +12,7 @@ import java.time.format.DateTimeFormatter
  * SalesVisualController — V1 parity: apps/visuals/views.py get_chart_data()
  *
  * Single endpoint that returns line or pie chart data.
- * V3 does NOT need unlock/lock — covered by RBAC.
+ * V3 security: @RequirePermission + @AuditLog (V1 used session unlock).
  */
 @RestController
 @RequestMapping("/sales/visuals")
@@ -34,6 +36,8 @@ class SalesVisualController(
      *   fees    — comma-separated: "cogs,platformFee"
      */
     @GetMapping("/chart-data")
+    @RequirePermission("module.sales.visuals.view")
+    @AuditLog(module = "SALES", action = "VIEW_CHART_DATA")
     fun getChartData(
         @RequestParam start: String,
         @RequestParam end: String,
