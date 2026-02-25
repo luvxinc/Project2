@@ -35,7 +35,14 @@ interface ProductRepository : JpaRepository<Product, String>, JpaSpecificationEx
     @Query("SELECT DISTINCT p.type FROM Product p WHERE p.deletedAt IS NULL AND p.type IS NOT NULL ORDER BY p.type")
     fun findDistinctTypes(): List<String>
 
+    /** Lightweight projection for category hierarchy — avoids loading full Product entities */
+    @Query("SELECT p.category, p.subcategory, p.type FROM Product p WHERE p.deletedAt IS NULL AND p.category IS NOT NULL")
+    fun findCategoryHierarchyTuples(): List<Array<String?>>
+
     fun countByDeletedAtIsNull(): Long
 
     fun existsBySkuAndDeletedAtIsNull(sku: String): Boolean
+
+    /** Batch-load products by SKU list (N+1 fix for LandedPriceRecalcService) */
+    fun findAllBySkuInAndDeletedAtIsNull(skus: Collection<String>): List<Product>
 }

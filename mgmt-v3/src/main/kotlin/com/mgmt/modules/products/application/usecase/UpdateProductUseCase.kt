@@ -60,6 +60,8 @@ class UpdateProductUseCase(
         product.updatedBy = username
         val saved = repo.save(product)
 
+        log.info("Product updated: {} by {}, newCogs={}", saved.sku, username, saved.cogs)
+
         // P1-2: FIFO init cost sync — if COGS changed, update INIT FIFO records
         if (saved.cogs.compareTo(oldCogs) != 0) {
             syncFifoInitCost(saved.sku, saved.cogs)

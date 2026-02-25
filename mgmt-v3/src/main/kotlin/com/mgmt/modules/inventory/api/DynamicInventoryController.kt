@@ -69,7 +69,8 @@ class DynamicInventoryController(
         }
 
         // 1. All SKUs — union of FIFO layers + PO items (covers INIT + purchase SKUs)
-        val fifoSkus = fifoLayerRepo.findAll().map { it.sku }.toSet()
+        val allLayers = fifoLayerRepo.findAll()
+        val fifoSkus = allLayers.map { it.sku }.toSet()
         val poSkus = poItemRepo.findDistinctSkus().toSet()
         val allSkus = (fifoSkus + poSkus).toList()
 
@@ -83,7 +84,6 @@ class DynamicInventoryController(
 
         // 3. Theory inventory — FIFO layers with remaining qty
         val pacificZone = java.time.ZoneId.of("America/Los_Angeles")
-        val allLayers = fifoLayerRepo.findAll()
         val layersByDate = allLayers.filter {
             it.inDate.atZone(pacificZone).toLocalDate() <= targetDate
         }

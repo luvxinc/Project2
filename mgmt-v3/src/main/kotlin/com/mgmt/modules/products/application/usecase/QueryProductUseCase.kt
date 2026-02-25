@@ -54,18 +54,18 @@ class QueryProductUseCase(
 
     /**
      * Build category hierarchy tree: { category: { subcategory: [type] } }
-     * Used by frontend cascading dropdowns for COGS edit modal.
+     * Uses lightweight tuple query — only fetches category/subcategory/type columns.
      */
     fun getCategoryHierarchy(): Map<String, Map<String, List<String>>> {
-        val products = repo.findAllByDeletedAtIsNull()
+        val tuples = repo.findCategoryHierarchyTuples()
         val hierarchy = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
 
-        for (p in products) {
-            val cat = p.category ?: continue
+        for (tuple in tuples) {
+            val cat = tuple[0] ?: continue
             val subMap = hierarchy.getOrPut(cat) { mutableMapOf() }
-            val sub = p.subcategory ?: continue
+            val sub = tuple[1] ?: continue
             val typeSet = subMap.getOrPut(sub) { mutableSetOf() }
-            val type = p.type ?: continue
+            val type = tuple[2] ?: continue
             typeSet.add(type)
         }
 
