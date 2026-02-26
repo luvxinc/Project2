@@ -17,6 +17,7 @@ interface WarehouseCardProps {
   onDelete: () => void;
   onDownload: () => void;
   onCustomDownload: () => void;
+  onClick?: () => void;
 }
 
 export function WarehouseCard({
@@ -25,6 +26,7 @@ export function WarehouseCard({
   onDelete,
   onDownload,
   onCustomDownload,
+  onClick,
 }: WarehouseCardProps) {
   const t = useTranslations('inventory');
   const { theme } = useTheme();
@@ -44,7 +46,7 @@ export function WarehouseCard({
           borderColor: colors.border,
         }}
         className="relative overflow-hidden rounded-[22px] border h-[512px] transition-transform duration-300 hover:scale-[1.01] group cursor-pointer"
-        onClick={onEdit}
+        onClick={onClick || onEdit}
       >
         {/* 3D Scene filling the entire card */}
         <div className="absolute inset-0">
@@ -59,6 +61,14 @@ export function WarehouseCard({
           >
             {warehouse.warehouse}
           </h3>
+          {warehouse.hasInventory && (
+            <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              <svg className="w-3 h-3 text-white/80" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              <span className="text-[10px] text-white/70 font-medium">Inventory</span>
+            </div>
+          )}
         </div>
 
         {/* Stats overlay — bottom with gradient */}

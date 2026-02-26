@@ -38,6 +38,7 @@ data class CreateStocktakeRequest(
     val stocktakeDate: LocalDate,
     val note: String? = null,
     val items: List<CreateStocktakeItemRequest>,
+    val locationDetails: List<CreateStocktakeLocationDetailRequest>? = null,
 )
 
 data class CreateStocktakeItemRequest(
@@ -45,9 +46,22 @@ data class CreateStocktakeItemRequest(
     val countedQty: Int,
 )
 
+data class CreateStocktakeLocationDetailRequest(
+    val sku: String,
+    val qtyPerBox: Int,
+    val numOfBox: Int,
+    val warehouse: String,
+    val aisle: String,   // WLR: L/R
+    val bay: Int,        // LOC: number
+    val level: String,   // LEVEL: G/M/T
+    val bin: String = "",  // SLR: L/R or empty
+    val slot: String = "", // LLR: L/R or empty
+)
+
 data class UpdateStocktakeRequest(
     val note: String? = null,
     val items: List<CreateStocktakeItemRequest>? = null,
+    val locationDetails: List<CreateStocktakeLocationDetailRequest>? = null,
 )
 
 // ═══════════════════════════════════════════════
@@ -63,6 +77,7 @@ data class WarehouseLocationResponse(
     val bin: String,
     val slot: String,
     val barcode: String?,
+    val hasInventory: Boolean = false,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -119,6 +134,7 @@ data class WarehouseTreeResponse(
 data class WarehouseNode(
     val warehouse: String,
     val totalLocations: Int,
+    val hasInventory: Boolean = false,
     val aisles: List<AisleNode>,
 )
 
@@ -138,10 +154,88 @@ data class LevelNode(
 )
 
 data class BinNode(
-    val bin: Int,
+    val bin: String,
     val slots: List<String>,
 )
 
 data class DownloadBarcodeRequest(
     val barcodes: List<String>,
 )
+
+// ═══════════════════════════════════════════════
+// STOCKTAKE LOCATION DETAIL DTOs
+// ═══════════════════════════════════════════════
+
+data class StocktakeLocationDetailResponse(
+    val id: Long,
+    val locationId: Long,
+    val sku: String,
+    val qtyPerBox: Int,
+    val numOfBox: Int,
+    val totalQty: Int,
+    val warehouse: String,
+    val aisle: String,
+    val bay: Int,
+    val level: String,
+    val bin: String,
+    val slot: String,
+    val barcode: String?,
+)
+
+// ═══════════════════════════════════════════════
+// WAREHOUSE INVENTORY DTOs (3D Hover + Product List)
+// ═══════════════════════════════════════════════
+
+data class WarehouseInventoryResponse(
+    val warehouse: String,
+    val locations: List<LocationInventoryItem>,
+    val totalLocations: Int,
+    val occupiedLocations: Int,
+)
+
+data class LocationInventoryItem(
+    val locationId: Long,
+    val aisle: String,
+    val bay: Int,
+    val level: String,
+    val bin: String,
+    val slot: String,
+    val barcode: String?,
+    val items: List<LocationSkuItem>,
+)
+
+data class LocationSkuItem(
+    val sku: String,
+    val qtyPerBox: Int,
+    val numOfBox: Int,
+    val totalQty: Int,
+)
+
+data class WarehouseProductListResponse(
+    val warehouse: String,
+    val products: List<WarehouseProductSummary>,
+    val totalSkus: Int,
+    val totalQuantity: Int,
+    val totalValue: BigDecimal,
+)
+
+data class WarehouseProductSummary(
+    val sku: String,
+    val totalQty: Int,
+    val fifoCost: BigDecimal,
+    val totalValue: BigDecimal,
+)
+
+// ═══════════════════════════════════════════════
+// STOCKTAKE EVENT DTOs (History)
+// ═══════════════════════════════════════════════
+
+data class StocktakeEventResponse(
+    val id: Long,
+    val stocktakeId: Long,
+    val eventType: String,
+    val summary: String?,
+    val createdBy: String?,
+    val createdAt: Instant,
+)
+

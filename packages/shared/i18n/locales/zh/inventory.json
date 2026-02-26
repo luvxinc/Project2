@@ -136,7 +136,34 @@
       "message": "创建您的第一个仓库和货架位置，开始使用。",
       "createFirst": "创建仓库"
     },
-    "retry": "重试"
+    "retry": "重试",
+    "main": {
+      "editBtn": "编辑布局",
+      "inventoryTitle": "库存地图",
+      "inventorySubtitle": "悬停在位置上查看存放的产品",
+      "productListTitle": "产品汇总",
+      "productListSubtitle": "此仓库中存放的所有 SKU",
+      "totalSkus": "SKU 总数",
+      "totalQty": "总数量",
+      "totalValue": "总价值",
+      "sku": "SKU",
+      "qty": "数量",
+      "fifoCost": "FIFO 成本",
+      "value": "价值",
+      "noInventory": "暂无库存数据",
+      "noInventoryDesc": "上传包含位置明细的盘存数据以填充库存信息。",
+      "occupiedLocations": "已占用 {count} 个",
+      "emptyLocations": "空闲 {count} 个",
+      "hasInventoryLocked": "此仓库已有产品存放，无法修改布局。",
+      "lockedTitle": "布局已锁定",
+      "lockedMessage": "此仓库的货架位置上目前有产品存放。在清除所有库存之前，无法修改或删除货架布局。",
+      "lockedOk": "知道了",
+      "hoverSku": "SKU",
+      "hoverQty": "总数量",
+      "hoverPerBox": "每盒数量",
+      "hoverBoxes": "箱数",
+      "emptySlot": "空"
+    }
   },
   "stocktake": {
     "title": "盘存管理",
@@ -154,7 +181,7 @@
     "upload": {
       "title": "上传盘存数据",
       "desc": "选择日期并上传 CSV 文件完成盘存录入",
-      "csvHint": "CSV 文件需要包含 SKU 和 Quantity 列",
+      "csvHint": "CSV 格式: SKU, (跳过), 每盒数量, 箱数, 通道(L/R), 货架号, 层级(G/M/T), 储位(L/R), 槽位(L/R), 仓库, (跳过)",
       "dragDrop": "拖拽 CSV 文件到此处，或点击选择",
       "selectFile": "选择文件",
       "targetDate": "归属日期",
@@ -202,7 +229,27 @@
       "viewSkipped": "查看跳过的 SKU 列表",
       "copy": "复制",
       "startNewSync": "开始新同步",
-      "backToHub": "返回库存"
+      "backToHub": "返回库存",
+      "locationValidation": "位置校验",
+      "locationValid": "所有位置已验证",
+      "locationInvalid": "{count} 个位置未找到",
+      "locationCorrection": "位置修正",
+      "locationCorrectionHint": "以下 CSV 中的位置在系统中不存在，请从已有位置中选择正确的位置。",
+      "csvLocation": "CSV 位置",
+      "correctLocation": "正确位置",
+      "selectLocation": "选择位置...",
+      "locationCols": {
+        "sku": "SKU",
+        "qtyPerBox": "每盒数量",
+        "numOfBox": "箱数",
+        "totalQty": "总计",
+        "aisle": "通道",
+        "bay": "货架",
+        "level": "层级",
+        "bin": "储位",
+        "slot": "槽位",
+        "warehouse": "仓库"
+      }
     },
     "edit": {
       "title": "库存修改向导",

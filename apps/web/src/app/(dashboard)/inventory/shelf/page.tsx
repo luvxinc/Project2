@@ -9,10 +9,11 @@ import { SecurityCodeDialog } from '@/components/ui/security-code-dialog';
 import { WarehouseCard } from './components/WarehouseCard';
 import { WarehouseModal } from './components/WarehouseModal';
 import { CustomDownloadView } from './components/CustomDownloadView';
+import { WarehouseMainPage } from './components/WarehouseMainPage';
 import { animate, stagger } from 'animejs';
 import type { WarehouseNode, WarehouseTreeResponse } from '@/lib/api/inventory';
 
-type View = 'list' | 'customDownload';
+type View = 'list' | 'customDownload' | 'warehouseMain';
 
 export default function ShelfPage() {
   const t = useTranslations('inventory');
@@ -35,6 +36,8 @@ export default function ShelfPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editTarget, setEditTarget] = useState<WarehouseNode | undefined>();
   const [customDownloadWarehouse, setCustomDownloadWarehouse] = useState<string | undefined>();
+  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseNode | null>(null);
+  const [lockedAlertOpen, setLockedAlertOpen] = useState(false);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<WarehouseNode | null>(null);
@@ -112,6 +115,10 @@ export default function ShelfPage() {
   }, [loading, data, updateScrollButtons]);
 
   const handleEdit = (warehouse: WarehouseNode) => {
+    if (warehouse.hasInventory) {
+      setLockedAlertOpen(true);
+      return;
+    }
     setModalMode('edit');
     setEditTarget(warehouse);
     setModalOpen(true);
@@ -124,8 +131,17 @@ export default function ShelfPage() {
   };
 
   const handleDelete = (warehouse: WarehouseNode) => {
+    if (warehouse.hasInventory) {
+      setLockedAlertOpen(true);
+      return;
+    }
     setDeleteTarget(warehouse);
     deleteSecurity.trigger();
+  };
+
+  const handleWarehouseClick = (warehouse: WarehouseNode) => {
+    setSelectedWarehouse(warehouse);
+    setView('warehouseMain');
   };
 
   const handleDownload = async (warehouse: WarehouseNode) => {
@@ -161,13 +177,46 @@ export default function ShelfPage() {
     loadData();
   };
 
+  // Edit from warehouse main page — go back to list and open modal
+  const handleEditFromMain = (wh: WarehouseNode) => {
+    setView('list');
+    setSelectedWarehouse(null);
+    setTimeout(() => handleEdit(wh), 50);
+  };
+
+  // Warehouse main page view
+  if (view === 'warehouseMain' && selectedWarehouse) {
+    const goBack = () => { setView('list'); setSelectedWarehouse(null); loadData(); };
+    return (
+      <div
+        style={{ backgroundColor: colors.bg }}
+        className="min-h-screen"
+        onClick={(e) => {
+          // Click outside content area → go back
+          if (e.target === e.currentTarget) goBack();
+        }}
+      >
+        <section
+          className="max-w-[1200px] mx-auto px-6 py-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <WarehouseMainPage
+            warehouse={selectedWarehouse}
+            onBack={goBack}
+            onEdit={handleEditFromMain}
+          />
+        </section>
+      </div>
+    );
+  }
+
   // Custom download view
   if (view === 'customDownload' && data) {
     return (
       <CustomDownloadView
         warehouses={data.warehouses}
         initialWarehouse={customDownloadWarehouse}
-        onBack={() => setView('list')}
+        onBack={() => { setView('list'); loadData(); }}
       />
     );
   }
@@ -329,6 +378,7 @@ export default function ShelfPage() {
                   onDelete={() => handleDelete(warehouse)}
                   onDownload={() => handleDownload(warehouse)}
                   onCustomDownload={() => handleCustomDownload(warehouse)}
+                  onClick={() => handleWarehouseClick(warehouse)}
                 />
               </div>
             ))}
@@ -363,6 +413,31 @@ export default function ShelfPage() {
         isLoading={isDeleting}
         error={deleteSecurity.error}
       />
+
+      {/* Locked alert modal */}
+      {lockedAlertOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setLockedAlertOpen(false)}>
+          <div className="rounded-2xl p-6 max-w-sm mx-4 shadow-2xl" style={{ backgroundColor: colors.bgElevated, border: `1px solid ${colors.separator}` }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.orange}18` }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: colors.orange }}>
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold" style={{ color: colors.text }}>{t('shelf.main.lockedTitle')}</h3>
+            </div>
+            <p className="text-sm mb-5" style={{ color: colors.textSecondary }}>{t('shelf.main.lockedMessage')}</p>
+            <button
+              onClick={() => setLockedAlertOpen(false)}
+              className="w-full py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+              style={{ backgroundColor: colors.controlAccent, color: '#fff' }}>
+              {t('shelf.main.lockedOk')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hide scrollbar */}
       <style>{`

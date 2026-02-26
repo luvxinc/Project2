@@ -43,7 +43,7 @@ export function CustomDownloadView({
     if (selectedLocations.length === 0) return;
     setIsDownloading(true);
     try {
-      const blob = await inventoryApi.downloadSingleBarcode({ locations: selectedLocations });
+      const blob = await inventoryApi.downloadSingleBarcode({ barcodes: selectedLocations });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -60,8 +60,14 @@ export function CustomDownloadView({
   };
 
   return (
-    <div style={{ backgroundColor: colors.bg }} className="min-h-screen">
-      <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-20">
+    <div
+      style={{ backgroundColor: colors.bg }}
+      className="min-h-screen"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onBack();
+      }}
+    >
+      <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-20" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

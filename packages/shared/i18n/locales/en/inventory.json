@@ -136,7 +136,34 @@
       "message": "Get started by creating your first warehouse with shelf locations.",
       "createFirst": "Create Warehouse"
     },
-    "retry": "Retry"
+    "retry": "Retry",
+    "main": {
+      "editBtn": "Edit Layout",
+      "inventoryTitle": "Inventory Map",
+      "inventorySubtitle": "Hover over locations to see stored products",
+      "productListTitle": "Product Summary",
+      "productListSubtitle": "All SKUs stored in this warehouse",
+      "totalSkus": "Total SKUs",
+      "totalQty": "Total Quantity",
+      "totalValue": "Total Value",
+      "sku": "SKU",
+      "qty": "Quantity",
+      "fifoCost": "FIFO Cost",
+      "value": "Value",
+      "noInventory": "No inventory data",
+      "noInventoryDesc": "Upload a stocktake with location details to populate inventory data.",
+      "occupiedLocations": "{count} occupied",
+      "emptyLocations": "{count} empty",
+      "hasInventoryLocked": "This warehouse has products stored. Layout editing is disabled.",
+      "lockedTitle": "Layout Locked",
+      "lockedMessage": "This warehouse currently has products stored in its locations. The shelf layout cannot be modified or deleted until all inventory is cleared.",
+      "lockedOk": "OK",
+      "hoverSku": "SKU",
+      "hoverQty": "Total Qty",
+      "hoverPerBox": "Qty/Box",
+      "hoverBoxes": "Boxes",
+      "emptySlot": "Empty"
+    }
   },
   "stocktake": {
     "title": "Stocktake Management",
@@ -154,7 +181,7 @@
     "upload": {
       "title": "Upload Stocktake Data",
       "desc": "Select a date and upload CSV to record stocktake",
-      "csvHint": "CSV file must contain SKU and Quantity columns",
+      "csvHint": "CSV file: SKU, (skip), Qty/Box, Boxes, Aisle(L/R), Bay#, Level(G/M/T), Bin(L/R), Slot(L/R), Warehouse, (skip)",
       "dragDrop": "Drag CSV file here, or click to select",
       "selectFile": "Select File",
       "targetDate": "Target Date",
@@ -202,7 +229,27 @@
       "viewSkipped": "View skipped SKU list",
       "copy": "Copy",
       "startNewSync": "Start New Sync",
-      "backToHub": "Back to Inventory"
+      "backToHub": "Back to Inventory",
+      "locationValidation": "Location Validation",
+      "locationValid": "All locations verified",
+      "locationInvalid": "{count} locations not found",
+      "locationCorrection": "Location Correction",
+      "locationCorrectionHint": "The following locations from your CSV don't exist. Select the correct location from existing ones.",
+      "csvLocation": "CSV Location",
+      "correctLocation": "Correct Location",
+      "selectLocation": "Select location...",
+      "locationCols": {
+        "sku": "SKU",
+        "qtyPerBox": "Qty/Box",
+        "numOfBox": "Boxes",
+        "totalQty": "Total",
+        "aisle": "Aisle",
+        "bay": "Bay",
+        "level": "Level",
+        "bin": "Bin",
+        "slot": "Slot",
+        "warehouse": "Warehouse"
+      }
     },
     "edit": {
       "title": "Inventory Edit",

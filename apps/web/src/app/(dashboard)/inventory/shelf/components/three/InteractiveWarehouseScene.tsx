@@ -1,20 +1,35 @@
 'use client';
 
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Grid, Html } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Html } from '@react-three/drei';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import type { WarehouseNode } from '@/lib/api/inventory';
-import { LEVEL_COLORS } from '../../constants';
+import { LEVEL_COLORS_HEX } from '../../constants';
 
-const SELECTED_COLOR = '#FFD700';
-const HOVER_COLOR = '#FFFFFF';
+// ═══════════ V1 Constants (same as WarehouseScene) ═══════════
+const WH_WIDTH = 10;
+const WALKWAY_WIDTH = 2.0;
+const ENTRANCE_DEPTH = 2.0;
+const SHELF_HEIGHT = 1.0;
+const SHELF_GAP = 0.5;
+const LEVEL_ORDER = ['G', 'M', 'T'];
 
-const BAY_WIDTH = 1.2;
-const LEVEL_HEIGHT = 1;
-const SHELF_DEPTH = 0.8;
-const AISLE_GAP = 2.5;
+const SELECTED_COLOR = 0xffd700;
+const SELECTED_EMISSIVE = 0xffa500;
+
+// ═══════════ Theme colors ═══════════
+const SCENE_COLORS = {
+  dark: {
+    canvasBg: '#1a1d24', floor: 0x2a3540, walkway: 0x5a5a4a, wireframe: 0x4a90d9, entry: 0x6aaf6a,
+    labelBg: 'rgba(0,0,0,0.6)', labelDefault: 0xffffff, labelAisle: 0xffff00, labelEntry: 0x00ff00,
+  },
+  light: {
+    canvasBg: '#e4e6ea', floor: 0xc0c8d4, walkway: 0xb0b0a8, wireframe: 0x5a8cc0, entry: 0x5a9a5a,
+    labelBg: 'rgba(255,255,255,0.85)', labelDefault: 0x333333, labelAisle: 0x806600, labelEntry: 0x1a7a1a,
+  },
+};
 
 interface InteractiveWarehouseSceneProps {
   warehouse: WarehouseNode;
@@ -22,234 +37,257 @@ interface InteractiveWarehouseSceneProps {
   selectedLocations: string[];
 }
 
-interface LocationBox {
-  code: string;
-  position: [number, number, number];
-  level: string;
-}
-
-function SelectableBox({
-  code,
-  position,
-  level,
-  isSelected,
-  onToggle,
-}: {
-  code: string;
-  position: [number, number, number];
-  level: string;
-  isSelected: boolean;
-  onToggle: (code: string) => void;
+// ═══════════ SpriteLabel ═══════════
+function SpriteLabel({ text, position, color = 0xffffff, scale = 1.2, bgColor = 'rgba(0,0,0,0.6)' }: {
+  text: string; position: [number, number, number]; color?: number; scale?: number; bgColor?: string;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const meshRef = useRef<THREE.Mesh>(null);
-  const { gl } = useThree();
-
-  const color = isSelected ? SELECTED_COLOR : hovered ? HOVER_COLOR : (LEVEL_COLORS[level] || '#999');
-  const opacity = isSelected ? 0.7 : hovered ? 0.5 : 0.2;
-
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    canvas.width = 256; canvas.height = 128;
+    ctx.fillStyle = bgColor; ctx.fillRect(0, 0, 256, 128);
+    ctx.font = 'bold 56px Arial';
+    ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 64);
+    return new THREE.CanvasTexture(canvas);
+  }, [text, color, bgColor]);
   return (
-    <mesh
-      ref={meshRef}
-      position={position}
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggle(code);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-        gl.domElement.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setHovered(false);
-        gl.domElement.style.cursor = 'auto';
-      }}
-    >
-      <boxGeometry args={[BAY_WIDTH * 0.85, LEVEL_HEIGHT * 0.8, SHELF_DEPTH * 0.85]} />
-      <meshStandardMaterial
-        color={color}
-        transparent
-        opacity={opacity}
-        emissive={isSelected ? SELECTED_COLOR : hovered ? HOVER_COLOR : '#000000'}
-        emissiveIntensity={isSelected ? 0.3 : hovered ? 0.15 : 0}
-      />
-      {hovered && (
-        <Html center style={{ pointerEvents: 'none' }}>
-          <div
-            className="px-2 py-1 rounded text-[11px] font-mono whitespace-nowrap"
-            style={{
-              background: 'rgba(0,0,0,0.85)',
-              color: '#fff',
-              transform: 'translateY(-30px)',
-            }}
-          >
-            {code}
-          </div>
-        </Html>
-      )}
-    </mesh>
+    <sprite position={position} scale={[scale * 2.5, scale * 1.25, 1]}>
+      <spriteMaterial map={texture} transparent />
+    </sprite>
   );
 }
 
-function InteractiveContent({
-  warehouse,
-  selectedLocations,
-  onToggle,
-}: {
-  warehouse: WarehouseNode;
-  selectedLocations: string[];
-  onToggle: (code: string) => void;
+function WireBorder({ w, h, d, position, color = 0x4a90d9 }: {
+  w: number; h: number; d: number; position: [number, number, number]; color?: number;
 }) {
-  // Build location boxes from warehouse tree
-  const locationBoxes: LocationBox[] = useMemo(() => {
-    const boxes: LocationBox[] = [];
-    let aisleZ = 0;
+  const geo = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), [w, h, d]);
+  return (<lineSegments geometry={geo} position={position}><lineBasicMaterial color={color} /></lineSegments>);
+}
 
-    for (const aisle of warehouse.aisles) {
-      const bayCount = aisle.bays.length;
-      const startX = -(bayCount * BAY_WIDTH) / 2 + BAY_WIDTH / 2;
+// ═══════════ Selectable Block ═══════════
+function SelectableBlock({ w, h, d, position, color, isSelected, hovered, locationCode, onHoverIn, onHoverOut, onClick }: {
+  w: number; h: number; d: number; position: [number, number, number]; color: number;
+  isSelected: boolean; hovered: boolean; locationCode: string;
+  onHoverIn: (code: string) => void; onHoverOut: () => void; onClick: (code: string) => void;
+}) {
+  const edgesGeo = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), [w, h, d]);
+  const displayColor = useMemo(() => {
+    if (isSelected) return SELECTED_COLOR;
+    if (hovered) return 0xffffff;
+    return color;
+  }, [color, isSelected, hovered]);
+  const emissive = useMemo(() => {
+    if (isSelected) return SELECTED_EMISSIVE;
+    if (hovered) return new THREE.Color(color).multiplyScalar(0.5).getHex();
+    return 0x000000;
+  }, [color, isSelected, hovered]);
+  const edgeColor = isSelected ? SELECTED_COLOR : hovered ? 0xffffff : 0x000000;
 
-      for (let bi = 0; bi < aisle.bays.length; bi++) {
-        const bay = aisle.bays[bi];
-        for (let li = 0; li < bay.levels.length; li++) {
-          const level = bay.levels[li];
-          const y = li * LEVEL_HEIGHT + LEVEL_HEIGHT / 2;
+  return (
+    <group position={position}>
+      <mesh castShadow
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(locationCode);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHoverIn(locationCode);
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onHoverOut();
+        }}
+      >
+        <boxGeometry args={[w, h, d]} />
+        <meshLambertMaterial color={displayColor} emissive={emissive} emissiveIntensity={isSelected ? 0.4 : hovered ? 0.2 : 0} />
+      </mesh>
+      <lineSegments geometry={edgesGeo}>
+        <lineBasicMaterial color={edgeColor} transparent opacity={isSelected || hovered ? 0.8 : 0.3} />
+      </lineSegments>
+      {hovered && (
+        <Html center style={{ pointerEvents: 'none' }}>
+          <div style={{ transform: 'translateY(-30px)', background: 'rgba(0,0,0,0.85)', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+            {isSelected ? '✓ ' : ''}{locationCode}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
 
-          // Each bin/slot gets a location code
-          for (const bin of level.bins) {
-            for (const slot of bin.slots) {
-              boxes.push({
-                code: slot,
-                position: [startX + bi * BAY_WIDTH, y, aisleZ],
-                level: level.level,
-              });
+// ═══════════ Interactive Content ═══════════
+function InteractiveContent({ warehouse, selectedLocations, onToggle, sc }: {
+  warehouse: WarehouseNode; selectedLocations: string[];
+  onToggle: (code: string) => void; sc: typeof SCENE_COLORS.dark;
+}) {
+  const [hoveredCode, setHoveredCode] = useState<string | null>(null);
+
+  const renderData = useMemo(() => warehouse.aisles.map(a => ({
+    side: a.aisle,
+    bays: a.bays.map(b => ({
+      bayNum: b.bay,
+      levels: b.levels.map(l => l.level),
+      binCount: b.levels[0]?.bins?.length || 0,
+      slotCount: b.levels[0]?.bins?.[0]?.slots?.length || 0,
+    })),
+  })), [warehouse]);
+
+  const hasL = renderData.some(a => a.side === 'L');
+  const hasR = renderData.some(a => a.side === 'R');
+  const maxBays = Math.max(
+    renderData.find(a => a.side === 'L')?.bays.length || 0,
+    renderData.find(a => a.side === 'R')?.bays.length || 0,
+    1,
+  );
+
+  const shelfWidth = (WH_WIDTH - WALKWAY_WIDTH) / 2 - 0.2;
+  const shelfDepth = 6.0;
+  const shelfZoneLength = maxBays * shelfDepth + Math.max(0, maxBays - 1) * SHELF_GAP;
+  const whDepth = shelfZoneLength + ENTRANCE_DEPTH;
+  const backWallZ = -whDepth / 2;
+  const shelfStartZ = backWallZ + shelfDepth / 2;
+  const xL = -(WH_WIDTH / 2 - shelfWidth / 2 - 0.1);
+  const xR = WH_WIDTH / 2 - shelfWidth / 2 - 0.1;
+  const entryZ = whDepth / 2 - ENTRANCE_DEPTH / 2;
+  const labelZ = whDepth / 2;
+  const smallGap = 0.05;
+
+  // ═══════════ Build per-block location codes using actual warehouse tree ═══════════
+  const whName = warehouse.warehouse; // e.g. 'A005'
+
+  const renderShelfBay = (aisle: typeof warehouse.aisles[0], idx: number, x: number) => {
+    const zPos = shelfStartZ + idx * (shelfDepth + SHELF_GAP);
+    const bay = aisle.bays[idx];
+    if (!bay) return null;
+
+    return (
+      <group key={`bay-${aisle.aisle}-${bay.bay}`}>
+        <group position={[x, 0, zPos]}>
+          {LEVEL_ORDER.map(levelCode => {
+            const levelData = bay.levels.find(l => l.level === levelCode);
+            if (!levelData) return null;
+            const enabledIndex = bay.levels.filter(l => LEVEL_ORDER.indexOf(l.level) <= LEVEL_ORDER.indexOf(levelCode)).length - 1;
+            const y = SHELF_HEIGHT / 2 + 0.1 + enabledIndex * (SHELF_HEIGHT + 0.1);
+            const baseColor = LEVEL_COLORS_HEX[levelCode] || 0xcccccc;
+            const levelKey = `${aisle.aisle}_${bay.bay}_${levelCode}`;
+
+            // Case A: No bins — single block per level
+            if (levelData.bins.length === 0) {
+              const code = `${whName}-${aisle.aisle}-${bay.bay}-${levelCode}`;
+              return (
+                <SelectableBlock key={levelKey}
+                  w={shelfWidth} h={SHELF_HEIGHT} d={shelfDepth} position={[0, y, 0]}
+                  color={baseColor} isSelected={selectedLocations.includes(code)}
+                  hovered={hoveredCode === code} locationCode={code}
+                  onHoverIn={setHoveredCode} onHoverOut={() => setHoveredCode(null)} onClick={onToggle}
+                />
+              );
             }
-          }
-        }
-      }
-      aisleZ += AISLE_GAP;
-    }
-    return boxes;
-  }, [warehouse]);
 
-  // Deduplicate by (aisle, bay, level) for visual rendering
-  // We render one box per level per bay, representing all bins/slots
-  const visualBoxes = useMemo(() => {
-    const map = new Map<string, LocationBox>();
-    for (const box of locationBoxes) {
-      const key = `${box.position[0]}-${box.position[1]}-${box.position[2]}`;
-      if (!map.has(key)) map.set(key, box);
-    }
-    return Array.from(map.values());
-  }, [locationBoxes]);
+            // Case B: Bins
+            const binDepthEach = shelfDepth / levelData.bins.length;
+            const startZ = -shelfDepth / 2;
 
-  // Build a map from visual position key to all location codes at that position
-  const positionToLocations = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const box of locationBoxes) {
-      const key = `${box.position[0]}-${box.position[1]}-${box.position[2]}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(box.code);
-    }
-    return map;
-  }, [locationBoxes]);
+            return (
+              <group key={levelKey}>
+                {levelData.bins.map((bin, bIdx) => {
+                  const binZCenter = startZ + bIdx * binDepthEach + binDepthEach / 2;
 
-  const isBoxSelected = useCallback((box: LocationBox) => {
-    const key = `${box.position[0]}-${box.position[1]}-${box.position[2]}`;
-    const codes = positionToLocations.get(key) || [];
-    return codes.some(c => selectedLocations.includes(c));
-  }, [selectedLocations, positionToLocations]);
+                  // Case B1: No slots — one block per bin
+                  if (bin.slots.length === 0) {
+                    const code = `${whName}-${aisle.aisle}-${bay.bay}-${levelCode}-${bin.bin}`;
+                    return (
+                      <SelectableBlock key={`${levelKey}_b${bIdx}`}
+                        w={shelfWidth} h={SHELF_HEIGHT} d={binDepthEach - smallGap} position={[0, y, binZCenter]}
+                        color={baseColor} isSelected={selectedLocations.includes(code)}
+                        hovered={hoveredCode === code} locationCode={code}
+                        onHoverIn={setHoveredCode} onHoverOut={() => setHoveredCode(null)} onClick={onToggle}
+                      />
+                    );
+                  }
 
-  const handleToggle = useCallback((code: string) => {
-    // Find all codes at this position and toggle them all
-    const box = locationBoxes.find(b => b.code === code);
-    if (!box) { onToggle(code); return; }
-    const key = `${box.position[0]}-${box.position[1]}-${box.position[2]}`;
-    const codes = positionToLocations.get(key) || [code];
-    // Toggle: if any selected, deselect all; otherwise select all
-    const anySelected = codes.some(c => selectedLocations.includes(c));
-    if (anySelected) {
-      // Remove all codes at this position
-      for (const c of codes) onToggle(c);
-    } else {
-      // Add all codes at this position
-      for (const c of codes) onToggle(c);
-    }
-  }, [locationBoxes, positionToLocations, selectedLocations, onToggle]);
+                  // Case C: Slots — one block per slot (finest granularity)
+                  const slotDepthEach = binDepthEach / bin.slots.length;
+                  const binZStart = startZ + bIdx * binDepthEach;
+
+                  return (
+                    <group key={`${levelKey}_b${bIdx}`}>
+                      {bin.slots.map((rawSlot, sIdx) => {
+                        const slotZCenter = binZStart + sIdx * slotDepthEach + slotDepthEach / 2;
+                        // Full barcode: WH-AISLE-BAY-LEVEL-BIN-SLOT (e.g. A005-L-1-G-L-R)
+                        const fullCode = `${whName}-${aisle.aisle}-${bay.bay}-${levelCode}-${bin.bin}-${rawSlot}`;
+                        return (
+                          <SelectableBlock key={`${levelKey}_b${bIdx}_s${sIdx}`}
+                            w={shelfWidth} h={SHELF_HEIGHT} d={slotDepthEach - smallGap} position={[0, y, slotZCenter]}
+                            color={baseColor} isSelected={selectedLocations.includes(fullCode)}
+                            hovered={hoveredCode === fullCode} locationCode={fullCode}
+                            onHoverIn={setHoveredCode} onHoverOut={() => setHoveredCode(null)} onClick={onToggle}
+                          />
+                        );
+                      })}
+                    </group>
+                  );
+                })}
+              </group>
+            );
+          })}
+        </group>
+        <SpriteLabel text={`Bay: ${bay.bay}`}
+          position={[x, bay.levels.length * (SHELF_HEIGHT + 0.1) + 0.7, zPos]}
+          color={sc.labelDefault} scale={0.6} bgColor={sc.labelBg}
+        />
+      </group>
+    );
+  };
 
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 15, 10]} intensity={0.8} />
-      <directionalLight position={[-5, 10, -5]} intensity={0.3} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 15, 10]} intensity={0.8} castShadow />
 
-      <Grid
-        position={[0, -0.01, 0]}
-        args={[50, 50]}
-        cellSize={1}
-        cellThickness={0.5}
-        cellColor="#606060"
-        sectionSize={5}
-        sectionThickness={1}
-        sectionColor="#808080"
-        fadeDistance={30}
-        infiniteGrid
-      />
+      <mesh position={[0, -0.1, 0]}>
+        <boxGeometry args={[WH_WIDTH, 0.2, whDepth]} />
+        <meshLambertMaterial color={sc.floor} />
+      </mesh>
+      <WireBorder w={WH_WIDTH} h={0.5} d={whDepth} position={[0, 0.25, 0]} color={sc.wireframe} />
+      <mesh position={[0, 0.02, 0]}>
+        <boxGeometry args={[WALKWAY_WIDTH, 0.02, whDepth]} />
+        <meshLambertMaterial color={sc.walkway} />
+      </mesh>
+      <SpriteLabel text="Aisle" position={[0, 1, 0]} color={sc.labelAisle} bgColor={sc.labelBg} />
+      <mesh position={[0, 0.08, entryZ]}>
+        <boxGeometry args={[WH_WIDTH / 2, 0.15, ENTRANCE_DEPTH * 0.8]} />
+        <meshLambertMaterial color={sc.entry} />
+      </mesh>
+      <SpriteLabel text="Entry" position={[0, 0.8, entryZ]} color={sc.labelEntry} bgColor={sc.labelBg} />
 
-      {/* Metal posts structure */}
-      {warehouse.aisles.map((aisle, ai) => {
-        const bayCount = aisle.bays.length;
-        const startX = -(bayCount * BAY_WIDTH) / 2 + BAY_WIDTH / 2;
-        const z = ai * AISLE_GAP;
-        const maxLevels = Math.max(...aisle.bays.map(b => b.levels.length));
-        const totalHeight = maxLevels * LEVEL_HEIGHT;
+      {hasL && (
+        <>
+          <SpriteLabel text="Aisle: L" position={[xL, 3.0, labelZ]} color={sc.labelDefault} scale={0.9} bgColor={sc.labelBg} />
+          {warehouse.aisles.filter(a => a.aisle === 'L').flatMap(a => a.bays.map((_, idx) => renderShelfBay(a, idx, xL)))}
+        </>
+      )}
+      {hasR && (
+        <>
+          <SpriteLabel text="Aisle: R" position={[xR, 3.0, labelZ]} color={sc.labelDefault} scale={0.9} bgColor={sc.labelBg} />
+          {warehouse.aisles.filter(a => a.aisle === 'R').flatMap(a => a.bays.map((_, idx) => renderShelfBay(a, idx, xR)))}
+        </>
+      )}
 
-        return (
-          <group key={`structure-${ai}`}>
-            {aisle.bays.map((_, bi) => {
-              const x = startX + bi * BAY_WIDTH;
-              return [
-                [-BAY_WIDTH / 2, -SHELF_DEPTH / 2],
-                [BAY_WIDTH / 2, -SHELF_DEPTH / 2],
-                [-BAY_WIDTH / 2, SHELF_DEPTH / 2],
-                [BAY_WIDTH / 2, SHELF_DEPTH / 2],
-              ].map(([dx, dz], pi) => (
-                <mesh key={`post-${ai}-${bi}-${pi}`} position={[x + dx, totalHeight / 2, z + dz]}>
-                  <boxGeometry args={[0.06, totalHeight, 0.06]} />
-                  <meshStandardMaterial color="#8a8a8a" metalness={0.7} roughness={0.3} />
-                </mesh>
-              ));
-            })}
-          </group>
-        );
-      })}
-
-      {/* Selectable location boxes */}
-      {visualBoxes.map((box) => (
-        <SelectableBox
-          key={box.code}
-          code={box.code}
-          position={box.position}
-          level={box.level}
-          isSelected={isBoxSelected(box)}
-          onToggle={handleToggle}
-        />
-      ))}
-
-      <OrbitControls enablePan enableZoom enableRotate maxPolarAngle={Math.PI / 2.1} />
+      <OrbitControls enablePan enableZoom enableRotate maxPolarAngle={Math.PI / 2 - 0.1} minDistance={5} maxDistance={50} />
     </>
   );
 }
 
-export function InteractiveWarehouseScene({
-  warehouse,
-  onSelectionChange,
-  selectedLocations,
-}: InteractiveWarehouseSceneProps) {
+// ═══════════ Exported Component ═══════════
+export function InteractiveWarehouseScene({ warehouse, onSelectionChange, selectedLocations }: InteractiveWarehouseSceneProps) {
   const { theme } = useTheme();
-  const colors = themeColors[theme];
+  const sc = SCENE_COLORS[theme] || SCENE_COLORS.dark;
 
+  // Per-location toggle (finest granularity)
   const handleToggle = useCallback((code: string) => {
     const newSelection = selectedLocations.includes(code)
       ? selectedLocations.filter(c => c !== code)
@@ -257,26 +295,13 @@ export function InteractiveWarehouseScene({
     onSelectionChange(newSelection);
   }, [selectedLocations, onSelectionChange]);
 
-  const aisleCount = warehouse.aisles.length;
-  const maxBays = Math.max(1, ...warehouse.aisles.map(a => a.bays.length));
-  const distance = Math.max(8, maxBays * 1.2, aisleCount * 2);
-
   return (
     <div className="w-full h-full" style={{ minHeight: 400 }}>
       <Canvas
-        camera={{
-          position: [distance * 0.6, distance * 0.5, distance * 0.8],
-          fov: 50,
-          near: 0.1,
-          far: 200,
-        }}
-        style={{ background: colors.bg }}
+        camera={{ position: [0, 15, 18], fov: 50, near: 0.1, far: 1000 }}
+        style={{ background: sc.canvasBg }}
       >
-        <InteractiveContent
-          warehouse={warehouse}
-          selectedLocations={selectedLocations}
-          onToggle={handleToggle}
-        />
+        <InteractiveContent warehouse={warehouse} selectedLocations={selectedLocations} onToggle={handleToggle} sc={sc} />
       </Canvas>
     </div>
   );

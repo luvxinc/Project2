@@ -40,6 +40,9 @@ class WarehouseLocation(
     @Column(name = "barcode", length = 50, insertable = false, updatable = false)
     var barcode: String? = null,
 
+    @Column(name = "has_inventory", nullable = false)
+    var hasInventory: Boolean = false,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
 

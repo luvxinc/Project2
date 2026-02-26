@@ -24,6 +24,7 @@ export interface AisleConfig {
 export interface WarehouseNode {
   warehouse: string;
   totalLocations: number;
+  hasInventory: boolean;
   aisles: AisleNode[];
 }
 
@@ -43,8 +44,8 @@ export interface LevelNode {
 }
 
 export interface BinNode {
-  bin: number;
-  slots: string[];       // full location codes
+  bin: string;
+  slots: string[];       // raw slot names (e.g. 'L', 'R')
 }
 
 export interface WarehouseTreeResponse {
@@ -67,7 +68,7 @@ export interface BatchCreateWarehouseRequest {
 }
 
 export interface DownloadBarcodeRequest {
-  locations: string[];
+  barcodes: string[];
 }
 
 // ═══════════════════════════════════════════════
@@ -103,17 +104,104 @@ export interface CreateStocktakeItemRequest {
   countedQty: number;
 }
 
+export interface CreateStocktakeLocationDetailRequest {
+  sku: string;
+  qtyPerBox: number;
+  numOfBox: number;
+  warehouse: string;
+  aisle: string;
+  bay: number;
+  level: string;
+  bin: string;
+  slot: string;
+}
+
 export interface CreateStocktakeRequest {
   stocktakeDate: string;
   note?: string;
   items: CreateStocktakeItemRequest[];
+  locationDetails?: CreateStocktakeLocationDetailRequest[];
   sec_code_l3?: string;
 }
 
 export interface UpdateStocktakeRequest {
   note?: string;
   items?: CreateStocktakeItemRequest[];
+  locationDetails?: CreateStocktakeLocationDetailRequest[];
   sec_code_l3?: string;
+}
+
+// ═══════════════════════════════════════════════
+// WAREHOUSE INVENTORY TYPES (3D Hover + Product List)
+// ═══════════════════════════════════════════════
+
+export interface LocationSkuItem {
+  sku: string;
+  qtyPerBox: number;
+  numOfBox: number;
+  totalQty: number;
+}
+
+export interface LocationInventoryItem {
+  locationId: number;
+  aisle: string;
+  bay: number;
+  level: string;
+  bin: string;
+  slot: string;
+  barcode: string | null;
+  items: LocationSkuItem[];
+}
+
+export interface WarehouseInventoryResponse {
+  warehouse: string;
+  locations: LocationInventoryItem[];
+  totalLocations: number;
+  occupiedLocations: number;
+}
+
+export interface WarehouseProductSummary {
+  sku: string;
+  totalQty: number;
+  fifoCost: number;
+  totalValue: number;
+}
+
+export interface WarehouseProductListResponse {
+  warehouse: string;
+  products: WarehouseProductSummary[];
+  totalSkus: number;
+  totalQuantity: number;
+  totalValue: number;
+}
+
+// ═══════════════════════════════════════════════
+// STOCKTAKE EVENT TYPES
+// ═══════════════════════════════════════════════
+
+export interface StocktakeEventItem {
+  id: number;
+  stocktakeId: number;
+  eventType: string;
+  summary: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface StocktakeLocationDetailItem {
+  id: number;
+  locationId: number;
+  sku: string;
+  qtyPerBox: number;
+  numOfBox: number;
+  totalQty: number;
+  warehouse: string;
+  aisle: string;
+  bay: number;
+  level: string;
+  bin: string;
+  slot: string;
+  barcode: string | null;
 }
 
 // ═══════════════════════════════════════════════
@@ -228,6 +316,28 @@ export const inventoryApi = {
     api.delete<{ success: boolean }>(`/inventory/stocktakes/${id}`, {
       sec_code_l3: securityCode,
     }),
+
+  // Get stocktake location details
+  getStocktakeLocations: (id: number) =>
+    api.get<StocktakeLocationDetailItem[]>(`/inventory/stocktakes/${id}/locations`),
+
+  // Get stocktake event history
+  getStocktakeEvents: (id: number) =>
+    api.get<StocktakeEventItem[]>(`/inventory/stocktakes/${id}/events`),
+
+  // ═══════════════════ WAREHOUSE INVENTORY ═══════════════════
+
+  // Get warehouse inventory map (3D hover)
+  getWarehouseInventory: (warehouse: string) =>
+    api.get<WarehouseInventoryResponse>(
+      `/inventory/warehouse-shelves/${encodeURIComponent(warehouse)}/inventory`
+    ),
+
+  // Get warehouse product list (SKU totals + FIFO value)
+  getWarehouseProducts: (warehouse: string) =>
+    api.get<WarehouseProductListResponse>(
+      `/inventory/warehouse-shelves/${encodeURIComponent(warehouse)}/products`
+    ),
 };
 
 // ═══════════════════════════════════════════════

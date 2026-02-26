@@ -19,6 +19,10 @@ interface WarehouseLocationRepository : JpaRepository<WarehouseLocation, Long>, 
         warehouse: String, aisle: String, bay: Int, level: String, bin: String, slot: String,
     ): Boolean
 
+    fun findByWarehouseAndAisleAndBayAndLevelAndBinAndSlot(
+        warehouse: String, aisle: String, bay: Int, level: String, bin: String, slot: String,
+    ): WarehouseLocation?
+
     @Modifying
     @Query("DELETE FROM WarehouseLocation w WHERE w.warehouse = :warehouse")
     fun deleteAllByWarehouse(@Param("warehouse") warehouse: String): Int
@@ -29,4 +33,10 @@ interface WarehouseLocationRepository : JpaRepository<WarehouseLocation, Long>, 
     fun existsByWarehouse(warehouse: String): Boolean
 
     fun countByWarehouse(warehouse: String): Long
+
+    @Query("SELECT COUNT(w) > 0 FROM WarehouseLocation w WHERE w.warehouse = :warehouse AND w.hasInventory = true")
+    fun hasInventoryInWarehouse(@Param("warehouse") warehouse: String): Boolean
+
+    @Query("SELECT w FROM WarehouseLocation w WHERE w.warehouse = :warehouse AND w.hasInventory = true")
+    fun findLocationsWithInventory(@Param("warehouse") warehouse: String): List<WarehouseLocation>
 }

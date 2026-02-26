@@ -93,8 +93,7 @@ class WarehouseShelfUseCase(
 
                         for ((binName, binLocations) in byBin.toSortedMap()) {
                             val slots = binLocations.map { it.slot }.filter { it.isNotEmpty() }.sorted()
-                            val binNum = binName.toIntOrNull() ?: 0
-                            binList.add(BinNode(bin = binNum, slots = slots))
+                            binList.add(BinNode(bin = binName, slots = slots))
                         }
 
                         levelList.add(LevelNode(level = lvl, bins = binList))
@@ -109,6 +108,7 @@ class WarehouseShelfUseCase(
             warehouseList.add(WarehouseNode(
                 warehouse = whName,
                 totalLocations = locations.size,
+                hasInventory = locations.any { it.hasInventory },
                 aisles = aisleList,
             ))
         }
@@ -132,6 +132,11 @@ class WarehouseShelfUseCase(
         val warehouseName = warehouse.trim().uppercase()
         if (!repo.existsByWarehouse(warehouseName)) {
             throw NotFoundException("inventory.errors.warehouseNotFound")
+        }
+
+        // Position locking: block modification if any location has inventory
+        if (repo.hasInventoryInWarehouse(warehouseName)) {
+            throw BadRequestException("inventory.errors.warehouseHasInventory")
         }
 
         // Delete old locations
@@ -165,6 +170,11 @@ class WarehouseShelfUseCase(
         val warehouseName = warehouse.trim().uppercase()
         if (!repo.existsByWarehouse(warehouseName)) {
             throw NotFoundException("inventory.errors.warehouseNotFound")
+        }
+
+        // Position locking: block deletion if any location has inventory
+        if (repo.hasInventoryInWarehouse(warehouseName)) {
+            throw BadRequestException("inventory.errors.warehouseHasInventory")
         }
 
         val deleted = repo.deleteAllByWarehouse(warehouseName)

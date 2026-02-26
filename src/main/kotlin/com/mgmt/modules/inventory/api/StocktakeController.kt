@@ -14,6 +14,15 @@ import org.springframework.web.bind.annotation.*
 
 /**
  * StocktakeController — Physical inventory count REST API.
+ *
+ * Endpoints:
+ *   1. GET    /inventory/stocktakes           — List all stocktakes
+ *   2. GET    /inventory/stocktakes/{id}       — Detail with items
+ *   3. POST   /inventory/stocktakes           — Create with location details
+ *   4. PUT    /inventory/stocktakes/{id}       — Update items/details
+ *   5. DELETE /inventory/stocktakes/{id}       — Delete stocktake
+ *   6. GET    /inventory/stocktakes/{id}/locations — Location detail entries
+ *   7. GET    /inventory/stocktakes/{id}/events    — Audit history
  */
 @RestController
 @RequestMapping("/inventory/stocktakes")
@@ -53,8 +62,54 @@ class StocktakeController(
     @SecurityLevel(level = "L3", actionKey = "btn_delete_stocktake")
     @AuditLog(module = "INVENTORY", action = "DELETE_STOCKTAKE", riskLevel = "HIGH")
     fun delete(@PathVariable id: Long): ResponseEntity<Any> {
-        stocktakeUseCase.delete(id)
+        stocktakeUseCase.delete(id, SecurityUtils.currentUsername())
         return ResponseEntity.ok(ApiResponse.ok(mapOf("success" to true)))
+    }
+
+    // ═══════════ Location Details ═══════════
+
+    @GetMapping("/{id}/locations")
+    @RequirePermission("module.inventory.stocktake")
+    fun getLocationDetails(@PathVariable id: Long): ResponseEntity<Any> {
+        val details = stocktakeUseCase.findLocationDetails(id)
+        val response = details.map { d ->
+            val loc = d.location!!
+            StocktakeLocationDetailResponse(
+                id = d.id,
+                locationId = d.locationId,
+                sku = d.sku,
+                qtyPerBox = d.qtyPerBox,
+                numOfBox = d.numOfBox,
+                totalQty = d.totalQty,
+                warehouse = loc.warehouse,
+                aisle = loc.aisle,
+                bay = loc.bay,
+                level = loc.level,
+                bin = loc.bin,
+                slot = loc.slot,
+                barcode = loc.barcode,
+            )
+        }
+        return ResponseEntity.ok(ApiResponse.ok(response))
+    }
+
+    // ═══════════ Event History ═══════════
+
+    @GetMapping("/{id}/events")
+    @RequirePermission("module.inventory.stocktake")
+    fun getEvents(@PathVariable id: Long): ResponseEntity<Any> {
+        val events = stocktakeUseCase.findEvents(id)
+        val response = events.map { e ->
+            StocktakeEventResponse(
+                id = e.id,
+                stocktakeId = e.stocktakeId,
+                eventType = e.eventType,
+                summary = e.summary,
+                createdBy = e.createdBy,
+                createdAt = e.createdAt,
+            )
+        }
+        return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
     // ═══════════ Helpers ═══════════
@@ -71,3 +126,4 @@ class StocktakeController(
         createdAt = st.createdAt, updatedAt = st.updatedAt,
     )
 }
+

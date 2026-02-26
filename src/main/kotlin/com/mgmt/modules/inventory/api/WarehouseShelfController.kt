@@ -7,6 +7,7 @@ import com.mgmt.common.security.SecurityLevel
 import com.mgmt.common.security.SecurityUtils
 import com.mgmt.modules.inventory.application.dto.BatchCreateWarehouseRequest
 import com.mgmt.modules.inventory.application.dto.DownloadBarcodeRequest
+import com.mgmt.modules.inventory.application.usecase.WarehouseInventoryUseCase
 import com.mgmt.modules.inventory.application.usecase.WarehouseShelfUseCase
 import com.mgmt.modules.inventory.infrastructure.pdf.ShelfBarcodePdfService
 import jakarta.validation.Valid
@@ -24,16 +25,19 @@ import org.springframework.web.bind.annotation.*
  *   1. GET    /inventory/warehouse-shelves           — Hierarchical warehouse tree + stats
  *   2. GET    /inventory/warehouse-shelves/warehouses — Warehouse name list
  *   3. POST   /inventory/warehouse-shelves           — Batch create (Cartesian product)
- *   4. PUT    /inventory/warehouse-shelves/{warehouse} — Update layout
- *   5. DELETE /inventory/warehouse-shelves/{warehouse} — Delete entire warehouse
+ *   4. PUT    /inventory/warehouse-shelves/{warehouse} — Update layout (blocked if has inventory)
+ *   5. DELETE /inventory/warehouse-shelves/{warehouse} — Delete entire warehouse (blocked if has inventory)
  *   6. POST   /inventory/warehouse-shelves/barcode/single — Single-location PDF
  *   7. GET    /inventory/warehouse-shelves/barcode/batch  — All-warehouse ZIP
  *   8. GET    /inventory/warehouse-shelves/barcode/{warehouse} — Single-warehouse PDF
+ *   9. GET    /inventory/warehouse-shelves/{warehouse}/inventory — Location→product mapping (3D hover)
+ *  10. GET    /inventory/warehouse-shelves/{warehouse}/products — SKU totals + FIFO value
  */
 @RestController
 @RequestMapping("/inventory/warehouse-shelves")
 class WarehouseShelfController(
     private val shelfUseCase: WarehouseShelfUseCase,
+    private val inventoryUseCase: WarehouseInventoryUseCase,
     private val pdfService: ShelfBarcodePdfService,
 ) {
 
@@ -157,4 +161,27 @@ class WarehouseShelfController(
             .body(pdfBytes)
     }
 
+    // ═══════════════════════════════════════════════
+    // 9. WAREHOUSE INVENTORY (3D Hover)
+    // ═══════════════════════════════════════════════
+
+    @GetMapping("/{warehouse}/inventory")
+    @RequirePermission("module.inventory.shelf.view")
+    fun getWarehouseInventory(@PathVariable warehouse: String): ResponseEntity<Any> {
+        val response = inventoryUseCase.getWarehouseInventory(warehouse)
+        return ResponseEntity.ok(ApiResponse.ok(response))
+    }
+
+    // ═══════════════════════════════════════════════
+    // 10. WAREHOUSE PRODUCTS (Product List + FIFO Value)
+    // ═══════════════════════════════════════════════
+
+    @GetMapping("/{warehouse}/products")
+    @RequirePermission("module.inventory.shelf.view")
+    fun getWarehouseProducts(@PathVariable warehouse: String): ResponseEntity<Any> {
+        val response = inventoryUseCase.getWarehouseProducts(warehouse)
+        return ResponseEntity.ok(ApiResponse.ok(response))
+    }
+
 }
+
