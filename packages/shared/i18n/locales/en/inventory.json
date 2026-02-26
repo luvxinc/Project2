@@ -1,11 +1,11 @@
 {
   "hub": {
     "shelf": {
-      "title": "Shelf Codes",
-      "navTitle": "Shelf",
-      "subtitle": "Warehouse Location System",
-      "description": "Create and manage warehouse shelf locations with structured aisle-bay-level codes",
-      "cta": "Manage Shelves"
+      "title": "Warehouse Locations",
+      "navTitle": "Locations",
+      "subtitle": "Location Management System",
+      "description": "Create and manage warehouse locations with structured aisle-bay-level codes",
+      "cta": "Manage Locations"
     },
     "dynamic": {
       "title": "Dynamic Inventory",
@@ -67,7 +67,7 @@
     "noDataDownload": "No data to download"
   },
   "shelf": {
-    "title": "Shelf Code Management",
+    "title": "Location Management",
     "subtitle": "Warehouse location system for inventory tracking",
     "card": {
       "locations": "Locations",
