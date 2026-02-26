@@ -71,13 +71,7 @@ export default function StocktakePage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ─── Cell edit modal ───
-  const [editingCell, setEditingCell] = useState<{ sku: string; date: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  // Pending edit for security flow
-  const pendingEditRef = useRef<{ sku: string; date: string; newVal: number; stId: number; updatedItems: { sku: string; countedQty: number }[] } | null>(null);
 
   // Refs
   const tableRef = useRef<HTMLDivElement>(null);
@@ -105,34 +99,7 @@ export default function StocktakePage() {
     },
   });
 
-  // ─── Security for cell edit ───
-  const securityEdit = useSecurityAction({
-    actionKey: 'btn_edit_stocktake',
-    level: 'L3',
-    onExecute: async (code: string) => {
-      const pending = pendingEditRef.current;
-      if (!pending) return;
-      try {
-        setSaving(true);
-        await inventoryApi.updateStocktake(pending.stId, { items: pending.updatedItems, sec_code_l3: code });
 
-        // Optimistic local update
-        setDetails(prev => prev.map(d =>
-          d.id === pending.stId
-            ? { ...d, items: pending.updatedItems.map((item, i) => ({ id: d.items[i]?.id ?? 0, ...item })) }
-            : d
-        ));
-        setEditingCell(null);
-        pendingEditRef.current = null;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Save failed';
-        setError(msg);
-        securityEdit.setError(msg);
-      } finally {
-        setSaving(false);
-      }
-    },
-  });
 
   // ─── Load data ───
   const loadStocktakes = useCallback(async () => {
@@ -202,41 +169,7 @@ export default function StocktakePage() {
     securityDelete.trigger();
   };
 
-  // ─── Cell click → open edit modal ───
-  const handleCellClick = (sku: string, date: string) => {
-    const val = pivot.matrix[sku]?.[date];
-    setEditingCell({ sku, date });
-    setEditValue(val !== null && val !== undefined ? String(val) : '0');
-  };
 
-  const editCurrentVal = editingCell ? pivot.matrix[editingCell.sku]?.[editingCell.date] : null;
-  const editNewVal = editValue !== '' ? parseInt(editValue, 10) : NaN;
-  const editVariance = !isNaN(editNewVal) && editCurrentVal !== null && editCurrentVal !== undefined
-    ? editNewVal - editCurrentVal
-    : null;
-  const editIsValid = !isNaN(editNewVal) && editNewVal >= 0 && (editCurrentVal === null || editNewVal !== editCurrentVal);
-
-  const handleEditSubmit = () => {
-    if (!editingCell || !editIsValid) return;
-    const { sku, date } = editingCell;
-    const newVal = editNewVal;
-
-    const st = details.find(d => d.stocktakeDate === date);
-    if (!st) return;
-
-    const updatedItems = st.items.map(item =>
-      item.sku === sku
-        ? { sku: item.sku, countedQty: newVal }
-        : { sku: item.sku, countedQty: item.countedQty }
-    );
-
-    if (!st.items.find(item => item.sku === sku)) {
-      updatedItems.push({ sku, countedQty: newVal });
-    }
-
-    pendingEditRef.current = { sku, date, newVal, stId: st.id, updatedItems };
-    securityEdit.trigger();
-  };
 
   // ─── Helpers ───
   const existingDates = stocktakes.map(s => s.stocktakeDate);
@@ -442,20 +375,18 @@ export default function StocktakePage() {
                       <span className="truncate block max-w-[180px]" title={sku}>{sku}</span>
                     </td>
 
-                    {/* Quantity cells — click to open edit modal */}
+                    {/* Quantity cells — read-only */}
                     {pivot.allDates.map(date => {
                       const val = pivot.matrix[sku]?.[date];
 
                       return (
                         <td
                           key={date}
-                          className="px-3 py-2 text-center font-mono cursor-pointer transition-colors hover:bg-blue-500/10"
+                          className="px-3 py-2 text-center font-mono"
                           style={{
                             color: val === null ? colors.textTertiary : colors.text,
                             fontWeight: val !== null ? 500 : 400,
                           }}
-                          onClick={() => handleCellClick(sku, date)}
-                          title="Click to edit"
                         >
                           {val !== null ? val.toLocaleString() : '—'}
                         </td>
@@ -541,117 +472,7 @@ export default function StocktakePage() {
         </div>
       )}
 
-      {/* ═══ Edit Cell Modal ═══ */}
-      {editingCell && !securityEdit.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: hexToRgba('#000000', 0.5), backdropFilter: 'blur(6px)' }}
-          onClick={() => setEditingCell(null)}>
-          <div className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
-            style={{ backgroundColor: colors.bgElevated }}
-            onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="px-6 pt-6 pb-3">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: `linear-gradient(135deg, ${colors.blue}, ${colors.controlAccent})` }}>
-                  <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold" style={{ color: colors.text }}>
-                    {tEdit('updateSingle')}
-                  </h3>
-                </div>
-              </div>
-            </div>
 
-            <div className="px-6 pb-6 space-y-4">
-              {/* SKU & Date info */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="px-3 py-2 rounded-lg" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
-                  <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: colors.textTertiary }}>SKU</div>
-                  <div className="text-sm font-mono font-semibold" style={{ color: colors.text }}>{editingCell.sku}</div>
-                </div>
-                <div className="px-3 py-2 rounded-lg" style={{ background: cardBg, border: `1px solid ${borderColor}` }}>
-                  <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: colors.textTertiary }}>{t('table.date')}</div>
-                  <div className="text-sm font-mono font-semibold" style={{ color: colors.text }}>{editingCell.date}</div>
-                </div>
-              </div>
-
-              {/* Current value */}
-              <div className="flex items-center justify-between px-3 py-2.5 rounded-lg"
-                style={{ background: hexToRgba(colors.blue, 0.06), border: `1px solid ${hexToRgba(colors.blue, 0.15)}` }}>
-                <span className="text-xs" style={{ color: colors.textSecondary }}>{tEdit('currentValue')}</span>
-                <span className="text-xl font-bold font-mono" style={{ color: colors.controlAccent }}>
-                  {editCurrentVal !== null && editCurrentVal !== undefined ? editCurrentVal.toLocaleString() : '—'}
-                </span>
-              </div>
-
-              {/* New value input */}
-              <div>
-                <label className="text-xs font-medium mb-1.5 block" style={{ color: colors.textSecondary }}>
-                  {tEdit('newQuantity')}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && editIsValid && handleEditSubmit()}
-                  autoFocus
-                  className="w-full h-11 px-4 rounded-xl text-base font-mono outline-none transition-all focus:ring-2"
-                  style={{
-                    backgroundColor: colors.bgTertiary,
-                    border: `1px solid ${editIsValid || editValue === '' ? borderColor : hexToRgba(colors.red, 0.4)}`,
-                    color: colors.text,
-                  }}
-                />
-                {editValue !== '' && isNaN(editNewVal) && (
-                  <p className="text-xs mt-1" style={{ color: colors.red }}>{tEdit('mustBeNumber')}</p>
-                )}
-                {editNewVal < 0 && (
-                  <p className="text-xs mt-1" style={{ color: colors.red }}>{tEdit('cannotBeNegative')}</p>
-                )}
-              </div>
-
-              {/* Variance preview */}
-              {editVariance !== null && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg"
-                  style={{
-                    background: editVariance > 0 ? hexToRgba(colors.green, 0.06) : editVariance < 0 ? hexToRgba(colors.red, 0.06) : 'transparent',
-                    border: `1px solid ${editVariance > 0 ? hexToRgba(colors.green, 0.2) : editVariance < 0 ? hexToRgba(colors.red, 0.2) : borderColor}`,
-                  }}>
-                  <span className="text-xs" style={{ color: colors.textSecondary }}>{tEdit('variance')}</span>
-                  <span className="text-sm font-bold font-mono"
-                    style={{ color: editVariance > 0 ? colors.green : editVariance < 0 ? colors.red : colors.text }}>
-                    {editVariance > 0 ? '+' : ''}{editVariance}
-                  </span>
-                </div>
-              )}
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => setEditingCell(null)}
-                  className="flex-1 h-11 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
-                  style={{ backgroundColor: colors.bgTertiary, color: colors.text }}>
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEditSubmit}
-                  disabled={!editIsValid || saving}
-                  className="flex-1 h-11 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: editIsValid ? colors.blue : colors.textTertiary }}>
-                  {saving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  {tEdit('confirmExecute')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ Dialogs ═══ */}
       <UploadStocktakeDialog
@@ -671,15 +492,7 @@ export default function StocktakePage() {
         error={securityDelete.error}
       />
 
-      <SecurityCodeDialog
-        isOpen={securityEdit.isOpen}
-        level={securityEdit.level}
-        title={tEdit('updateSingle')}
-        description={editingCell ? `${editingCell.sku} → ${editValue}` : ''}
-        onConfirm={securityEdit.onConfirm}
-        onCancel={() => { securityEdit.onCancel(); setEditingCell(null); pendingEditRef.current = null; }}
-        error={securityEdit.error}
-      />
+
     </div>
   );
 }

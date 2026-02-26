@@ -325,6 +325,38 @@ export const inventoryApi = {
   getStocktakeEvents: (id: number) =>
     api.get<StocktakeEventItem[]>(`/inventory/stocktakes/${id}/events`),
 
+  // ─── Single-record operations (History page) ───
+
+  // Update single location detail
+  updateLocationDetail: (stocktakeId: number, detailId: number, data: {
+    qtyPerBox?: number; numOfBox?: number;
+    warehouse?: string; aisle?: string; bay?: number; level?: string; bin?: string; slot?: string;
+    sec_code_l3?: string;
+  }) => api.put<{ success: boolean }>(`/inventory/stocktakes/${stocktakeId}/locations/${detailId}`, data),
+
+  // Delete single location detail
+  deleteLocationDetail: (stocktakeId: number, detailId: number, securityCode: string) =>
+    api.delete<{ success: boolean }>(`/inventory/stocktakes/${stocktakeId}/locations/${detailId}`, { sec_code_l3: securityCode }),
+
+  // Add location detail
+  addLocationDetail: (stocktakeId: number, data: {
+    sku: string; qtyPerBox: number; numOfBox: number;
+    warehouse: string; aisle: string; bay: number; level: string; bin?: string; slot?: string;
+    sec_code_l3?: string;
+  }) => api.post<{ success: boolean; id: number }>(`/inventory/stocktakes/${stocktakeId}/locations`, data),
+
+  // Update single legacy item
+  updateStocktakeItem: (stocktakeId: number, itemId: number, data: { countedQty: number; sec_code_l3?: string }) =>
+    api.put<{ success: boolean }>(`/inventory/stocktakes/${stocktakeId}/items/${itemId}`, data),
+
+  // Delete single legacy item
+  deleteStocktakeItem: (stocktakeId: number, itemId: number, securityCode: string) =>
+    api.delete<{ success: boolean }>(`/inventory/stocktakes/${stocktakeId}/items/${itemId}`, { sec_code_l3: securityCode }),
+
+  // Add legacy item
+  addStocktakeItem: (stocktakeId: number, data: { sku: string; countedQty: number; sec_code_l3?: string }) =>
+    api.post<{ success: boolean; id: number }>(`/inventory/stocktakes/${stocktakeId}/items`, data),
+
   // ═══════════════════ WAREHOUSE INVENTORY ═══════════════════
 
   // Get warehouse inventory map (3D hover)

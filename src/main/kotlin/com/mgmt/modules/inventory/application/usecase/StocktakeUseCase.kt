@@ -179,6 +179,198 @@ class StocktakeUseCase(
         return stocktakeRepo.save(stocktake)
     }
 
+    // ═══════════ Single-Record Operations (History Page) ═══════════
+
+    @Transactional
+    fun updateLocationDetail(stocktakeId: Long, detailId: Long, dto: UpdateLocationDetailRequest, username: String): StocktakeLocationDetail {
+        val stocktake = findOne(stocktakeId)
+        val detail = locationDetailRepo.findById(detailId).orElseThrow {
+            NotFoundException("inventory.errors.locationDetailNotFound")
+        }
+        require(detail.stocktakeId == stocktakeId) { "Detail does not belong to this stocktake" }
+
+        val oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox)
+
+        // Update fields
+        dto.qtyPerBox?.let { detail.qtyPerBox = it }
+        dto.numOfBox?.let { detail.numOfBox = it }
+
+        // If location fields changed, resolve new location
+        if (dto.warehouse != null || dto.aisle != null || dto.bay != null || dto.level != null || dto.bin != null || dto.slot != null) {
+            val wh = (dto.warehouse ?: detail.location!!.warehouse).trim().uppercase()
+            val aisle = (dto.aisle ?: detail.location!!.aisle).trim().uppercase()
+            val bay = dto.bay ?: detail.location!!.bay
+            val level = (dto.level ?: detail.location!!.level).trim().uppercase()
+            val bin = (dto.bin ?: detail.location!!.bin).trim().uppercase()
+            val slot = (dto.slot ?: detail.location!!.slot).trim().uppercase()
+
+            val newLoc = locationRepo.findByWarehouseAndAisleAndBayAndLevelAndBinAndSlot(wh, aisle, bay, level, bin, slot)
+                ?: throw BadRequestException("inventory.errors.locationNotFound")
+            detail.location = newLoc
+        }
+
+        detail.updatedAt = Instant.now()
+        val saved = locationDetailRepo.save(detail)
+
+        // Re-aggregate items
+        reAggregateItems(stocktake, username)
+
+        recordEvent(stocktakeId, "UPDATE_DETAIL", username,
+            summary = "Updated location detail for ${detail.sku}",
+            oldData = oldData,
+            newData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox),
+        )
+
+        return saved
+    }
+
+    @Transactional
+    fun deleteLocationDetail(stocktakeId: Long, detailId: Long, username: String) {
+        val stocktake = findOne(stocktakeId)
+        val detail = locationDetailRepo.findById(detailId).orElseThrow {
+            NotFoundException("inventory.errors.locationDetailNotFound")
+        }
+        require(detail.stocktakeId == stocktakeId) { "Detail does not belong to this stocktake" }
+
+        recordEvent(stocktakeId, "DELETE_DETAIL", username,
+            summary = "Deleted location detail for ${detail.sku}",
+            oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox),
+        )
+
+        locationDetailRepo.delete(detail)
+        em.flush()
+
+        // Re-aggregate items
+        reAggregateItems(stocktake, username)
+    }
+
+    @Transactional
+    fun addLocationDetail(stocktakeId: Long, dto: AddLocationDetailRequest, username: String): StocktakeLocationDetail {
+        val stocktake = findOne(stocktakeId)
+
+        val wh = dto.warehouse.trim().uppercase()
+        val aisle = dto.aisle.trim().uppercase()
+        val level = dto.level.trim().uppercase()
+        val bin = dto.bin.trim().uppercase()
+        val slot = dto.slot.trim().uppercase()
+
+        val location = locationRepo.findByWarehouseAndAisleAndBayAndLevelAndBinAndSlot(wh, aisle, dto.bay, level, bin, slot)
+            ?: throw BadRequestException("inventory.errors.locationNotFound")
+
+        val detail = StocktakeLocationDetail(
+            stocktake = stocktake,
+            location = location,
+            sku = dto.sku.trim().uppercase(),
+            qtyPerBox = dto.qtyPerBox,
+            numOfBox = dto.numOfBox,
+        )
+        val saved = locationDetailRepo.save(detail)
+        em.flush()
+
+        // Re-aggregate items
+        reAggregateItems(stocktake, username)
+
+        recordEvent(stocktakeId, "ADD_DETAIL", username,
+            summary = "Added location detail for ${dto.sku}",
+            newData = mapOf("sku" to dto.sku, "qtyPerBox" to dto.qtyPerBox, "numOfBox" to dto.numOfBox, "warehouse" to wh),
+        )
+
+        return saved
+    }
+
+    // ─── Legacy item single-record operations ───
+
+    @Transactional
+    fun updateStocktakeItem(stocktakeId: Long, itemId: Long, dto: UpdateStocktakeItemRequest, username: String): StocktakeItem {
+        val stocktake = findOne(stocktakeId)
+        val item = stocktake.items.find { it.id == itemId }
+            ?: throw NotFoundException("inventory.errors.stocktakeItemNotFound")
+
+        val oldQty = item.countedQty
+        item.countedQty = dto.countedQty
+        stocktake.updatedAt = Instant.now()
+        stocktake.updatedBy = username
+        stocktakeRepo.save(stocktake)
+
+        recordEvent(stocktakeId, "UPDATE_ITEM", username,
+            summary = "Updated ${item.sku}: $oldQty → ${dto.countedQty}",
+            oldData = mapOf("sku" to item.sku, "countedQty" to oldQty),
+            newData = mapOf("sku" to item.sku, "countedQty" to dto.countedQty),
+        )
+
+        return item
+    }
+
+    @Transactional
+    fun deleteStocktakeItem(stocktakeId: Long, itemId: Long, username: String) {
+        val stocktake = findOne(stocktakeId)
+        val item = stocktake.items.find { it.id == itemId }
+            ?: throw NotFoundException("inventory.errors.stocktakeItemNotFound")
+
+        recordEvent(stocktakeId, "DELETE_ITEM", username,
+            summary = "Deleted ${item.sku} (qty: ${item.countedQty})",
+            oldData = mapOf("sku" to item.sku, "countedQty" to item.countedQty),
+        )
+
+        stocktake.items.remove(item)
+        itemRepo.delete(item)
+        stocktake.updatedAt = Instant.now()
+        stocktake.updatedBy = username
+        stocktakeRepo.save(stocktake)
+    }
+
+    @Transactional
+    fun addStocktakeItem(stocktakeId: Long, dto: AddStocktakeItemRequest, username: String): StocktakeItem {
+        val stocktake = findOne(stocktakeId)
+        val sku = dto.sku.trim().uppercase()
+
+        // Check duplicate
+        val existing = stocktake.items.find { it.sku == sku }
+        if (existing != null) {
+            throw ConflictException("inventory.errors.skuAlreadyExists")
+        }
+
+        val item = StocktakeItem(
+            stocktake = stocktake,
+            sku = sku,
+            countedQty = dto.countedQty,
+        )
+        stocktake.items.add(item)
+        stocktake.updatedAt = Instant.now()
+        stocktake.updatedBy = username
+        stocktakeRepo.save(stocktake)
+
+        recordEvent(stocktakeId, "ADD_ITEM", username,
+            summary = "Added $sku (qty: ${dto.countedQty})",
+            newData = mapOf("sku" to sku, "countedQty" to dto.countedQty),
+        )
+
+        return item
+    }
+
+    /**
+     * Re-aggregate stocktake_items from location_details.
+     * Called after any single-record location detail operation.
+     */
+    private fun reAggregateItems(stocktake: Stocktake, username: String) {
+        val details = locationDetailRepo.findAllByStocktakeId(stocktake.id)
+        val skuTotals = details.groupBy { it.sku }.mapValues { (_, items) -> items.sumOf { it.qtyPerBox * it.numOfBox } }
+
+        // Clear and rebuild items
+        itemRepo.deleteAllByStocktakeId(stocktake.id)
+        em.flush()
+        em.clear()
+
+        val fresh = findOne(stocktake.id)
+        skuTotals.forEach { (sku, total) ->
+            val item = StocktakeItem(stocktake = fresh, sku = sku, countedQty = total)
+            fresh.items.add(item)
+        }
+        fresh.updatedAt = Instant.now()
+        fresh.updatedBy = username
+        stocktakeRepo.save(fresh)
+    }
+
     // ═══════════ Delete ═══════════
 
     @Transactional

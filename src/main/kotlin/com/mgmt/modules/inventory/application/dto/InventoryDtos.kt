@@ -64,6 +64,42 @@ data class UpdateStocktakeRequest(
     val locationDetails: List<CreateStocktakeLocationDetailRequest>? = null,
 )
 
+// Single-record update for location detail (History page inline edit)
+data class UpdateLocationDetailRequest(
+    val qtyPerBox: Int? = null,
+    val numOfBox: Int? = null,
+    val warehouse: String? = null,
+    val aisle: String? = null,
+    val bay: Int? = null,
+    val level: String? = null,
+    val bin: String? = null,
+    val slot: String? = null,
+)
+
+// Single-record update for legacy item (History page inline edit)
+data class UpdateStocktakeItemRequest(
+    val countedQty: Int,
+)
+
+// Add single item to existing stocktake (History page add SKU)
+data class AddStocktakeItemRequest(
+    val sku: String,
+    val countedQty: Int,
+)
+
+// Add single location detail to existing stocktake (History page add SKU)
+data class AddLocationDetailRequest(
+    val sku: String,
+    val qtyPerBox: Int,
+    val numOfBox: Int,
+    val warehouse: String,
+    val aisle: String,
+    val bay: Int,
+    val level: String,
+    val bin: String = "",
+    val slot: String = "",
+)
+
 // ═══════════════════════════════════════════════
 // WAREHOUSE LOCATION DTOs
 // ═══════════════════════════════════════════════

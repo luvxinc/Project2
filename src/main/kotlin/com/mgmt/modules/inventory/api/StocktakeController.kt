@@ -93,6 +93,84 @@ class StocktakeController(
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
+    @PutMapping("/{id}/locations/{detailId}")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_edit_stocktake")
+    @AuditLog(module = "INVENTORY", action = "UPDATE_LOCATION_DETAIL", riskLevel = "MEDIUM")
+    fun updateLocationDetail(
+        @PathVariable id: Long,
+        @PathVariable detailId: Long,
+        @RequestBody dto: UpdateLocationDetailRequest,
+    ): ResponseEntity<Any> {
+        val detail = stocktakeUseCase.updateLocationDetail(id, detailId, dto, SecurityUtils.currentUsername())
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("success" to true, "id" to detail.id)))
+    }
+
+    @DeleteMapping("/{id}/locations/{detailId}")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_delete_stocktake")
+    @AuditLog(module = "INVENTORY", action = "DELETE_LOCATION_DETAIL", riskLevel = "HIGH")
+    fun deleteLocationDetail(
+        @PathVariable id: Long,
+        @PathVariable detailId: Long,
+    ): ResponseEntity<Any> {
+        stocktakeUseCase.deleteLocationDetail(id, detailId, SecurityUtils.currentUsername())
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("success" to true)))
+    }
+
+    @PostMapping("/{id}/locations")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_add_stocktake")
+    @AuditLog(module = "INVENTORY", action = "ADD_LOCATION_DETAIL", riskLevel = "MEDIUM")
+    fun addLocationDetail(
+        @PathVariable id: Long,
+        @RequestBody dto: AddLocationDetailRequest,
+    ): ResponseEntity<Any> {
+        val detail = stocktakeUseCase.addLocationDetail(id, dto, SecurityUtils.currentUsername())
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.ok(mapOf("success" to true, "id" to detail.id)))
+    }
+
+    // ═══════════ Legacy Item Single-Record ═══════════
+
+    @PutMapping("/{id}/items/{itemId}")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_edit_stocktake")
+    @AuditLog(module = "INVENTORY", action = "UPDATE_STOCKTAKE_ITEM", riskLevel = "MEDIUM")
+    fun updateStocktakeItem(
+        @PathVariable id: Long,
+        @PathVariable itemId: Long,
+        @RequestBody dto: UpdateStocktakeItemRequest,
+    ): ResponseEntity<Any> {
+        val item = stocktakeUseCase.updateStocktakeItem(id, itemId, dto, SecurityUtils.currentUsername())
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("success" to true, "id" to item.id)))
+    }
+
+    @DeleteMapping("/{id}/items/{itemId}")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_delete_stocktake")
+    @AuditLog(module = "INVENTORY", action = "DELETE_STOCKTAKE_ITEM", riskLevel = "HIGH")
+    fun deleteStocktakeItem(
+        @PathVariable id: Long,
+        @PathVariable itemId: Long,
+    ): ResponseEntity<Any> {
+        stocktakeUseCase.deleteStocktakeItem(id, itemId, SecurityUtils.currentUsername())
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("success" to true)))
+    }
+
+    @PostMapping("/{id}/items")
+    @RequirePermission("module.inventory.stocktake.modify")
+    @SecurityLevel(level = "L3", actionKey = "btn_add_stocktake")
+    @AuditLog(module = "INVENTORY", action = "ADD_STOCKTAKE_ITEM", riskLevel = "MEDIUM")
+    fun addStocktakeItem(
+        @PathVariable id: Long,
+        @RequestBody dto: AddStocktakeItemRequest,
+    ): ResponseEntity<Any> {
+        val item = stocktakeUseCase.addStocktakeItem(id, dto, SecurityUtils.currentUsername())
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.ok(mapOf("success" to true, "id" to item.id)))
+    }
+
     // ═══════════ Event History ═══════════
 
     @GetMapping("/{id}/events")
