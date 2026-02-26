@@ -9,6 +9,7 @@ import type { StocktakeListItem, StocktakeLocationDetailItem } from '@/lib/api/i
 
 // ═══════════════════════════════════════
 // Inventory History Page
+// List -> Detail navigation pattern
 // ═══════════════════════════════════════
 
 export default function InventoryHistoryPage() {
@@ -16,12 +17,14 @@ export default function InventoryHistoryPage() {
   const colors = themeColors[theme];
   const t = useTranslations('inventory.history');
 
+  // ═══════ State ═══════
   const [batches, setBatches] = useState<StocktakeListItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Detail mode
   const [selectedBatch, setSelectedBatch] = useState<StocktakeListItem | null>(null);
   const [details, setDetails] = useState<StocktakeLocationDetailItem[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [slideOpen, setSlideOpen] = useState(false);
 
   // ═══════ Load batches ═══════
   const loadBatches = useCallback(async () => {
@@ -40,10 +43,9 @@ export default function InventoryHistoryPage() {
     loadBatches();
   }, [loadBatches]);
 
-  // ═══════ Open batch detail ═══════
-  const openBatchDetail = useCallback(async (batch: StocktakeListItem) => {
+  // ═══════ Open / close detail ═══════
+  const openDetail = useCallback(async (batch: StocktakeListItem) => {
     setSelectedBatch(batch);
-    setSlideOpen(true);
     setDetailLoading(true);
     try {
       const data = await inventoryApi.getStocktakeLocations(batch.id);
@@ -55,19 +57,15 @@ export default function InventoryHistoryPage() {
     }
   }, []);
 
-  const closeSlidein = useCallback(() => {
-    setSlideOpen(false);
-    setTimeout(() => {
-      setSelectedBatch(null);
-      setDetails([]);
-    }, 300);
+  const goBack = useCallback(() => {
+    setSelectedBatch(null);
+    setDetails([]);
   }, []);
 
   // ═══════ Computed ═══════
   const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const cardBg = theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)';
 
-  // Group details by warehouse
   const warehouseSummary = useMemo(() => {
     if (!details.length) return {};
     const map: Record<string, number> = {};
@@ -77,6 +75,145 @@ export default function InventoryHistoryPage() {
     return map;
   }, [details]);
 
+  // ═══════════════════════════════════════
+  // DETAIL VIEW
+  // ═══════════════════════════════════════
+  if (selectedBatch) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+        <div className="max-w-[1400px] mx-auto px-6 py-10">
+          {/* Back + Header */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={goBack}
+              className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
+              style={{ color: colors.controlAccent }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              {t('title')}
+            </button>
+          </div>
+
+          {/* Summary card */}
+          <div
+            className="rounded-xl mb-5"
+            style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{ borderBottom: `1px solid ${borderColor}` }}
+            >
+              <div className="flex items-center gap-3">
+                <p className="text-base font-mono font-bold" style={{ color: colors.text }}>
+                  {selectedBatch.stocktakeDate}
+                </p>
+                <span
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: `${colors.controlAccent}12`, color: colors.controlAccent }}
+                >
+                  {t('skus', { count: selectedBatch.itemCount })}
+                </span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs" style={{ color: colors.textTertiary }}>
+                  {t('records', { count: details.length })}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 flex flex-wrap gap-4">
+              {Object.entries(warehouseSummary).map(([wh, count]) => (
+                <div key={wh} className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold px-2 py-1 rounded"
+                    style={{ backgroundColor: `${colors.controlAccent}10`, color: colors.controlAccent }}>
+                    {wh}
+                  </span>
+                  <span className="text-xs" style={{ color: colors.textTertiary }}>
+                    {count} {t('records', { count: '' }).trim()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Detail Table */}
+          {detailLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: colors.controlAccent, borderTopColor: 'transparent' }} />
+            </div>
+          ) : details.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-sm" style={{ color: colors.textTertiary }}>{t('noBatches')}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
+              <div className="max-h-[calc(100vh-320px)] overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr>
+                      <th className="px-3 py-2.5 text-left font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>#</th>
+                      <th className="px-3 py-2.5 text-left font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colSku')}</th>
+                      <th className="px-3 py-2.5 text-right font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colQtyPerBox')}</th>
+                      <th className="px-3 py-2.5 text-right font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colNumOfBox')}</th>
+                      <th className="px-3 py-2.5 text-right font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colTotal')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colWarehouse')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colAisle')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colBay')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colLevel')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colBin')}</th>
+                      <th className="px-3 py-2.5 text-center font-semibold sticky top-0 z-10"
+                        style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colSlot')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {details.map((d, i) => (
+                      <tr key={d.id}
+                        className="transition-colors"
+                        style={{ borderTop: `1px solid ${borderColor}` }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = cardBg}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td className="px-3 py-2" style={{ color: colors.textTertiary }}>{i + 1}</td>
+                        <td className="px-3 py-2 font-mono font-bold" style={{ color: colors.text }}>{d.sku}</td>
+                        <td className="px-3 py-2 text-right" style={{ color: colors.text }}>{d.qtyPerBox}</td>
+                        <td className="px-3 py-2 text-right" style={{ color: colors.text }}>{d.numOfBox}</td>
+                        <td className="px-3 py-2 text-right font-medium" style={{ color: colors.green }}>
+                          {d.totalQty.toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2 text-center font-mono text-[10px]" style={{ color: colors.textSecondary }}>{d.warehouse}</td>
+                        <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.aisle}</td>
+                        <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.bay}</td>
+                        <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.level}</td>
+                        <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.bin || '-'}</td>
+                        <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.slot || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════
+  // LIST VIEW
+  // ═══════════════════════════════════════
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
       <div className="max-w-[1400px] mx-auto px-6 py-10">
@@ -110,7 +247,7 @@ export default function InventoryHistoryPage() {
                   background: cardBg,
                   border: `1px solid ${borderColor}`,
                 }}
-                onClick={() => openBatchDetail(batch)}
+                onClick={() => openDetail(batch)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = colors.controlAccent;
                   e.currentTarget.style.transform = 'translateY(-1px)';
@@ -159,123 +296,6 @@ export default function InventoryHistoryPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* ═══════ Slide-in Detail Panel ═══════ */}
-      {/* Backdrop */}
-      {slideOpen && (
-        <div
-          className="fixed inset-0 z-40 transition-opacity duration-300"
-          style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-          onClick={closeSlidein}
-        />
-      )}
-
-      {/* Panel */}
-      <div
-        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col transition-transform duration-300"
-        style={{
-          width: 'min(90vw, 1100px)',
-          transform: slideOpen ? 'translateX(0)' : 'translateX(100%)',
-          backgroundColor: colors.bg,
-          borderLeft: `1px solid ${borderColor}`,
-          boxShadow: slideOpen ? '-8px 0 30px rgba(0,0,0,0.15)' : 'none',
-        }}
-      >
-        {/* Panel Header */}
-        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-          style={{ borderBottom: `1px solid ${borderColor}` }}>
-          <div>
-            <h3 className="text-lg font-bold" style={{ color: colors.text }}>
-              {t('detailTitle')}
-            </h3>
-            {selectedBatch && (
-              <p className="text-xs mt-0.5" style={{ color: colors.textTertiary }}>
-                {t('detailSubtitle', { date: selectedBatch.stocktakeDate })}
-                {' '}-- {t('records', { count: details.length })}
-                {Object.keys(warehouseSummary).length > 0 && (
-                  <> -- {t('warehouses')}: {Object.keys(warehouseSummary).join(', ')}</>
-                )}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={closeSlidein}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-            style={{ color: colors.textTertiary }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Panel Body — Table */}
-        <div className="flex-1 overflow-auto">
-          {detailLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                style={{ borderColor: colors.controlAccent, borderTopColor: 'transparent' }} />
-            </div>
-          ) : details.length === 0 ? (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-sm" style={{ color: colors.textTertiary }}>{t('noBatches')}</p>
-            </div>
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr style={{ background: cardBg }}>
-                  <th className="px-3 py-2.5 text-left font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>#</th>
-                  <th className="px-3 py-2.5 text-left font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colSku')}</th>
-                  <th className="px-3 py-2.5 text-right font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colQtyPerBox')}</th>
-                  <th className="px-3 py-2.5 text-right font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colNumOfBox')}</th>
-                  <th className="px-3 py-2.5 text-right font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colTotal')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colWarehouse')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colAisle')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colBay')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colLevel')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colBin')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold sticky top-0"
-                    style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colSlot')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {details.map((d, i) => (
-                  <tr key={d.id}
-                    className="transition-colors"
-                    style={{ borderTop: `1px solid ${borderColor}` }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = cardBg}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <td className="px-3 py-2" style={{ color: colors.textTertiary }}>{i + 1}</td>
-                    <td className="px-3 py-2 font-mono font-bold" style={{ color: colors.text }}>{d.sku}</td>
-                    <td className="px-3 py-2 text-right" style={{ color: colors.text }}>{d.qtyPerBox}</td>
-                    <td className="px-3 py-2 text-right" style={{ color: colors.text }}>{d.numOfBox}</td>
-                    <td className="px-3 py-2 text-right font-medium" style={{ color: colors.green }}>
-                      {d.totalQty.toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-center font-mono text-[10px]" style={{ color: colors.textSecondary }}>{d.warehouse}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.aisle}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.bay}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.level}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.bin || '-'}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.slot || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
       </div>
     </div>
   );
