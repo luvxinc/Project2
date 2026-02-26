@@ -351,6 +351,17 @@
     "colBay": "Bay",
     "colLevel": "Level",
     "colBin": "Bin",
-    "colSlot": "Slot"
+    "colSlot": "Slot",
+    "clickToEdit": "Click to edit",
+    "deleteTitle": "Delete Record",
+    "deleteWarning": "Are you sure you want to delete {sku}?",
+    "confirmDelete": "Delete",
+    "cancel": "Cancel",
+    "addSku": "Add SKU",
+    "addSkuDesc": "Select a SKU from the product list and enter quantity or location details.",
+    "confirmAdd": "Add",
+    "editTitle": "Edit Record",
+    "prev": "Prev",
+    "next": "Next"
   }
 }
