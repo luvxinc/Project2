@@ -343,16 +343,16 @@ class SalesFifoSyncUseCase(
      */
     private fun extractSkuSlots(ct: CleanedTransaction): List<Pair<String, Int>> {
         val result = mutableListOf<Pair<String, Int>>()
-        ct.sku1?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp1 ?: 0)) }
-        ct.sku2?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp2 ?: 0)) }
-        ct.sku3?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp3 ?: 0)) }
-        ct.sku4?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp4 ?: 0)) }
-        ct.sku5?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp5 ?: 0)) }
-        ct.sku6?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp6 ?: 0)) }
-        ct.sku7?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp7 ?: 0)) }
-        ct.sku8?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp8 ?: 0)) }
-        ct.sku9?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp9 ?: 0)) }
-        ct.sku10?.let { if (it.isNotBlank()) result.add(it to (ct.qtyp10 ?: 0)) }
+        ct.sku1?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp1 ?: 0)) }
+        ct.sku2?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp2 ?: 0)) }
+        ct.sku3?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp3 ?: 0)) }
+        ct.sku4?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp4 ?: 0)) }
+        ct.sku5?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp5 ?: 0)) }
+        ct.sku6?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp6 ?: 0)) }
+        ct.sku7?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp7 ?: 0)) }
+        ct.sku8?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp8 ?: 0)) }
+        ct.sku9?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp9 ?: 0)) }
+        ct.sku10?.let { if (it.isNotBlank()) result.add(it.trim().uppercase() to (ct.qtyp10 ?: 0)) }
         return result
     }
 }

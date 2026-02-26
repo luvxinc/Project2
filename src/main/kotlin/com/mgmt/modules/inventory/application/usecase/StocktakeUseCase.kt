@@ -90,7 +90,7 @@ class StocktakeUseCase(
         dto.items.forEach { itemDto ->
             val item = StocktakeItem(
                 stocktake = stocktake,
-                sku = itemDto.sku.trim(),
+                sku = itemDto.sku.trim().uppercase(),
                 countedQty = itemDto.countedQty,
             )
             stocktake.items.add(item)
@@ -140,7 +140,7 @@ class StocktakeUseCase(
             newItems.forEach { itemDto ->
                 val item = StocktakeItem(
                     stocktake = fresh,
-                    sku = itemDto.sku.trim(),
+                    sku = itemDto.sku.trim().uppercase(),
                     countedQty = itemDto.countedQty,
                 )
                 fresh.items.add(item)
