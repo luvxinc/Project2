@@ -5,7 +5,7 @@ import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
 import InventoryTabSelector from '../components/InventoryTabSelector';
 import { inventoryApi } from '@/lib/api/inventory';
-import type { StocktakeListItem, StocktakeLocationDetailItem } from '@/lib/api/inventory';
+import type { StocktakeListItem, StocktakeLocationDetailItem, StocktakeItemData } from '@/lib/api/inventory';
 
 // ═══════════════════════════════════════
 // Inventory History Page
@@ -30,7 +30,9 @@ export default function InventoryHistoryPage() {
   // Detail data
   const [selectedBatch, setSelectedBatch] = useState<StocktakeListItem | null>(null);
   const [details, setDetails] = useState<StocktakeLocationDetailItem[]>([]);
+  const [simpleItems, setSimpleItems] = useState<StocktakeItemData[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const hasLocationData = details.length > 0;
 
   // ═══════ Load batches ═══════
   const loadBatches = useCallback(async () => {
@@ -62,10 +64,23 @@ export default function InventoryHistoryPage() {
     });
 
     try {
-      const data = await inventoryApi.getStocktakeLocations(batch.id);
-      setDetails(data);
-    } catch (err) {
-      console.error('[History] Failed to load details:', err);
+      // Try location details first (new format)
+      const locData = await inventoryApi.getStocktakeLocations(batch.id);
+      if (locData && locData.length > 0) {
+        setDetails(locData);
+      } else {
+        // Fallback: load simple items (legacy format)
+        const detail = await inventoryApi.getStocktake(batch.id);
+        setSimpleItems(detail.items || []);
+      }
+    } catch {
+      // Location endpoint failed — fallback to items
+      try {
+        const detail = await inventoryApi.getStocktake(batch.id);
+        setSimpleItems(detail.items || []);
+      } catch (err2) {
+        console.error('[History] Failed to load details:', err2);
+      }
     } finally {
       setDetailLoading(false);
     }
@@ -79,6 +94,7 @@ export default function InventoryHistoryPage() {
       setAnimating(false);
       setSelectedBatch(null);
       setDetails([]);
+      setSimpleItems([]);
     }, 350);
   }, []);
 
@@ -238,23 +254,25 @@ export default function InventoryHistoryPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs" style={{ color: colors.textTertiary }}>
-                      {t('records', { count: details.length })}
+                      {t('records', { count: hasLocationData ? details.length : simpleItems.length })}
                     </p>
                   </div>
                 </div>
-                <div className="p-5 flex flex-wrap gap-4">
-                  {Object.entries(warehouseSummary).map(([wh, count]) => (
-                    <div key={wh} className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold px-2 py-1 rounded"
-                        style={{ backgroundColor: `${colors.controlAccent}10`, color: colors.controlAccent }}>
-                        {wh}
-                      </span>
-                      <span className="text-xs" style={{ color: colors.textTertiary }}>
-                        {t('records', { count })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {Object.keys(warehouseSummary).length > 0 && (
+                  <div className="p-5 flex flex-wrap gap-4">
+                    {Object.entries(warehouseSummary).map(([wh, count]) => (
+                      <div key={wh} className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold px-2 py-1 rounded"
+                          style={{ backgroundColor: `${colors.controlAccent}10`, color: colors.controlAccent }}>
+                          {wh}
+                        </span>
+                        <span className="text-xs" style={{ color: colors.textTertiary }}>
+                          {t('records', { count })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Detail Table */}
@@ -263,11 +281,8 @@ export default function InventoryHistoryPage() {
                   <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
                     style={{ borderRightColor: colors.controlAccent, borderBottomColor: colors.controlAccent, borderLeftColor: colors.controlAccent, borderTopColor: 'transparent' }} />
                 </div>
-              ) : details.length === 0 ? (
-                <div className="flex items-center justify-center h-64">
-                  <p className="text-sm" style={{ color: colors.textTertiary }}>{t('noBatches')}</p>
-                </div>
-              ) : (
+              ) : hasLocationData ? (
+                /* ═══════ New format: location-level table ═══════ */
                 <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
                   <div className="max-h-[calc(100vh-320px)] overflow-y-auto">
                     <table className="w-full text-xs">
@@ -310,6 +325,44 @@ export default function InventoryHistoryPage() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              ) : simpleItems.length > 0 ? (
+                /* ═══════ Legacy format: SKU + qty only ═══════ */
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
+                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2.5 text-left font-semibold sticky top-0 z-10"
+                            style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>#</th>
+                          <th className="px-4 py-2.5 text-left font-semibold sticky top-0 z-10"
+                            style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colSku')}</th>
+                          <th className="px-4 py-2.5 text-right font-semibold sticky top-0 z-10"
+                            style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>{t('colTotal')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {simpleItems.map((item, i) => (
+                          <tr key={item.id}
+                            className="transition-colors"
+                            style={{ borderTop: `1px solid ${borderColor}` }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = cardBg}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <td className="px-4 py-2.5" style={{ color: colors.textTertiary }}>{i + 1}</td>
+                            <td className="px-4 py-2.5 font-mono font-bold" style={{ color: colors.text }}>{item.sku}</td>
+                            <td className="px-4 py-2.5 text-right font-medium" style={{ color: colors.green }}>
+                              {item.countedQty.toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-sm" style={{ color: colors.textTertiary }}>{t('noBatches')}</p>
                 </div>
               )}
             </div>
