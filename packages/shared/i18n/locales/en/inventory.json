@@ -162,6 +162,14 @@
       "hoverQty": "Total Qty",
       "hoverPerBox": "Qty/Box",
       "hoverBoxes": "Boxes",
+      "hoverTotal": "Total",
+      "perBox": "{qty}/box",
+      "numBoxes": "x {count} boxes",
+      "hoverPrompt": "Hover a location",
+      "hoverPromptDesc": "Move your cursor over a shelf to see product details",
+      "legendHasInv": "Has Inventory",
+      "legendEmpty": "Empty",
+      "legendHint": "Hover to inspect",
       "emptySlot": "Empty"
     }
   },

@@ -56,8 +56,8 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
         inventoryApi.getWarehouseInventory(warehouse.warehouse),
         inventoryApi.getWarehouseProducts(warehouse.warehouse),
       ]);
-      console.log('[WarehouseMainPage] inventory loaded:', inv?.locations?.length, 'locations, occupied:', inv?.occupiedLocations);
-      console.log('[WarehouseMainPage] products loaded:', prod?.products?.length, 'products');
+
+
       setInventory(inv);
       setProducts(prod);
     } catch (err) {
@@ -116,7 +116,7 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
       }
     }
 
-    console.log('[InventoryIndex]', idx.size, 'entries. Sample keys:', [...idx.keys()].slice(0, 8));
+
     return idx;
   }, [inventory]);
 
@@ -144,7 +144,7 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
             </h2>
             <p className="text-xs" style={{ color: colors.textTertiary }}>
               {warehouse.totalLocations} {tShelf('card.locations')}
-              {inventory && ` · ${inventory.occupiedLocations} occupied`}
+              {inventory && ` \u00b7 ${t('occupiedLocations', { count: inventory.occupiedLocations })}`}
             </p>
           </div>
         </div>
@@ -184,10 +184,10 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
           {inventory && (
             <div className="flex items-center gap-3 text-xs">
               <span className="px-2 py-1 rounded-lg" style={{ background: hexToRgba(colors.green, 0.1), color: colors.green }}>
-                {inventory.occupiedLocations} occupied
+                {t('occupiedLocations', { count: inventory.occupiedLocations })}
               </span>
               <span className="px-2 py-1 rounded-lg" style={{ background: hexToRgba(colors.textTertiary, 0.08), color: colors.textTertiary }}>
-                {inventory.totalLocations - inventory.occupiedLocations} empty
+                {t('emptyLocations', { count: inventory.totalLocations - inventory.occupiedLocations })}
               </span>
             </div>
           )}
@@ -252,8 +252,8 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
                         <span className="text-sm font-bold" style={{ color: colors.green }}>{item.totalQty}</span>
                       </div>
                       <div className="flex items-center gap-3 text-[10px]" style={{ color: colors.textTertiary }}>
-                        <span>{item.qtyPerBox}/box</span>
-                        <span>x {item.numOfBox} boxes</span>
+                        <span>{t('perBox', { qty: item.qtyPerBox })}</span>
+                        <span>{t('numBoxes', { count: item.numOfBox })}</span>
                       </div>
                     </div>
                   ))}
@@ -261,7 +261,7 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
 
                 {/* Total */}
                 <div className="flex items-center justify-between pt-2" style={{ borderTop: `1px solid ${borderColor}` }}>
-                  <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>Total</span>
+                  <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>{t('hoverTotal')}</span>
                   <span className="text-sm font-bold" style={{ color: colors.text }}>
                     {hoverData.items.reduce((sum, i) => sum + i.totalQty, 0).toLocaleString()}
                   </span>
@@ -277,8 +277,8 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
                   </svg>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs font-medium" style={{ color: colors.textSecondary }}>Hover a location</p>
-                  <p className="text-[10px]" style={{ color: colors.textTertiary }}>Move your cursor over a shelf to see product details</p>
+                  <p className="text-xs font-medium" style={{ color: colors.textSecondary }}>{t('hoverPrompt')}</p>
+                  <p className="text-[10px]" style={{ color: colors.textTertiary }}>{t('hoverPromptDesc')}</p>
                 </div>
               </div>
             )}

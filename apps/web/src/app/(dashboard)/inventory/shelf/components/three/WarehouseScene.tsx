@@ -6,6 +6,7 @@ import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { ShelfBay } from './ShelfBay';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
+import { useTranslations } from 'next-intl';
 import type { AisleConfig, WarehouseNode } from '@/lib/api/inventory';
 import type { InventoryIndex, LocationInventoryData } from './ShelfBay';
 
@@ -359,6 +360,7 @@ function WarehouseContent({ renderData, mini, inventoryIndex, showInventory, onH
 export function WarehouseScene({ aisles, warehouseData, mini = false, inventoryIndex, showInventory = false, onHoverLocation }: WarehouseSceneProps) {
   const { theme } = useTheme();
   const sc = SCENE_COLORS[theme] || SCENE_COLORS.dark;
+  const t = useTranslations('inventory.shelf.main');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -399,13 +401,13 @@ export function WarehouseScene({ aisles, warehouseData, mini = false, inventoryI
           style={{ background: sc.legendBg, backdropFilter: 'blur(8px)' }}>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded" style={{ background: '#4CAF50', opacity: 1 }} />
-            <span className="text-[10px]" style={{ color: sc.legendText }}>Has Inventory</span>
+            <span className="text-[10px]" style={{ color: sc.legendText }}>{t('legendHasInv')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded" style={{ background: '#888', opacity: 0.5 }} />
-            <span className="text-[10px]" style={{ color: sc.legendText }}>Empty</span>
+            <span className="text-[10px]" style={{ color: sc.legendText }}>{t('legendEmpty')}</span>
           </div>
-          <span className="text-[10px]" style={{ color: sc.legendTextDim }}>Hover to inspect</span>
+          <span className="text-[10px]" style={{ color: sc.legendTextDim }}>{t('legendHint')}</span>
         </div>
       )}
     </div>

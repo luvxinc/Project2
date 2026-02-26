@@ -162,6 +162,14 @@
       "hoverQty": "总数量",
       "hoverPerBox": "每盒数量",
       "hoverBoxes": "箱数",
+      "hoverTotal": "合计",
+      "perBox": "{qty}/盒",
+      "numBoxes": "x {count} 箱",
+      "hoverPrompt": "悬停查看",
+      "hoverPromptDesc": "将光标移至货架位置查看产品详情",
+      "legendHasInv": "有库存",
+      "legendEmpty": "空闲",
+      "legendHint": "悬停查看详情",
       "emptySlot": "空"
     }
   },
