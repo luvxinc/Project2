@@ -62,7 +62,7 @@ class StocktakeUseCase(
     @Transactional(readOnly = true)
     fun findLocationDetails(stocktakeId: Long): List<StocktakeLocationDetail> {
         findOne(stocktakeId) // validate existence
-        return locationDetailRepo.findAllByStocktakeId(stocktakeId)
+        return locationDetailRepo.findAllByStocktakeIdWithLocation(stocktakeId)
     }
 
     @Transactional(readOnly = true)

@@ -12,6 +12,9 @@ interface StocktakeLocationDetailRepository : JpaRepository<StocktakeLocationDet
 
     fun findAllByStocktakeId(stocktakeId: Long): List<StocktakeLocationDetail>
 
+    @Query("SELECT d FROM StocktakeLocationDetail d JOIN FETCH d.location WHERE d.stocktakeId = :stocktakeId")
+    fun findAllByStocktakeIdWithLocation(@Param("stocktakeId") stocktakeId: Long): List<StocktakeLocationDetail>
+
     fun findAllByLocationId(locationId: Long): List<StocktakeLocationDetail>
 
     fun findAllByStocktakeIdAndSku(stocktakeId: Long, sku: String): List<StocktakeLocationDetail>

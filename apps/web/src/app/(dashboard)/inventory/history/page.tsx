@@ -128,7 +128,7 @@ export default function InventoryHistoryPage() {
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-                  style={{ borderColor: colors.controlAccent, borderTopColor: 'transparent' }} />
+                  style={{ borderRightColor: colors.controlAccent, borderBottomColor: colors.controlAccent, borderLeftColor: colors.controlAccent, borderTopColor: 'transparent' }} />
               </div>
             ) : batches.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 gap-3">
@@ -261,7 +261,7 @@ export default function InventoryHistoryPage() {
               {detailLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                    style={{ borderColor: colors.controlAccent, borderTopColor: 'transparent' }} />
+                    style={{ borderRightColor: colors.controlAccent, borderBottomColor: colors.controlAccent, borderLeftColor: colors.controlAccent, borderTopColor: 'transparent' }} />
                 </div>
               ) : details.length === 0 ? (
                 <div className="flex items-center justify-center h-64">
