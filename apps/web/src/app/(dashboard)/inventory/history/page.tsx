@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme, themeColors } from '@/contexts/ThemeContext';
 import { useTranslations } from 'next-intl';
 import InventoryTabSelector from '../components/InventoryTabSelector';
@@ -78,10 +78,18 @@ export default function InventoryHistoryPage() {
   // ═══════════════════════════════════════
   // DETAIL VIEW
   // ═══════════════════════════════════════
+  const contentRef = useRef<HTMLDivElement>(null);
+  const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
+    // Only go back if click is directly on the background, not on content
+    if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
+      goBack();
+    }
+  }, [goBack]);
+
   if (selectedBatch) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
-        <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className="min-h-screen" style={{ backgroundColor: colors.bg }} onClick={handleBackgroundClick}>
+        <div ref={contentRef} className="max-w-[1400px] mx-auto px-6 py-10">
           {/* Back + Header */}
           <div className="flex items-center justify-between mb-6">
             <button
