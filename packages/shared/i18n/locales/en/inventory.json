@@ -20,6 +20,13 @@
       "subtitle": "Physical Count & Reconciliation",
       "description": "Schedule and manage physical inventory counts with variance reporting",
       "cta": "Manage Stocktake"
+    },
+    "history": {
+      "title": "Inventory History",
+      "navTitle": "History",
+      "subtitle": "Stocktake Upload History",
+      "description": "View and manage past stocktake uploads with location-level detail editing",
+      "cta": "View History"
     }
   },
   "dynamic": {
@@ -313,5 +320,37 @@
       "deleteDate": "Delete Stocktake Date",
       "deleteDateDesc": "Select the stocktake date to delete. All SKU data under this date will be permanently removed. This action cannot be undone."
     }
+  },
+  "history": {
+    "title": "Upload History",
+    "subtitle": "View and edit past stocktake uploads",
+    "batchDate": "Batch Date",
+    "uploadedBy": "Uploaded By",
+    "uploadedAt": "Uploaded At",
+    "records": "{count} records",
+    "skus": "{count} SKUs",
+    "warehouses": "Warehouses",
+    "viewDetails": "View Details",
+    "noBatches": "No upload history",
+    "noBatchesDesc": "Upload stocktake data from the Stocktake page to see history here.",
+    "detailTitle": "Batch Details",
+    "detailSubtitle": "Location-level inventory for {date}",
+    "editCell": "Click to edit",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "saved": "Changes Saved",
+    "noChanges": "No changes to save",
+    "confirmEdit": "Confirm Edit",
+    "editWarning": "You are about to modify inventory data. This will update the warehouse location inventory.",
+    "colSku": "SKU",
+    "colQtyPerBox": "Qty/Box",
+    "colNumOfBox": "Boxes",
+    "colTotal": "Total",
+    "colWarehouse": "Warehouse",
+    "colAisle": "Aisle",
+    "colBay": "Bay",
+    "colLevel": "Level",
+    "colBin": "Bin",
+    "colSlot": "Slot"
   }
 }

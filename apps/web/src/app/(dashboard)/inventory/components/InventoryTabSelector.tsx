@@ -7,17 +7,18 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 
 // ================================
 // Inventory Module Tab Definitions
-// Order: 动态库存 → 盘点 → 货架编码
+// Order: dynamic -> stocktake -> shelf -> history
 // ================================
 
-type InventoryTab = 'dynamic' | 'stocktake' | 'shelf';
+type InventoryTab = 'dynamic' | 'stocktake' | 'shelf' | 'history';
 
-const inventoryTabs: InventoryTab[] = ['dynamic', 'stocktake', 'shelf'];
+const inventoryTabs: InventoryTab[] = ['dynamic', 'stocktake', 'shelf', 'history'];
 
 const inventoryTabPaths: Record<InventoryTab, string> = {
   dynamic: '/inventory/dynamic',
   stocktake: '/inventory/stocktake',
   shelf: '/inventory/shelf',
+  history: '/inventory/history',
 };
 
 // ================================
@@ -44,6 +45,7 @@ export default function InventoryTabSelector() {
     if (pathname?.includes('/inventory/dynamic')) return 'dynamic';
     if (pathname?.includes('/inventory/stocktake')) return 'stocktake';
     if (pathname?.includes('/inventory/shelf')) return 'shelf';
+    if (pathname?.includes('/inventory/history')) return 'history';
     // Default: first tab
     return 'dynamic';
   }, [pathname]);

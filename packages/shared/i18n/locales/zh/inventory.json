@@ -20,6 +20,13 @@
       "subtitle": "实物盘点与对账",
       "description": "安排和管理实物库存盘点，支持差异报告",
       "cta": "管理盘点"
+    },
+    "history": {
+      "title": "盘存历史",
+      "navTitle": "历史",
+      "subtitle": "盘存上传历史记录",
+      "description": "查看和管理历史盘存上传记录，支持货位级别明细编辑",
+      "cta": "查看历史"
     }
   },
   "dynamic": {
@@ -318,5 +325,37 @@
       "deleteDate": "删除盘存日期",
       "deleteDateDesc": "选择要删除的盘存日期，该日期下所有 SKU 数据将被永久删除，操作不可恢复，请谨慎确认"
     }
+  },
+  "history": {
+    "title": "上传历史",
+    "subtitle": "查看和编辑历史盘存上传记录",
+    "batchDate": "盘存日期",
+    "uploadedBy": "上传人",
+    "uploadedAt": "上传时间",
+    "records": "{count} 条记录",
+    "skus": "{count} 个 SKU",
+    "warehouses": "涉及仓库",
+    "viewDetails": "查看明细",
+    "noBatches": "暂无上传历史",
+    "noBatchesDesc": "在盘存页面上传数据后，历史记录将在此显示。",
+    "detailTitle": "批次明细",
+    "detailSubtitle": "{date} 的货位级别库存明细",
+    "editCell": "点击编辑",
+    "saveChanges": "保存修改",
+    "saving": "保存中...",
+    "saved": "已保存",
+    "noChanges": "无修改内容",
+    "confirmEdit": "确认修改",
+    "editWarning": "您即将修改库存数据，此操作将同步更新仓库货位库存。",
+    "colSku": "SKU",
+    "colQtyPerBox": "每盒数量",
+    "colNumOfBox": "箱数",
+    "colTotal": "合计",
+    "colWarehouse": "仓库",
+    "colAisle": "排",
+    "colBay": "格",
+    "colLevel": "层",
+    "colBin": "区位",
+    "colSlot": "分格"
   }
 }
