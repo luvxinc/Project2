@@ -47,7 +47,7 @@ export default function InventoryHistoryPage() {
   // ═══════ Add SKU State ═══════
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [skuList, setSkuList] = useState<{ id: string; sku: string; name: string | null }[]>([]);
-  const [skuPage, setSkuPage] = useState(0);
+
   const [selectedSku, setSelectedSku] = useState('');
   const [addQty, setAddQty] = useState('');
   const [addQtyPerBox, setAddQtyPerBox] = useState('');
@@ -235,7 +235,6 @@ export default function InventoryHistoryPage() {
     setAddLevel('');
     setAddBin('');
     setAddSlot('');
-    setSkuPage(0);
     try {
       const list = await productsApi.getSkuList();
       setSkuList(list);
@@ -285,13 +284,7 @@ export default function InventoryHistoryPage() {
     return map;
   }, [details]);
 
-  // SKU page for add modal
-  const PAGE_SIZE = 5;
-  const pagedSkus = useMemo(() => {
-    const start = skuPage * PAGE_SIZE;
-    return skuList.slice(start, start + PAGE_SIZE);
-  }, [skuList, skuPage]);
-  const totalSkuPages = Math.ceil(skuList.length / PAGE_SIZE);
+
 
   // Warehouse tree helpers
   const warehouses = useMemo(() => warehouseTree?.warehouses?.map((w: any) => w.warehouse) || [], [warehouseTree]);
@@ -645,41 +638,28 @@ export default function InventoryHistoryPage() {
               <div>
                 <label className="text-xs font-medium mb-1.5 block" style={{ color: colors.textSecondary }}>SKU</label>
                 <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
-                  {pagedSkus.map((s) => (
-                    <div key={s.sku}
-                      className="px-3 py-2 cursor-pointer transition-colors flex items-center justify-between"
-                      style={{
-                        backgroundColor: selectedSku === s.sku ? `${colors.controlAccent}15` : 'transparent',
-                        borderBottom: `1px solid ${borderColor}`,
-                      }}
-                      onClick={() => setSelectedSku(s.sku)}>
-                      <span className="text-xs font-mono font-bold" style={{ color: selectedSku === s.sku ? colors.controlAccent : colors.text }}>{s.sku}</span>
-                      {selectedSku === s.sku && (
-                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill={colors.controlAccent}>
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                        </svg>
-                      )}
-                    </div>
-                  ))}
-                  {skuList.length === 0 && (
-                    <div className="px-3 py-4 text-center text-xs" style={{ color: colors.textTertiary }}>No SKUs available</div>
-                  )}
-                </div>
-                {totalSkuPages > 1 && (
-                  <div className="flex items-center justify-between mt-2">
-                    <button disabled={skuPage === 0} onClick={() => setSkuPage(p => p - 1)}
-                      className="text-xs px-2 py-1 rounded disabled:opacity-30 transition-opacity"
-                      style={{ color: colors.controlAccent }}>
-                      ← {t('prev')}
-                    </button>
-                    <span className="text-[10px]" style={{ color: colors.textTertiary }}>{skuPage + 1} / {totalSkuPages}</span>
-                    <button disabled={skuPage >= totalSkuPages - 1} onClick={() => setSkuPage(p => p + 1)}
-                      className="text-xs px-2 py-1 rounded disabled:opacity-30 transition-opacity"
-                      style={{ color: colors.controlAccent }}>
-                      {t('next')} →
-                    </button>
+                  <div className="overflow-y-auto" style={{ maxHeight: '200px' }}>
+                    {skuList.map((s) => (
+                      <div key={s.sku}
+                        className="px-3 py-2 cursor-pointer transition-colors flex items-center justify-between"
+                        style={{
+                          backgroundColor: selectedSku === s.sku ? `${colors.controlAccent}15` : 'transparent',
+                          borderBottom: `1px solid ${borderColor}`,
+                        }}
+                        onClick={() => setSelectedSku(s.sku)}>
+                        <span className="text-xs font-mono font-bold" style={{ color: selectedSku === s.sku ? colors.controlAccent : colors.text }}>{s.sku}</span>
+                        {selectedSku === s.sku && (
+                          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 20 20" fill={colors.controlAccent}>
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                          </svg>
+                        )}
+                      </div>
+                    ))}
+                    {skuList.length === 0 && (
+                      <div className="px-3 py-4 text-center text-xs" style={{ color: colors.textTertiary }}>No SKUs available</div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Quantity / Location inputs */}
