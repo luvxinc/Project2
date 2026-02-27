@@ -684,8 +684,9 @@
     },
     "delete": {
       "title": "Delete Receive Record",
-      "securityDescription": "Deleting a receive record requires L3 security code",
-      "noteRequired": "A deletion reason note is required"
+      "securityDescription": "Deleting a receive record requires L3 security code. This will roll back all related inventory and FIFO data",
+      "noteRequired": "A deletion reason note is required",
+      "notePlaceholder": "Reason for deletion (optional)"
     },
     "restore": {
       "title": "Restore Receive Record",

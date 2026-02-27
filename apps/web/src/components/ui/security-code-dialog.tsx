@@ -13,6 +13,7 @@ interface SecurityCodeDialogProps {
   onCancel: () => void;
   isLoading?: boolean;
   error?: string | null;
+  children?: React.ReactNode;
 }
 
 const levelColors = {
@@ -28,15 +29,16 @@ export function SecurityCodeDialog(props: SecurityCodeDialogProps) {
   return <SecurityCodeDialogContent {...props} />;
 }
 
-function SecurityCodeDialogContent({
-  level,
-  title,
-  description,
-  onConfirm,
-  onCancel,
-  isLoading = false,
-  error = null,
-}: Omit<SecurityCodeDialogProps, 'isOpen'>) {
+function SecurityCodeDialogContent(props: Omit<SecurityCodeDialogProps, 'isOpen'>) {
+  const {
+    level,
+    title,
+    description,
+    onConfirm,
+    onCancel,
+    isLoading = false,
+    error = null,
+  } = props;
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
   const { theme } = useTheme();
@@ -80,6 +82,9 @@ function SecurityCodeDialogContent({
             </span>
             <span style={{ color: colors.textSecondary }} className="text-[12px]">{tAuth(`securityLevels.${level}`)}</span>
           </div>
+
+          {/* Optional extra content (e.g. note input) */}
+          {props.children && <div className="mb-4">{props.children}</div>}
 
           <div className="mb-4">
             <input

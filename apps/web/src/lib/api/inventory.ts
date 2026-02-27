@@ -107,7 +107,8 @@ export interface CreateStocktakeItemRequest {
 export interface CreateStocktakeLocationDetailRequest {
   sku: string;
   qtyPerBox: number;
-  numOfBox: number;
+  boxPerCtn: number;
+  numOfCtn: number;
   warehouse: string;
   aisle: string;
   bay: number;
@@ -138,7 +139,8 @@ export interface UpdateStocktakeRequest {
 export interface LocationSkuItem {
   sku: string;
   qtyPerBox: number;
-  numOfBox: number;
+  boxPerCtn: number;
+  numOfCtn: number;
   totalQty: number;
 }
 
@@ -193,7 +195,8 @@ export interface StocktakeLocationDetailItem {
   locationId: number;
   sku: string;
   qtyPerBox: number;
-  numOfBox: number;
+  boxPerCtn: number;
+  numOfCtn: number;
   totalQty: number;
   warehouse: string;
   aisle: string;
@@ -329,7 +332,7 @@ export const inventoryApi = {
 
   // Update single location detail
   updateLocationDetail: (stocktakeId: number, detailId: number, data: {
-    qtyPerBox?: number; numOfBox?: number;
+    qtyPerBox?: number; boxPerCtn?: number; numOfCtn?: number;
     warehouse?: string; aisle?: string; bay?: number; level?: string; bin?: string; slot?: string;
     sec_code_l3?: string;
   }) => api.put<{ success: boolean }>(`/inventory/stocktakes/${stocktakeId}/locations/${detailId}`, data),
@@ -340,7 +343,7 @@ export const inventoryApi = {
 
   // Add location detail
   addLocationDetail: (stocktakeId: number, data: {
-    sku: string; qtyPerBox: number; numOfBox: number;
+    sku: string; qtyPerBox: number; boxPerCtn: number; numOfCtn: number;
     warehouse: string; aisle: string; bay: number; level: string; bin?: string; slot?: string;
     sec_code_l3?: string;
   }) => api.post<{ success: boolean; id: number }>(`/inventory/stocktakes/${stocktakeId}/locations`, data),

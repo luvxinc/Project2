@@ -51,8 +51,9 @@ class WarehouseInventoryUseCase(
                 LocationSkuItem(
                     sku = inv.sku,
                     qtyPerBox = inv.qtyPerBox,
-                    numOfBox = inv.numOfBox,
-                    totalQty = inv.qtyPerBox * inv.numOfBox, // manual calc since generated col read after flush
+                    boxPerCtn = inv.boxPerCtn,
+                    numOfCtn = inv.numOfCtn,
+                    totalQty = inv.qtyPerBox * inv.boxPerCtn * inv.numOfCtn, // manual calc since generated col read after flush
                 )
             } ?: emptyList()
 
@@ -92,7 +93,7 @@ class WarehouseInventoryUseCase(
 
         // Aggregate by SKU
         val skuAgg = allInventory.groupBy { it.sku }.map { (sku, items) ->
-            val totalQty = items.sumOf { it.qtyPerBox * it.numOfBox }
+            val totalQty = items.sumOf { it.qtyPerBox * it.boxPerCtn * it.numOfCtn }
             sku to totalQty
         }
 

@@ -51,7 +51,8 @@ export default function InventoryHistoryPage() {
   const [selectedSku, setSelectedSku] = useState('');
   const [addQty, setAddQty] = useState('');
   const [addQtyPerBox, setAddQtyPerBox] = useState('');
-  const [addNumOfBox, setAddNumOfBox] = useState('');
+  const [addBoxPerCtn, setAddBoxPerCtn] = useState('');
+  const [addNumOfCtn, setAddNumOfCtn] = useState('');
   // Location selectors for new format add
   const [addWarehouse, setAddWarehouse] = useState('');
   const [addAisle, setAddAisle] = useState('');
@@ -228,7 +229,8 @@ export default function InventoryHistoryPage() {
     setSelectedSku('');
     setAddQty('');
     setAddQtyPerBox('');
-    setAddNumOfBox('');
+    setAddBoxPerCtn('');
+    setAddNumOfCtn('');
     setAddWarehouse('');
     setAddAisle('');
     setAddBay('');
@@ -251,12 +253,13 @@ export default function InventoryHistoryPage() {
     if (!selectedSku || !selectedBatch) return;
     if (hasLocationData) {
       const qpb = parseInt(addQtyPerBox, 10);
-      const nb = parseInt(addNumOfBox, 10);
-      if (isNaN(qpb) || qpb < 1 || isNaN(nb) || nb < 1 || !addWarehouse || !addAisle || !addBay || !addLevel) return;
+      const bpc = parseInt(addBoxPerCtn, 10);
+      const nc = parseInt(addNumOfCtn, 10);
+      if (isNaN(qpb) || qpb < 1 || isNaN(bpc) || bpc < 1 || isNaN(nc) || nc < 1 || !addWarehouse || !addAisle || !addBay || !addLevel) return;
       pendingActionRef.current = {
         type: 'add',
         payload: {
-          sku: selectedSku, qtyPerBox: qpb, numOfBox: nb,
+          sku: selectedSku, qtyPerBox: qpb, boxPerCtn: bpc, numOfCtn: nc,
           warehouse: addWarehouse, aisle: addAisle, bay: parseInt(addBay, 10),
           level: addLevel, bin: addBin || '', slot: addSlot || '',
         },
@@ -478,11 +481,11 @@ export default function InventoryHistoryPage() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr>
-                          {['#', t('colSku'), t('colQtyPerBox'), t('colNumOfBox'), t('colTotal'),
+                          {['#', t('colSku'), t('colQtyPerBox'), t('colBoxPerCtn'), t('colNumOfCtn'), t('colTotal'),
                             t('colWarehouse'), t('colAisle'), t('colBay'), t('colLevel'), t('colBin'), t('colSlot'), ''
                           ].map((col, ci) => (
                             <th key={ci}
-                              className={`px-3 py-2.5 font-semibold sticky top-0 z-10 ${ci >= 2 && ci <= 4 ? 'text-right' : ci >= 5 ? 'text-center' : 'text-left'}`}
+                              className={`px-3 py-2.5 font-semibold sticky top-0 z-10 ${ci >= 2 && ci <= 5 ? 'text-right' : ci >= 6 ? 'text-center' : 'text-left'}`}
                               style={{ color: colors.textSecondary, backgroundColor: colors.bg }}>
                               {col}
                             </th>
@@ -497,7 +500,8 @@ export default function InventoryHistoryPage() {
                             <td className="px-3 py-2" style={{ color: colors.textTertiary }}>{i + 1}</td>
                             <td className="px-3 py-2 font-mono font-bold" style={{ color: colors.text }}>{d.sku}</td>
                             <EditableCell rowId={d.id} field="qtyPerBox" value={d.qtyPerBox} />
-                            <EditableCell rowId={d.id} field="numOfBox" value={d.numOfBox} />
+                            <EditableCell rowId={d.id} field="boxPerCtn" value={d.boxPerCtn} />
+                            <EditableCell rowId={d.id} field="numOfCtn" value={d.numOfCtn} />
                             <td className="px-3 py-2 text-right font-medium" style={{ color: colors.green }}>{d.totalQty.toLocaleString()}</td>
                             <td className="px-3 py-2 text-center font-mono text-[10px]" style={{ color: colors.textSecondary }}>{d.warehouse}</td>
                             <td className="px-3 py-2 text-center" style={{ color: colors.textSecondary }}>{d.aisle}</td>
@@ -665,7 +669,7 @@ export default function InventoryHistoryPage() {
               {/* Quantity / Location inputs */}
               {hasLocationData ? (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-medium mb-1 block" style={{ color: colors.textSecondary }}>{t('colQtyPerBox')}</label>
                       <input type="number" min={1} value={addQtyPerBox} onChange={e => setAddQtyPerBox(e.target.value)}
@@ -673,8 +677,14 @@ export default function InventoryHistoryPage() {
                         style={{ backgroundColor: colors.bgTertiary || cardBg, border: `1px solid ${borderColor}`, color: colors.text }} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium mb-1 block" style={{ color: colors.textSecondary }}>{t('colNumOfBox')}</label>
-                      <input type="number" min={1} value={addNumOfBox} onChange={e => setAddNumOfBox(e.target.value)}
+                      <label className="text-xs font-medium mb-1 block" style={{ color: colors.textSecondary }}>{t('colBoxPerCtn')}</label>
+                      <input type="number" min={1} value={addBoxPerCtn} onChange={e => setAddBoxPerCtn(e.target.value)}
+                        className="w-full h-9 px-3 rounded-lg text-xs font-mono outline-none"
+                        style={{ backgroundColor: colors.bgTertiary || cardBg, border: `1px solid ${borderColor}`, color: colors.text }} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block" style={{ color: colors.textSecondary }}>{t('colNumOfCtn')}</label>
+                      <input type="number" min={1} value={addNumOfCtn} onChange={e => setAddNumOfCtn(e.target.value)}
                         className="w-full h-9 px-3 rounded-lg text-xs font-mono outline-none"
                         style={{ backgroundColor: colors.bgTertiary || cardBg, border: `1px solid ${borderColor}`, color: colors.text }} />
                     </div>
@@ -714,7 +724,7 @@ export default function InventoryHistoryPage() {
                   {t('cancel')}
                 </button>
                 <button onClick={submitAdd}
-                  disabled={!selectedSku || (hasLocationData ? (!addQtyPerBox || !addNumOfBox || !addWarehouse || !addAisle || !addBay || !addLevel) : !addQty)}
+                  disabled={!selectedSku || (hasLocationData ? (!addQtyPerBox || !addBoxPerCtn || !addNumOfCtn || !addWarehouse || !addAisle || !addBay || !addLevel) : !addQty)}
                   className="flex-1 h-11 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40"
                   style={{ backgroundColor: colors.green }}>
                   {t('confirmAdd')}

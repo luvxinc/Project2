@@ -11,10 +11,7 @@ import java.time.LocalDate
  * Tracks actual qty vs sent qty per SKU per shipment.
  */
 @Entity
-@Table(
-    name = "receives",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["shipment_id", "po_id", "sku", "unit_price"])]
-)
+@Table(name = "receives")
 class Receive(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

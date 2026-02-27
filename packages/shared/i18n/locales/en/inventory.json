@@ -196,7 +196,7 @@
     "upload": {
       "title": "Upload Stocktake Data",
       "desc": "Select a date and upload CSV to record stocktake",
-      "csvHint": "CSV file: SKU, (skip), Qty/Box, Boxes, Aisle(L/R), Bay#, Level(G/M/T), Bin(L/R), Slot(L/R), Warehouse, (skip)",
+      "csvHint": "CSV file: SKU, (skip), Qty/Box, Box/CTN, Num of CTNs, Aisle(L/R), Bay#, Level(G/M/T), Bin(L/R), Slot(L/R), Warehouse, (skip)",
       "dragDrop": "Drag CSV file here, or click to select",
       "selectFile": "Select File",
       "targetDate": "Target Date",
@@ -256,7 +256,8 @@
       "locationCols": {
         "sku": "SKU",
         "qtyPerBox": "Qty/Box",
-        "numOfBox": "Boxes",
+        "boxPerCtn": "Box/CTN",
+        "numOfCtn": "CTNs",
         "totalQty": "Total",
         "aisle": "Aisle",
         "bay": "Bay",
@@ -344,7 +345,8 @@
     "editWarning": "You are about to modify inventory data. This will update the warehouse location inventory.",
     "colSku": "SKU",
     "colQtyPerBox": "Qty/Box",
-    "colNumOfBox": "Boxes",
+    "colBoxPerCtn": "Box/CTN",
+    "colNumOfCtn": "CTNs",
     "colTotal": "Total",
     "colWarehouse": "Warehouse",
     "colAisle": "Aisle",

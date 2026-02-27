@@ -189,11 +189,12 @@ class StocktakeUseCase(
         }
         require(detail.stocktakeId == stocktakeId) { "Detail does not belong to this stocktake" }
 
-        val oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox)
+        val oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "boxPerCtn" to detail.boxPerCtn, "numOfCtn" to detail.numOfCtn)
 
         // Update fields
         dto.qtyPerBox?.let { detail.qtyPerBox = it }
-        dto.numOfBox?.let { detail.numOfBox = it }
+        dto.boxPerCtn?.let { detail.boxPerCtn = it }
+        dto.numOfCtn?.let { detail.numOfCtn = it }
 
         // If location fields changed, resolve new location
         if (dto.warehouse != null || dto.aisle != null || dto.bay != null || dto.level != null || dto.bin != null || dto.slot != null) {
@@ -218,7 +219,7 @@ class StocktakeUseCase(
         recordEvent(stocktakeId, "UPDATE_DETAIL", username,
             summary = "Updated location detail for ${detail.sku}",
             oldData = oldData,
-            newData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox),
+            newData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "boxPerCtn" to detail.boxPerCtn, "numOfCtn" to detail.numOfCtn),
         )
 
         return saved
@@ -234,7 +235,7 @@ class StocktakeUseCase(
 
         recordEvent(stocktakeId, "DELETE_DETAIL", username,
             summary = "Deleted location detail for ${detail.sku}",
-            oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "numOfBox" to detail.numOfBox),
+            oldData = mapOf("sku" to detail.sku, "qtyPerBox" to detail.qtyPerBox, "boxPerCtn" to detail.boxPerCtn, "numOfCtn" to detail.numOfCtn),
         )
 
         locationDetailRepo.delete(detail)
@@ -262,7 +263,8 @@ class StocktakeUseCase(
             location = location,
             sku = dto.sku.trim().uppercase(),
             qtyPerBox = dto.qtyPerBox,
-            numOfBox = dto.numOfBox,
+            boxPerCtn = dto.boxPerCtn,
+            numOfCtn = dto.numOfCtn,
         )
         val saved = locationDetailRepo.save(detail)
         em.flush()
@@ -272,7 +274,7 @@ class StocktakeUseCase(
 
         recordEvent(stocktakeId, "ADD_DETAIL", username,
             summary = "Added location detail for ${dto.sku}",
-            newData = mapOf("sku" to dto.sku, "qtyPerBox" to dto.qtyPerBox, "numOfBox" to dto.numOfBox, "warehouse" to wh),
+            newData = mapOf("sku" to dto.sku, "qtyPerBox" to dto.qtyPerBox, "boxPerCtn" to dto.boxPerCtn, "numOfCtn" to dto.numOfCtn, "warehouse" to wh),
         )
 
         return saved
@@ -354,7 +356,7 @@ class StocktakeUseCase(
      */
     private fun reAggregateItems(stocktake: Stocktake, username: String) {
         val details = locationDetailRepo.findAllByStocktakeId(stocktake.id)
-        val skuTotals = details.groupBy { it.sku }.mapValues { (_, items) -> items.sumOf { it.qtyPerBox * it.numOfBox } }
+        val skuTotals = details.groupBy { it.sku }.mapValues { (_, items) -> items.sumOf { it.qtyPerBox * it.boxPerCtn * it.numOfCtn } }
 
         // Clear and rebuild items
         itemRepo.deleteAllByStocktakeId(stocktake.id)
@@ -434,7 +436,8 @@ class StocktakeUseCase(
                 location = location,
                 sku = detail.sku.trim().uppercase(),
                 qtyPerBox = detail.qtyPerBox,
-                numOfBox = detail.numOfBox,
+                boxPerCtn = detail.boxPerCtn,
+                numOfCtn = detail.numOfCtn,
             )
             locationDetailRepo.save(locationDetail)
 
@@ -459,8 +462,8 @@ class StocktakeUseCase(
         // Use native SQL to copy from stocktake_location_details → warehouse_location_inventory
         // This avoids JPA lazy-loading issues with the location reference
         val inserted = em.createNativeQuery("""
-            INSERT INTO warehouse_location_inventory (location_id, sku, qty_per_box, num_of_box, last_stocktake_id, updated_by, updated_at)
-            SELECT sld.location_id, sld.sku, sld.qty_per_box, sld.num_of_box, :stocktakeId, :username, NOW()
+            INSERT INTO warehouse_location_inventory (location_id, sku, qty_per_box, box_per_ctn, num_of_ctn, last_stocktake_id, updated_by, updated_at)
+            SELECT sld.location_id, sld.sku, sld.qty_per_box, sld.box_per_ctn, sld.num_of_ctn, :stocktakeId, :username, NOW()
             FROM stocktake_location_details sld
             JOIN warehouse_locations wl ON sld.location_id = wl.id
             WHERE sld.stocktake_id = :stocktakeId AND wl.warehouse = :warehouse

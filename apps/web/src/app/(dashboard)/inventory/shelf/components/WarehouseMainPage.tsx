@@ -85,7 +85,8 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
           items: loc.items.map(item => ({
             sku: item.sku,
             qtyPerBox: item.qtyPerBox,
-            numOfBox: item.numOfBox,
+            boxPerCtn: item.boxPerCtn,
+            numOfCtn: item.numOfCtn,
             totalQty: item.totalQty,
           })),
         });
@@ -94,7 +95,7 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
 
     // Second pass: aggregate at bin level (aisle_bay_level_bin_)
     // So when ShelfBay queries a slot that has no data, it can fallback to the bin aggregate
-    const binAgg = new Map<string, Map<string, { sku: string; qtyPerBox: number; numOfBox: number; totalQty: number }>>();
+    const binAgg = new Map<string, Map<string, { sku: string; qtyPerBox: number; boxPerCtn: number; numOfCtn: number; totalQty: number }>>();
     for (const loc of inventory.locations) {
       if (loc.items.length === 0) continue;
       const binKey = `${loc.aisle}_${loc.bay}_${loc.level}_${loc.bin || ''}_`;
@@ -103,7 +104,7 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
       for (const item of loc.items) {
         if (skuMap.has(item.sku)) {
           const existing = skuMap.get(item.sku)!;
-          existing.numOfBox += item.numOfBox;
+          existing.numOfCtn += item.numOfCtn;
           existing.totalQty += item.totalQty;
         } else {
           skuMap.set(item.sku, { ...item });
@@ -253,7 +254,8 @@ export function WarehouseMainPage({ warehouse, onBack, onEdit }: WarehouseMainPa
                       </div>
                       <div className="flex items-center gap-3 text-[10px]" style={{ color: colors.textTertiary }}>
                         <span>{t('perBox', { qty: item.qtyPerBox })}</span>
-                        <span>{t('numBoxes', { count: item.numOfBox })}</span>
+                        <span>×{item.boxPerCtn}</span>
+                        <span>{t('numBoxes', { count: item.numOfCtn })}</span>
                       </div>
                     </div>
                   ))}

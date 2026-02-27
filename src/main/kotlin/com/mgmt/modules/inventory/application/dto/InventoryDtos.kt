@@ -49,7 +49,8 @@ data class CreateStocktakeItemRequest(
 data class CreateStocktakeLocationDetailRequest(
     val sku: String,
     val qtyPerBox: Int,
-    val numOfBox: Int,
+    val boxPerCtn: Int,
+    val numOfCtn: Int,
     val warehouse: String,
     val aisle: String,   // WLR: L/R
     val bay: Int,        // LOC: number
@@ -67,7 +68,8 @@ data class UpdateStocktakeRequest(
 // Single-record update for location detail (History page inline edit)
 data class UpdateLocationDetailRequest(
     val qtyPerBox: Int? = null,
-    val numOfBox: Int? = null,
+    val boxPerCtn: Int? = null,
+    val numOfCtn: Int? = null,
     val warehouse: String? = null,
     val aisle: String? = null,
     val bay: Int? = null,
@@ -91,7 +93,8 @@ data class AddStocktakeItemRequest(
 data class AddLocationDetailRequest(
     val sku: String,
     val qtyPerBox: Int,
-    val numOfBox: Int,
+    val boxPerCtn: Int,
+    val numOfCtn: Int,
     val warehouse: String,
     val aisle: String,
     val bay: Int,
@@ -207,7 +210,8 @@ data class StocktakeLocationDetailResponse(
     val locationId: Long,
     val sku: String,
     val qtyPerBox: Int,
-    val numOfBox: Int,
+    val boxPerCtn: Int,
+    val numOfCtn: Int,
     val totalQty: Int,
     val warehouse: String,
     val aisle: String,
@@ -243,7 +247,8 @@ data class LocationInventoryItem(
 data class LocationSkuItem(
     val sku: String,
     val qtyPerBox: Int,
-    val numOfBox: Int,
+    val boxPerCtn: Int,
+    val numOfCtn: Int,
     val totalQty: Int,
 )
 

@@ -196,7 +196,7 @@
     "upload": {
       "title": "上传盘存数据",
       "desc": "选择日期并上传 CSV 文件完成盘存录入",
-      "csvHint": "CSV 格式: SKU, (跳过), 每盒数量, 箱数, 通道(L/R), 货架号, 层级(G/M/T), 储位(L/R), 槽位(L/R), 仓库, (跳过)",
+      "csvHint": "CSV 格式: SKU, (跳过), 每盒数量, 每箱盒数, 箱数, 通道(L/R), 货架号, 层级(G/M/T), 储位(L/R), 槽位(L/R), 仓库, (跳过)",
       "dragDrop": "拖拽 CSV 文件到此处，或点击选择",
       "selectFile": "选择文件",
       "targetDate": "归属日期",
@@ -256,7 +256,8 @@
       "locationCols": {
         "sku": "SKU",
         "qtyPerBox": "每盒数量",
-        "numOfBox": "箱数",
+        "boxPerCtn": "每箱盒数",
+        "numOfCtn": "箱数",
         "totalQty": "总计",
         "aisle": "排",
         "bay": "格",
@@ -349,7 +350,8 @@
     "editWarning": "您即将修改库存数据，此操作将同步更新仓库货位库存。",
     "colSku": "SKU",
     "colQtyPerBox": "每盒数量",
-    "colNumOfBox": "箱数",
+    "colBoxPerCtn": "每箱盒数",
+    "colNumOfCtn": "箱数",
     "colTotal": "合计",
     "colWarehouse": "仓库",
     "colAisle": "排",

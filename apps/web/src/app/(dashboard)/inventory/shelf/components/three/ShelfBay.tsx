@@ -25,7 +25,8 @@ const LEVEL_ORDER = ['G', 'M', 'T'];
 export interface InventoryHoverItem {
   sku: string;
   qtyPerBox: number;
-  numOfBox: number;
+  boxPerCtn: number;
+  numOfCtn: number;
   totalQty: number;
 }
 

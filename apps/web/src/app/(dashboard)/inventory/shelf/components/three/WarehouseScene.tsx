@@ -201,7 +201,7 @@ function InventoryTooltip({ data, label, sceneColors }: {
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '12px', fontWeight: 700, color: sceneColors.tooltipQty }}>{item.totalQty}</div>
               <div style={{ fontSize: '9px', color: sceneColors.tooltipSub }}>
-                {item.qtyPerBox}×{item.numOfBox}
+                {item.qtyPerBox}×{item.boxPerCtn}×{item.numOfCtn}
               </div>
             </div>
           </div>

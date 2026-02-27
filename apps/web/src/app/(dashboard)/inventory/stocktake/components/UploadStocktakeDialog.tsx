@@ -49,26 +49,27 @@ function fuzzyMatch(bad: string, allSkus: string[], limit = 5): string[] {
 }
 
 // ═══════════════════════════════════════
-// CSV Row Type (11-column new format)
+// CSV Row Type (12-column new format)
 // ═══════════════════════════════════════
 interface CsvRow {
   sku: string;        // col 1
   // col 2 skipped (manual verification)
   qtyPerBox: number;  // col 3
-  numOfBox: number;   // col 4
-  aisle: string;      // col 5 (WLR: L/R)
-  bay: number;        // col 6 (LOC)
-  level: string;      // col 7 (LEVEL: G/M/T)
-  bin: string;        // col 8 (SLR: L/R or empty)
-  slot: string;       // col 9 (LLR: L/R or empty)
-  warehouse: string;  // col 10
-  // col 11 skipped (total qty, system calculates)
-  totalQty: number;   // computed: qtyPerBox × numOfBox
+  boxPerCtn: number;  // col 4 (Boxes per Carton)
+  numOfCtn: number;   // col 5 (Number of Cartons)
+  aisle: string;      // col 6 (WLR: L/R)
+  bay: number;        // col 7 (LOC)
+  level: string;      // col 8 (LEVEL: G/M/T)
+  bin: string;        // col 9 (SLR: L/R or empty)
+  slot: string;       // col 10 (LLR: L/R or empty)
+  warehouse: string;  // col 11
+  // col 12 skipped (total qty, system calculates)
+  totalQty: number;   // computed: qtyPerBox × boxPerCtn × numOfCtn
   rowIndex: number;   // original CSV row #
 }
 
 // ═══════════════════════════════════════
-// CSV parser — 11-column format
+// CSV parser — 12-column format
 // ═══════════════════════════════════════
 function parseCSV11(text: string): CsvRow[] {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
@@ -81,39 +82,42 @@ function parseCSV11(text: string): CsvRow[] {
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
 
-    // Need at least 10 columns (11th is optional)
-    if (parts.length < 10) continue;
+    // Need at least 11 columns (12th is optional total)
+    if (parts.length < 11) continue;
 
     const sku = (parts[0] || '').trim().toUpperCase();
     // col 2 (index 1) is skipped
     const qtyPerBox = parseInt(parts[2] || '', 10);
-    const numOfBox = parseInt(parts[3] || '', 10);
-    const aisle = (parts[4] || '').trim().toUpperCase();
-    const bay = parseInt(parts[5] || '', 10);
-    const level = (parts[6] || '').trim().toUpperCase();
-    const bin = (parts[7] || '').trim().toUpperCase();
-    const slot = (parts[8] || '').trim().toUpperCase();
-    const warehouse = (parts[9] || '').trim().toUpperCase();
-    // col 11 (index 10) is skipped — system calculates total
+    const boxPerCtn = parseInt(parts[3] || '', 10);
+    const numOfCtn = parseInt(parts[4] || '', 10);
+    const aisle = (parts[5] || '').trim().toUpperCase();
+    const bay = parseInt(parts[6] || '', 10);
+    const level = (parts[7] || '').trim().toUpperCase();
+    const bin = (parts[8] || '').trim().toUpperCase();
+    const slot = (parts[9] || '').trim().toUpperCase();
+    const warehouse = (parts[10] || '').trim().toUpperCase();
+    // col 12 (index 11) is skipped — system calculates total
 
     // Validation
     if (INVALID_SKUS.has(sku)) continue;
     if (isNaN(qtyPerBox) || qtyPerBox < 0) continue;
-    if (isNaN(numOfBox) || numOfBox < 0) continue;
+    if (isNaN(boxPerCtn) || boxPerCtn < 0) continue;
+    if (isNaN(numOfCtn) || numOfCtn < 0) continue;
     if (isNaN(bay) || bay < 0) continue;
     if (!warehouse) continue;
 
     rows.push({
       sku,
       qtyPerBox,
-      numOfBox,
+      boxPerCtn,
+      numOfCtn,
       aisle,
       bay,
       level,
       bin: bin || '',
       slot: slot || '',
       warehouse,
-      totalQty: qtyPerBox * numOfBox,
+      totalQty: qtyPerBox * boxPerCtn * numOfCtn,
       rowIndex: i + 1, // 1-based for user display
     });
   }
@@ -318,7 +322,8 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
           return {
             sku: correctedSku,
             qtyPerBox: r.qtyPerBox,
-            numOfBox: r.numOfBox,
+            boxPerCtn: r.boxPerCtn,
+            numOfCtn: r.numOfCtn,
             warehouse: parts[0] || r.warehouse,
             aisle: parts[1] || r.aisle,
             bay: parseInt(parts[2]) || r.bay,
@@ -330,7 +335,8 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
         return {
           sku: correctedSku,
           qtyPerBox: r.qtyPerBox,
-          numOfBox: r.numOfBox,
+          boxPerCtn: r.boxPerCtn,
+          numOfCtn: r.numOfCtn,
           warehouse: r.warehouse,
           aisle: r.aisle,
           bay: r.bay,
@@ -345,7 +351,7 @@ export function UploadStocktakeDialog({ open, onClose, onComplete, existingDates
   const computedFinalItems = (() => {
     const agg: Record<string, number> = {};
     for (const d of computedLocationDetails) {
-      const totalQty = d.qtyPerBox * d.numOfBox;
+      const totalQty = d.qtyPerBox * d.boxPerCtn * d.numOfCtn;
       agg[d.sku] = (agg[d.sku] || 0) + totalQty;
     }
     return Object.entries(agg).map(([sku, countedQty]) => ({ sku, countedQty })).sort((a, b) => a.sku.localeCompare(b.sku));

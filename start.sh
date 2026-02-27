@@ -21,7 +21,7 @@ PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
 # Cloudflare Tunnel Token
-CF_TOKEN="${CF_TOKEN:-YOUR_CF_TOKEN_HERE}"
+CF_TOKEN="${CF_TOKEN:-***REDACTED_CF_TOKEN***}"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"
@@ -104,7 +104,7 @@ done
 if [ "$CONFLICT" = true ]; then
     printf "\n"
     log_info "检测到端口冲突。停止本机服务..."
-    brew services stop postgresql@16 2>/dev/null || brew services stop postgresql 2>/dev/null || true
+    brew services stop postgresql@15 2>/dev/null || brew services stop postgresql 2>/dev/null || true
     brew services stop redis 2>/dev/null || true
     sleep 2
 

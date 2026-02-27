@@ -18,7 +18,7 @@ interface WarehouseLocationInventoryRepository : JpaRepository<WarehouseLocation
     fun findAllByWarehouse(@Param("warehouse") warehouse: String): List<WarehouseLocationInventory>
 
     @Query("""
-        SELECT DISTINCT wli.sku, SUM(wli.qtyPerBox * wli.numOfBox) AS totalQty 
+        SELECT DISTINCT wli.sku, SUM(wli.qtyPerBox * wli.boxPerCtn * wli.numOfCtn) AS totalQty 
         FROM WarehouseLocationInventory wli 
         WHERE wli.location.warehouse = :warehouse 
         GROUP BY wli.sku ORDER BY wli.sku

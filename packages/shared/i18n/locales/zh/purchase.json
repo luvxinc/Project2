@@ -684,8 +684,9 @@
     },
     "delete": {
       "title": "删除入库记录",
-      "securityDescription": "删除入库记录需要 L3 安全码",
-      "noteRequired": "删除备注不能为空"
+      "securityDescription": "删除入库记录需要 L3 安全码，此操作将回滚所有关联的库存和FIFO数据",
+      "noteRequired": "删除备注不能为空",
+      "notePlaceholder": "删除原因 (选填)"
     },
     "restore": {
       "title": "恢复入库记录",

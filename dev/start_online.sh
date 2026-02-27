@@ -20,7 +20,7 @@ PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
 # Cloudflare Token (与 ops/start_server.sh 一致)
-CF_TOKEN="YOUR_CF_TOKEN_HERE"
+CF_TOKEN="***REDACTED_CF_TOKEN***"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"
@@ -75,13 +75,24 @@ log_ok "Java $(java -version 2>&1 | head -1 | awk -F '"' '{print $2}')"
 # 检查 PostgreSQL
 if ! lsof -i :5432 -sTCP:LISTEN > /dev/null 2>&1; then
     log_warn "PostgreSQL 未运行，尝试启动..."
-    brew services start postgresql@16 2>/dev/null || brew services start postgresql 2>/dev/null || true
-    sleep 2
+    # 清理残留的 postmaster.pid（非正常关机后的常见问题）
+    PG_DATA_DIR="/opt/homebrew/var/postgresql@15"
+    if [ -f "$PG_DATA_DIR/postmaster.pid" ]; then
+        OLD_PID=$(head -1 "$PG_DATA_DIR/postmaster.pid")
+        if ! ps -p "$OLD_PID" -o comm= 2>/dev/null | grep -q postgres; then
+            log_warn "检测到残留 postmaster.pid (PID: $OLD_PID 已不存在)，正在清理..."
+            rm -f "$PG_DATA_DIR/postmaster.pid"
+        fi
+    fi
+    brew services stop postgresql@15 2>/dev/null || true
+    sleep 1
+    brew services start postgresql@15 2>/dev/null || brew services start postgresql 2>/dev/null || true
+    sleep 3
 fi
 if lsof -i :5432 -sTCP:LISTEN > /dev/null 2>&1; then
     log_ok "PostgreSQL"
 else
-    log_err "PostgreSQL 无法启动"
+    log_err "PostgreSQL 无法启动。请检查: tail -50 /opt/homebrew/var/postgresql@15/server.log"
     exit 1
 fi
 

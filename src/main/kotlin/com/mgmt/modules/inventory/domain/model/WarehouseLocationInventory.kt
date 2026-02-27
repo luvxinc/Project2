@@ -9,7 +9,7 @@ import java.time.Instant
  * Overwritten on each stocktake upload. Powers the 3D hover display
  * and the warehouse product list (SKU total + FIFO value).
  *
- * total_qty is a GENERATED ALWAYS AS (qty_per_box * num_of_box) STORED column — read-only in JPA.
+ * total_qty is a GENERATED ALWAYS AS (qty_per_box * box_per_ctn * num_of_ctn) STORED column — read-only in JPA.
  */
 @Entity
 @Table(name = "warehouse_location_inventory")
@@ -31,8 +31,11 @@ class WarehouseLocationInventory(
     @Column(name = "qty_per_box", nullable = false)
     var qtyPerBox: Int = 0,
 
-    @Column(name = "num_of_box", nullable = false)
-    var numOfBox: Int = 0,
+    @Column(name = "box_per_ctn", nullable = false)
+    var boxPerCtn: Int = 1,
+
+    @Column(name = "num_of_ctn", nullable = false)
+    var numOfCtn: Int = 0,
 
     // GENERATED column — read-only
     @Column(name = "total_qty", insertable = false, updatable = false)

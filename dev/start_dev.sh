@@ -84,12 +84,23 @@ if lsof -i :5432 -sTCP:LISTEN > /dev/null 2>&1; then
     log_ok "PostgreSQL (端口 5432 已监听)"
 else
     log_warn "PostgreSQL 端口 5432 未监听，尝试启动..."
-    brew services start postgresql@16 2>/dev/null || brew services start postgresql 2>/dev/null || true
-    sleep 2
+    # 清理残留的 postmaster.pid（非正常关机后的常见问题）
+    PG_DATA_DIR="/opt/homebrew/var/postgresql@15"
+    if [ -f "$PG_DATA_DIR/postmaster.pid" ]; then
+        OLD_PID=$(head -1 "$PG_DATA_DIR/postmaster.pid")
+        if ! ps -p "$OLD_PID" -o comm= 2>/dev/null | grep -q postgres; then
+            log_warn "检测到残留 postmaster.pid (PID: $OLD_PID)，正在清理..."
+            rm -f "$PG_DATA_DIR/postmaster.pid"
+        fi
+    fi
+    brew services stop postgresql@15 2>/dev/null || true
+    sleep 1
+    brew services start postgresql@15 2>/dev/null || brew services start postgresql 2>/dev/null || true
+    sleep 3
     if lsof -i :5432 -sTCP:LISTEN > /dev/null 2>&1; then
         log_ok "PostgreSQL 启动成功"
     else
-        log_err "PostgreSQL 无法启动。请手动检查: brew services list"
+        log_err "PostgreSQL 无法启动。请检查: tail -50 /opt/homebrew/var/postgresql@15/server.log"
         exit 1
     fi
 fi

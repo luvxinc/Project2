@@ -134,7 +134,15 @@ class ReceiveUseCase(
         val allShipmentItems = shipmentItemRepo.findAllByShipmentIdAndDeletedAtIsNullOrderBySkuAsc(shipment.id)
         val receives = mutableListOf<Receive>()
 
-        dto.items.forEach { input ->
+        // Merge input by SKU — frontend sends one entry per (poNum, sku) row,
+        // but backend processes per SKU across all POs. SUM receiveQuantity for same SKU.
+        val mergedItems = dto.items
+            .groupBy { it.sku.trim().uppercase() }
+            .map { (_, group) ->
+                group.first().copy(receiveQuantity = group.sumOf { it.receiveQuantity })
+            }
+
+        mergedItems.forEach { input ->
             val inputSku = input.sku.trim().uppercase()
             val inputReceiveQty = input.receiveQuantity
 
@@ -280,7 +288,7 @@ class ReceiveUseCase(
             //   ALL_RECEIVED / DIFF_UNRESOLVED / DIFF_RESOLVED → can_modify=False, can_delete=False
             //   DELETED → can_modify=False, can_delete=False
             val canModify = status == ReceiveStatus.IN_TRANSIT
-            val canDelete = status == ReceiveStatus.IN_TRANSIT
+            val canDelete = status != ReceiveStatus.DELETED
 
             ReceiveManagementItemResponse(
                 logisticNum = logisticNum,
@@ -511,23 +519,45 @@ class ReceiveUseCase(
     /**
      *
      * V1 mechanism: writes qty=0 record to in_receive (audit log), DELETEs in_receive_final.
-     * V3 equivalent: sets deletedAt (soft-delete). Semantically identical for:
-     *   - findForManagement: detects DELETED via activeRecords.isEmpty()
-     *   - findPendingShipments: only counts active receives (totalActive == 0 → pending)
+     * V3 equivalent: sets deletedAt (soft-delete) + rolls back ALL downstream inventory effects:
+     *   ① Soft-delete Receive records
+     *   ② Mark pending ReceiveDiffs as 'deleted'
+     *   ③ Delete FIFO transactions created by triggerLandedPriceCreation
+     *   ④ Delete FIFO layers created by triggerLandedPriceCreation
+     *   ⑤ Delete LandedPrice records
+     *   ⑥ Restore Shipment status to 'in_transit' (so it reappears in pending)
+     *
+     * Safety valve: if ANY FIFO layer has been partially consumed by sales
+     * (qty_remaining < qty_in), deletion is BLOCKED to preserve FIFO integrity.
      *
      * Note (P0-7): note is REQUIRED — enforced via isNullOrBlank check.
      */
     @Transactional
     fun deleteReceive(logisticNum: String, note: String?, username: String): Boolean {
-        if (note.isNullOrBlank()) {
-            throw IllegalArgumentException("purchase.errors.deleteNoteRequired")
-        }
+        val deleteNote = "删除订单 by $username: ${note?.takeIf { it.isNotBlank() } ?: "手动删除入库"}"
         val receives = receiveRepo.findByLogisticNumAndDeletedAtIsNull(logisticNum)
         if (receives.isEmpty()) throw NotFoundException("purchase.errors.receiveNotFound")
 
         val now = Instant.now()
-        val deleteNote = "删除订单 by $username: $note"
 
+        // ── Safety valve: check if FIFO layers have been consumed ──────────
+        val refKeys = receives.map { r ->
+            "receive_${logisticNum}_${r.poNum}_${r.sku}_${r.unitPrice}"
+        }
+        val fifoTrans = refKeys.mapNotNull { fifoTranRepo.findByRefKey(it) }
+        val fifoLayers = if (fifoTrans.isNotEmpty()) {
+            fifoLayerRepo.findByInTranIdIn(fifoTrans.map { it.id })
+        } else emptyList()
+
+        val consumedLayers = fifoLayers.filter { it.qtyRemaining < it.qtyIn }
+        if (consumedLayers.isNotEmpty()) {
+            val detail = consumedLayers.joinToString(", ") { "${it.sku}(剩${it.qtyRemaining}/${it.qtyIn})" }
+            throw IllegalStateException(
+                "purchase.errors.cannotDeleteConsumedFifo: $detail"
+            )
+        }
+
+        // ── ① Soft-delete Receive records ─────────────────────────────────
         receives.forEach { r ->
             r.deletedAt = now
             r.updatedAt = now
@@ -536,6 +566,7 @@ class ReceiveUseCase(
             receiveRepo.save(r)
         }
 
+        // ── ② Mark pending ReceiveDiffs as 'deleted' ──────────────────────
         receiveDiffRepo.findAllByLogisticNum(logisticNum)
             .filter { it.status == "pending" }
             .forEach { d ->
@@ -547,6 +578,37 @@ class ReceiveUseCase(
                 receiveDiffRepo.save(d)
             }
 
+        // ── ③④⑤ Rollback FIFO: transactions, layers, landed prices ───────
+        if (fifoTrans.isNotEmpty()) {
+            // Delete landed prices first (references fifo_tran_id, fifo_layer_id)
+            val landedPrices = landedPriceRepo.findByLogisticNum(logisticNum)
+            if (landedPrices.isNotEmpty()) {
+                landedPriceRepo.deleteAll(landedPrices)
+                log.info("[deleteReceive] Deleted ${landedPrices.size} landed_prices for $logisticNum")
+            }
+
+            // Delete FIFO layers
+            if (fifoLayers.isNotEmpty()) {
+                fifoLayerRepo.deleteAll(fifoLayers)
+                log.info("[deleteReceive] Deleted ${fifoLayers.size} fifo_layers for $logisticNum")
+            }
+
+            // Delete FIFO transactions
+            fifoTranRepo.deleteAll(fifoTrans)
+            log.info("[deleteReceive] Deleted ${fifoTrans.size} fifo_transactions for $logisticNum")
+        }
+
+        // ── ⑥ Restore shipment status to 'in_transit' ────────────────────
+        val shipment = shipmentRepo.findByLogisticNumAndDeletedAtIsNull(logisticNum)
+        if (shipment != null && shipment.status == "delivered") {
+            shipment.status = "in_transit"
+            shipment.updatedAt = now
+            shipment.updatedBy = username
+            shipmentRepo.save(shipment)
+            log.info("[deleteReceive] Restored shipment $logisticNum status to in_transit")
+        }
+
+        log.info("[deleteReceive] Fully rolled back receive for $logisticNum by $username")
         return true
     }
 

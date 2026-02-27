@@ -161,10 +161,8 @@ export default function ReceivingManagementPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (secCode: string) => {
-      if (!deleteNote.trim()) {
-        throw new Error(t('receives.delete.noteRequired'));
-      }
-      return purchaseApi.deleteReceive(deleteTarget!, deleteNote.trim(), secCode || undefined);
+      const note = deleteNote.trim() || '手动删除入库';
+      return purchaseApi.deleteReceive(deleteTarget!, note, secCode || undefined);
     },
     onSuccess: () => {
       deleteSecurity.onCancel();
@@ -173,8 +171,9 @@ export default function ReceivingManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['receiveManagement'] });
       handleBack();
     },
-    onError: () => {
-      deleteSecurity.setError(tCommon('securityCode.invalid'));
+    onError: (err: any) => {
+      const msg = err?.message || err?.detail || tCommon('securityCode.invalid');
+      deleteSecurity.setError(msg);
     },
   });
 
@@ -390,7 +389,16 @@ export default function ReceivingManagementPage() {
         onCancel={() => { deleteSecurity.onCancel(); setDeleteTarget(null); }}
         isLoading={deleteMutation.isPending}
         error={deleteSecurity.error}
-      />
+      >
+        <textarea
+          value={deleteNote}
+          onChange={(e) => setDeleteNote(e.target.value)}
+          placeholder={t('receives.delete.notePlaceholder')}
+          rows={2}
+          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none transition-colors resize-none"
+          style={{ backgroundColor: colors.bgTertiary, borderColor: colors.border, color: colors.text }}
+        />
+      </SecurityCodeDialog>
 
       {/* Restore Dialog */}
       <SecurityCodeDialog
