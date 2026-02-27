@@ -20,8 +20,8 @@ PROJECT_ROOT="$SCRIPT_DIR"
 PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
-# Cloudflare Tunnel Token
-CF_TOKEN="${CF_TOKEN:-***REDACTED_CF_TOKEN***}"
+# Cloudflare Tunnel Token (从环境变量读取，勿硬编码)
+CF_TOKEN="${CF_TOKEN:-}"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"

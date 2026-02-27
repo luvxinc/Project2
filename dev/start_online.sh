@@ -19,8 +19,8 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
-# Cloudflare Token (与 ops/start_server.sh 一致)
-CF_TOKEN="***REDACTED_CF_TOKEN***"
+# Cloudflare Token (从环境变量读取，勿硬编码)
+CF_TOKEN="${CF_TOKEN:?请设置 CF_TOKEN 环境变量}"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"

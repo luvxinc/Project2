@@ -42,10 +42,13 @@ logs/
 data/records/
 data/exports/
 
-# Database dumps (sensitive, large)
+# Database dumps & backups (sensitive, large)
+backups/
 docker/postgres/*.dump
 *.dump
+*.pgdump
 *.sql.gz
+*.sql.bz2
 
 # Cache
 .pytest_cache/
@@ -62,3 +65,4 @@ CLAUDE.md
 # Node.js / Frontends
 output/
 generated-pdfs/
+
