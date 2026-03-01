@@ -692,7 +692,7 @@ class AutoOpsService(
                 categoryGroup, pathKey, qty, qty
             )
         } catch (_: Exception) {
-            // Fallback to wildcard
+            // Fallback 1: wildcard path for same category
             try {
                 jdbcTemplate.queryForMap(
                     """SELECT discount_type, discount_value FROM offer_reply_strategy 
@@ -700,7 +700,17 @@ class AutoOpsService(
                        AND enabled = true ORDER BY id LIMIT 1""",
                     categoryGroup, qty, qty
                 )
-            } catch (_: Exception) { null }
+            } catch (_: Exception) {
+                // Fallback 2: global default (category_group = '*')
+                try {
+                    jdbcTemplate.queryForMap(
+                        """SELECT discount_type, discount_value FROM offer_reply_strategy 
+                           WHERE category_group = '*' AND qty_min <= ? AND (qty_max IS NULL OR qty_max >= ?)
+                           AND enabled = true ORDER BY id LIMIT 1""",
+                        qty, qty
+                    )
+                } catch (_: Exception) { null }
+            }
         } ?: return null
 
         val discountType = strategy["discount_type"].toString()

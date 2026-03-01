@@ -973,17 +973,20 @@ class EbayListingController(
 
             // Find a CPS campaign (COST_PER_SALE)
             var campaignId: String? = null
+            var isDynamicCampaign = false
             if (campaigns.isArray) {
                 for (c in campaigns) {
                     val fundingModel = c.path("fundingStrategy").path("fundingModel").asText()
                     if (fundingModel == "COST_PER_SALE") {
                         campaignId = c.path("campaignId").asText()
+                        isDynamicCampaign = c.path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                         break
                     }
                 }
                 // Fallback to first running campaign
                 if (campaignId == null && campaigns.size() > 0) {
                     campaignId = campaigns[0].path("campaignId").asText()
+                    isDynamicCampaign = campaigns[0].path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                 }
             }
 
@@ -997,18 +1000,25 @@ class EbayListingController(
             var success = 0; var failed = 0
             val errors = mutableListOf<String>()
 
-            log.info("📢 Bulk promote: {} items in {} batches → campaign {}", items.size, totalBatches, campaignId)
+            log.info("📢 Bulk promote: {} items in {} batches → campaign {} (dynamic={})", items.size, totalBatches, campaignId, isDynamicCampaign)
 
             val bulkUrl = "$MARKETING_BASE/ad_campaign/$campaignId/bulk_create_ads_by_listing_id"
 
             batches.forEachIndexed { idx, batch ->
                 if (idx > 0) Thread.sleep(200) // Rate limit between batches
 
-                val requests = batch.map { item ->
-                    mapOf(
-                        "listingId" to (item["listingId"]?.toString() ?: ""),
-                        "bidPercentage" to (item["bidPercentage"]?.toString() ?: "5.0"),
-                    )
+                // For DYNAMIC campaigns, eBay manages ad rates — do NOT send bidPercentage
+                val requests = if (isDynamicCampaign) {
+                    batch.map { item ->
+                        mapOf("listingId" to (item["listingId"]?.toString() ?: ""))
+                    }
+                } else {
+                    batch.map { item ->
+                        mapOf(
+                            "listingId" to (item["listingId"]?.toString() ?: ""),
+                            "bidPercentage" to (item["bidPercentage"]?.toString() ?: "5.0"),
+                        )
+                    }
                 }
 
                 try {
@@ -1024,9 +1034,17 @@ class EbayListingController(
                     if (responses.isArray) {
                         for (r in responses) {
                             val statusCode = r.path("statusCode").asInt()
-                            if (statusCode in 200..299) success++ else {
-                                failed++
-                                errors.add(r.path("errors").toString())
+                            if (statusCode in 200..299) {
+                                success++
+                            } else {
+                                // errorId 35036 = "ad already exists" → listing is already promoted, treat as success
+                                val errorId = r.path("errors").firstOrNull()?.path("errorId")?.asInt(0) ?: 0
+                                if (errorId == 35036) {
+                                    success++
+                                } else {
+                                    failed++
+                                    errors.add(r.path("errors").toString())
+                                }
                             }
                         }
                     }
@@ -1039,6 +1057,27 @@ class EbayListingController(
             }
 
             log.info("📢 Bulk promote done: {} success, {} failed out of {}", success, failed, items.size)
+
+            // Update local listing cache with new ad rates (non-DYNAMIC only)
+            if (success > 0 && !isDynamicCampaign) {
+                var cacheUpdated = 0
+                for (item in items) {
+                    try {
+                        val listingId = item["listingId"]?.toString() ?: continue
+                        val newRate = item["bidPercentage"]?.toString()?.toDoubleOrNull() ?: continue
+                        val cached = listingCacheRepo.findByItemIdAndSeller(listingId, seller) ?: continue
+                        val json = mapper.readTree(cached.data)
+                        if (json is com.fasterxml.jackson.databind.node.ObjectNode) {
+                            json.put("adRate", newRate)
+                            cached.data = mapper.writeValueAsString(json)
+                            listingCacheRepo.save(cached)
+                            cacheUpdated++
+                        }
+                    } catch (_: Exception) { }
+                }
+                log.info("📢 Updated {} listing cache adRate entries", cacheUpdated)
+            }
+
             actionLog.logPromote(
                 triggerType = "MANUAL",
                 seller = seller,

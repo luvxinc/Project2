@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query
 interface EbayListingCacheRepository : JpaRepository<EbayListingCache, String> {
     fun findAllBySeller(seller: String): List<EbayListingCache>
     fun findByItemIdAndSeller(itemId: String, seller: String): EbayListingCache?
+    fun findByItemId(itemId: String): List<EbayListingCache>
 
     @Modifying
     @Query("DELETE FROM EbayListingCache e WHERE e.seller = :seller")

@@ -261,7 +261,7 @@ export default function OffersPage() {
     const customLabel = skuMap[offer.itemId || ''] || '';
     // Extract root SKU (first SKU before any delimiter)
     const rootSku = customLabel.split(/[,;|\s]/)[0]?.toUpperCase()?.replace(/\.[0-9]+$/, '') || '';
-    if (!rootSku) return { action: 'Decline' };
+    if (!rootSku) return { action: 'Skip' }; // No SKU found — skip, never decline
 
     // Determine category group
     let categoryGroup = 'OTHER';
@@ -323,7 +323,7 @@ export default function OffersPage() {
       const universalStrategies = autoStrategies
         .filter(s => s.category_group === categoryGroup && s.path_key === '*')
         .filter(s => qty >= s.qty_min && (s.qty_max == null || qty <= s.qty_max));
-      if (universalStrategies.length === 0) return { action: 'Decline' };
+      if (universalStrategies.length === 0) return { action: 'Skip' }; // No strategy — skip, never decline
       return computeAction(offer, universalStrategies[0]);
     }
 
@@ -336,7 +336,7 @@ export default function OffersPage() {
   ): { action: string; counterPrice?: number } => {
     const buyNow = offer.buyItNowPrice || 0;
     const offerPrice = offer.offerPrice || 0;
-    if (buyNow <= 0) return { action: 'Decline' };
+    if (buyNow <= 0) return { action: 'Skip' }; // No price data — skip, never decline
 
     let counterPrice: number;
     if (strategy.discount_type === 'PERCENT') {
@@ -373,6 +373,13 @@ export default function OffersPage() {
 
       const auto = computeAutoAction(offer);
       const seller = offer.seller || 'espartsplus';
+
+      // Skip offers that can't be auto-replied (missing data / no matching rule)
+      if (auto.action === 'Skip') {
+        console.log(`[AutoReply] [${completed}/${total}] bestOfferId=${offer.bestOfferId} → SKIP (no matching rule or missing data)`);
+        continue;
+      }
+
       console.log(`[AutoReply] [${completed}/${total}] bestOfferId=${offer.bestOfferId} → action=${auto.action}${auto.counterPrice != null ? ` counterPrice=${auto.counterPrice}` : ''}`);
 
       try {
