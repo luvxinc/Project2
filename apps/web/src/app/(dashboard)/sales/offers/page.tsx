@@ -156,6 +156,16 @@ export default function OffersPage() {
       setOffers(res.items || []);
       setFetchedAt(res.fetchedAt);
       setDataReady(true);
+
+      // Auto-reply runs asynchronously on the backend (scheduler, 0s delay).
+      // Re-fetch after a short delay so auto-replied offers disappear from the list.
+      setTimeout(async () => {
+        try {
+          const updated = await salesApi.getOffers({ seller: 'all' });
+          setOffers(updated.items || []);
+          setFetchedAt(updated.fetchedAt);
+        } catch { /* ignore */ }
+      }, 3000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch offers';
       setError(msg);
