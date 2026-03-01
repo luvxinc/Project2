@@ -733,6 +733,99 @@ export default function AutomationPage() {
                       </div>
                     );
                   })}
+
+                  {/* ═══ Global Default Strategy ═══ */}
+                  <div className="mt-6">
+                    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: colors.controlAccent }}>
+                      <div className="px-6 py-4" style={{ backgroundColor: `${colors.controlAccent}08` }}>
+                        <div className="flex items-center gap-3">
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.controlAccent }} />
+                          <span className="text-[16px] font-semibold" style={{ color: colors.text }}>{'Global Default Strategy'}</span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${colors.controlAccent}12`, color: colors.controlAccent }}>
+                            Fallback
+                          </span>
+                        </div>
+                        <p className="text-[11px] mt-1 ml-6" style={{ color: colors.textTertiary }}>
+                          {'Applied when no specific category rule matches. Ensures all offers get an auto-reply.'}
+                        </p>
+                      </div>
+                      <div className="px-6 pb-5" style={{ backgroundColor: colors.bgSecondary }}>
+                        {(() => {
+                          const globalTiers = strategies.filter(s => s.category_group === '*');
+                          const gc = colors.controlAccent;
+                          return (
+                            <div className="mt-3">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>
+                                  {t('offerLeafStrategies')}
+                                </span>
+                                <button
+                                  onClick={() => addStrategyTier('*', '*')}
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium hover:opacity-80 transition-opacity"
+                                  style={{ backgroundColor: `${gc}10`, color: gc }}
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                  {t('offerAddQtyTier')}
+                                </button>
+                              </div>
+                              {globalTiers.length === 0 ? (
+                                <p className="text-[11px] italic" style={{ color: colors.textTertiary }}>{t('offerNoTiers')}</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-[80px_80px_1fr_1fr_32px] gap-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>
+                                    <span>≥ {t('offerColQtyMin')}</span>
+                                    <span>≤ {t('offerColQtyMax')}</span>
+                                    <span>{t('offerColType')}</span>
+                                    <span>{t('offerColDiscount')}</span>
+                                    <span></span>
+                                  </div>
+                                  {globalTiers.map((tier, ti) => (
+                                    <div key={tier.id ?? `g-${ti}`} className="grid grid-cols-[80px_80px_1fr_1fr_32px] gap-2 items-center">
+                                      <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: colors.textTertiary }}>≥</span>
+                                        <input type="number" min="0" step="1" value={tier.qty_min || ''} placeholder="0"
+                                          onChange={e => updateLocalStrategy(tier.id!, 'qty_min', e.target.value ? Number(e.target.value) : 0)}
+                                          onBlur={() => updateStrategyTier(tier)}
+                                          className="w-full pl-5 pr-2 py-1.5 rounded-lg border text-[12px] text-center outline-none"
+                                          style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }} />
+                                      </div>
+                                      <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: colors.textTertiary }}>≤</span>
+                                        <input type="number" min="0" step="1" value={tier.qty_max ?? ''} placeholder="∞"
+                                          onChange={e => updateLocalStrategy(tier.id!, 'qty_max', e.target.value ? Number(e.target.value) : null)}
+                                          onBlur={() => updateStrategyTier(tier)}
+                                          className="w-full pl-5 pr-2 py-1.5 rounded-lg border text-[12px] text-center outline-none"
+                                          style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }} />
+                                      </div>
+                                      <select value={tier.discount_type}
+                                        onChange={e => { updateLocalStrategy(tier.id!, 'discount_type', e.target.value); setTimeout(() => updateStrategyTier({ ...tier, discount_type: e.target.value as 'AMOUNT' | 'PERCENT' }), 50); }}
+                                        className="w-full px-2 py-1.5 rounded-lg border text-[12px] outline-none appearance-none"
+                                        style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }}>
+                                        <option value="AMOUNT">{t('offerTypeFixed')}</option>
+                                        <option value="PERCENT">{t('offerTypePercent')}</option>
+                                      </select>
+                                      <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: colors.textTertiary }}>{tier.discount_type === 'AMOUNT' ? '$' : ''}</span>
+                                        <input type="number" step="0.01" min="0" value={tier.discount_value}
+                                          onChange={e => updateLocalStrategy(tier.id!, 'discount_value', Number(e.target.value))}
+                                          onBlur={() => updateStrategyTier(tier)}
+                                          className="w-full px-2 py-1.5 rounded-lg border text-[12px] text-right outline-none"
+                                          style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text, paddingLeft: tier.discount_type === 'AMOUNT' ? '16px' : '8px' }} />
+                                        {tier.discount_type === 'PERCENT' && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: colors.textTertiary }}>%</span>}
+                                      </div>
+                                      <button onClick={() => deleteStrategyTier(tier.id!)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-70" style={{ color: colors.red }}>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
