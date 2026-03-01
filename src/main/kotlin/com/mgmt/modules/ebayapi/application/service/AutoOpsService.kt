@@ -1,6 +1,7 @@
 package com.mgmt.modules.ebayapi.application.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mgmt.modules.ebayapi.domain.repository.EbayBestOfferRepository
 import com.mgmt.modules.ebayapi.domain.repository.EbayListingCacheRepository
 import com.mgmt.modules.ebayapi.domain.repository.EbaySellerAccountRepository
 import org.slf4j.LoggerFactory
@@ -28,6 +29,7 @@ class AutoOpsService(
     private val oauthService: EbayOAuthService,
     private val sellerAccountRepo: EbaySellerAccountRepository,
     private val listingCacheRepo: EbayListingCacheRepository,
+    private val bestOfferRepo: EbayBestOfferRepository,
     private val actionLog: SalesActionLogService,
     private val jdbcTemplate: JdbcTemplate,
 ) {
@@ -76,14 +78,13 @@ class AutoOpsService(
         // Group by seller (derive from cached listing data)
         val sellerItemMap = mutableMapOf<String, MutableList<SoldItemInfo>>()
         for (item in soldItems) {
-            // Find seller from listing cache
-            val cached = listingCacheRepo.findByItemIdAndSeller(item.itemId, "espartsplus")
-                ?: listingCacheRepo.findByItemIdAndSeller(item.itemId, "espartsmore")
-            val seller = if (cached != null) {
-                try {
-                    mapper.readTree(cached.data).path("seller").asText("espartsplus")
-                } catch (_: Exception) { "espartsplus" }
-            } else "espartsplus"
+            // Find seller from listing cache — no fallback, skip if unknown
+            val cached = listingCacheRepo.findByItemId(item.itemId).firstOrNull()
+            if (cached == null) {
+                log.warn("[AutoOps] Auto-restock: cannot determine seller for item {}, skipping", item.itemId)
+                continue
+            }
+            val seller = cached.seller
 
             sellerItemMap.getOrPut(seller) { mutableListOf() }.add(item)
         }
@@ -229,6 +230,27 @@ class AutoOpsService(
 
         if (success) {
             log.info("[AutoOps] Auto-reply succeeded: {} for offer {}", action, offer.bestOfferId)
+
+            // Update offer status in DB so it no longer shows as "Pending"
+            try {
+                val bestOfferId = offer.bestOfferId ?: ""
+                if (bestOfferId.isNotBlank()) {
+                    val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
+                    if (dbOffer != null) {
+                        dbOffer.status = when (action.lowercase()) {
+                            "accept" -> "Accepted"
+                            "decline" -> "Declined"
+                            "counter" -> "CounterOffered"
+                            else -> action
+                        }
+                        dbOffer.updatedAt = Instant.now()
+                        bestOfferRepo.save(dbOffer)
+                        log.info("[AutoOps] Updated offer {} status → {}", bestOfferId, dbOffer.status)
+                    }
+                }
+            } catch (e: Exception) {
+                log.warn("[AutoOps] Failed to update offer {} status in DB: {}", offer.bestOfferId, e.message)
+            }
         } else {
             log.warn("[AutoOps] Auto-reply failed for offer {}: {}", offer.bestOfferId, errorMsg)
         }
@@ -318,15 +340,18 @@ class AutoOpsService(
                 val campaigns = campaignsJson.path("campaigns")
 
                 var campaignId: String? = null
+                var isDynamicCampaign = false
                 if (campaigns.isArray) {
                     for (c in campaigns) {
                         if (c.path("fundingStrategy").path("fundingModel").asText() == "COST_PER_SALE") {
                             campaignId = c.path("campaignId").asText()
+                            isDynamicCampaign = c.path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                             break
                         }
                     }
                     if (campaignId == null && campaigns.size() > 0) {
                         campaignId = campaigns[0].path("campaignId").asText()
+                        isDynamicCampaign = campaigns[0].path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                     }
                 }
 
@@ -336,8 +361,8 @@ class AutoOpsService(
                 }
 
                 // Apply via Marketing API bulk_create_ads (eBay limit: 500 per call)
-                log.info("[AutoOps] Auto-promote: updating {} listings for seller {} via campaign {}",
-                    updates.size, seller, campaignId)
+                log.info("[AutoOps] Auto-promote: updating {} listings for seller {} via campaign {} (dynamic={})",
+                    updates.size, seller, campaignId, isDynamicCampaign)
 
                 val bulkUrl = "$MARKETING_BASE/ad_campaign/$campaignId/bulk_create_ads_by_listing_id"
                 val batches = updates.chunked(500)
@@ -346,7 +371,13 @@ class AutoOpsService(
                 batches.forEachIndexed { idx, batch ->
                     if (idx > 0) Thread.sleep(200)
                     try {
-                        val bulkBody = mapOf("requests" to batch)
+                        // For DYNAMIC campaigns, eBay manages ad rates — do NOT send bidPercentage
+                        val requestItems = if (isDynamicCampaign) {
+                            batch.map { mapOf("listingId" to it["listingId"]!!) }
+                        } else {
+                            batch
+                        }
+                        val bulkBody = mapOf("requests" to requestItems)
                         val bulkResponse = restTemplate.exchange(
                             java.net.URI.create(bulkUrl), HttpMethod.POST,
                             HttpEntity(mapper.writeValueAsString(bulkBody), mktHeaders),
@@ -356,13 +387,44 @@ class AutoOpsService(
                         val responses = resultJson.path("responses")
                         if (responses.isArray) {
                             for (r in responses) {
-                                if (r.path("statusCode").asInt() in 200..299) batchSuccess++ else batchFailed++
+                                val statusCode = r.path("statusCode").asInt()
+                                if (statusCode in 200..299) {
+                                    batchSuccess++
+                                } else {
+                                    // errorId 35036 = "ad already exists" → already promoted, treat as success
+                                    val errorId = r.path("errors").firstOrNull()?.path("errorId")?.asInt(0) ?: 0
+                                    if (errorId == 35036) batchSuccess++ else batchFailed++
+                                }
                             }
                         }
                     } catch (e: Exception) {
                         batchFailed += batch.size
                         log.warn("[AutoOps] Auto-promote batch {} failed: {}", idx + 1, e.message)
                     }
+                }
+
+                // Update local listing cache with new ad rates
+                // Only for non-DYNAMIC campaigns — DYNAMIC rates are managed by eBay
+                if (batchSuccess > 0 && !isDynamicCampaign) {
+                    val rateMap = updates.associate { it["listingId"]!! to it["bidPercentage"]!! }
+                    var cacheUpdated = 0
+                    for ((listingId, newRate) in rateMap) {
+                        try {
+                            val cached = listingCacheRepo.findByItemIdAndSeller(listingId, seller) ?: continue
+                            val json = mapper.readTree(cached.data)
+                            if (json is com.fasterxml.jackson.databind.node.ObjectNode) {
+                                json.put("adRate", newRate.toDouble())
+                                cached.data = mapper.writeValueAsString(json)
+                                listingCacheRepo.save(cached)
+                                cacheUpdated++
+                            }
+                        } catch (e: Exception) {
+                            log.debug("[AutoOps] Failed to update cache adRate for {}: {}", listingId, e.message)
+                        }
+                    }
+                    log.info("[AutoOps] Auto-promote: updated {} listing cache adRate entries for seller {}", cacheUpdated, seller)
+                } else if (isDynamicCampaign) {
+                    log.info("[AutoOps] Auto-promote: skipping cache adRate update for seller {} (DYNAMIC campaign — rates managed by eBay)", seller)
                 }
 
                 val durationMs = System.currentTimeMillis() - startMs
@@ -616,17 +678,18 @@ class AutoOpsService(
             buyNowPrice - discountValue
         }.coerceAtLeast(0.0).let { Math.round(it * 100) / 100.0 }
 
-        val action = if (offerPrice >= counterPrice) "Accept"
-        else "Counter"
-
         // Normalize counter to .99 pricing
-        val normalizedCounter = if (action == "Counter") {
-            Math.max(0.99, Math.floor(counterPrice) - 0.01)
-        } else null
+        val normalizedCounter = Math.max(0.99, Math.floor(counterPrice) - 0.01)
+
+        // Decide action: if buyer's offer >= our normalized counter, Accept;
+        // otherwise Counter with the normalized price.
+        // This prevents the absurd case of countering LOWER than the buyer's offer
+        // (e.g., buyer offers $18, raw counter = $18.39, normalized = $17.99 → should Accept)
+        val action = if (offerPrice >= normalizedCounter) "Accept" else "Counter"
 
         return mapOf(
             "action" to action,
-            "counterPrice" to normalizedCounter,
+            "counterPrice" to if (action == "Counter") normalizedCounter else null,
             "ruleUsed" to "$categoryGroup|$pathKey",
         )
     }
