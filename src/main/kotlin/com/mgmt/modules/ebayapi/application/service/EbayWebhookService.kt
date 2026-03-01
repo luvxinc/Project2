@@ -606,6 +606,7 @@ class EbayWebhookService(
      * 链路: Webhook → 解析 offer 数据 → SSE 推送到前端 Offer 页面
      */
     private fun handleBestOffer(event: JsonNode) {
+        try {
         val data = event.path("notification").path("data")
         val itemId = data.path("itemId").asText(
             data.path("legacyItemId").asText("")
@@ -702,6 +703,9 @@ class EbayWebhookService(
             autoOpsService.scheduleAutoReply(offerInfo)
         } else {
             log.warn("[Offer] Skipping auto-reply for offer {} — seller unknown for item {}", bestOfferId, itemId)
+        }
+        } catch (e: Exception) {
+            log.error("[Offer] handleBestOffer failed: {}", e.message, e)
         }
     }
 
