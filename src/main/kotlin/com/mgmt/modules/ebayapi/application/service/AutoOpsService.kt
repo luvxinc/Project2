@@ -171,18 +171,19 @@ class AutoOpsService(
     /**
      * Called from EbayWebhookService when a Best Offer is received.
      * Schedules a delayed auto-reply.
+     * @param delaySeconds delay before executing (10s for webhook, 0 for refresh catch-up)
      */
-    fun scheduleAutoReply(offer: OfferEventInfo) {
+    fun scheduleAutoReply(offer: OfferEventInfo, delaySeconds: Long = 10) {
         if (!actionLog.isAutoOpsEnabled()) return
 
-        log.info("[AutoOps] Auto-ops: scheduling offer reply for {} in 10s", offer.bestOfferId)
+        log.info("[AutoOps] Auto-ops: scheduling offer reply for {} in {}s", offer.bestOfferId, delaySeconds)
         scheduler.schedule({
             try {
                 executeAutoReply(offer)
             } catch (e: Exception) {
                 log.error("[AutoOps] Auto-reply failed: {}", e.message, e)
             }
-        }, 10, TimeUnit.SECONDS)
+        }, delaySeconds, TimeUnit.SECONDS)
     }
 
     private fun executeAutoReply(offer: OfferEventInfo) {

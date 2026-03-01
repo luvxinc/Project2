@@ -215,6 +215,34 @@ class EbayOfferController(
 
             log.info("[Refresh] Total new offers persisted: {}", totalFetched)
 
+            // Safety net: auto-reply any Pending offers if auto-ops is enabled
+            if (actionLog.isAutoOpsEnabled()) {
+                try {
+                    val pendingOffers = bestOfferRepo.findByStatusInOrderByCreatedAtDesc(listOf("Pending", "Active"))
+                    if (pendingOffers.isNotEmpty()) {
+                        log.info("[Refresh] Auto-ops enabled — triggering auto-reply for {} pending offers", pendingOffers.size)
+                        for (dbOffer in pendingOffers) {
+                            val offerInfo = com.mgmt.modules.ebayapi.application.service.OfferEventInfo(
+                                itemId = dbOffer.itemId,
+                                itemTitle = dbOffer.itemTitle,
+                                buyerUserId = dbOffer.buyerUserId,
+                                offerPrice = dbOffer.offerPrice?.toDouble(),
+                                offerCurrency = dbOffer.offerCurrency,
+                                quantity = dbOffer.quantity,
+                                status = dbOffer.status,
+                                bestOfferId = dbOffer.bestOfferId,
+                                message = dbOffer.buyerMessage,
+                                seller = dbOffer.seller,
+                                buyItNowPrice = dbOffer.buyItNowPrice?.toDouble(),
+                            )
+                            autoOpsService.scheduleAutoReply(offerInfo, delaySeconds = 0)
+                        }
+                    }
+                } catch (e: Exception) {
+                    log.warn("[Refresh] Failed to trigger auto-reply for pending offers: {}", e.message)
+                }
+            }
+
             // Return refreshed data from database
             getOffers(seller, status)
         } catch (e: Exception) {
