@@ -40,6 +40,9 @@ class FifoTransaction(
 
     var note: String? = null,
 
+    @Column(length = 10)
+    var source: String = "csv",
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now(),
 )
@@ -204,6 +207,12 @@ interface FifoLayerRepository : org.springframework.data.jpa.repository.JpaRepos
         "UPDATE FifoLayer l SET l.unitCost = :cost, l.landedCost = :cost WHERE l.inTranId IN :tranIds"
     )
     fun updateCostByTranIds(tranIds: List<Long>, cost: java.math.BigDecimal): Int
+
+    /** Bulk: get total remaining qty per SKU for stock health check */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT l.sku, SUM(l.qtyRemaining) FROM FifoLayer l GROUP BY l.sku HAVING SUM(l.qtyRemaining) > 0"
+    )
+    fun findStockBySku(): List<Array<Any>>
 }
 
 interface FifoAllocationRepository : org.springframework.data.jpa.repository.JpaRepository<FifoAllocation, Long> {

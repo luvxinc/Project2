@@ -15,6 +15,12 @@ const salesFeatures = [
     accent: '#0071e3', // Apple Blue
   },
   {
+    key: 'listings',
+    href: '/sales/listings',
+    icon: 'listings',
+    accent: '#ff9f0a', // Apple Orange
+  },
+  {
     key: 'reports',
     href: '/sales/reports',
     icon: 'reports',
@@ -34,6 +40,12 @@ function FeatureIcon({ name, accent }: { name: string; accent: string }) {
     upload: (
       <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+      </svg>
+    ),
+    listings: (
+      <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={0.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
       </svg>
     ),
     reports: (

@@ -13,6 +13,7 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import SalesTabSelector from '../components/SalesTabSelector';
+import PendingSkuBanner from '../components/PendingSkuBanner';
 
 echarts.use([
   LineChart, PieChart, TitleComponent, TooltipComponent,
@@ -160,6 +161,7 @@ export default function SalesVisualsPage() {
       </section>
 
       <section className="max-w-[1400px] mx-auto px-6 pt-2">
+        <PendingSkuBanner />
         {/* ══ Control Bar — macOS toolbar style ══ */}
         <div style={glass} className="p-4 mb-4">
           <div className="flex flex-wrap items-center gap-6">

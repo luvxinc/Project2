@@ -51,6 +51,12 @@ class SecurityConfig(
                     .requestMatchers("/health", "/actuator/health").permitAll()
                     .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
+                    // eBay OAuth callback + data sync (internal management)
+                    .requestMatchers("/ebay/callback", "/ebay/sync/**").permitAll()
+                    // Automation rules (internal management)
+                    .requestMatchers("/automation/**").permitAll()
+                    // eBay Webhook — exempt from JWT; verified via ECDSA signature
+                    .requestMatchers("/ebay/webhook").permitAll()
                     // All other endpoints require authentication
                     .anyRequest().authenticated()
             }

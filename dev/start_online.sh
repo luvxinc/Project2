@@ -19,8 +19,13 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 PID_DIR="$PROJECT_ROOT/.dev-pids"
 LOG_DIR="$PROJECT_ROOT/logs"
 
-# Cloudflare Token (从环境变量读取，勿硬编码)
-CF_TOKEN="${CF_TOKEN:?请设置 CF_TOKEN 环境变量}"
+# Cloudflare Token
+CF_TOKEN="${CF_TOKEN:-eyJhIjoiM2FiYmI2YzYwYmQ2MTkxYjBmOWUxZTBhMzYzODFjYjYiLCJ0IjoiMmZjMWQwNTQtMTAyYS00MGFjLWFlMGItYmJiYWVhYTU2OTNhIiwicyI6Ik9HUTVOV0l4TXpJdE1qZzBaQzAwTlRsaExUZzJNMll0TlRVM1ptRTJZV0ZoTXpSayJ9}"
+
+# eBay Webhook (Event-Driven Sync)
+export EBAY_WEBHOOK_VERIFICATION_TOKEN="${EBAY_WEBHOOK_VERIFICATION_TOKEN:-bXc53ZKPH_5zWK0gN94rcPzm1gklTrxiparvvWvhQ2c}"
+export EBAY_WEBHOOK_ENDPOINT_URL="${EBAY_WEBHOOK_ENDPOINT_URL:-https://api.topmorrowusa.com/api/v1/ebay/webhook}"
+export EBAY_WEBHOOK_ENABLED="${EBAY_WEBHOOK_ENABLED:-false}"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"
@@ -139,7 +144,12 @@ printf "\n${BLUE}▶ Phase 4: 启动后端 (Spring Boot → 0.0.0.0:8080)${NC}\n
 
 cd "$PROJECT_ROOT"
 # 使用 caffeinate 防止系统休眠
-nohup caffeinate -ims ./gradlew bootRun > "$LOG_DIR/v3-backend.log" 2>&1 &
+# 传递 Webhook 环境变量给 Spring Boot
+nohup caffeinate -ims env \
+    EBAY_WEBHOOK_VERIFICATION_TOKEN="$EBAY_WEBHOOK_VERIFICATION_TOKEN" \
+    EBAY_WEBHOOK_ENDPOINT_URL="$EBAY_WEBHOOK_ENDPOINT_URL" \
+    EBAY_WEBHOOK_ENABLED="$EBAY_WEBHOOK_ENABLED" \
+    ./gradlew bootRun > "$LOG_DIR/v3-backend.log" 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > "$PID_DIR/v3-backend.pid"
 log_info "后端启动中... (PID: $BACKEND_PID)"
@@ -216,6 +226,12 @@ printf "  🖥️  前端:  ${CYAN}http://localhost:3000${NC}  (PID: $FRONTEND_P
 printf "  ⚙️  后端:  ${CYAN}http://localhost:8080/api/v1${NC}  (PID: $BACKEND_PID)\n"
 printf "  🌐 隧道:  PID: $TUNNEL_PID\n"
 printf "  🔒 防休眠: 已开启 (caffeinate)\n"
+printf "  📡 Webhook: ${CYAN}$EBAY_WEBHOOK_ENDPOINT_URL${NC}\n"
+if [ "$EBAY_WEBHOOK_ENABLED" = "true" ]; then
+    printf "  📡 事件处理: ${GREEN}已启用${NC}\n"
+else
+    printf "  📡 事件处理: ${YELLOW}仅验证 (EBAY_WEBHOOK_ENABLED=false)${NC}\n"
+fi
 printf "\n"
 printf "  📄 后端日志:  tail -f $LOG_DIR/v3-backend.log\n"
 printf "  📄 前端日志:  tail -f $LOG_DIR/v3-frontend.log\n"

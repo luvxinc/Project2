@@ -10,7 +10,7 @@ spring:
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mgmt_v2?stringtype=unspecified}
     username: ${DB_USERNAME:aaron}
-    password: ${DB_PASSWORD:***REDACTED_PASSWORD***}
+    password: ${DB_PASSWORD:caonima123}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -83,6 +83,12 @@ spring:
     default-property-inclusion: non_null
     time-zone: America/Los_Angeles
 
+  # === Task Scheduling ===
+  task:
+    scheduling:
+      pool:
+        size: 3  # Allow daily sync + ad rate refresh + auto-promote to run concurrently
+
 # === Server ===
 server:
   port: 8080
@@ -109,7 +115,7 @@ management:
 # === JWT ===
 mgmt:
   jwt:
-    secret: ${JWT_SECRET:***REDACTED_JWT_SECRET***}
+    secret: ${JWT_SECRET:EsplusErpV3SuperSecretKeyForJwtSigning2026!@#$%^&*()}
     access-token-expiry: 3600    # 1 hour (seconds)
     refresh-token-expiry: 604800 # 7 days (seconds)
     issuer: esplus-erp
@@ -140,3 +146,21 @@ logging:
 app:
   project-root: ${MGMT_PROJECT_ROOT:}
   output-dir: ${REPORT_OUTPUT_DIR:output}
+  # Sales data source: 'api' = ebay_api.cleaned_transactions, 'csv' = public.cleaned_transactions (fallback)
+  sales-data-source: ${SALES_DATA_SOURCE:api}
+
+# === eBay OAuth ===
+ebay:
+  oauth:
+    client-id: ${EBAY_CLIENT_ID:}
+    client-secret: ${EBAY_CLIENT_SECRET:}
+    ru-name: ${EBAY_RU_NAME:Aaron_Tong-AaronTon-ERP-PR-tspuspknv}
+    # eBay redirects here after user authorizes; frontend handles the code
+    redirect-uri: ${EBAY_REDIRECT_URI:https://erp.topmorrowusa.com/ebay/callback/}
+  webhook:
+    # eBay Developer Portal 中生成的 verification token
+    verification-token: ${EBAY_WEBHOOK_VERIFICATION_TOKEN:}
+    # 公网 Webhook 接收端点 URL (context-path /api/v1 已包含在内)
+    endpoint-url: ${EBAY_WEBHOOK_ENDPOINT_URL:https://api.topmorrowusa.com/api/v1/ebay/webhook}
+    # 是否启用事件处理 (false = 仅响应 challenge + 签名验证, 不触发业务逻辑)
+    enabled: ${EBAY_WEBHOOK_ENABLED:false}

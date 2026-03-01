@@ -126,16 +126,11 @@ class SalesQtyAnalyzer(
 
         val skuList = extractSkuSlots(tx)
 
-        val hasSpecial = skuList.any { it.sku in SpecialSkuRules.SOURCE_SKUS }
-        val finalSkuList = if (hasSpecial) {
-            skuList + SkuSlot(SpecialSkuRules.TARGET_SKU, SpecialSkuRules.TARGET_QTY)
-        } else {
-            skuList
-        }
+        // NOTE: SpecialSkuRules (KEY injection) is now handled by API Transform
+        // (EbayTransformService.parseSkus) — sku2 already contains NU1C8SKT7.
+        // Do NOT re-inject here to avoid double-counting.
 
-        // action_map: 88 → ["esparts88"], plus → ["espartsplus"], total → null
-        // code_map: Canceled=CA, Returned=RE, Cased=CC, Request=CR, Dispute=PD
-        for ((sku, qtyp) in finalSkuList) {
+        for ((sku, qtyp) in skuList) {
             val totalQty = quantity * qtyp
             val s = stats.getOrPut(sku) { SkuSalesStats() }
 

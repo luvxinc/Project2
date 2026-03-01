@@ -13,6 +13,10 @@
       "title": "交易数据",
       "upload": "数据上传"
     },
+    "listings": {
+      "title": "Listing 管理",
+      "view": "商品列表"
+    },
     "reports": {
       "title": "报表中心",
       "generate": "报表生成器",

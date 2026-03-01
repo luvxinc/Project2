@@ -175,11 +175,9 @@ object ProfitAggregator {
         for (slot in slots) {
             val unitCost = skuCostMap[slot.sku] ?: BigDecimal.ZERO
             totalCost += unitCost * BigDecimal.valueOf((slot.perQty * qtySets).toLong())
-
-            if (includeSpecialSku && slot.sku in SpecialSkuRules.SOURCE_SKUS) {
-                val extraCost = skuCostMap[SpecialSkuRules.TARGET_SKU] ?: BigDecimal.ZERO
-                totalCost += extraCost * BigDecimal.valueOf((2 * qtySets).toLong())
-            }
+            // NOTE: SpecialSkuRules (KEY cost injection) is now handled by API Transform.
+            // sku2 already contains NU1C8SKT7 when applicable, so the loop above
+            // naturally includes KEY cost. No manual injection needed.
         }
         return totalCost
     }

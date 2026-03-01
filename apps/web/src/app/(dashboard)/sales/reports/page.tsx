@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { salesApi } from '@/lib/api/sales';
 import type { ReportFile, PreviewTable } from '@/lib/api/sales';
 import SalesTabSelector from '../components/SalesTabSelector';
+import PendingSkuBanner from '../components/PendingSkuBanner';
 import { getApiBaseUrlCached } from '@/lib/api-url';
 import { animate } from 'animejs';
 
@@ -425,6 +426,7 @@ export default function SalesReportsPage() {
 
       {/* Content */}
       <section className="max-w-[1200px] mx-auto px-6 pt-4 relative">
+        <PendingSkuBanner />
         {/* Click-outside overlay for slide-over — closes detail panel */}
         {isFlipped && (
           <div

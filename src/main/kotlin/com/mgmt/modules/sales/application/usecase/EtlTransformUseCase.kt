@@ -9,6 +9,8 @@ import com.mgmt.modules.sales.domain.repository.EtlBatchRepository
 import com.mgmt.modules.sales.domain.repository.RawEarningRepository
 import com.mgmt.modules.sales.domain.repository.RawTransactionRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -27,6 +29,7 @@ import java.time.Instant
  *   6. Shipping Label 分类 (5 types)
  *   7. Return record 生成 (copy NN items → set action)
  *   8. 4D 去重 ON CONFLICT(order_number, seller, item_id, action) DO UPDATE
+ *   9. 跨表去重: 当 dedup-with-api=true 时，跳过已在 ebay_api 中的记录
  */
 @Service
 class EtlTransformUseCase(
@@ -34,8 +37,17 @@ class EtlTransformUseCase(
     private val rawEarnRepo: RawEarningRepository,
     private val cleanedRepo: CleanedTransactionRepository,
     private val batchRepo: EtlBatchRepository,
+    private val jdbcTemplate: JdbcTemplate,
 ) {
     private val log = LoggerFactory.getLogger(EtlTransformUseCase::class.java)
+
+    /**
+     * 跨表去重开关。
+     * false (默认) = 当前 CSV 模式，不检查 ebay_api 表
+     * true = 全 API 模式下的 CSV fallback，跳过 API 已同步的记录
+     */
+    @Value("\${ebay.pipeline.dedup-with-api:false}")
+    private var dedupWithApi: Boolean = false
 
     @Transactional
     fun transform(batchId: String): TransformResultResponse {
@@ -385,12 +397,32 @@ class EtlTransformUseCase(
 
     /**
      * 4D upsert: ON CONFLICT(order_number, COALESCE(seller,''), COALESCE(item_id,''), action) DO UPDATE
+     *
+     * When dedupWithApi=true, also checks ebay_api.cleaned_transactions first.
+     * If the record already exists there, skip writing to public schema.
      */
     private fun upsertCleaned(ct: CleanedTransaction) {
         val orderNumber = ct.orderNumber ?: run {
             cleanedRepo.save(ct)
             return
         }
+
+        // Cross-schema dedup: skip if API already has this record
+        if (dedupWithApi) {
+            val apiCount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(*) FROM ebay_api.cleaned_transactions
+                   WHERE order_number = ? AND COALESCE(seller, '') = ?
+                   AND COALESCE(item_id, '') = ? AND action = ?""".trimIndent(),
+                Int::class.java,
+                orderNumber, ct.seller ?: "", ct.itemId ?: "", ct.action.name,
+            ) ?: 0
+            if (apiCount > 0) {
+                log.debug("CSV dedup: skipped {}/{}/{}/{} — already in API",
+                    orderNumber, ct.seller, ct.itemId, ct.action)
+                return
+            }
+        }
+
         val existing = cleanedRepo.findBy4DKey(
             orderNumber,
             ct.seller ?: "",

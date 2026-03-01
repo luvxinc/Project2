@@ -62,7 +62,7 @@ class ProductController(
     ): ResponseEntity<Any> {
         val params = ProductQueryParams(page, limit, search, category, status)
         val (products, total) = queryUseCase.findAll(params)
-        val effectiveLimit = maxOf(1, minOf(limit, 100))
+        val effectiveLimit = maxOf(1, minOf(limit, 9999))
 
         return ResponseEntity.ok(PagedResponse(
             data = products.map { toResponse(it) },

@@ -25,7 +25,7 @@ class QueryProductUseCase(
 
     fun findAll(params: ProductQueryParams): Pair<List<Product>, Long> {
         val page = maxOf(1, params.page)
-        val limit = maxOf(1, minOf(params.limit, 100))
+        val limit = maxOf(1, minOf(params.limit, 9999))
         val spec = buildSpec(params.search, params.category, params.status)
         val pageable = PageRequest.of(page - 1, limit, Sort.by("sku").ascending())
         val result = repo.findAll(spec, pageable)

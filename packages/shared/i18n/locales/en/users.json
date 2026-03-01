@@ -252,6 +252,47 @@
       }
     }
   },
+  "ebayAccounts": {
+    "title": "eBay Accounts",
+    "description": "Connect and manage eBay seller accounts via OAuth for API data synchronization.",
+    "cta": "Manage Accounts",
+    "pageTitle": "eBay Accounts",
+    "pageDescription": "Manage eBay seller accounts and OAuth authorization",
+    "connectEbay": "Connect eBay",
+    "emptyTitle": "No eBay Accounts Connected",
+    "emptyDescription": "Click the button below to connect your eBay seller account via OAuth.",
+    "status": {
+      "authorized": "Authorized",
+      "pending": "Pending",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "card": {
+      "tokenExpiry": "Token",
+      "tokenNotSet": "Not set",
+      "lastSync": "Last sync"
+    },
+    "actions": {
+      "authorize": "Authorize",
+      "refresh": "Refresh",
+      "reAuth": "Re-auth",
+      "delete": "Disconnect"
+    },
+    "guide": {
+      "title": "How it Works",
+      "step1": "Click \"Connect eBay\" — you'll be redirected to eBay to sign in and authorize",
+      "step2": "After authorization, you'll be redirected back and the account will appear here",
+      "step3": "The system automatically manages token refresh — no manual steps needed"
+    },
+    "errors": {
+      "authUrlFailed": "Failed to initiate eBay connection",
+      "deleteFailed": "Failed to disconnect account",
+      "refreshFailed": "Token refresh failed. Please reconnect your eBay account."
+    },
+    "confirm": {
+      "deleteAccount": "Disconnect eBay account \"{name}\"? You can reconnect at any time."
+    }
+  },
   "form": {
     "createTitle": "Create New User",
     "updateTitle": "Update User",

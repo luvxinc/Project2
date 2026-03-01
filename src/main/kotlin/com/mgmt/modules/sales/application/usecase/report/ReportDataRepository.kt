@@ -3,6 +3,7 @@ package com.mgmt.modules.sales.application.usecase.report
 import com.mgmt.modules.sales.domain.model.CleanedTransaction
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.Instant
@@ -26,22 +27,31 @@ class ReportDataRepository {
     @PersistenceContext
     private lateinit var em: EntityManager
 
+    @Value("\${app.sales-data-source:api}")
+    private lateinit var salesDataSource: String
+
+    /** Resolved table name based on config: ebay_api.cleaned_transactions or public.cleaned_transactions */
+    private val tableName: String
+        get() = if (salesDataSource == "api") "ebay_api.cleaned_transactions" else "cleaned_transactions"
+
     // ═══════════════════════════════════════════════════════
     // Transaction Queries
     // ═══════════════════════════════════════════════════════
 
     /**
-     *   → SELECT * FROM Data_Clean_Log WHERE `order date` BETWEEN :start AND :end
+     *   → SELECT * FROM cleaned_transactions WHERE order_date BETWEEN :start AND :end
+     *   Data source controlled by app.sales-data-source config.
      */
     fun findTransactionsByDateRange(startDate: LocalDate, endDate: LocalDate): List<CleanedTransaction> {
         val start = startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
         val end = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
-        return em.createQuery(
-            "SELECT c FROM CleanedTransaction c WHERE c.orderDate >= :start AND c.orderDate < :end",
+        @Suppress("UNCHECKED_CAST")
+        return em.createNativeQuery(
+            "SELECT * FROM $tableName WHERE order_date >= ?1 AND order_date < ?2",
             CleanedTransaction::class.java
-        ).setParameter("start", start)
-         .setParameter("end", end)
-         .resultList
+        ).setParameter(1, start)
+         .setParameter(2, end)
+         .resultList as List<CleanedTransaction>
     }
 
     // ═══════════════════════════════════════════════════════
@@ -286,7 +296,7 @@ class ReportDataRepository {
                 SELECT sku1 as sku,
                        TO_CHAR(order_date, 'YYYY-MM') as month,
                        SUM(quantity) as qty
-                FROM cleaned_transactions
+                FROM $tableName
                 WHERE order_date >= CURRENT_DATE - INTERVAL '12 months'
                   AND action = 'NN'
                   AND sku1 IS NOT NULL

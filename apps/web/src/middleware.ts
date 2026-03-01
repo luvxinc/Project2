@@ -13,8 +13,9 @@ import type { NextRequest } from 'next/server';
 
 // 公开路由 (不需要登录)
 const PUBLIC_ROUTES = [
-  '/',           // 首页 (登录页)
-  '/api/health', // 健康检查
+  '/',              // 首页 (登录页)
+  '/api/health',    // 健康检查
+  '/ebay/callback', // eBay OAuth 回调
 ];
 
 // 静态资源 (跳过检查)

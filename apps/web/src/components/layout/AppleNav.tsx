@@ -16,6 +16,7 @@ const modules = [
     href: '/sales',
     groups: [
       { key: 'transactions', items: ['upload'] },
+      { key: 'listings', items: ['view'] },
       { key: 'reports', items: ['generate', 'view'] },
       { key: 'visuals', items: ['dashboard'] }
     ]
@@ -144,6 +145,8 @@ const NAV_HREF_OVERRIDES: Record<string, string> = {
   // Sales module
   'sales.transactions':          '/sales/etl',
   'sales.transactions.upload':   '/sales/etl',
+  'sales.listings':              '/sales/listings',
+  'sales.listings.view':         '/sales/listings',
   // Inventory module
   'inventory.shelf':             '/inventory/shelf',
   'inventory.shelf.manage':      '/inventory/shelf',

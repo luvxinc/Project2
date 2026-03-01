@@ -61,14 +61,17 @@ class ProfitMetrics {
 
     /**
      * profit = net_rev + cog_value + net_shipping + net_platform_fee
-     *        + net_high_return_fee + net_low_rating_fee + net_third_party_fee
-     *        + net_ad_fee + net_postage_cost + net_return_postage
+     *        + net_third_party_fee + net_ad_fee + net_promo_fee
+     *        + net_inad_fee + net_postage_cost + net_return_postage
+     *
+     * All fee net* properties return NEGATIVE values for expenses,
+     * so simple addition gives correct profit.
      */
     val profit: BigDecimal
         get() = netRev + cogValue + fees.netShipping +
-            fees.netPlatformFee + fees.netHighReturnFee + fees.netLowRatingFee +
-            fees.netThirdPartyFee +
-            fees.netAdFee + fees.netPostageCost + fees.netReturnPostage
+            fees.netPlatformFee + fees.netThirdPartyFee +
+            fees.netAdFee + fees.netPromoFee + fees.netInadFee +
+            fees.netPostageCost + fees.netReturnPostage
 }
 
 /**
@@ -115,10 +118,10 @@ class ProfitReportBuilder(private val config: ReportConfig) {
             "净买家支付邮费" to { m -> m.fees.netShipping.r() },
             "净销售税" to { m -> m.fees.netTax.r() },
             "净固定平台费用" to { m -> m.fees.netPlatformFee.r() },
-            "净高退货产品罚款" to { m -> m.fees.netHighReturnFee.r() },
-            "净低账户评级罚款" to { m -> m.fees.netLowRatingFee.r() },
             "净第三方投诉罚款" to { m -> m.fees.netThirdPartyFee.r() },
             "净广告开销" to { m -> m.fees.netAdFee.r() },
+            "净促销费用" to { m -> m.fees.netPromoFee.r() },
+            "净高退货罚款" to { m -> m.fees.netInadFee.r() },
             "退货包邮费用" to { m -> m.fees.netReturnPostage.r() },
             "净邮费支出" to { m -> m.fees.netPostageCost.r() },
             "盈亏" to { m -> m.profit.r() },

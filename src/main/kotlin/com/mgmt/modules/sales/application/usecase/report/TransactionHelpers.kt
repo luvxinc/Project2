@@ -52,34 +52,45 @@ data class FeeBreakdown(
     var regulatoryFee: BigDecimal = BigDecimal.ZERO,
     var intlFee: BigDecimal = BigDecimal.ZERO,
     var adFee: BigDecimal = BigDecimal.ZERO,
+    var promoFee: BigDecimal = BigDecimal.ZERO,
+    var inadFee: BigDecimal = BigDecimal.ZERO,  // HIGH_ITEM_NOT_AS_DESCRIBED_FEE (from other_fee)
     var disputeFee: BigDecimal = BigDecimal.ZERO,
     var labelCost: BigDecimal = BigDecimal.ZERO,
     var labelReturn: BigDecimal = BigDecimal.ZERO,
-    // 但字段必须存在以保持 profit 公式和报表列完整性
-    var highReturnFee: BigDecimal = BigDecimal.ZERO,
-    var lowRatingFee: BigDecimal = BigDecimal.ZERO,
 ) {
-    /** net_platform_fee = sum of PLATFORM_FEE_GROUP columns */
+    /**
+     * net_platform_fee = sum of PLATFORM_FEE_GROUP columns.
+     * API stores fees as POSITIVE (expense from seller).
+     * Profit formula: profit = rev + cog + fees, where fees are negative.
+     * → we negate here so profit formula works: -fvf - regulatory - intl
+     */
     val netPlatformFee: BigDecimal
-        get() = fvfFeeFixed + fvfFeeVariable + regulatoryFee + intlFee
+        get() = -(fvfFeeFixed + fvfFeeVariable + regulatoryFee + intlFee)
 
-    /** net_shipping = Shipping and handling + Refund Shipping and handling */
+    /** net_shipping = buyer-paid shipping (positive = income) */
     val netShipping: BigDecimal get() = shippingFee
-    /** net_tax = all tax columns summed */
+    /** net_tax = all tax columns summed (pass-through, neutral) */
     val netTax: BigDecimal get() = sellerTax + ebayTax
-    /** net_ad_fee */
-    val netAdFee: BigDecimal get() = adFee
-    /** net_postage_cost = Shipping label-Earning data */
+    /** net_ad_fee (negative = expense) */
+    val netAdFee: BigDecimal get() = -adFee
+    /** net_promo_fee (negative = expense) */
+    val netPromoFee: BigDecimal get() = -promoFee
+    /** net_inad_fee = HIGH_ITEM_NOT_AS_DESCRIBED_FEE (negative = penalty) */
+    val netInadFee: BigDecimal get() = -inadFee
+    /** net_postage_cost = Shipping label cost (already negative in API) */
     val netPostageCost: BigDecimal get() = labelCost
-    /** net_return_postage = Shipping label-Return */
+    /** net_return_postage = Return shipping label cost (already negative in API) */
     val netReturnPostage: BigDecimal get() = labelReturn
-    /** net_third_party_fee = Payments dispute fee */
-    val netThirdPartyFee: BigDecimal get() = disputeFee
-    /** base.py L317-318 — Very high 'item not as described' fee */
-    val netHighReturnFee: BigDecimal get() = highReturnFee
-    /** base.py L319-320 — Below standard performance fee */
-    val netLowRatingFee: BigDecimal get() = lowRatingFee
+    /** net_third_party_fee = Payments dispute fee (negative = expense) */
+    val netThirdPartyFee: BigDecimal get() = -disputeFee
 
+    /**
+     * Accumulate fee values from a CleanedTransaction row.
+     *
+     * API convention: platform fees are POSITIVE (deducted from seller).
+     * Refund rows (RE/CA) have NEGATIVE fees (refunded back to seller).
+     * We store raw values here; sign normalization happens in computed properties above.
+     */
     fun addFrom(tx: CleanedTransaction, weight: BigDecimal) {
         shippingFee += tx.shippingFee * weight
         sellerTax += tx.sellerTax * weight
@@ -89,6 +100,8 @@ data class FeeBreakdown(
         regulatoryFee += tx.regulatoryFee * weight
         intlFee += tx.intlFee * weight
         adFee += tx.adFee * weight
+        promoFee += tx.promoFee * weight
+        inadFee += tx.otherFee * weight  // other_fee = INAD + regulatory from API Transform
         disputeFee += tx.disputeFee * weight
         labelCost += tx.labelCost * weight
         labelReturn += tx.labelReturn * weight

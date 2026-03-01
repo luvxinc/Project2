@@ -252,6 +252,47 @@
       }
     }
   },
+  "ebayAccounts": {
+    "title": "eBay 账户",
+    "description": "连接和管理 eBay 卖家账户 OAuth 授权，用于 API 数据同步。",
+    "cta": "管理账户",
+    "pageTitle": "eBay 账户",
+    "pageDescription": "管理 eBay 卖家账户与 OAuth 授权",
+    "connectEbay": "连接 eBay",
+    "emptyTitle": "暂无已连接的 eBay 账户",
+    "emptyDescription": "点击下方按钮，通过 OAuth 连接你的 eBay 卖家账户。",
+    "status": {
+      "authorized": "已授权",
+      "pending": "待授权",
+      "expired": "已过期",
+      "revoked": "已撤销"
+    },
+    "card": {
+      "tokenExpiry": "Token 过期",
+      "tokenNotSet": "未设置",
+      "lastSync": "最后同步"
+    },
+    "actions": {
+      "authorize": "授权",
+      "refresh": "刷新 Token",
+      "reAuth": "重新授权",
+      "delete": "断开连接"
+    },
+    "guide": {
+      "title": "工作原理",
+      "step1": "点击「连接 eBay」— 将跳转到 eBay 登录并授权",
+      "step2": "授权完成后，自动跳转回此页面，账户将显示在上方",
+      "step3": "系统将自动管理 Token 刷新，无需手动操作"
+    },
+    "errors": {
+      "authUrlFailed": "连接 eBay 失败",
+      "deleteFailed": "断开账户失败",
+      "refreshFailed": "Token 刷新失败，请重新连接 eBay 账户。"
+    },
+    "confirm": {
+      "deleteAccount": "确定断开 eBay 账户「{name}」吗？你可以随时重新连接。"
+    }
+  },
   "form": {
     "createTitle": "创建新用户",
     "updateTitle": "更新用户",

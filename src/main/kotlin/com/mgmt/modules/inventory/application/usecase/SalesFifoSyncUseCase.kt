@@ -1,6 +1,7 @@
 package com.mgmt.modules.inventory.application.usecase
 
 import com.mgmt.domain.inventory.*
+import com.mgmt.modules.sales.application.usecase.report.ReportDataRepository
 import com.mgmt.modules.sales.domain.model.CleanedTransaction
 import com.mgmt.modules.sales.domain.model.SalesAction
 import com.mgmt.modules.sales.domain.repository.CleanedTransactionRepository
@@ -32,6 +33,7 @@ class SalesFifoSyncUseCase(
     private val fifoAllocRepo: FifoAllocationRepository,
     private val cleanedRepo: CleanedTransactionRepository,
     private val batchRepo: EtlBatchRepository,
+    private val reportData: ReportDataRepository,
 ) {
     private val log = LoggerFactory.getLogger(SalesFifoSyncUseCase::class.java)
 
@@ -89,10 +91,10 @@ class SalesFifoSyncUseCase(
         var skippedCount = 0
         val errors = mutableListOf<String>()
 
-        // Get all cleaned transactions in date range
-        val cleaned = cleanedRepo.findAll().filter {
-            it.orderDate >= dateMin && it.orderDate <= dateMax
-        }
+        // Get all cleaned transactions in date range (uses data-source config)
+        val cleaned = reportData.findTransactionsByDateRange(
+            batch.dateMin!!, batch.dateMax!!
+        )
 
         // Sort: NN first, then returns
         val sorted = cleaned.sortedWith(compareBy<CleanedTransaction> {

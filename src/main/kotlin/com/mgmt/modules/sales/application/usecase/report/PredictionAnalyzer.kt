@@ -177,12 +177,8 @@ class PredictionAnalyzer(
                 val netQty = (quantity * slot.perQty * effectiveRatio).toInt()
                 val skuMonths = monthlyData.getOrPut(slot.sku) { mutableMapOf() }
                 skuMonths[monthKey] = (skuMonths[monthKey] ?: 0) + netQty
-
-                if (slot.sku in SpecialSkuRules.SOURCE_SKUS) {
-                    val specialQty = (quantity * 2 * effectiveRatio).toInt()
-                    val targetMonths = monthlyData.getOrPut(SpecialSkuRules.TARGET_SKU) { mutableMapOf() }
-                    targetMonths[monthKey] = (targetMonths[monthKey] ?: 0) + specialQty
-                }
+                // NOTE: SpecialSkuRules (KEY injection) is now handled by API Transform.
+                // sku2 already contains NU1C8SKT7 when applicable.
             }
         }
 
