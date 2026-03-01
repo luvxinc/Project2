@@ -45,6 +45,9 @@ class EbayWebhookService(
     private val saleBroadcaster: ListingSaleEventBroadcaster,
     private val autoOpsService: AutoOpsService,
     private val actionLog: SalesActionLogService,
+    private val listingCacheRepo: com.mgmt.modules.ebayapi.domain.repository.EbayListingCacheRepository,
+    private val sellerRepo: com.mgmt.modules.ebayapi.domain.repository.EbaySellerAccountRepository,
+    private val bestOfferRepo: com.mgmt.modules.ebayapi.domain.repository.EbayBestOfferRepository,
 ) {
     private val log = LoggerFactory.getLogger(EbayWebhookService::class.java)
     private val httpClient = HttpClient.newHttpClient()
@@ -342,12 +345,15 @@ class EbayWebhookService(
         val buyItNowPrice = extractXml(itemBlock, "BuyItNowPrice")?.toDoubleOrNull()
         val itemId = extractXml(xml, "ItemID") ?: ""
 
+        // Resolve seller from listing cache (do NOT hardcode defaultSeller)
+        val seller = resolveSellerForItem(itemId)
+
         // Event name for logging
         val eventName = extractXml(xml, "NotificationEventName") ?: "BestOffer"
 
-        log.info("[Offer] Platform Notification [{}]: Best Offer -- item: {} '{}', buyer: {}, offer: {} {}, original: {} {}, qty: {}",
+        log.info("[Offer] Platform Notification [{}]: Best Offer -- item: {} '{}', buyer: {}, offer: {} {}, original: {} {}, qty: {}, seller: {}",
             eventName, itemId, itemTitle.take(40), buyerUserId, offerPrice, currency,
-            buyItNowPrice ?: "?", currency, quantity)
+            buyItNowPrice ?: "?", currency, quantity, seller ?: "UNKNOWN")
 
         val offerInfo = OfferEventInfo(
             itemId = itemId,
@@ -359,14 +365,56 @@ class EbayWebhookService(
             status = status,
             bestOfferId = bestOfferId,
             message = buyerMessage,
-            seller = defaultSeller,
+            seller = seller,
             buyItNowPrice = buyItNowPrice,
         )
 
+        // ── Persist offer to database ──
+        if (bestOfferId.isNotBlank()) {
+            try {
+                val existing = bestOfferRepo.findByBestOfferId(bestOfferId)
+                if (existing != null) {
+                    // Update status if changed (e.g. Pending → Accepted/Declined)
+                    existing.status = status
+                    existing.updatedAt = Instant.now()
+                    bestOfferRepo.save(existing)
+                    log.info("[Offer] Updated existing offer {} status → {}", bestOfferId, status)
+                } else {
+                    val entity = com.mgmt.modules.ebayapi.domain.model.EbayBestOffer(
+                        bestOfferId = bestOfferId,
+                        itemId = itemId,
+                        seller = seller,
+                        buyerUserId = buyerUserId,
+                        buyerEmail = buyerEmail,
+                        offerPrice = offerPrice.toBigDecimal(),
+                        offerCurrency = currency,
+                        buyItNowPrice = buyItNowPrice?.toBigDecimal(),
+                        quantity = quantity,
+                        status = status,
+                        buyerMessage = buyerMessage,
+                        itemTitle = itemTitle,
+                        expirationTime = expirationTime?.let {
+                            try { Instant.parse(it) } catch (_: Exception) { null }
+                        },
+                        eventName = eventName,
+                    )
+                    bestOfferRepo.save(entity)
+                    log.info("[Offer] Saved new offer {} to database", bestOfferId)
+                }
+            } catch (e: Exception) {
+                log.error("[Offer] Failed to persist offer {}: {}", bestOfferId, e.message)
+            }
+        }
+
+        // Always broadcast to frontend (for UI display)
         saleBroadcaster.broadcastOffer(offerInfo)
 
-        // Trigger auto-reply (delayed 10s) if auto-ops enabled
-        autoOpsService.scheduleAutoReply(offerInfo)
+        // Trigger auto-reply only if seller is resolved — wrong token = silent failure
+        if (seller != null) {
+            autoOpsService.scheduleAutoReply(offerInfo)
+        } else {
+            log.warn("[Offer] Skipping auto-reply for offer {} — seller unknown for item {}", bestOfferId, itemId)
+        }
     }
 
     /**
@@ -399,11 +447,24 @@ class EbayWebhookService(
             return
         }
 
-        log.info("[Sale] Webhook: New order confirmed — orderId: {}", orderId)
+        // Resolve seller from first line item in the order
+        val firstItemId = data.path("lineItems").firstOrNull()
+            ?.path("legacyItemId")?.asText(null)
+            ?: data.path("lineItems").firstOrNull()?.path("itemId")?.asText(null)
+        val seller = if (firstItemId != null) resolveSellerForItem(firstItemId) else null
+
+        // Use resolved seller for sync, or try all authorized sellers
+        val syncSeller = seller ?: run {
+            // If we can't resolve, try the first authorized seller that works
+            val authorizedSellers = sellerRepo.findAllByStatus("authorized")
+            authorizedSellers.firstOrNull()?.sellerUsername ?: "espartsplus"
+        }
+
+        log.info("[Sale] Webhook: New order confirmed — orderId: {}, seller: {}", orderId, syncSeller)
 
         try {
             // 1. 同步该订单的 Fulfillment + Finances 数据
-            val result = syncService.syncSingleOrder(defaultSeller, orderId)
+            val result = syncService.syncSingleOrder(syncSeller, orderId)
             log.info("[Sale] Sync result: {}", result)
 
             // 2. 触发 Transform 生成 cleaned_transaction
@@ -469,9 +530,12 @@ class EbayWebhookService(
                 log.info("[Sale] Broadcast {} sold items to Listing page: {}",
                     soldItems.size, soldItems.map { it.itemId })
 
+                // Resolve seller from first sold item for logging
+                val logSeller = resolveSellerForItem(soldItems.first().itemId) ?: "unknown"
+
                 // Log webhook order event
                 actionLog.logWebhookOrder(
-                    seller = defaultSeller,
+                    seller = logSeller,
                     orderId = orderId,
                     soldItems = soldItems.map { mapOf(
                         "itemId" to it.itemId,
@@ -503,10 +567,17 @@ class EbayWebhookService(
             return
         }
 
-        log.info("[Restock] Webhook: Item shipped — orderId: {}", orderId)
+        // Resolve seller from first line item, or fallback to first authorized seller
+        val firstItemId = data.path("lineItems").firstOrNull()
+            ?.path("legacyItemId")?.asText(null)
+            ?: data.path("lineItems").firstOrNull()?.path("itemId")?.asText(null)
+        val seller = if (firstItemId != null) resolveSellerForItem(firstItemId) else null
+        val syncSeller = seller ?: sellerRepo.findAllByStatus("authorized").firstOrNull()?.sellerUsername ?: "espartsplus"
+
+        log.info("[Restock] Webhook: Item shipped — orderId: {}, seller: {}", orderId, syncSeller)
 
         try {
-            val updated = syncService.refreshOrderStatus(defaultSeller, orderId)
+            val updated = syncService.refreshOrderStatus(syncSeller, orderId)
             if (updated) {
                 log.info("[Restock] Order {} fulfillment status updated successfully", orderId)
             } else {
@@ -560,8 +631,22 @@ class EbayWebhookService(
             data.path("itemTitle").asText("")
         )
 
-        log.info("[Offer] Webhook: Best Offer received -- itemId: {}, buyer: {}, price: {} {}, qty: {}",
-            itemId, buyerUserId, offerPrice, offerCurrency, quantity)
+        // Resolve seller from listing cache (don't hardcode defaultSeller)
+        val seller = resolveSellerForItem(itemId)
+
+        // Try to get buyItNowPrice from listing cache if not in webhook
+        val buyItNowPrice = if (seller != null) {
+            try {
+                val cached = listingCacheRepo.findByItemIdAndSeller(itemId, seller)
+                if (cached != null) {
+                    val cachedJson = objectMapper.readTree(cached.data)
+                    cachedJson.path("currentPrice").asDouble(0.0).takeIf { it > 0 }
+                } else null
+            } catch (_: Exception) { null }
+        } else null
+
+        log.info("[Offer] Webhook: Best Offer received -- itemId: {}, buyer: {}, price: {} {}, qty: {}, seller: {}, buyItNow: {}",
+            itemId, buyerUserId, offerPrice, offerCurrency, quantity, seller ?: "UNKNOWN", buyItNowPrice ?: "?")
 
         // Broadcast to frontend via SSE
         val offerInfo = OfferEventInfo(
@@ -574,14 +659,50 @@ class EbayWebhookService(
             status = status,
             bestOfferId = bestOfferId,
             message = message,
-            seller = defaultSeller,
-            buyItNowPrice = null,  // Not available in JSON webhook path
+            seller = seller,
+            buyItNowPrice = buyItNowPrice,
         )
+
+        // ── Persist offer to database (same as parseBestOfferFromXml) ──
+        if (bestOfferId.isNotBlank()) {
+            try {
+                val existing = bestOfferRepo.findByBestOfferId(bestOfferId)
+                if (existing != null) {
+                    existing.status = status
+                    existing.updatedAt = Instant.now()
+                    bestOfferRepo.save(existing)
+                    log.info("[Offer] Updated existing offer {} status → {}", bestOfferId, status)
+                } else {
+                    val entity = com.mgmt.modules.ebayapi.domain.model.EbayBestOffer(
+                        bestOfferId = bestOfferId,
+                        itemId = itemId,
+                        seller = seller,
+                        buyerUserId = buyerUserId,
+                        offerPrice = offerPrice.toBigDecimal(),
+                        offerCurrency = offerCurrency,
+                        buyItNowPrice = buyItNowPrice?.toBigDecimal(),
+                        quantity = quantity,
+                        status = status,
+                        buyerMessage = message,
+                        itemTitle = itemTitle,
+                        eventName = "BestOffer",
+                    )
+                    bestOfferRepo.save(entity)
+                    log.info("[Offer] Saved new offer {} to database", bestOfferId)
+                }
+            } catch (e: Exception) {
+                log.error("[Offer] Failed to persist offer {}: {}", bestOfferId, e.message)
+            }
+        }
 
         saleBroadcaster.broadcastOffer(offerInfo)
 
-        // Trigger auto-reply (delayed 10s)
-        autoOpsService.scheduleAutoReply(offerInfo)
+        // Trigger auto-reply only if seller is resolved
+        if (seller != null) {
+            autoOpsService.scheduleAutoReply(offerInfo)
+        } else {
+            log.warn("[Offer] Skipping auto-reply for offer {} — seller unknown for item {}", bestOfferId, itemId)
+        }
     }
 
     /**
@@ -590,5 +711,25 @@ class EbayWebhookService(
     private fun cleanupOldNotifications() {
         val cutoff = Instant.now().minusSeconds(IDEMPOTENCY_CACHE_HOURS * 3600)
         processedNotifications.entries.removeIf { it.value.isBefore(cutoff) }
+    }
+
+    /**
+     * Resolve the actual seller username for a given itemId by looking up the listing cache.
+     * Returns null if not found — callers must handle unknown seller explicitly.
+     */
+    private fun resolveSellerForItem(itemId: String): String? {
+        if (itemId.isBlank()) return null
+        return try {
+            val cached = listingCacheRepo.findByItemId(itemId).firstOrNull()
+            if (cached != null) {
+                cached.seller
+            } else {
+                log.warn("[Offer] Could not resolve seller for itemId {} — item not in listing cache", itemId)
+                null
+            }
+        } catch (e: Exception) {
+            log.warn("[Offer] Error looking up seller for itemId {}: {}", itemId, e.message)
+            null
+        }
     }
 }

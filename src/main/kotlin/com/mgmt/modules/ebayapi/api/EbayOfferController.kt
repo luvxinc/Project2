@@ -32,6 +32,7 @@ class EbayOfferController(
     private val saleBroadcaster: ListingSaleEventBroadcaster,
     private val actionLog: SalesActionLogService,
     private val autoOpsService: AutoOpsService,
+    private val bestOfferRepo: com.mgmt.modules.ebayapi.domain.repository.EbayBestOfferRepository,
 ) {
     private val log = LoggerFactory.getLogger(EbayOfferController::class.java)
     private val restTemplate = RestTemplate()
@@ -50,31 +51,42 @@ class EbayOfferController(
     @GetMapping("")
     fun getOffers(
         @RequestParam(defaultValue = "all") seller: String,
+        @RequestParam(defaultValue = "Pending") status: String,
     ): ResponseEntity<Any> {
         return try {
-            val sellers = if (seller.equals("all", ignoreCase = true)) {
-                sellerRepo.findAllByStatus("authorized").map { it.sellerUsername }
+            // Parse status filter (comma-separated, e.g. "Pending,CounterOffered")
+            val statusList = status.split(",").map { it.trim() }
+
+            val offers = if (seller.equals("all", ignoreCase = true)) {
+                bestOfferRepo.findByStatusInOrderByCreatedAtDesc(statusList)
             } else {
-                listOf(seller)
+                bestOfferRepo.findBySellerAndStatusInOrderByCreatedAtDesc(seller, statusList)
             }
 
-            val allOffers = mutableListOf<Map<String, Any?>>()
-
-            for (s in sellers) {
-                try {
-                    val accessToken = oauthService.getValidAccessToken(s)
-                    val offers = fetchBestOffersViaTrading(accessToken)
-                    offers.forEach { offer ->
-                        allOffers.add(offer.toMutableMap().apply { put("seller", s) })
-                    }
-                } catch (e: Exception) {
-                    log.warn("Failed to fetch offers for seller {}: {}", s, e.message)
-                }
+            val items = offers.map { offer ->
+                mapOf(
+                    "bestOfferId" to offer.bestOfferId,
+                    "itemId" to offer.itemId,
+                    "seller" to offer.seller,
+                    "buyerUserId" to offer.buyerUserId,
+                    "buyerEmail" to offer.buyerEmail,
+                    "offerPrice" to offer.offerPrice,
+                    "offerCurrency" to offer.offerCurrency,
+                    "buyItNowPrice" to offer.buyItNowPrice,
+                    "quantity" to offer.quantity,
+                    "status" to offer.status,
+                    "buyerMessage" to offer.buyerMessage,
+                    "itemTitle" to offer.itemTitle,
+                    "expirationTime" to offer.expirationTime?.toString(),
+                    "creationTime" to offer.createdAt.toString(),
+                    "eventName" to offer.eventName,
+                )
             }
 
             ResponseEntity.ok(mapOf(
-                "items" to allOffers,
-                "total" to allOffers.size,
+                "items" to items,
+                "total" to items.size,
+                "source" to "database",
                 "fetchedAt" to java.time.Instant.now().toString(),
             ))
         } catch (e: Exception) {
@@ -137,8 +149,80 @@ class EbayOfferController(
     @PostMapping("/refresh")
     fun refreshOffers(
         @RequestParam(defaultValue = "all") seller: String,
+        @RequestParam(defaultValue = "Pending") status: String,
     ): ResponseEntity<Any> {
-        return getOffers(seller)
+        return try {
+            val sellers = if (seller.equals("all", ignoreCase = true)) {
+                sellerRepo.findAllByStatus("authorized").map { it.sellerUsername }
+            } else {
+                listOf(seller)
+            }
+
+            var totalFetched = 0
+
+            for (s in sellers) {
+                try {
+                    val accessToken = oauthService.getValidAccessToken(s)
+                    val offers = fetchBestOffersViaTrading(accessToken)
+                    log.info("[Refresh] Fetched {} offers from eBay for seller {}", offers.size, s)
+
+                    // Persist each offer to database (upsert)
+                    for (offer in offers) {
+                        val bestOfferId = offer["bestOfferId"]?.toString() ?: continue
+                        try {
+                            val existing = bestOfferRepo.findByBestOfferId(bestOfferId)
+                            if (existing != null) {
+                                // Update status if changed
+                                val newStatus = offer["status"]?.toString() ?: existing.status
+                                if (existing.status != newStatus) {
+                                    existing.status = newStatus
+                                    existing.updatedAt = java.time.Instant.now()
+                                    bestOfferRepo.save(existing)
+                                }
+                            } else {
+                                val entity = com.mgmt.modules.ebayapi.domain.model.EbayBestOffer(
+                                    bestOfferId = bestOfferId,
+                                    itemId = offer["itemId"]?.toString() ?: "",
+                                    seller = s,
+                                    buyerUserId = offer["buyerUserId"]?.toString(),
+                                    buyerEmail = offer["buyerEmail"]?.toString(),
+                                    offerPrice = (offer["offerPrice"] as? Double)?.toBigDecimal(),
+                                    offerCurrency = offer["offerCurrency"]?.toString() ?: "USD",
+                                    buyItNowPrice = (offer["buyItNowPrice"] as? Double)?.toBigDecimal(),
+                                    quantity = (offer["quantity"] as? Int) ?: 1,
+                                    status = offer["status"]?.toString() ?: "Pending",
+                                    buyerMessage = offer["buyerMessage"]?.toString(),
+                                    itemTitle = offer["itemTitle"]?.toString(),
+                                    expirationTime = offer["expirationTime"]?.toString()?.let {
+                                        try { java.time.Instant.parse(it) } catch (_: Exception) { null }
+                                    },
+                                    eventName = "GetBestOffers",
+                                    createdAt = offer["creationTime"]?.toString()?.let {
+                                        try { java.time.Instant.parse(it) } catch (_: Exception) { null }
+                                    } ?: java.time.Instant.now(),
+                                )
+                                bestOfferRepo.save(entity)
+                                totalFetched++
+                            }
+                        } catch (e: Exception) {
+                            log.warn("[Refresh] Failed to persist offer {}: {}", bestOfferId, e.message)
+                        }
+                    }
+                } catch (e: Exception) {
+                    log.warn("[Refresh] Failed to fetch offers for seller {}: {}", s, e.message)
+                }
+            }
+
+            log.info("[Refresh] Total new offers persisted: {}", totalFetched)
+
+            // Return refreshed data from database
+            getOffers(seller, status)
+        } catch (e: Exception) {
+            log.error("[Refresh] Failed: {}", e.message, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
+                "error" to (e.message ?: "Unknown error"),
+            ))
+        }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -173,6 +257,10 @@ class EbayOfferController(
         val counterPrice: Double? = null,
         val quantity: Int? = null,
         val sellerMessage: String? = null,
+        val offerPrice: Double? = null,
+        val itemTitle: String? = null,
+        val buyerUserId: String? = null,
+        val buyItNowPrice: Double? = null,
     )
 
     @PostMapping("/respond")
@@ -210,6 +298,22 @@ class EbayOfferController(
 
             if (isSuccess) {
                 log.info("[OK] [{}/{}] Responded to Best Offer {} with action: {}", idx + 1, request.offers.size, offer.bestOfferId, offer.action)
+                // Update offer status in database
+                try {
+                    val dbOffer = bestOfferRepo.findByBestOfferId(offer.bestOfferId)
+                    if (dbOffer != null) {
+                        dbOffer.status = when (offer.action.lowercase()) {
+                            "accept" -> "Accepted"
+                            "decline" -> "Declined"
+                            "counter" -> "CounterOffered"
+                            else -> offer.action
+                        }
+                        dbOffer.updatedAt = java.time.Instant.now()
+                        bestOfferRepo.save(dbOffer)
+                    }
+                } catch (e: Exception) {
+                    log.warn("Failed to update offer {} status in DB: {}", offer.bestOfferId, e.message)
+                }
             } else {
                 log.warn("[FAIL] [{}/{}] Failed to respond to Best Offer {}: {}", idx + 1, request.offers.size, offer.bestOfferId, errMsg)
             }
@@ -226,10 +330,10 @@ class EbayOfferController(
                 seller = request.seller,
                 bestOfferId = offer.bestOfferId,
                 itemId = offer.itemId,
-                itemTitle = null,
-                buyerUserId = null,
-                originalPrice = null,
-                offerPrice = null,
+                itemTitle = offer.itemTitle,
+                buyerUserId = offer.buyerUserId,
+                originalPrice = offer.buyItNowPrice,
+                offerPrice = offer.offerPrice,
                 buyerQty = offer.quantity ?: 1,
                 action = offer.action,
                 counterPrice = offer.counterPrice,
@@ -410,106 +514,131 @@ class EbayOfferController(
 
     private fun fetchBestOffersViaTrading(accessToken: String): List<Map<String, Any?>> {
         val allOffers = mutableListOf<Map<String, Any?>>()
+        var pageNumber = 1
 
-        // GetBestOffers with no ItemID returns all best offers
-        val xmlRequest = """
-        <?xml version="1.0" encoding="utf-8"?>
-        <GetBestOffersRequest xmlns="urn:ebay:apis:eBLBaseComponents">
-            <RequesterCredentials>
-                <eBayAuthToken>$accessToken</eBayAuthToken>
-            </RequesterCredentials>
-            <BestOfferStatus>Active</BestOfferStatus>
-            <Pagination>
-                <EntriesPerPage>200</EntriesPerPage>
-                <PageNumber>1</PageNumber>
-            </Pagination>
-            <DetailLevel>ReturnAll</DetailLevel>
-        </GetBestOffersRequest>
-        """.trimIndent()
+        while (true) {
+            // GetBestOffers with no ItemID returns all best offers
+            val xmlRequest = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <GetBestOffersRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+                <RequesterCredentials>
+                    <eBayAuthToken>$accessToken</eBayAuthToken>
+                </RequesterCredentials>
+                <BestOfferStatus>Active</BestOfferStatus>
+                <Pagination>
+                    <EntriesPerPage>200</EntriesPerPage>
+                    <PageNumber>$pageNumber</PageNumber>
+                </Pagination>
+                <DetailLevel>ReturnAll</DetailLevel>
+            </GetBestOffersRequest>
+            """.trimIndent()
 
-        val headers = HttpHeaders().apply {
-            contentType = MediaType.TEXT_XML
-            set("X-EBAY-API-SITEID", "0")
-            set("X-EBAY-API-COMPATIBILITY-LEVEL", "1271")
-            set("X-EBAY-API-CALL-NAME", "GetBestOffers")
-            set("X-EBAY-API-IAF-TOKEN", accessToken)
-        }
-
-        try {
-            val response = restTemplate.exchange(
-                TRADING_API_URL, HttpMethod.POST,
-                HttpEntity(xmlRequest, headers), String::class.java,
-            )
-
-            val body = response.body ?: ""
-
-            if (body.contains("<Ack>Failure</Ack>")) {
-                val shortErrRegex = Regex("<ShortMessage>(.*?)</ShortMessage>")
-                val shortErr = shortErrRegex.find(body)?.groupValues?.get(1) ?: "Unknown"
-                log.warn("GetBestOffers returned Failure: {}", shortErr)
-                return emptyList()
+            val headers = HttpHeaders().apply {
+                contentType = MediaType.TEXT_XML
+                set("X-EBAY-API-SITEID", "0")
+                set("X-EBAY-API-COMPATIBILITY-LEVEL", "1271")
+                set("X-EBAY-API-CALL-NAME", "GetBestOffers")
+                set("X-EBAY-API-IAF-TOKEN", accessToken)
             }
 
-            // Parse best offers from XML
-            val offerPattern = Regex("<BestOffer>(.*?)</BestOffer>", RegexOption.DOT_MATCHES_ALL)
-            val itemIdFromResponse = extractXmlValue(body, "ItemID")
-
-            // Get item-level info
-            val itemTitle = extractXmlValue(body, "Title") ?: ""
-            val itemListingType = extractXmlValue(body, "ListingType") ?: ""
-            val buyItNowPrice = extractXmlValue(body, "BuyItNowPrice")?.toDoubleOrNull()
-
-            for (offerMatch in offerPattern.findAll(body)) {
-                val offerXml = offerMatch.groupValues[1]
-
-                // eBay uses different tag names depending on context
-                val status = extractXmlValue(offerXml, "BestOfferStatus")
-                    ?: extractXmlValue(offerXml, "Status")
-                val creationTime = extractXmlValue(offerXml, "CreationTime")
-                    ?: extractXmlValue(offerXml, "BestOfferCreationTime")
-
-                val offer = mapOf(
-                    "bestOfferId" to extractXmlValue(offerXml, "BestOfferID"),
-                    "itemId" to (extractXmlValue(offerXml, "ItemID") ?: itemIdFromResponse),
-                    "itemTitle" to itemTitle,
-                    "buyerUserId" to extractXmlValue(offerXml, "UserID"),
-                    "buyerEmail" to extractXmlValue(offerXml, "Email"),
-                    "offerPrice" to extractXmlValue(offerXml, "Price")?.toDoubleOrNull(),
-                    "offerCurrency" to extractXmlAttribute(offerXml, "Price", "currencyID"),
-                    "quantity" to (extractXmlValue(offerXml, "Quantity")?.toIntOrNull() ?: 1),
-                    "status" to status,
-                    "expirationTime" to extractXmlValue(offerXml, "ExpirationTime"),
-                    "creationTime" to (creationTime ?: run {
-                        // Infer from ExpirationTime - 24h (eBay default offer validity)
-                        val exp = extractXmlValue(offerXml, "ExpirationTime")
-                        if (exp != null) {
-                            try {
-                                val expInstant = java.time.Instant.parse(exp)
-                                expInstant.minusSeconds(24 * 3600).toString()
-                            } catch (_: Exception) { null }
-                        } else null
-                    }),
-                    "callStatus" to extractXmlValue(offerXml, "CallStatus"),
-                    "buyerMessage" to extractXmlValue(offerXml, "BuyerMessage"),
-                    "bestOfferCodeType" to extractXmlValue(offerXml, "BestOfferCodeType"),
-                    "buyItNowPrice" to buyItNowPrice,
+            try {
+                val response = restTemplate.exchange(
+                    TRADING_API_URL, HttpMethod.POST,
+                    HttpEntity(xmlRequest, headers), String::class.java,
                 )
-                allOffers.add(offer)
-            }
 
-            // Debug log first offer XML if fields missing
-            if (allOffers.isNotEmpty() && allOffers.first()["status"] == null) {
-                val firstOffer = offerPattern.find(body)?.groupValues?.get(1) ?: ""
-                log.warn("⚠️ Missing status in offer XML. First offer tags: {}", 
-                    firstOffer.take(500))
-            }
+                val body = response.body ?: ""
 
-            log.info("Fetched {} best offers via Trading API", allOffers.size)
-        } catch (e: Exception) {
-            log.error("GetBestOffers failed: {}", e.message, e)
+                if (body.contains("<Ack>Failure</Ack>")) {
+                    val shortErrRegex = Regex("<ShortMessage>(.*?)</ShortMessage>")
+                    val shortErr = shortErrRegex.find(body)?.groupValues?.get(1) ?: "Unknown"
+                    log.warn("GetBestOffers returned Failure: {}", shortErr)
+                    break
+                }
+
+                // eBay returns <ItemBestOffersArray><ItemBestOffers>... per item when no ItemID
+                val itemBestOffersPattern = Regex(
+                    "<ItemBestOffers>(.*?)</ItemBestOffers>", RegexOption.DOT_MATCHES_ALL
+                )
+                val itemBlocks = itemBestOffersPattern.findAll(body).toList()
+
+                if (itemBlocks.isNotEmpty()) {
+                    // Multi-item response: parse each ItemBestOffers block
+                    for (itemBlock in itemBlocks) {
+                        val blockXml = itemBlock.groupValues[1]
+
+                        // Extract item-level info from <Item> block within this ItemBestOffers
+                        val itemSection = Regex("<Item>(.*?)</Item>", RegexOption.DOT_MATCHES_ALL)
+                            .find(blockXml)?.groupValues?.get(1) ?: ""
+                        val itemId = extractXmlValue(itemSection, "ItemID") ?: extractXmlValue(blockXml, "ItemID") ?: ""
+                        val itemTitle = extractXmlValue(itemSection, "Title") ?: ""
+                        val buyItNowPrice = extractXmlValue(itemSection, "BuyItNowPrice")?.toDoubleOrNull()
+
+                        // Parse offers within this item block
+                        val offerPattern = Regex("<BestOffer>(.*?)</BestOffer>", RegexOption.DOT_MATCHES_ALL)
+                        for (offerMatch in offerPattern.findAll(blockXml)) {
+                            allOffers.add(parseOfferXml(offerMatch.groupValues[1], itemId, itemTitle, buyItNowPrice))
+                        }
+                    }
+                } else {
+                    // Single-item response (or fallback): parse flat structure
+                    val itemIdFromResponse = extractXmlValue(body, "ItemID") ?: ""
+                    val itemTitle = extractXmlValue(body, "Title") ?: ""
+                    val buyItNowPrice = extractXmlValue(body, "BuyItNowPrice")?.toDoubleOrNull()
+
+                    val offerPattern = Regex("<BestOffer>(.*?)</BestOffer>", RegexOption.DOT_MATCHES_ALL)
+                    for (offerMatch in offerPattern.findAll(body)) {
+                        allOffers.add(parseOfferXml(offerMatch.groupValues[1], itemIdFromResponse, itemTitle, buyItNowPrice))
+                    }
+                }
+
+                // Check pagination
+                val totalPages = extractXmlValue(body, "TotalNumberOfPages")?.toIntOrNull() ?: 1
+                if (pageNumber >= totalPages) break
+                pageNumber++
+
+            } catch (e: Exception) {
+                log.error("GetBestOffers failed (page {}): {}", pageNumber, e.message, e)
+                break
+            }
         }
 
+        log.info("Fetched {} best offers via Trading API", allOffers.size)
         return allOffers
+    }
+
+    /** Parse a single <BestOffer> XML block into a map. */
+    private fun parseOfferXml(offerXml: String, itemId: String, itemTitle: String, buyItNowPrice: Double?): Map<String, Any?> {
+        val status = extractXmlValue(offerXml, "BestOfferStatus")
+            ?: extractXmlValue(offerXml, "Status")
+        val creationTime = extractXmlValue(offerXml, "CreationTime")
+            ?: extractXmlValue(offerXml, "BestOfferCreationTime")
+
+        return mapOf(
+            "bestOfferId" to extractXmlValue(offerXml, "BestOfferID"),
+            "itemId" to (extractXmlValue(offerXml, "ItemID") ?: itemId),
+            "itemTitle" to itemTitle,
+            "buyerUserId" to extractXmlValue(offerXml, "UserID"),
+            "buyerEmail" to extractXmlValue(offerXml, "Email"),
+            "offerPrice" to extractXmlValue(offerXml, "Price")?.toDoubleOrNull(),
+            "offerCurrency" to extractXmlAttribute(offerXml, "Price", "currencyID"),
+            "quantity" to (extractXmlValue(offerXml, "Quantity")?.toIntOrNull() ?: 1),
+            "status" to status,
+            "expirationTime" to extractXmlValue(offerXml, "ExpirationTime"),
+            "creationTime" to (creationTime ?: run {
+                val exp = extractXmlValue(offerXml, "ExpirationTime")
+                if (exp != null) {
+                    try {
+                        val expInstant = java.time.Instant.parse(exp)
+                        expInstant.minusSeconds(24 * 3600).toString()
+                    } catch (_: Exception) { null }
+                } else null
+            }),
+            "callStatus" to extractXmlValue(offerXml, "CallStatus"),
+            "buyerMessage" to extractXmlValue(offerXml, "BuyerMessage"),
+            "bestOfferCodeType" to extractXmlValue(offerXml, "BestOfferCodeType"),
+            "buyItNowPrice" to buyItNowPrice,
+        )
     }
 
     // ══════════════════════════════════════════════════════════
@@ -576,5 +705,25 @@ class EbayOfferController(
     private fun extractXmlAttribute(xml: String, tag: String, attribute: String): String? {
         val regex = Regex("<$tag[^>]*$attribute=\"([^\"]*?)\"[^>]*>", RegexOption.DOT_MATCHES_ALL)
         return regex.find(xml)?.groupValues?.get(1)?.trim()
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Manual trigger for scheduled auto-ops jobs (testing/admin)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * POST /api/v1/ebay/sync/offers/trigger-auto-promote
+     * Manually trigger the dailyAutoPromote scheduled job.
+     */
+    @PostMapping("/trigger-auto-promote")
+    fun triggerAutoPromote(): ResponseEntity<Any> {
+        log.info("[Admin] Manual trigger: dailyAutoPromote")
+        return try {
+            autoOpsService.dailyAutoPromote()
+            ResponseEntity.ok(mapOf("status" to "completed", "message" to "dailyAutoPromote executed successfully"))
+        } catch (e: Exception) {
+            log.error("[Admin] Manual trigger failed: {}", e.message, e)
+            ResponseEntity.status(500).body(mapOf("status" to "failed", "error" to e.message))
+        }
     }
 }
