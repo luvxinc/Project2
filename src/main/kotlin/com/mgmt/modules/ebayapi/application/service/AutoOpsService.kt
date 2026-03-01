@@ -193,6 +193,18 @@ class AutoOpsService(
         val autoAction = computeAutoAction(offer, seller)
         if (autoAction == null) {
             log.info("[AutoOps] Auto-reply: no matching rule for offer {}, skipping", offer.bestOfferId)
+            // Mark as "NoRule" so refresh won't retry this offer endlessly
+            try {
+                val bestOfferId = offer.bestOfferId ?: ""
+                if (bestOfferId.isNotBlank()) {
+                    val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
+                    if (dbOffer != null && dbOffer.status == "Pending") {
+                        dbOffer.status = "NoRule"
+                        dbOffer.updatedAt = Instant.now()
+                        bestOfferRepo.save(dbOffer)
+                    }
+                }
+            } catch (_: Exception) {}
             return
         }
 
@@ -254,6 +266,27 @@ class AutoOpsService(
             }
         } else {
             log.warn("[AutoOps] Auto-reply failed for offer {}: {}", offer.bestOfferId, errorMsg)
+
+            // If eBay says offer is no longer available, update DB to remove from Pending list
+            val isOfferGone = errorMsg?.contains("no longer available", ignoreCase = true) == true
+                    || errorMsg?.contains("is not active", ignoreCase = true) == true
+                    || errorMsg?.contains("expired", ignoreCase = true) == true
+            if (isOfferGone) {
+                try {
+                    val bestOfferId = offer.bestOfferId ?: ""
+                    if (bestOfferId.isNotBlank()) {
+                        val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
+                        if (dbOffer != null) {
+                            dbOffer.status = "Expired"
+                            dbOffer.updatedAt = Instant.now()
+                            bestOfferRepo.save(dbOffer)
+                            log.info("[AutoOps] Offer {} marked Expired (eBay: no longer available)", bestOfferId)
+                        }
+                    }
+                } catch (e: Exception) {
+                    log.warn("[AutoOps] Failed to mark offer {} as Expired: {}", offer.bestOfferId, e.message)
+                }
+            }
         }
     }
 
