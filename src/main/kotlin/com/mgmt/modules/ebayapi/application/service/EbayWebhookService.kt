@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mgmt.modules.ebayapi.application.config.EbayWebhookProperties
 import org.slf4j.LoggerFactory
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.net.http.HttpClient
@@ -13,6 +14,7 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -48,6 +50,8 @@ class EbayWebhookService(
     private val listingCacheRepo: com.mgmt.modules.ebayapi.domain.repository.EbayListingCacheRepository,
     private val sellerRepo: com.mgmt.modules.ebayapi.domain.repository.EbaySellerAccountRepository,
     private val bestOfferRepo: com.mgmt.modules.ebayapi.domain.repository.EbayBestOfferRepository,
+    private val redis: StringRedisTemplate,
+    private val messageRepo: com.mgmt.modules.ebayapi.domain.repository.EbayMessageRepository,
 ) {
     private val log = LoggerFactory.getLogger(EbayWebhookService::class.java)
     private val httpClient = HttpClient.newHttpClient()
@@ -55,15 +59,10 @@ class EbayWebhookService(
     // 公钥缓存: KID → Base64 公钥
     private val publicKeyCache = ConcurrentHashMap<String, String>()
 
-    // 已处理的 notificationId 缓存 (幂等: 防止重复处理)
-    private val processedNotifications = ConcurrentHashMap<String, Instant>()
-
     // 最后一次销售事件时间戳 (备用)
     @Volatile
     private var lastSaleEventAt: Instant = Instant.EPOCH
 
-    // 默认 seller (当前系统单卖家)
-    private val defaultSeller = "espartsplus"
     private val PST = ZoneId.of("America/Los_Angeles")
 
     companion object {
@@ -72,9 +71,6 @@ class EbayWebhookService(
 
         /** 签名时间戳容忍窗口 (秒) — 超过此范围的签名视为过期 */
         private const val TIMESTAMP_TOLERANCE_SECONDS = 300L  // 5 minutes
-
-        /** 幂等缓存保留时长 (小时) */
-        private const val IDEMPOTENCY_CACHE_HOURS = 24L
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -208,8 +204,8 @@ class EbayWebhookService(
             val topic = event.path("metadata").path("topic").asText()
             val notificationId = event.path("notification").path("notificationId").asText()
 
-            // 幂等检查: 同一 notificationId 只处理一次
-            if (notificationId.isNotBlank() && processedNotifications.containsKey(notificationId)) {
+            // 幂等检查 (Redis): SETNX — 首次写入返回 true, 重复返回 false
+            if (notificationId.isNotBlank() && isAlreadyProcessed(notificationId)) {
                 log.info("Duplicate notification ignored — id: {}", notificationId)
                 return true
             }
@@ -231,12 +227,6 @@ class EbayWebhookService(
                 else -> log.info("Unhandled webhook topic: {} — acknowledging without action", topic)
             }
 
-            // 标记为已处理
-            if (notificationId.isNotBlank()) {
-                processedNotifications[notificationId] = Instant.now()
-                cleanupOldNotifications()
-            }
-
             true
         } catch (e: Exception) {
             log.error("Webhook event processing error: {}", e.message, e)
@@ -256,6 +246,17 @@ class EbayWebhookService(
      * Best Offer 事件仅通过 Platform Notification 推送。
      */
     fun processPlatformNotification(payload: String): Boolean {
+        // Verify Platform Notification shared secret (if configured).
+        // eBay includes the token in <RequesterCredentials><eBayAuthToken> within SOAP body.
+        val expectedToken = webhookProps.platformNotificationToken
+        if (expectedToken.isNotBlank()) {
+            val tokenInPayload = extractCredentialsToken(payload)
+            if (tokenInPayload == null || tokenInPayload != expectedToken) {
+                log.warn("[Webhook] Platform Notification token mismatch, rejecting")
+                return false
+            }
+        }
+
         return try {
             // 提取事件类型: <soapenv:Body><GetBestOffersResponse> or <BestOfferPlacedNotification>
             val eventType = extractPlatformEventType(payload)
@@ -265,6 +266,10 @@ class EbayWebhookService(
             when {
                 eventType.contains("BestOffer", ignoreCase = true) -> {
                     parseBestOfferFromXml(payload)
+                }
+                eventType.contains("AskSellerQuestion", ignoreCase = true) ||
+                eventType.contains("MyMessages", ignoreCase = true) -> {
+                    parseMessageNotificationFromXml(payload)
                 }
                 else -> {
                     log.info("Unhandled Platform Notification type: {} — acknowledging", eventType)
@@ -409,12 +414,101 @@ class EbayWebhookService(
         // Always broadcast to frontend (for UI display)
         saleBroadcaster.broadcastOffer(offerInfo)
 
-        // Trigger auto-reply only if seller is resolved — wrong token = silent failure
-        if (seller != null) {
-            autoOpsService.scheduleAutoReply(offerInfo)
-        } else {
+        // Trigger auto-reply ONLY for new Pending offers
+        // eBay also sends BestOfferDeclined/BestOfferAccepted notifications — skip those
+        if (seller == null) {
             log.warn("[Offer] Skipping auto-reply for offer {} — seller unknown for item {}", bestOfferId, itemId)
+        } else if (!status.equals("Pending", ignoreCase = true)) {
+            log.info("[Offer] Skipping auto-reply for offer {} — status is '{}' (not Pending, likely eBay auto-decline)", bestOfferId, status)
+        } else {
+            autoOpsService.scheduleAutoReply(offerInfo)
         }
+    }
+
+    /**
+     * 解析 AskSellerQuestion / MyMessages Platform Notification。
+     *
+     * eBay 买家发消息时通过 Trading API Platform Notification 推送:
+     *   <soapenv:Body>
+     *     <GetMyMessagesResponse> or <AskSellerQuestionNotification>
+     *       <Message>
+     *         <MessageID>...</MessageID>
+     *         <Sender>buyer_id</Sender>
+     *         <Subject>...</Subject>
+     *         <Text>...</Text>
+     *         <ItemID>...</ItemID>
+     *         <ReceiveDate>...</ReceiveDate>
+     *       </Message>
+     *     </GetMyMessagesResponse>
+     *   </soapenv:Body>
+     */
+    private fun parseMessageNotificationFromXml(xml: String) {
+        val messageId = extractXml(xml, "MessageID")
+        val senderUsername = extractXml(xml, "Sender") ?: extractXml(xml, "SenderID") ?: "Unknown"
+        val recipientId = extractXml(xml, "RecipientUserID") ?: ""
+        val subject = extractXml(xml, "Subject")
+        val body = extractXml(xml, "Text")
+        val itemId = extractXml(xml, "ItemID")
+        val itemTitle = extractXml(xml, "ItemTitle")
+        val receiveDateStr = extractXml(xml, "ReceiveDate")
+
+        // Resolve seller: recipient is the seller for buyer-sent messages
+        val seller = if (recipientId.isNotBlank()) {
+            // Verify it's a known seller
+            val known = sellerRepo.findAll().map { it.sellerUsername }
+            if (recipientId in known) recipientId
+            else if (itemId != null) resolveSellerForItem(itemId)
+            else null
+        } else if (itemId != null) {
+            resolveSellerForItem(itemId)
+        } else null
+
+        log.info("[Message] Platform Notification: buyer={}, item={}, subject={}, seller={}",
+            senderUsername, itemId, subject?.take(40), seller ?: "UNKNOWN")
+
+        // Persist to database
+        if (messageId != null) {
+            try {
+                val existing = messageRepo.findByMessageId(messageId)
+                if (existing == null) {
+                    val receivedAt = receiveDateStr?.let {
+                        try { Instant.parse(it) } catch (_: Exception) { Instant.now() }
+                    } ?: Instant.now()
+
+                    messageRepo.save(com.mgmt.modules.ebayapi.domain.model.EbayMessage(
+                        messageId = messageId,
+                        sender = "BUYER",
+                        senderUsername = senderUsername,
+                        recipientUsername = seller ?: recipientId,
+                        sellerUsername = seller ?: recipientId,
+                        itemId = itemId,
+                        itemTitle = itemTitle,
+                        subject = subject,
+                        body = body,
+                        folderId = "0",
+                        isRead = false,
+                        flagged = false,
+                        replied = false,
+                        receivedAt = receivedAt,
+                    ))
+                    log.info("[Message] Saved new message {} from buyer {}", messageId, senderUsername)
+                } else {
+                    log.info("[Message] Message {} already exists, skipping", messageId)
+                }
+            } catch (e: Exception) {
+                log.error("[Message] Failed to persist message {}: {}", messageId, e.message)
+            }
+        }
+
+        // SSE broadcast to frontend
+        saleBroadcaster.broadcastMessage(MessageEventInfo(
+            messageId = messageId ?: "",
+            sender = "BUYER",
+            senderUsername = senderUsername,
+            itemId = itemId,
+            subject = subject,
+            seller = seller,
+        ))
     }
 
     /**
@@ -453,12 +547,12 @@ class EbayWebhookService(
             ?: data.path("lineItems").firstOrNull()?.path("itemId")?.asText(null)
         val seller = if (firstItemId != null) resolveSellerForItem(firstItemId) else null
 
-        // Use resolved seller for sync, or try all authorized sellers
-        val syncSeller = seller ?: run {
-            // If we can't resolve, try the first authorized seller that works
-            val authorizedSellers = sellerRepo.findAllByStatus("authorized")
-            authorizedSellers.firstOrNull()?.sellerUsername ?: "espartsplus"
+        // Seller must be resolved — no fallback, no guessing (multi-account isolation)
+        if (seller == null) {
+            log.error("[Sale] Order {} — cannot resolve seller from lineItems. Skipping sync to prevent cross-account contamination.", orderId)
+            return
         }
+        val syncSeller = seller
 
         log.info("[Sale] Webhook: New order confirmed — orderId: {}, seller: {}", orderId, syncSeller)
 
@@ -526,12 +620,12 @@ class EbayWebhookService(
             }
 
             if (soldItems.isNotEmpty()) {
-                saleBroadcaster.broadcastSale(soldItems)
+                // Resolve seller from first sold item
+                val logSeller = resolveSellerForItem(soldItems.first().itemId) ?: "unknown"
+
+                saleBroadcaster.broadcastSale(logSeller, soldItems)
                 log.info("[Sale] Broadcast {} sold items to Listing page: {}",
                     soldItems.size, soldItems.map { it.itemId })
-
-                // Resolve seller from first sold item for logging
-                val logSeller = resolveSellerForItem(soldItems.first().itemId) ?: "unknown"
 
                 // Log webhook order event
                 actionLog.logWebhookOrder(
@@ -567,12 +661,16 @@ class EbayWebhookService(
             return
         }
 
-        // Resolve seller from first line item, or fallback to first authorized seller
+        // Seller must be resolved — no fallback, no guessing (multi-account isolation)
         val firstItemId = data.path("lineItems").firstOrNull()
             ?.path("legacyItemId")?.asText(null)
             ?: data.path("lineItems").firstOrNull()?.path("itemId")?.asText(null)
         val seller = if (firstItemId != null) resolveSellerForItem(firstItemId) else null
-        val syncSeller = seller ?: sellerRepo.findAllByStatus("authorized").firstOrNull()?.sellerUsername ?: "espartsplus"
+        if (seller == null) {
+            log.error("[Restock] Shipped order {} — cannot resolve seller. Skipping to prevent cross-account contamination.", orderId)
+            return
+        }
+        val syncSeller = seller
 
         log.info("[Restock] Webhook: Item shipped — orderId: {}, seller: {}", orderId, syncSeller)
 
@@ -698,11 +796,13 @@ class EbayWebhookService(
 
         saleBroadcaster.broadcastOffer(offerInfo)
 
-        // Trigger auto-reply only if seller is resolved
-        if (seller != null) {
-            autoOpsService.scheduleAutoReply(offerInfo)
-        } else {
+        // Trigger auto-reply ONLY for new Pending offers
+        if (seller == null) {
             log.warn("[Offer] Skipping auto-reply for offer {} — seller unknown for item {}", bestOfferId, itemId)
+        } else if (!status.equals("Pending", ignoreCase = true)) {
+            log.info("[Offer] Skipping auto-reply for offer {} — status is '{}' (not Pending, likely eBay auto-decline)", bestOfferId, status)
+        } else {
+            autoOpsService.scheduleAutoReply(offerInfo)
         }
         } catch (e: Exception) {
             log.error("[Offer] handleBestOffer failed: {}", e.message, e)
@@ -710,11 +810,22 @@ class EbayWebhookService(
     }
 
     /**
-     * 清理超过 24 小时的幂等缓存条目。
+     * Redis-based idempotency check: returns true if this notification was already processed.
+     * Uses SETNX + 24h TTL — key exists = already processed, first write = new notification.
      */
-    private fun cleanupOldNotifications() {
-        val cutoff = Instant.now().minusSeconds(IDEMPOTENCY_CACHE_HOURS * 3600)
-        processedNotifications.entries.removeIf { it.value.isBefore(cutoff) }
+    private fun isAlreadyProcessed(notificationId: String): Boolean {
+        return redis.opsForValue().setIfAbsent(
+            "webhook:processed:$notificationId", "1", Duration.ofHours(24)
+        ) == false // false = key already existed = already processed
+    }
+
+    /**
+     * Extract the auth token from SOAP RequesterCredentials block.
+     * eBay Platform Notifications include the token in:
+     *   <RequesterCredentials><eBayAuthToken>TOKEN</eBayAuthToken></RequesterCredentials>
+     */
+    private fun extractCredentialsToken(xml: String): String? {
+        return extractXml(xml, "eBayAuthToken")
     }
 
     /**

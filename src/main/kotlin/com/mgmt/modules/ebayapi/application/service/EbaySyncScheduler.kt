@@ -10,6 +10,9 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import com.mgmt.modules.ebayapi.infrastructure.EbayApiUtils
+import com.mgmt.modules.ebayapi.infrastructure.RedisSchedulerLock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -36,6 +39,9 @@ class EbaySyncScheduler(
     private val listingCacheRepo: EbayListingCacheRepository,
     private val jdbcTemplate: JdbcTemplate,
     private val actionLog: SalesActionLogService,
+    private val schedulerLock: RedisSchedulerLock,
+    private val afterSalesSyncService: EbayAfterSalesSyncService,
+    private val messageSyncService: EbayMessageSyncService,
 ) {
     private val log = LoggerFactory.getLogger(EbaySyncScheduler::class.java)
     private val restTemplate = RestTemplate()
@@ -65,6 +71,8 @@ class EbaySyncScheduler(
      */
     @Scheduled(cron = "59 59 23 * * *", zone = "America/Los_Angeles")
     fun dailyAutoSync() {
+        if (!schedulerLock.tryLock("scheduler:daily_sync", Duration.ofHours(2))) return
+
         log.info("=======================================")
         log.info("Daily auto-sync triggered at {}", Instant.now())
         log.info("=======================================")
@@ -74,33 +82,39 @@ class EbaySyncScheduler(
         val durationMs = System.currentTimeMillis() - startMs
 
         for (r in reports) {
-            if (r.status == "success") {
-                log.info("[OK] {} synced {}-{}: txn={}, orders={}, cleaned={}",
-                    r.seller, r.fromDate, r.toDate, r.transactionsFetched, r.ordersFetched, r.cleanedProduced)
-                actionLog.logDataSync(
-                    triggerType = "SCHEDULED",
-                    seller = r.seller,
-                    fromDate = r.fromDate.toString(),
-                    toDate = r.toDate.toString(),
-                    txnFetched = r.transactionsFetched,
-                    ordersFetched = r.ordersFetched,
-                    cleanedProduced = r.cleanedProduced,
-                    durationMs = durationMs,
-                )
-            } else {
-                log.error("[FAIL] {} sync failed: {}", r.seller, r.error)
-                actionLog.logDataSync(
-                    triggerType = "SCHEDULED",
-                    seller = r.seller,
-                    fromDate = r.fromDate.toString(),
-                    toDate = r.toDate.toString(),
-                    txnFetched = 0,
-                    ordersFetched = 0,
-                    cleanedProduced = 0,
-                    durationMs = durationMs,
-                    success = false,
-                    errorMessage = r.error,
-                )
+            when (r.status) {
+                "success" -> {
+                    log.info("[OK] {} synced {}-{}: txn={}, orders={}, cleaned={}",
+                        r.seller, r.fromDate, r.toDate, r.transactionsFetched, r.ordersFetched, r.cleanedProduced)
+                    actionLog.logDataSync(
+                        triggerType = "SCHEDULED",
+                        seller = r.seller,
+                        fromDate = r.fromDate.toString(),
+                        toDate = r.toDate.toString(),
+                        txnFetched = r.transactionsFetched,
+                        ordersFetched = r.ordersFetched,
+                        cleanedProduced = r.cleanedProduced,
+                        durationMs = durationMs,
+                    )
+                }
+                "skipped" -> {
+                    log.info("[SKIP] {} watermark already at {}, no new data to sync", r.seller, r.fromDate)
+                }
+                else -> {
+                    log.error("[FAIL] {} sync failed: {}", r.seller, r.error)
+                    actionLog.logDataSync(
+                        triggerType = "SCHEDULED",
+                        seller = r.seller,
+                        fromDate = r.fromDate.toString(),
+                        toDate = r.toDate.toString(),
+                        txnFetched = 0,
+                        ordersFetched = 0,
+                        cleanedProduced = 0,
+                        durationMs = durationMs,
+                        success = false,
+                        errorMessage = r.error,
+                    )
+                }
             }
         }
     }
@@ -132,9 +146,10 @@ class EbaySyncScheduler(
                 // 1. 读取水位线确定起始日期
                 val fromDate = getWatermark(seller) ?: today.minusDays(1)
 
-                // 2. 如果水位线已是今天，跳过
-                if (!fromDate.isBefore(today)) {
-                    log.info("Seller {} already synced up to {}, skipping", seller, fromDate)
+                // 2. 如果水位线超过今天（不该发生），跳过
+                //    水位线 == 今天时仍需同步 — 捕获当天剩余数据
+                if (fromDate.isAfter(today)) {
+                    log.info("Seller {} watermark {} is ahead of today {}, skipping", seller, fromDate, today)
                     reports.add(SyncReport(seller, fromDate, today, 0, 0, 0, "skipped"))
                     continue
                 }
@@ -147,7 +162,21 @@ class EbaySyncScheduler(
                 // 4. 转换为 cleaned_transactions
                 val cleaned = transformService.transformDateRange(fromDate.toString(), today.toString())
 
-                // 5. 更新水位线
+                // 5. 同步售后事件 (同主 sync 日期范围)
+                try {
+                    afterSalesSyncService.syncDateRange(seller, fromDate, today)
+                } catch (e: Exception) {
+                    log.warn("[Scheduler] After-sales sync failed for {}: {}", seller, e.message)
+                }
+
+                // 6. 同步消息 (3 天窗口)
+                try {
+                    messageSyncService.syncDateRange(seller, today.minusDays(3), today)
+                } catch (e: Exception) {
+                    log.warn("[Scheduler] Message sync failed for {}: {}", seller, e.message)
+                }
+
+                // 7. 更新水位线
                 updateWatermark(seller, "fin_txn", today, batch.transactionsFetched)
                 updateWatermark(seller, "ful_orders", today, batch.ordersFetched)
                 updateWatermark(seller, "fin_payout", today, 0)
@@ -205,6 +234,47 @@ class EbaySyncScheduler(
     }
 
     // ═══════════════════════════════════════════════════════════
+    // Frequent Sync — every 5 min (after-sales + messages)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * 每 5 分钟轮询售后事件和消息。
+     *
+     * eBay 不提供售后/消息的 Webhook, 用高频轮询代替:
+     *   - 售后: Post-Order API (RETURN/CANCELLATION/CASE/INQUIRY), 最近 2 天
+     *   - 消息: Trading API GetMyMessages (Inbox + Sent), 最近 1 天
+     *
+     * 消息 Sent 轮询用于追踪客服人员在 eBay 网页端的回复时效。
+     */
+    @Scheduled(fixedRate = 300_000) // 5 minutes
+    fun frequentAfterSalesAndMessageSync() {
+        if (!schedulerLock.tryLock("scheduler:frequent_sync", Duration.ofMinutes(4))) return
+
+        val sellers = sellerAccountRepo.findAll()
+        if (sellers.isEmpty()) return
+
+        val today = LocalDate.now(PST)
+
+        for (account in sellers) {
+            val seller = account.sellerUsername
+
+            // After-sales: last 2 days
+            try {
+                afterSalesSyncService.syncDateRange(seller, today.minusDays(2), today)
+            } catch (e: Exception) {
+                log.warn("[FreqSync] After-sales sync failed for {}: {}", seller, e.message)
+            }
+
+            // Messages: last 1 day (captures staff replies on eBay website)
+            try {
+                messageSyncService.syncDateRange(seller, today.minusDays(1), today)
+            } catch (e: Exception) {
+                log.warn("[FreqSync] Message sync failed for {}: {}", seller, e.message)
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // Daily Ad Rate Refresh — 23:30:00 PST (30 min before daily sync)
     // ═══════════════════════════════════════════════════════════
 
@@ -217,6 +287,13 @@ class EbaySyncScheduler(
     @Scheduled(cron = "0 30 23 * * *", zone = "America/Los_Angeles")
     @org.springframework.transaction.annotation.Transactional
     fun dailyAdRateRefresh() {
+        if (!schedulerLock.tryLock("scheduler:ad_refresh", Duration.ofHours(1))) return
+
+        if (!actionLog.isAutoOpsEnabled()) {
+            log.info("[AdRate] Ad rate refresh skipped — auto_ops_enabled is false")
+            return
+        }
+
         log.info("=======================================")
         log.info("Daily ad rate refresh triggered at {}", Instant.now())
         log.info("=======================================")
@@ -322,12 +399,14 @@ class EbaySyncScheduler(
                     val url = "$RECOMMENDATION_BASE/find?filter=recommendationTypes:%7BAD%7D"
                     log.info("Recommendation API: fetching for {} listings", batch.size)
 
-                    val response = restTemplate.exchange(
-                        java.net.URI.create(url),
-                        HttpMethod.POST,
-                        HttpEntity(requestBody, headers),
-                        String::class.java,
-                    )
+                    val response = EbayApiUtils.callWithRetry(label = "Recommendation/find") {
+                        restTemplate.exchange(
+                            java.net.URI.create(url),
+                            HttpMethod.POST,
+                            HttpEntity(requestBody, headers),
+                            String::class.java,
+                        )
+                    }
 
                     val responseBody = response.body ?: "{}"
                     val json = mapper.readTree(responseBody)

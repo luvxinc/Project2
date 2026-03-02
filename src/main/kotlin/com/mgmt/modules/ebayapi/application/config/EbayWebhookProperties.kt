@@ -16,6 +16,7 @@ data class EbayWebhookProperties(
     val verificationToken: String = "",
     val endpointUrl: String = "",
     val enabled: Boolean = false,
+    val platformNotificationToken: String = "",
 )
 
 @Configuration

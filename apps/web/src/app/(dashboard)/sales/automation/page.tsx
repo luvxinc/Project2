@@ -86,6 +86,8 @@ export default function AutomationPage() {
   const [otherPieceCounts, setOtherPieceCounts] = useState<string[]>(['1-6', '7-12', '13-24']);
   const [autoOpsEnabled, setAutoOpsEnabled] = useState(false);
   const [autoOpsLoading, setAutoOpsLoading] = useState(false);
+  const [autoAcceptCancel, setAutoAcceptCancel] = useState(false);
+  const [autoAcceptCancelLoading, setAutoAcceptCancelLoading] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -120,9 +122,16 @@ export default function AutomationPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Load auto-ops status
+  // Load auto-ops status + sub-toggles
   useEffect(() => {
     autoOpsApi.getStatus().then(res => setAutoOpsEnabled(res.enabled)).catch(() => {});
+    // Load auto_accept_cancellation from rules
+    const baseUrl = getApiBaseUrlCached();
+    fetch(`${baseUrl}/automation/rules`).then(r => r.json()).then(data => {
+      const rulesList = data.rules || [];
+      const cancelRule = rulesList.find((r: Record<string, string>) => r.module === 'SYSTEM' && r.rule_key === 'auto_accept_cancellation');
+      if (cancelRule) setAutoAcceptCancel(cancelRule.rule_value === 'true');
+    }).catch(() => {});
   }, []);
 
   const toggleAutoOps = async () => {
@@ -132,6 +141,20 @@ export default function AutomationPage() {
       setAutoOpsEnabled(res.enabled);
     } catch { /* ignore */ }
     finally { setAutoOpsLoading(false); }
+  };
+
+  const toggleAutoAcceptCancel = async () => {
+    setAutoAcceptCancelLoading(true);
+    try {
+      const newValue = !autoAcceptCancel;
+      const baseUrl = getApiBaseUrlCached();
+      await fetch(`${baseUrl}/automation/rules`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rules: { 'SYSTEM.auto_accept_cancellation': String(newValue) }, tree: [] }),
+      });
+      setAutoAcceptCancel(newValue);
+    } catch { /* ignore */ }
+    finally { setAutoAcceptCancelLoading(false); }
   };
 
   const rv = (mod: string, key: string, fb: string) => rules[`${mod}.${key}`] ?? fb;
@@ -397,17 +420,16 @@ export default function AutomationPage() {
                   <div className="rounded-2xl border p-6 space-y-5" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
                     <h4 className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>{t('adsStrategyOffsets')}</h4>
                     {[
-                      { label: t('adsAggressiveWeight'), key: 'aggressive_offset', fb: '3.0', prefix: '+' },
-                      { label: t('adsConservativeWeight'), key: 'conservative_offset', fb: '3.0', prefix: '−' },
+                      { label: t('adsAggressiveWeight'), key: 'aggressive_weight', fb: '30', desc: t('adsWeightHelpAggressive') },
+                      { label: t('adsConservativeWeight'), key: 'conservative_weight', fb: '70', desc: t('adsWeightHelpConservative') },
                     ].map(f => (
                       <div key={f.key} className="flex items-center justify-between">
                         <div>
                           <p className="text-[14px] font-medium" style={{ color: colors.text }}>{f.label}</p>
-                          <p className="text-[11px]" style={{ color: colors.textTertiary }}>{f.prefix === '+' ? t('adsOffsetHelpPlus') : t('adsOffsetHelpMinus')}</p>
+                          <p className="text-[11px]" style={{ color: colors.textTertiary }}>{f.desc}</p>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-[14px]" style={{ color: colors.textTertiary }}>{f.prefix}</span>
-                          <input type="number" step="0.5" value={rv('ADS', f.key, f.fb)} onChange={e => setRv('ADS', f.key, e.target.value)}
+                          <input type="number" step="5" min="0" max="100" value={rv('ADS', f.key, f.fb)} onChange={e => setRv('ADS', f.key, e.target.value)}
                             className="w-20 px-3 py-2 rounded-xl border text-[14px] text-right outline-none" style={{ backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }} />
                           <span className="text-[13px]" style={{ color: colors.textTertiary }}>%</span>
                         </div>
@@ -433,8 +455,11 @@ export default function AutomationPage() {
                   {/* Preview */}
                   {(() => {
                     const sr = 10;
-                    const agg = Math.min(sr + Number(rv('ADS', 'aggressive_offset', '3')), Number(rv('ADS', 'ad_rate_max', '8')));
-                    const con = Math.max(sr - Number(rv('ADS', 'conservative_offset', '3')), Number(rv('ADS', 'ad_rate_min', '2')));
+                    const cw = Number(rv('ADS', 'conservative_weight', '70'));
+                    const aw = Number(rv('ADS', 'aggressive_weight', '30'));
+                    const blended = sr * cw / 100 + (sr * 1.2) * aw / 100;
+                    const agg = Math.min(blended, Number(rv('ADS', 'ad_rate_max', '8')));
+                    const con = Math.max(sr * cw / 100, Number(rv('ADS', 'ad_rate_min', '2')));
                     return (
                       <div className="rounded-2xl border p-5" style={{ backgroundColor: `${colors.purple}06`, borderColor: `${colors.purple}20` }}>
                         <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: colors.purple }}>{t('adsPreviewTitle', { rate: sr })}</h4>
@@ -865,9 +890,9 @@ export default function AutomationPage() {
                       {/* Automated actions list */}
                       <div className="space-y-3">
                         {[
-                          { icon: 'R', title: 'Auto-Restock', desc: 'Restock listings 15s after sale webhook', timing: '15s delay' },
-                          { icon: 'O', title: 'Auto-Reply Offers', desc: 'Reply to Best Offers 10s after webhook', timing: '10s delay' },
-                          { icon: 'P', title: 'Auto-Promote', desc: 'Daily ad rate refresh at 2:30 AM PST', timing: '2:30 AM' },
+                          { icon: 'R', title: t('autoOpsRestock'), desc: t('autoOpsRestockDesc'), timing: '15s delay' },
+                          { icon: 'O', title: t('autoOpsOfferReply'), desc: t('autoOpsOfferReplyDesc'), timing: '10s delay' },
+                          { icon: 'P', title: t('autoOpsPromote'), desc: t('autoOpsPromoteDesc'), timing: '2:30 AM' },
                         ].map(a => (
                           <div key={a.title} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: autoOpsEnabled ? `${colors.green}08` : 'transparent' }}>
                             <span className="text-[20px]">{a.icon}</span>
@@ -881,6 +906,28 @@ export default function AutomationPage() {
                             }}>{a.timing}</span>
                           </div>
                         ))}
+
+                        {/* Auto-Accept Cancellation — sub-toggle */}
+                        <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: autoAcceptCancel && autoOpsEnabled ? `${colors.orange}08` : 'transparent' }}>
+                          <span className="text-[20px]">C</span>
+                          <div className="flex-1">
+                            <p className="text-[13px] font-medium" style={{ color: colors.text }}>{t('autoOpsAcceptCancel')}</p>
+                            <p className="text-[11px]" style={{ color: colors.textTertiary }}>{t('autoOpsAcceptCancelDesc')}</p>
+                          </div>
+                          <button
+                            onClick={toggleAutoAcceptCancel}
+                            disabled={autoAcceptCancelLoading || !autoOpsEnabled}
+                            className="relative flex-shrink-0 rounded-full transition-colors"
+                            style={{
+                              backgroundColor: autoAcceptCancel && autoOpsEnabled ? colors.orange : colors.gray5,
+                              width: '44px', height: '26px',
+                              opacity: autoAcceptCancelLoading || !autoOpsEnabled ? 0.4 : 1,
+                            }}
+                          >
+                            <span className="absolute top-[2px] w-[22px] h-[22px] rounded-full bg-white shadow-sm transition-all"
+                              style={{ left: autoAcceptCancel && autoOpsEnabled ? '20px' : '2px' }} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

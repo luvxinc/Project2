@@ -1,5 +1,6 @@
 package com.mgmt.modules.ebayapi.api
 
+import com.mgmt.modules.ebayapi.application.service.AutoOpsService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
@@ -237,7 +238,7 @@ class AutomationRulesController(
                 ((it["qty_max"] as? Number)?.toInt()?.let { max -> qty <= max } ?: true)
             }
             if (matched.isEmpty()) {
-                // Fallback to universal (*)
+                // Fallback 1: wildcard path for same category
                 matched = strategies.filter {
                     it["category_group"] == categoryGroup &&
                     it["path_key"] == "*" &&
@@ -245,45 +246,62 @@ class AutomationRulesController(
                     ((it["qty_max"] as? Number)?.toInt()?.let { max -> qty <= max } ?: true)
                 }
             }
-
-            // 5. Compute action
-            if (matched.isEmpty() || buyNow <= 0) {
-                results.add(mapOf(
-                    "sku" to rawSku, "categoryGroup" to categoryGroup, "pathKey" to pathKey,
-                    "buyItNowPrice" to buyNow, "offerPrice" to offerPrice, "quantity" to qty,
-                    "action" to "Decline", "reason" to "no matching strategy",
-                    "matchedStrategy" to null
-                ))
-                continue
+            if (matched.isEmpty()) {
+                // Fallback 2: global default (category_group = '*')
+                matched = strategies.filter {
+                    it["category_group"] == "*" &&
+                    (it["qty_min"] as? Number)?.toInt()?.let { min -> qty >= min } ?: true &&
+                    ((it["qty_max"] as? Number)?.toInt()?.let { max -> qty <= max } ?: true)
+                }
             }
 
-            val strat = matched[0]
-            val discountType = strat["discount_type"] as String
-            val discountValue = (strat["discount_value"] as Number).toDouble()
-            val rawCounterPrice = if (discountType == "PERCENT") {
-                buyNow * (1 - discountValue / 100)
-            } else {
-                buyNow - discountValue
-            }.let { Math.max(0.0, Math.round(it * 100) / 100.0) }
-
-            val action = if (offerPrice >= rawCounterPrice) "Accept" else "Counter"
-            // Normalize counter offer to .99 pricing (e.g. $31.48 → $30.99)
-            val counterPrice = if (action == "Counter") {
-                Math.max(0.99, Math.floor(rawCounterPrice) - 0.01)
-            } else rawCounterPrice
-
-            results.add(mapOf(
-                "sku" to rawSku, "categoryGroup" to categoryGroup, "pathKey" to pathKey,
-                "buyItNowPrice" to buyNow, "offerPrice" to offerPrice, "quantity" to qty,
-                "counterPrice" to counterPrice, "action" to action,
-                "matchedStrategy" to mapOf(
+            // 5. Compute action using shared decision function
+            // IRON RULE: every offer MUST get Accept or Counter, NEVER Decline.
+            // If no strategy matched, use hardcoded last-resort: PERCENT 5%
+            val discountType: String
+            val discountValue: Double
+            val matchedStrategyInfo: Map<String, Any?>?
+            if (matched.isNotEmpty() && buyNow > 0) {
+                val strat = matched[0]
+                discountType = strat["discount_type"] as String
+                discountValue = (strat["discount_value"] as Number).toDouble()
+                matchedStrategyInfo = mapOf(
                     "discount_type" to discountType,
                     "discount_value" to discountValue,
                     "qty_min" to strat["qty_min"],
                     "qty_max" to strat["qty_max"],
                     "path_key" to strat["path_key"],
-                ),
-                "reason" to if (action == "Accept") "offerPrice($offerPrice) >= counterPrice($counterPrice)" else "offerPrice($offerPrice) < counterPrice($counterPrice)"
+                )
+            } else if (buyNow > 0) {
+                // No strategy matched → hardcoded last-resort
+                discountType = "PERCENT"
+                discountValue = 5.0
+                matchedStrategyInfo = mapOf(
+                    "discount_type" to "PERCENT",
+                    "discount_value" to 5.0,
+                    "source" to "hardcoded_last_resort",
+                )
+            } else {
+                // buyNow <= 0: can't compute — skip
+                results.add(mapOf(
+                    "sku" to rawSku, "categoryGroup" to categoryGroup, "pathKey" to pathKey,
+                    "buyItNowPrice" to buyNow, "offerPrice" to offerPrice, "quantity" to qty,
+                    "action" to "Skip", "reason" to "buyItNowPrice is 0 or missing",
+                    "matchedStrategy" to null
+                ))
+                continue
+            }
+
+            val decision = AutoOpsService.computeOfferDecision(buyNow, offerPrice, discountType, discountValue)
+            val action = decision["action"] as String
+            val counterPrice = decision["counterPrice"] ?: decision["normalizedCounter"]
+
+            results.add(mapOf(
+                "sku" to rawSku, "categoryGroup" to categoryGroup, "pathKey" to pathKey,
+                "buyItNowPrice" to buyNow, "offerPrice" to offerPrice, "quantity" to qty,
+                "counterPrice" to counterPrice, "action" to action,
+                "matchedStrategy" to matchedStrategyInfo,
+                "reason" to if (action == "Accept") "offerPrice($offerPrice) >= normalizedCounter(${decision["normalizedCounter"]})" else "offerPrice($offerPrice) < normalizedCounter(${decision["normalizedCounter"]})"
             ))
         }
 
