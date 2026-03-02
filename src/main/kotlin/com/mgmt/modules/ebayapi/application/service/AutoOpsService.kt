@@ -4,12 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.mgmt.modules.ebayapi.domain.repository.EbayBestOfferRepository
 import com.mgmt.modules.ebayapi.domain.repository.EbayListingCacheRepository
 import com.mgmt.modules.ebayapi.domain.repository.EbaySellerAccountRepository
+import com.mgmt.modules.inventory.domain.repository.WarehouseLocationInventoryRepository
 import org.slf4j.LoggerFactory
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import com.mgmt.modules.ebayapi.infrastructure.EbayApiUtils
+import com.mgmt.modules.ebayapi.infrastructure.RedisSchedulerLock
+import jakarta.annotation.PreDestroy
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -32,16 +38,63 @@ class AutoOpsService(
     private val bestOfferRepo: EbayBestOfferRepository,
     private val actionLog: SalesActionLogService,
     private val jdbcTemplate: JdbcTemplate,
+    private val schedulerLock: RedisSchedulerLock,
+    private val redis: StringRedisTemplate,
+    private val warehouseRepo: WarehouseLocationInventoryRepository,
 ) {
     private val log = LoggerFactory.getLogger(AutoOpsService::class.java)
     private val restTemplate = RestTemplate()
     private val mapper = ObjectMapper()
     private val scheduler = Executors.newScheduledThreadPool(2)
 
+    @PreDestroy
+    fun shutdown() {
+        log.info("[AutoOps] Shutting down scheduler executor")
+        scheduler.shutdown()
+        if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+            scheduler.shutdownNow()
+        }
+    }
+
     companion object {
         private const val TRADING_API_URL = "https://api.ebay.com/ws/api.dll"
         private const val MARKETING_BASE = "https://api.ebay.com/sell/marketing/v1"
         private const val RECOMMENDATION_BASE = "https://api.ebay.com/sell/recommendation/v1"
+
+        /**
+         * Pure decision function: given a strategy's discount and the offer/listing prices,
+         * compute the auto-reply action and normalized counter price.
+         *
+         * Shared between production engine (computeAutoAction) and dry-run (AutomationRulesController).
+         *
+         * @return map with keys: action, counterPrice, rawCounterPrice, normalizedCounter
+         */
+        fun computeOfferDecision(
+            buyNowPrice: Double,
+            offerPrice: Double,
+            discountType: String,
+            discountValue: Double,
+        ): Map<String, Any?> {
+            val rawCounterPrice = if (discountType == "PERCENT") {
+                buyNowPrice * (1 - discountValue / 100)
+            } else {
+                buyNowPrice - discountValue
+            }.coerceAtLeast(0.0).let { Math.round(it * 100) / 100.0 }
+
+            // Normalize counter to .99 pricing (e.g. $31.48 -> $30.99)
+            val normalizedCounter = Math.max(0.99, Math.floor(rawCounterPrice) - 0.01)
+
+            // Decide action: if buyer's offer >= our normalized counter, Accept;
+            // otherwise Counter with the normalized price.
+            val action = if (offerPrice >= normalizedCounter) "Accept" else "Counter"
+
+            return mapOf(
+                "action" to action,
+                "counterPrice" to if (action == "Counter") normalizedCounter else null,
+                "rawCounterPrice" to rawCounterPrice,
+                "normalizedCounter" to normalizedCounter,
+            )
+        }
     }
 
     // ═══════════════════════════════════════════════
@@ -91,6 +144,7 @@ class AutoOpsService(
 
         var totalSuccess = 0
         var totalFailed = 0
+        val restockDetails = mutableListOf<Map<String, Any>>()
 
         for ((seller, items) in sellerItemMap) {
             try {
@@ -98,6 +152,12 @@ class AutoOpsService(
 
                 // For each sold item, look up current soldQuantity from cache and calculate new qty
                 for (item in items) {
+                    // Per-item distributed lock to prevent race condition on rapid sales
+                    val itemLockKey = "restock:item:${seller}:${item.itemId}"
+                    if (redis.opsForValue().setIfAbsent(itemLockKey, "1", Duration.ofMinutes(1)) != true) {
+                        log.info("[AutoOps] Restock for item {} already in progress, skipping", item.itemId)
+                        continue
+                    }
                     try {
                         val cached = listingCacheRepo.findByItemIdAndSeller(item.itemId, seller)
                         val cachedJson = if (cached != null) mapper.readTree(cached.data) else null
@@ -111,8 +171,31 @@ class AutoOpsService(
                         val inventoryXml = buildInventoryStatusXml(item.itemId, sku, newQty)
                         val ok = callReviseInventoryStatus(accessToken, inventoryXml)
 
+                        val detail = mapOf<String, Any>(
+                            "itemId" to item.itemId,
+                            "sku" to (sku ?: ""),
+                            "oldQuantity" to currentAvailQty,
+                            "newQuantity" to newQty,
+                            "soldQuantity" to totalSold,
+                            "success" to ok,
+                        )
+
                         if (ok) {
                             totalSuccess++
+                            restockDetails.add(detail)
+                            // Update listing cache with new quantity (lightweight: only availableQuantity)
+                            try {
+                                if (cached != null) {
+                                    val jsonNode = mapper.readTree(cached.data)
+                                    if (jsonNode is com.fasterxml.jackson.databind.node.ObjectNode) {
+                                        jsonNode.put("availableQuantity", newQty)
+                                        cached.data = mapper.writeValueAsString(jsonNode)
+                                        listingCacheRepo.save(cached)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                log.warn("[AutoOps] Failed to update cache after restock for {}: {}", item.itemId, e.message)
+                            }
                             actionLog.logRestock(
                                 triggerType = "AUTO",
                                 seller = seller,
@@ -125,6 +208,7 @@ class AutoOpsService(
                             )
                         } else {
                             totalFailed++
+                            restockDetails.add(detail)
                             actionLog.logRestock(
                                 triggerType = "AUTO",
                                 seller = seller,
@@ -144,6 +228,8 @@ class AutoOpsService(
                     } catch (e: Exception) {
                         totalFailed++
                         log.warn("[AutoOps] Auto-restock failed for item {}: {}", item.itemId, e.message)
+                    } finally {
+                        redis.delete(itemLockKey)
                     }
                 }
             } catch (e: Exception) {
@@ -161,6 +247,7 @@ class AutoOpsService(
             successCount = totalSuccess,
             failedCount = totalFailed,
             durationMs = durationMs,
+            items = restockDetails,
         )
     }
 
@@ -187,24 +274,20 @@ class AutoOpsService(
     }
 
     private fun executeAutoReply(offer: OfferEventInfo) {
-        val seller = offer.seller ?: "espartsplus"
+        if (offer.seller == null) {
+            log.error("[AutoOps] Auto-reply rejected for offer {} — seller is null (item {} not in listing cache)",
+                offer.bestOfferId, offer.itemId)
+            return
+        }
+        val seller = offer.seller
 
         // Load offer reply rules (tree + strategies)
+        // IRON RULE: computeAutoAction NEVER returns null — always Accept or Counter
         val autoAction = computeAutoAction(offer, seller)
         if (autoAction == null) {
-            log.info("[AutoOps] Auto-reply: no matching rule for offer {}, skipping", offer.bestOfferId)
-            // Mark as "NoRule" so refresh won't retry this offer endlessly
-            try {
-                val bestOfferId = offer.bestOfferId ?: ""
-                if (bestOfferId.isNotBlank()) {
-                    val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
-                    if (dbOffer != null && dbOffer.status == "Pending") {
-                        dbOffer.status = "NoRule"
-                        dbOffer.updatedAt = Instant.now()
-                        bestOfferRepo.save(dbOffer)
-                    }
-                }
-            } catch (_: Exception) {}
+            // Should never happen, but guard just in case (e.g. buyNowPrice=0)
+            log.error("[AutoOps] computeAutoAction returned null for offer {} — this should not happen! (buyNow={}, offerPrice={})",
+                offer.bestOfferId, offer.buyItNowPrice, offer.offerPrice)
             return
         }
 
@@ -224,10 +307,23 @@ class AutoOpsService(
             quantity = offer.quantity ?: 1,
         )
 
+        // Track attempt AFTER API call (not before) to ensure accurate count
+        val bestOfferId = offer.bestOfferId ?: ""
+        try {
+            if (bestOfferId.isNotBlank()) {
+                val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
+                if (dbOffer != null) {
+                    dbOffer.autoReplyAttempts += 1
+                    dbOffer.lastAutoReplyAttemptAt = Instant.now()
+                    bestOfferRepo.save(dbOffer)
+                }
+            }
+        } catch (_: Exception) {}
+
         actionLog.logOfferReply(
             triggerType = "AUTO",
             seller = seller,
-            bestOfferId = offer.bestOfferId ?: "",
+            bestOfferId = bestOfferId,
             itemId = offer.itemId,
             itemTitle = offer.itemTitle,
             buyerUserId = offer.buyerUserId,
@@ -242,11 +338,10 @@ class AutoOpsService(
         )
 
         if (success) {
-            log.info("[AutoOps] Auto-reply succeeded: {} for offer {}", action, offer.bestOfferId)
+            log.info("[AutoOps] Auto-reply succeeded: {} for offer {}", action, bestOfferId)
 
             // Update offer status in DB so it no longer shows as "Pending"
             try {
-                val bestOfferId = offer.bestOfferId ?: ""
                 if (bestOfferId.isNotBlank()) {
                     val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
                     if (dbOffer != null) {
@@ -256,36 +351,43 @@ class AutoOpsService(
                             "counter" -> "CounterOffered"
                             else -> action
                         }
+                        dbOffer.autoReplyAttempts = 0 // Reset on success
                         dbOffer.updatedAt = Instant.now()
                         bestOfferRepo.save(dbOffer)
                         log.info("[AutoOps] Updated offer {} status → {}", bestOfferId, dbOffer.status)
                     }
                 }
             } catch (e: Exception) {
-                log.warn("[AutoOps] Failed to update offer {} status in DB: {}", offer.bestOfferId, e.message)
+                log.warn("[AutoOps] Failed to update offer {} status in DB: {}", bestOfferId, e.message)
             }
         } else {
-            log.warn("[AutoOps] Auto-reply failed for offer {}: {}", offer.bestOfferId, errorMsg)
+            log.warn("[AutoOps] Auto-reply failed for offer {}: {}", bestOfferId, errorMsg)
 
             // If eBay says offer is no longer available, update DB to remove from Pending list
             val isOfferGone = errorMsg?.contains("no longer available", ignoreCase = true) == true
                     || errorMsg?.contains("is not active", ignoreCase = true) == true
                     || errorMsg?.contains("expired", ignoreCase = true) == true
-            if (isOfferGone) {
-                try {
-                    val bestOfferId = offer.bestOfferId ?: ""
-                    if (bestOfferId.isNotBlank()) {
-                        val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
-                        if (dbOffer != null) {
+
+            try {
+                if (bestOfferId.isNotBlank()) {
+                    val dbOffer = bestOfferRepo.findByBestOfferId(bestOfferId)
+                    if (dbOffer != null) {
+                        if (isOfferGone) {
                             dbOffer.status = "Expired"
                             dbOffer.updatedAt = Instant.now()
                             bestOfferRepo.save(dbOffer)
                             log.info("[AutoOps] Offer {} marked Expired (eBay: no longer available)", bestOfferId)
+                        } else if (dbOffer.autoReplyAttempts >= 3) {
+                            // Max retries exhausted — mark as AutoReplyFailed to stop retry scan
+                            dbOffer.status = "AutoReplyFailed"
+                            dbOffer.updatedAt = Instant.now()
+                            bestOfferRepo.save(dbOffer)
+                            log.warn("[AutoOps] Offer {} marked AutoReplyFailed after {} attempts", bestOfferId, dbOffer.autoReplyAttempts)
                         }
                     }
-                } catch (e: Exception) {
-                    log.warn("[AutoOps] Failed to mark offer {} as Expired: {}", offer.bestOfferId, e.message)
                 }
+            } catch (e: Exception) {
+                log.warn("[AutoOps] Failed to update offer {} failure status: {}", bestOfferId, e.message)
             }
         }
     }
@@ -301,6 +403,8 @@ class AutoOpsService(
     @Scheduled(cron = "0 30 2 * * *", zone = "America/Los_Angeles")
     @org.springframework.transaction.annotation.Transactional
     fun dailyAutoPromote() {
+        if (!schedulerLock.tryLock("scheduler:auto_promote", Duration.ofHours(1))) return
+
         if (!actionLog.isAutoOpsEnabled()) {
             log.info("[AutoOps] Auto-promote: disabled, skipping")
             return
@@ -327,9 +431,26 @@ class AutoOpsService(
                 val cachedListings = listingCacheRepo.findAllBySeller(seller)
                 if (cachedListings.isEmpty()) continue
 
-                // Get current promoted listings and suggested rates
-                val itemIds = cachedListings.map { it.itemId }
-                val suggestedRates = fetchSuggestedAdRatesInternal(accessToken, itemIds)
+                // Read suggested rates from cache (populated by 23:30 dailyAdRateRefresh).
+                // Only call API as fallback if cache has no suggestedAdRate data.
+                val cachedSuggestedRates = mutableMapOf<String, Double>()
+                val missingItems = mutableListOf<String>()
+                for (cached in cachedListings) {
+                    val json = try { mapper.readTree(cached.data) } catch (_: Exception) { continue }
+                    val rate = json.path("suggestedAdRate").asDouble(0.0)
+                    if (rate > 0) {
+                        cachedSuggestedRates[cached.itemId] = rate
+                    } else {
+                        missingItems.add(cached.itemId)
+                    }
+                }
+                // Fallback: fetch from API only for items missing cached suggestedAdRate
+                if (missingItems.isNotEmpty()) {
+                    log.info("[AutoOps] Auto-promote: {} items missing cached suggestedAdRate, fetching from API", missingItems.size)
+                    val apiFallback = fetchSuggestedAdRatesInternal(accessToken, missingItems)
+                    cachedSuggestedRates.putAll(apiFallback)
+                }
+                val suggestedRates = cachedSuggestedRates
 
                 // Calculate new rates for each listing
                 val updates = mutableListOf<Map<String, String>>()
@@ -376,16 +497,13 @@ class AutoOpsService(
                 var campaignId: String? = null
                 var isDynamicCampaign = false
                 if (campaigns.isArray) {
+                    // Only use COST_PER_SALE campaigns — do not fallback to other types
                     for (c in campaigns) {
                         if (c.path("fundingStrategy").path("fundingModel").asText() == "COST_PER_SALE") {
                             campaignId = c.path("campaignId").asText()
                             isDynamicCampaign = c.path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                             break
                         }
-                    }
-                    if (campaignId == null && campaigns.size() > 0) {
-                        campaignId = campaigns[0].path("campaignId").asText()
-                        isDynamicCampaign = campaigns[0].path("fundingStrategy").path("adRateStrategy").asText() == "DYNAMIC"
                     }
                 }
 
@@ -479,6 +597,72 @@ class AutoOpsService(
     }
 
     // ═══════════════════════════════════════════════
+    // 4. Retry Pending Offers (every 10 minutes)
+    // ═══════════════════════════════════════════════
+
+    /**
+     * Every 10 minutes, scan for Pending/Active offers that failed auto-reply
+     * and retry them. Prevents offers from sitting unanswered until eBay expiration.
+     *
+     * Conditions for retry eligibility:
+     * - status IN ('Pending', 'Active')
+     * - created within 48 hours (not expired on eBay side)
+     * - last attempt was > 15 minutes ago (cooldown)
+     * - attempts < 3 (max retries)
+     */
+    @Scheduled(fixedDelay = 600_000) // 10 minutes
+    fun retryPendingOffers() {
+        if (!schedulerLock.tryLock("scheduler:retry_pending_offers", Duration.ofMinutes(9))) return
+
+        if (!actionLog.isAutoOpsEnabled()) return
+
+        val now = Instant.now()
+        val cutoff48h = now.minus(Duration.ofHours(48))
+        val cooldownCutoff = now.minus(Duration.ofMinutes(15))
+        val maxAttempts = 3
+
+        val eligible = try {
+            bestOfferRepo.findRetryEligibleOffers(cutoff48h, cooldownCutoff, maxAttempts)
+        } catch (e: Exception) {
+            log.warn("[AutoOps] Retry scan: failed to query eligible offers: {}", e.message)
+            return
+        }
+
+        if (eligible.isEmpty()) return
+
+        log.info("[AutoOps] Retry scan: found {} eligible offers for retry", eligible.size)
+
+        for ((index, dbOffer) in eligible.withIndex()) {
+            try {
+                val offer = OfferEventInfo(
+                    itemId = dbOffer.itemId,
+                    itemTitle = dbOffer.itemTitle,
+                    buyerUserId = dbOffer.buyerUserId,
+                    offerPrice = dbOffer.offerPrice?.toDouble(),
+                    offerCurrency = dbOffer.offerCurrency,
+                    quantity = dbOffer.quantity,
+                    status = dbOffer.status,
+                    bestOfferId = dbOffer.bestOfferId,
+                    message = dbOffer.buyerMessage,
+                    seller = dbOffer.seller,
+                    buyItNowPrice = dbOffer.buyItNowPrice?.toDouble(),
+                )
+                // Stagger retries: base 5s + 3s per item index + exponential by attempt count
+                // attempt 0→5s, attempt 1→10s, attempt 2→20s, spread across items
+                val baseDelay = 5L + (index * 3L)
+                val attemptBackoff = (1L shl dbOffer.autoReplyAttempts.coerceAtMost(3)) * 5L // 5, 10, 20, 40
+                val delay = baseDelay + attemptBackoff
+                scheduleAutoReply(offer, delaySeconds = delay)
+            } catch (e: Exception) {
+                log.warn("[AutoOps] Retry scan: failed to schedule retry for offer {}: {}",
+                    dbOffer.bestOfferId, e.message)
+            }
+        }
+
+        log.info("[AutoOps] Retry scan: scheduled {} offers for retry", eligible.size)
+    }
+
+    // ═══════════════════════════════════════════════
     // Helper methods
     // ═══════════════════════════════════════════════
 
@@ -509,10 +693,11 @@ class AutoOpsService(
     }
 
     private fun buildInventoryStatusXml(itemId: String, sku: String?, quantity: Int): String {
-        val skuTag = if (!sku.isNullOrBlank()) "<SKU>$sku</SKU>" else ""
+        val escapedItemId = EbayApiUtils.escapeXml(itemId)
+        val skuTag = if (!sku.isNullOrBlank()) "<SKU>${EbayApiUtils.escapeXml(sku)}</SKU>" else ""
         return """
             <InventoryStatus>
-                <ItemID>$itemId</ItemID>
+                <ItemID>$escapedItemId</ItemID>
                 $skuTag
                 <Quantity>$quantity</Quantity>
             </InventoryStatus>
@@ -537,10 +722,12 @@ class AutoOpsService(
         }
 
         return try {
-            val response = restTemplate.exchange(
-                TRADING_API_URL, HttpMethod.POST,
-                HttpEntity(xml, headers), String::class.java
-            )
+            val response = EbayApiUtils.callWithRetry(label = "ReviseInventoryStatus") {
+                restTemplate.exchange(
+                    TRADING_API_URL, HttpMethod.POST,
+                    HttpEntity(xml, headers), String::class.java
+                )
+            }
             val body = response.body ?: ""
             if (body.contains("<Ack>Failure</Ack>")) {
                 log.error("ReviseInventoryStatus failed: {}", body.take(500))
@@ -571,14 +758,23 @@ class AutoOpsService(
         quantity: Int = 1,
         sellerMessage: String? = null,
     ): Pair<Boolean, String?> {
+        // Distributed lock: prevent concurrent replies to the same offer (manual + auto race)
+        val lockKey = "offer:reply:$bestOfferId"
+        if (redis.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMinutes(2)) != true) {
+            log.warn("[AutoOps] Offer {} is being processed by another operation, skipping", bestOfferId)
+            return Pair(false, "Offer $bestOfferId is being processed by another operation")
+        }
         return try {
             val accessToken = oauthService.getValidAccessToken(seller)
 
+            val escapedItemId = EbayApiUtils.escapeXml(itemId)
+            val escapedOfferId = EbayApiUtils.escapeXml(bestOfferId)
+            val escapedAction = EbayApiUtils.escapeXml(action)
             val counterBlock = if (action.equals("Counter", ignoreCase = true) && counterPrice != null) {
                 "<CounterOfferPrice>$counterPrice</CounterOfferPrice>\n                    <CounterOfferQuantity>$quantity</CounterOfferQuantity>"
             } else ""
             val messageBlock = if (!sellerMessage.isNullOrBlank()) {
-                "<SellerResponse>$sellerMessage</SellerResponse>"
+                "<SellerResponse>${EbayApiUtils.escapeXml(sellerMessage)}</SellerResponse>"
             } else ""
 
             val xmlRequest = """<?xml version="1.0" encoding="utf-8"?>
@@ -586,9 +782,9 @@ class AutoOpsService(
                     <RequesterCredentials>
                         <eBayAuthToken>$accessToken</eBayAuthToken>
                     </RequesterCredentials>
-                    <ItemID>$itemId</ItemID>
-                    <BestOfferID>$bestOfferId</BestOfferID>
-                    <Action>$action</Action>
+                    <ItemID>$escapedItemId</ItemID>
+                    <BestOfferID>$escapedOfferId</BestOfferID>
+                    <Action>$escapedAction</Action>
                     $counterBlock
                     $messageBlock
                 </RespondToBestOfferRequest>
@@ -602,10 +798,12 @@ class AutoOpsService(
                 set("X-EBAY-API-IAF-TOKEN", accessToken)
             }
 
-            val response = restTemplate.exchange(
-                TRADING_API_URL, HttpMethod.POST,
-                HttpEntity(xmlRequest, headers), String::class.java,
-            )
+            val response = EbayApiUtils.callWithRetry(label = "RespondToBestOffer") {
+                restTemplate.exchange(
+                    TRADING_API_URL, HttpMethod.POST,
+                    HttpEntity(xmlRequest, headers), String::class.java,
+                )
+            }
 
             val body = response.body ?: ""
             val isSuccess = body.contains("<Ack>Success</Ack>") || body.contains("<Ack>Warning</Ack>")
@@ -617,6 +815,8 @@ class AutoOpsService(
         } catch (e: Exception) {
             log.error("RespondToBestOffer failed for {}: {}", bestOfferId, e.message)
             Pair(false, e.message ?: "HTTP error")
+        } finally {
+            redis.delete(lockKey)
         }
     }
 
@@ -674,7 +874,11 @@ class AutoOpsService(
                     } catch (_: Exception) { emptyList() }
                     val matched = ranges.find { r ->
                         val parts = r.split("-").mapNotNull { it.toDoubleOrNull() }
-                        parts.size == 2 && buyNowPrice >= parts[0] && buyNowPrice <= parts[1]
+                        when (parts.size) {
+                            2 -> buyNowPrice >= parts[0] && buyNowPrice <= parts[1]
+                            1 -> buyNowPrice >= parts[0] // open-ended: "30.01-" means 30.01+
+                            else -> false
+                        }
                     }
                     if (matched != null) pathParts.add("price_range:$matched")
                 }
@@ -683,10 +887,10 @@ class AutoOpsService(
         val pathKey = if (pathParts.isNotEmpty()) pathParts.joinToString("|") else "*"
         val qty = offer.quantity ?: 1
 
-        // Find matching strategy
+        // Find matching strategy (3-level fallback chain + hardcoded last resort)
         val strategy = try {
             jdbcTemplate.queryForMap(
-                """SELECT discount_type, discount_value FROM offer_reply_strategy 
+                """SELECT discount_type, discount_value FROM offer_reply_strategy
                    WHERE category_group = ? AND path_key = ? AND qty_min <= ? AND (qty_max IS NULL OR qty_max >= ?)
                    AND enabled = true ORDER BY id LIMIT 1""",
                 categoryGroup, pathKey, qty, qty
@@ -695,7 +899,7 @@ class AutoOpsService(
             // Fallback 1: wildcard path for same category
             try {
                 jdbcTemplate.queryForMap(
-                    """SELECT discount_type, discount_value FROM offer_reply_strategy 
+                    """SELECT discount_type, discount_value FROM offer_reply_strategy
                        WHERE category_group = ? AND path_key = '*' AND qty_min <= ? AND (qty_max IS NULL OR qty_max >= ?)
                        AND enabled = true ORDER BY id LIMIT 1""",
                     categoryGroup, qty, qty
@@ -704,36 +908,34 @@ class AutoOpsService(
                 // Fallback 2: global default (category_group = '*')
                 try {
                     jdbcTemplate.queryForMap(
-                        """SELECT discount_type, discount_value FROM offer_reply_strategy 
+                        """SELECT discount_type, discount_value FROM offer_reply_strategy
                            WHERE category_group = '*' AND qty_min <= ? AND (qty_max IS NULL OR qty_max >= ?)
                            AND enabled = true ORDER BY id LIMIT 1""",
                         qty, qty
                     )
                 } catch (_: Exception) { null }
             }
-        } ?: return null
+        }
 
-        val discountType = strategy["discount_type"].toString()
-        val discountValue = (strategy["discount_value"] as? Number)?.toDouble() ?: return null
-
-        val counterPrice = if (discountType == "PERCENT") {
-            buyNowPrice * (1 - discountValue / 100)
+        // IRON RULE: every offer MUST get a response (Accept or Counter, NEVER skip/decline).
+        // If all 3 fallback levels fail, use hardcoded last-resort: 5% PERCENT.
+        val discountType: String
+        val discountValue: Double
+        if (strategy != null) {
+            discountType = strategy["discount_type"].toString()
+            discountValue = (strategy["discount_value"] as? Number)?.toDouble() ?: 5.0
         } else {
-            buyNowPrice - discountValue
-        }.coerceAtLeast(0.0).let { Math.round(it * 100) / 100.0 }
+            log.warn("[AutoOps] No strategy matched for offer (category={}, path={}, qty={}). Using hardcoded last-resort: PERCENT 5%",
+                categoryGroup, pathKey, qty)
+            discountType = "PERCENT"
+            discountValue = 5.0
+        }
 
-        // Normalize counter to .99 pricing
-        val normalizedCounter = Math.max(0.99, Math.floor(counterPrice) - 0.01)
-
-        // Decide action: if buyer's offer >= our normalized counter, Accept;
-        // otherwise Counter with the normalized price.
-        // This prevents the absurd case of countering LOWER than the buyer's offer
-        // (e.g., buyer offers $18, raw counter = $18.39, normalized = $17.99 → should Accept)
-        val action = if (offerPrice >= normalizedCounter) "Accept" else "Counter"
+        val decision = computeOfferDecision(buyNowPrice, offerPrice, discountType, discountValue)
 
         return mapOf(
-            "action" to action,
-            "counterPrice" to if (action == "Counter") normalizedCounter else null,
+            "action" to decision["action"],
+            "counterPrice" to decision["counterPrice"],
             "ruleUsed" to "$categoryGroup|$pathKey",
         )
     }
@@ -751,10 +953,12 @@ class AutoOpsService(
             try {
                 val body = mapper.writeValueAsString(mapOf("listingIds" to batch))
                 val url = "$RECOMMENDATION_BASE/find?filter=recommendationTypes:%7BAD%7D"
-                val response = restTemplate.exchange(
-                    java.net.URI.create(url), HttpMethod.POST,
-                    HttpEntity(body, headers), String::class.java
-                )
+                val response = EbayApiUtils.callWithRetry(label = "Recommendation/find") {
+                    restTemplate.exchange(
+                        java.net.URI.create(url), HttpMethod.POST,
+                        HttpEntity(body, headers), String::class.java
+                    )
+                }
                 val json = mapper.readTree(response.body ?: "{}")
                 val recs = json.path("listingRecommendations")
                 if (recs.isArray) {

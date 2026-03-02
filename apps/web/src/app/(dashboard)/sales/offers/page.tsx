@@ -181,7 +181,7 @@ export default function OffersPage() {
   // ═══ SSE: Real-time Best Offer push from Webhook ═══
   useEffect(() => {
     const baseUrl = getApiBaseUrlCached();
-    const sse = new EventSource(`${baseUrl}/ebay/sync/offers/events`);
+    const sse = new EventSource(`${baseUrl}/ebay/sync/offers/events?seller=${encodeURIComponent(filterSeller)}`);
     sseRef.current = sse;
 
     sse.addEventListener('connected', () => {
@@ -246,7 +246,7 @@ export default function OffersPage() {
       sse.close();
       sseRef.current = null;
     };
-  }, []);
+  }, [filterSeller]);
 
   // ═══ Selection helpers ═══
   const toggleSelect = (id: string) => {

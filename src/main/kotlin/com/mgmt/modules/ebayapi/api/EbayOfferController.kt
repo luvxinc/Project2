@@ -263,9 +263,9 @@ class EbayOfferController(
      * Uses the same SSE broadcaster as the Listings page.
      */
     @GetMapping("/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-    fun offerEvents(): SseEmitter {
-        log.info("📡 New SSE client connected for Offer events")
-        return saleBroadcaster.subscribe()
+    fun offerEvents(@RequestParam(defaultValue = "all") seller: String): SseEmitter {
+        log.info("SSE client connected for Offer events, seller={}", seller)
+        return saleBroadcaster.subscribe(seller)
     }
 
     // ═══════════════════════════════════════════════════════════

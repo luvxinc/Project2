@@ -59,6 +59,12 @@ class EbayBestOffer(
     @Column(name = "event_name", length = 64)
     var eventName: String? = null,
 
+    @Column(name = "auto_reply_attempts")
+    var autoReplyAttempts: Int = 0,
+
+    @Column(name = "last_auto_reply_attempt_at")
+    var lastAutoReplyAttemptAt: Instant? = null,
+
     @Column(name = "created_at")
     var createdAt: Instant = Instant.now(),
 
