@@ -21,6 +21,17 @@ LOG_DIR="$PROJECT_ROOT/logs"
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"
 
+# ─── 加载 .env 文件中的 eBay 凭证 (不加载基础设施变量，避免覆盖本地配置) ───
+ENV_FILE="$PROJECT_ROOT/.env"
+if [ -f "$ENV_FILE" ]; then
+    while IFS='=' read -r key value; do
+        [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+        if [[ "$key" == EBAY_* ]]; then
+            export "$key=$value"
+        fi
+    done < "$ENV_FILE"
+fi
+
 # ─── 颜色 ───
 RED='\033[0;31m'
 GREEN='\033[0;32m'

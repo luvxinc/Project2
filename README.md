@@ -14,34 +14,25 @@ Enterprise Resource Planning system for cross-border e-commerce operations.
 
 ## Quick Start
 
-### Docker (Recommended)
-
 ```bash
+# Prerequisites: JDK 21+, Node 22, pnpm 10, PostgreSQL 15/16, Redis 7
+
 # 1. Copy environment config
 cp .env.example .env
-# Edit .env with your values
+# Edit .env with your eBay OAuth credentials and other values
 
-# 2. Start all services
-docker compose up -d
+# 2. Start local dev (backend + frontend)
+bash dev/start_dev.sh
 
-# 3. Access
+# 3. Start production (with Cloudflare Tunnel)
+bash dev/start_online.sh
+
+# 4. Stop all services
+bash dev/stop.sh
+
+# Access:
 # Frontend: http://localhost:3000
 # Backend:  http://localhost:8080/api/v1/health
-```
-
-### Local Development
-
-```bash
-# Prerequisites: JDK 21, Node 22, pnpm 10, PostgreSQL 16, Redis 7
-
-# Start backend
-./gradlew bootRun
-
-# Start frontend (in another terminal)
-cd apps/web && pnpm dev
-
-# Or start both via script
-bash dev/start_dev.sh
 ```
 
 ## Project Structure
@@ -57,10 +48,7 @@ bash dev/start_dev.sh
 │       ├── components/        # Shared UI components
 │       └── lib/               # API utilities
 ├── packages/shared/        # Shared i18n locales
-├── dev/                    # Dev scripts (start/stop)
-├── Dockerfile.backend      # Backend container
-├── Dockerfile.frontend     # Frontend container
-└── docker-compose.yml      # Full-stack orchestration
+└── dev/                    # Dev scripts (start_dev / start_online / stop)
 ```
 
 ## Modules

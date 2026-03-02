@@ -44,7 +44,6 @@ data/exports/
 
 # Database dumps & backups (sensitive, large)
 backups/
-docker/postgres/*.dump
 *.dump
 *.pgdump
 *.sql.gz

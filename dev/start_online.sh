@@ -22,10 +22,23 @@ LOG_DIR="$PROJECT_ROOT/logs"
 # Cloudflare Token
 CF_TOKEN="${CF_TOKEN:-eyJhIjoiM2FiYmI2YzYwYmQ2MTkxYjBmOWUxZTBhMzYzODFjYjYiLCJ0IjoiMmZjMWQwNTQtMTAyYS00MGFjLWFlMGItYmJiYWVhYTU2OTNhIiwicyI6Ik9HUTVOV0l4TXpJdE1qZzBaQzAwTlRsaExUZzJNMll0TlRVM1ptRTJZV0ZoTXpSayJ9}"
 
-# eBay Webhook (Event-Driven Sync)
+# ─── 加载 .env 文件中的 eBay 凭证 (不加载基础设施变量，避免覆盖本地配置) ───
+ENV_FILE="$PROJECT_ROOT/.env"
+if [ -f "$ENV_FILE" ]; then
+    while IFS='=' read -r key value; do
+        # 跳过注释和空行
+        [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+        # 只导出 EBAY_ 开头的变量
+        if [[ "$key" == EBAY_* ]]; then
+            export "$key=$value"
+        fi
+    done < "$ENV_FILE"
+fi
+
+# eBay Webhook (如未从 .env 加载则使用默认值)
 export EBAY_WEBHOOK_VERIFICATION_TOKEN="${EBAY_WEBHOOK_VERIFICATION_TOKEN:-bXc53ZKPH_5zWK0gN94rcPzm1gklTrxiparvvWvhQ2c}"
 export EBAY_WEBHOOK_ENDPOINT_URL="${EBAY_WEBHOOK_ENDPOINT_URL:-https://api.topmorrowusa.com/api/v1/ebay/webhook}"
-export EBAY_WEBHOOK_ENABLED="${EBAY_WEBHOOK_ENABLED:-false}"
+export EBAY_WEBHOOK_ENABLED="${EBAY_WEBHOOK_ENABLED:-true}"
 
 # 确保目录存在
 mkdir -p "$PID_DIR" "$LOG_DIR"
@@ -144,8 +157,13 @@ printf "\n${BLUE}▶ Phase 4: 启动后端 (Spring Boot → 0.0.0.0:8080)${NC}\n
 
 cd "$PROJECT_ROOT"
 # 使用 caffeinate 防止系统休眠
-# 传递 Webhook 环境变量给 Spring Boot
+# 传递所有 eBay 环境变量给 Spring Boot (OAuth + Webhook)
 nohup caffeinate -ims env \
+    EBAY_CLIENT_ID="$EBAY_CLIENT_ID" \
+    EBAY_CLIENT_SECRET="$EBAY_CLIENT_SECRET" \
+    EBAY_DEV_ID="$EBAY_DEV_ID" \
+    EBAY_RU_NAME="$EBAY_RU_NAME" \
+    EBAY_REDIRECT_URI="$EBAY_REDIRECT_URI" \
     EBAY_WEBHOOK_VERIFICATION_TOKEN="$EBAY_WEBHOOK_VERIFICATION_TOKEN" \
     EBAY_WEBHOOK_ENDPOINT_URL="$EBAY_WEBHOOK_ENDPOINT_URL" \
     EBAY_WEBHOOK_ENABLED="$EBAY_WEBHOOK_ENABLED" \
