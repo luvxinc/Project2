@@ -27,7 +27,7 @@ import { getApiBaseUrl } from '@/lib/api-url';
 export function AuthSessionGuard() {
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const permPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isRefreshingRef = useRef(false);
+  const refreshPromiseRef = useRef<Promise<boolean> | null>(null);
   const redirectingRef = useRef(false);
 
   // Parse JWT exp without library
@@ -97,43 +97,44 @@ export function AuthSessionGuard() {
     }
   }, [getApiUrl]);
 
-  // Silent refresh
+  // Silent refresh — deduplicates concurrent calls via shared Promise
   const doRefresh = useCallback(async (): Promise<boolean> => {
-    if (isRefreshingRef.current) return false;
-    isRefreshingRef.current = true;
+    // If a refresh is already in-flight, await the same Promise
+    if (refreshPromiseRef.current) return refreshPromiseRef.current;
 
     const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      isRefreshingRef.current = false;
+    if (!refreshToken) return false;
+
+    refreshPromiseRef.current = (async () => {
+      try {
+        const apiUrl = getApiUrl();
+        const res = await window._originalFetch(`${apiUrl}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const newAccessToken = json.data?.accessToken;
+          if (newAccessToken) {
+            localStorage.setItem('accessToken', newAccessToken);
+            scheduleRefresh(newAccessToken);
+            syncPermissions();
+            return true;
+          }
+        }
+      } catch {
+        // Network error
+      }
       return false;
-    }
+    })();
 
     try {
-      const apiUrl = getApiUrl();
-      const res = await window._originalFetch(`${apiUrl}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        const newAccessToken = json.data?.accessToken;
-        if (newAccessToken) {
-          localStorage.setItem('accessToken', newAccessToken);
-          scheduleRefresh(newAccessToken);
-          isRefreshingRef.current = false;
-          // Sync permissions after successful token refresh
-          syncPermissions();
-          return true;
-        }
-      }
-    } catch {
-      // Network error
+      return await refreshPromiseRef.current;
+    } finally {
+      refreshPromiseRef.current = null;
     }
-
-    isRefreshingRef.current = false;
-    return false;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getApiUrl, syncPermissions]);
 
