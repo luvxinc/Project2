@@ -26,6 +26,10 @@ interface AuditLogRepository : JpaRepository<AuditLog, String>, JpaSpecification
 @Repository
 interface BusinessLogRepository : JpaRepository<BusinessLog, String>, JpaSpecificationExecutor<BusinessLog> {
 
+    @Modifying
+    @Query("DELETE FROM BusinessLog b WHERE b.devMode = true")
+    fun deleteByDevModeTrue(): Int
+
     fun findAllByCreatedAtBetween(start: Instant, end: Instant, pageable: Pageable): Page<BusinessLog>
 
     fun countByCreatedAtAfter(after: Instant): Long
@@ -33,6 +37,10 @@ interface BusinessLogRepository : JpaRepository<BusinessLog, String>, JpaSpecifi
 
 @Repository
 interface AccessLogRepository : JpaRepository<AccessLog, String>, JpaSpecificationExecutor<AccessLog> {
+
+    @Modifying
+    @Query("DELETE FROM AccessLog a WHERE a.devMode = true")
+    fun deleteByDevModeTrue(): Int
 
     fun findAllByCreatedAtBetween(start: Instant, end: Instant, pageable: Pageable): Page<AccessLog>
 
@@ -61,6 +69,10 @@ interface AccessLogRepository : JpaRepository<AccessLog, String>, JpaSpecificati
 
 @Repository
 interface ErrorLogRepository : JpaRepository<ErrorLog, String>, JpaSpecificationExecutor<ErrorLog> {
+
+    @Modifying
+    @Query("DELETE FROM ErrorLog e WHERE e.devMode = true")
+    fun deleteByDevModeTrue(): Int
 
     fun findAllByCreatedAtBetween(start: Instant, end: Instant, pageable: Pageable): Page<ErrorLog>
 

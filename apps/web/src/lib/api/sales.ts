@@ -436,6 +436,65 @@ export const salesApi = {
   updateSku: (data: { seller: string; itemId: string; newSku: string }) =>
     api.post<{ success: boolean; itemId: string; newSku: string }>('/ebay/sync/listings/update-sku', data),
 
+  // ═══ Orders ═══
+
+  getOrders: (params: { seller?: string; status?: string; page?: number; size?: number; dateFrom?: string; dateTo?: string; search?: string }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    if (params.status) qs.set('status', params.status);
+    if (params.page != null) qs.set('page', params.page.toString());
+    if (params.size != null) qs.set('size', params.size.toString());
+    if (params.dateFrom) qs.set('dateFrom', params.dateFrom);
+    if (params.dateTo) qs.set('dateTo', params.dateTo);
+    if (params.search) qs.set('search', params.search);
+    return api.get<OrdersResponse>(`/ebay/sync/orders?${qs.toString()}`);
+  },
+
+  refreshOrders: (params: { seller?: string }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    return api.post<{ status: string; ordersSynced: number }>(`/ebay/sync/orders/refresh?${qs.toString()}`, {});
+  },
+
+  // ═══ After-Sales ═══
+
+  getAfterSales: (params: { seller?: string; type?: string; page?: number; size?: number }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    if (params.type) qs.set('type', params.type);
+    if (params.page != null) qs.set('page', params.page.toString());
+    if (params.size != null) qs.set('size', params.size.toString());
+    return api.get<AfterSalesResponse>(`/ebay/sync/after-sales?${qs.toString()}`);
+  },
+
+  refreshAfterSales: (params: { seller?: string }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    return api.post<{ status: string; eventsSynced: number }>(`/ebay/sync/after-sales/refresh?${qs.toString()}`, {});
+  },
+
+  // ═══ Messages ═══
+
+  getMessages: (params: { seller?: string; page?: number; size?: number }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    if (params.page != null) qs.set('page', params.page.toString());
+    if (params.size != null) qs.set('size', params.size.toString());
+    return api.get<MessagesResponse>(`/ebay/sync/messages?${qs.toString()}`);
+  },
+
+  refreshMessages: (params: { seller?: string }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    return api.post<{ status: string; messagesSynced: number }>(`/ebay/sync/messages/refresh?${qs.toString()}`, {});
+  },
+
+  getMessageStats: (params: { seller?: string }) => {
+    const qs = new URLSearchParams();
+    if (params.seller) qs.set('seller', params.seller);
+    return api.get<MessageStatsResponse>(`/ebay/sync/messages/stats?${qs.toString()}`);
+  },
+
   // ═══ Offers ═══
 
   /** Get all offers from database/cache */
@@ -496,6 +555,108 @@ export interface ChartDataResponse {
   categories?: string[];
   series?: ChartSeries[];
   pie_data?: PieSlice[];
+}
+
+// ═══ Order Types ═══
+
+export interface OrderItem {
+  orderId: string;
+  legacyOrderId?: string;
+  buyerUsername?: string;
+  buyerFullName?: string;
+  shipToName?: string;
+  shipToCity?: string;
+  shipToState?: string;
+  total: number;
+  priceCurrency?: string;
+  orderFulfillmentStatus?: string;
+  orderPaymentStatus?: string;
+  cancelStatus?: string;
+  creationDate: string;
+  sellerUsername?: string;
+  items: OrderLineItem[];
+  afterSalesTypes?: string[];
+}
+
+export interface OrderLineItem {
+  sku?: string;
+  title?: string;
+  quantity: number;
+  lineItemCost: number;
+}
+
+export interface OrdersResponse {
+  content: OrderItem[];
+  totalElements: number;
+  number: number;
+  size: number;
+  totalPages: number;
+}
+
+// ═══ After-Sales Types ═══
+
+export interface AfterSalesEvent {
+  id: number;
+  eventType: string;
+  eventId: string;
+  orderId?: string;
+  sellerUsername?: string;
+  buyerUsername?: string;
+  itemId?: string;
+  sku?: string;
+  title?: string;
+  quantity?: number;
+  reason?: string;
+  status?: string;
+  amount?: number;
+  currency?: string;
+  createdAt: string;
+}
+
+export interface AfterSalesResponse {
+  content: AfterSalesEvent[];
+  totalElements: number;
+  number: number;
+  size: number;
+  totalPages: number;
+}
+
+// ═══ Message Types ═══
+
+export interface MessageItem {
+  id: number;
+  messageId: string;
+  sender: string;
+  senderUsername?: string;
+  recipientUsername?: string;
+  sellerUsername?: string;
+  itemId?: string;
+  itemTitle?: string;
+  sku?: string;
+  subject?: string;
+  body?: string;
+  messageType?: string;
+  folderId?: string;
+  isRead: boolean;
+  flagged: boolean;
+  replied: boolean;
+  parentMessageId?: string;
+  responseTimeSeconds?: number;
+  receivedAt: string;
+}
+
+export interface MessagesResponse {
+  content: MessageItem[];
+  totalElements: number;
+  number: number;
+  size: number;
+  totalPages: number;
+}
+
+export interface MessageStatsResponse {
+  avgResponseSeconds: number | null;
+  maxResponseSeconds: number | null;
+  totalMessages: number;
 }
 
 // ═══ Offer Types ═══

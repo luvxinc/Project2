@@ -164,3 +164,5 @@ ebay:
     endpoint-url: ${EBAY_WEBHOOK_ENDPOINT_URL:https://api.topmorrowusa.com/api/v1/ebay/webhook}
     # 是否启用事件处理 (false = 仅响应 challenge + 签名验证, 不触发业务逻辑)
     enabled: ${EBAY_WEBHOOK_ENABLED:false}
+    # eBay Trading API Platform Notification 共享密钥 (空 = 跳过验证, 向后兼容)
+    platform-notification-token: ${EBAY_PLATFORM_NOTIFICATION_TOKEN:}
