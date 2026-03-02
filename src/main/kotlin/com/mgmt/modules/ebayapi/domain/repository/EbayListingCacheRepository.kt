@@ -17,4 +17,24 @@ interface EbayListingCacheRepository : JpaRepository<EbayListingCache, String> {
     @Modifying
     @Query("DELETE FROM EbayListingCache e WHERE e.itemId = :itemId AND e.seller = :seller")
     fun deleteByItemIdAndSeller(itemId: String, seller: String)
+
+    @Modifying
+    @Query(
+        value = """INSERT INTO ebay_api.listing_cache (item_id, seller, data, fetched_at)
+                   VALUES (:itemId, :seller, CAST(:data AS jsonb), :fetchedAt)
+                   ON CONFLICT (item_id) DO UPDATE SET
+                       seller = EXCLUDED.seller,
+                       data = EXCLUDED.data,
+                       fetched_at = EXCLUDED.fetched_at""",
+        nativeQuery = true
+    )
+    fun upsert(itemId: String, seller: String, data: String, fetchedAt: java.time.Instant)
+
+    @Modifying
+    @Query(
+        value = """DELETE FROM ebay_api.listing_cache
+                   WHERE seller = :seller AND item_id NOT IN (:itemIds)""",
+        nativeQuery = true
+    )
+    fun deleteBySellerAndItemIdNotIn(seller: String, itemIds: List<String>)
 }

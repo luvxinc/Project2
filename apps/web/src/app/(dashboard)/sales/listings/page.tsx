@@ -414,7 +414,7 @@ export default function ListingsPage() {
   // ═══ SSE: 实时接收销售事件，精确更新对应行 ═══
   useEffect(() => {
     const baseUrl = getApiBaseUrlCached();
-    const sseUrl = `${baseUrl}/ebay/sync/listings/events`;
+    const sseUrl = `${baseUrl}/ebay/sync/listings/events?seller=${encodeURIComponent(activeSeller)}`;
     let es: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -492,7 +492,7 @@ export default function ListingsPage() {
       if (retryTimer) clearTimeout(retryTimer);
       setSseConnected(false);
     };
-  }, []);
+  }, [activeSeller]);
 
   // Sort logic
   const handleSort = (field: keyof ListingItem) => {

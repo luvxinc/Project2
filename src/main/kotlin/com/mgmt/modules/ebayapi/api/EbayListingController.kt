@@ -9,6 +9,7 @@ import com.mgmt.modules.ebayapi.domain.model.EbayListingCache
 import com.mgmt.modules.ebayapi.domain.repository.EbayListingCacheRepository
 import com.mgmt.modules.ebayapi.domain.repository.EbaySellerAccountRepository
 import com.mgmt.domain.inventory.FifoLayerRepository
+import com.mgmt.modules.ebayapi.infrastructure.EbayApiUtils
 import org.slf4j.LoggerFactory
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
@@ -170,19 +171,21 @@ class EbayListingController(
                 }
                 allEnrichedItems.addAll(enriched)
 
-                // Save to cache
-                listingCacheRepo.deleteBySeller(s)
+                // Upsert cache (no gap where concurrent reads see zero listings)
                 val now = java.time.Instant.now()
-                val cacheEntities = enriched.map { item ->
-                    EbayListingCache(
-                        itemId = item["itemId"]?.toString() ?: "",
-                        seller = s,
-                        data = mapper.writeValueAsString(item),
-                        fetchedAt = now,
-                    )
+                val fetchedItemIds = mutableListOf<String>()
+                for (item in enriched) {
+                    val itemId = item["itemId"]?.toString() ?: continue
+                    fetchedItemIds.add(itemId)
+                    listingCacheRepo.upsert(itemId, s, mapper.writeValueAsString(item), now)
                 }
-                listingCacheRepo.saveAll(cacheEntities)
-                log.info("Cached {} listings for seller {}", cacheEntities.size, s)
+                // Remove listings no longer active on eBay
+                if (fetchedItemIds.isNotEmpty()) {
+                    listingCacheRepo.deleteBySellerAndItemIdNotIn(s, fetchedItemIds)
+                } else {
+                    listingCacheRepo.deleteBySeller(s)
+                }
+                log.info("Upserted {} listings for seller {}", fetchedItemIds.size, s)
             }
 
             var outOfStock = 0; var lowStock = 0; var inStock = 0
@@ -343,9 +346,9 @@ class EbayListingController(
      * 前端收到后只更新对应 itemId 的行 (soldQty +N, availableQty -N)。
      */
     @GetMapping("/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-    fun streamSaleEvents(): SseEmitter {
-        log.info("📡 New SSE client subscribing to listing sale events")
-        return saleBroadcaster.subscribe()
+    fun streamSaleEvents(@RequestParam(defaultValue = "all") seller: String): SseEmitter {
+        log.info("SSE client subscribing to listing sale events for seller={}", seller)
+        return saleBroadcaster.subscribe(seller)
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -830,6 +833,7 @@ class EbayListingController(
             val errors = mutableListOf<String>()
             val batches = items.chunked(4)
             val totalBatches = batches.size
+            val restockDetails = mutableListOf<Map<String, Any>>()
 
             log.info("📦 Bulk restock: {} items in {} batches", items.size, totalBatches)
 
@@ -837,20 +841,51 @@ class EbayListingController(
             batches.forEachIndexed { idx, batch ->
                 // Rate limit: 50ms between batches to stay safe under 6000/15s burst limit
                 if (idx > 0) Thread.sleep(50)
+
+                // Pre-compute new quantities for this batch
+                val batchItems = batch.map { item ->
+                    val itemId = item["itemId"]?.toString() ?: ""
+                    val sku = item["sku"]?.toString()
+                    val sold = (item["soldQuantity"] as? Number)?.toInt() ?: 0
+                    val newQty = (sold / 25).coerceIn(10, 100)
+                    mapOf("itemId" to itemId, "sku" to (sku ?: ""), "soldQuantity" to sold, "newQuantity" to newQty)
+                }
+
                 try {
-                    val inventoryStatuses = batch.map { item ->
-                        val itemId = item["itemId"]?.toString() ?: ""
-                        val sku = item["sku"]?.toString()
-                        val sold = (item["soldQuantity"] as? Number)?.toInt() ?: 0
-                        val newQty = (sold / 25).coerceIn(10, 100)
-                        buildInventoryStatusXml(itemId, sku, quantity = newQty, price = null)
+                    val inventoryStatuses = batchItems.map { bi ->
+                        val sku = bi["sku"]?.toString()?.ifBlank { null }
+                        buildInventoryStatusXml(bi["itemId"].toString(), sku, quantity = bi["newQuantity"] as Int, price = null)
                     }.joinToString("\n")
 
                     val result = callReviseInventoryStatus(accessToken, inventoryStatuses)
-                    if (result) success += batch.size else { failed += batch.size; errors.add("Batch ${idx+1} failed") }
+                    if (result) {
+                        success += batch.size
+                        restockDetails.addAll(batchItems.map { it + ("success" to true) })
+                        // Update local listing cache so frontend sees new qty immediately
+                        for (bi in batchItems) {
+                            try {
+                                val cached = listingCacheRepo.findByItemIdAndSeller(bi["itemId"].toString(), seller)
+                                if (cached != null) {
+                                    val jsonNode = mapper.readTree(cached.data)
+                                    if (jsonNode is com.fasterxml.jackson.databind.node.ObjectNode) {
+                                        jsonNode.put("availableQuantity", bi["newQuantity"] as Int)
+                                        cached.data = mapper.writeValueAsString(jsonNode)
+                                        listingCacheRepo.save(cached)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                log.warn("Failed to update cache after restock for {}: {}", bi["itemId"], e.message)
+                            }
+                        }
+                    } else {
+                        failed += batch.size
+                        errors.add("Batch ${idx+1} failed")
+                        restockDetails.addAll(batchItems.map { it + ("success" to false) })
+                    }
                 } catch (e: Exception) {
                     failed += batch.size
                     errors.add(e.message ?: "Unknown error")
+                    restockDetails.addAll(batchItems.map { it + ("success" to false) })
                 }
                 if ((idx + 1) % 50 == 0 || idx == totalBatches - 1) {
                     log.info("📦 Restock progress: {}/{} batches ({} items ok, {} failed)", idx + 1, totalBatches, success, failed)
@@ -865,6 +900,7 @@ class EbayListingController(
                 successCount = success,
                 failedCount = failed,
                 durationMs = 0,
+                items = restockDetails,
             )
             ResponseEntity.ok(mapOf(
                 "success" to success, "failed" to failed,
@@ -1103,8 +1139,8 @@ class EbayListingController(
 
     private fun buildInventoryStatusXml(itemId: String, sku: String?, quantity: Int?, price: Double?): String {
         val sb = StringBuilder("<InventoryStatus>")
-        sb.append("<ItemID>$itemId</ItemID>")
-        if (!sku.isNullOrBlank()) sb.append("<SKU>$sku</SKU>")
+        sb.append("<ItemID>${EbayApiUtils.escapeXml(itemId)}</ItemID>")
+        if (!sku.isNullOrBlank()) sb.append("<SKU>${EbayApiUtils.escapeXml(sku)}</SKU>")
         if (quantity != null) sb.append("<Quantity>$quantity</Quantity>")
         if (price != null) sb.append("<StartPrice currencyID=\"USD\">${"%.2f".format(price)}</StartPrice>")
         sb.append("</InventoryStatus>")
@@ -1168,8 +1204,8 @@ class EbayListingController(
                     <eBayAuthToken>$accessToken</eBayAuthToken>
                 </RequesterCredentials>
                 <Item>
-                    <ItemID>$itemId</ItemID>
-                    <SKU>$newSku</SKU>
+                    <ItemID>${EbayApiUtils.escapeXml(itemId)}</ItemID>
+                    <SKU>${EbayApiUtils.escapeXml(newSku)}</SKU>
                 </Item>
             </ReviseItemRequest>
             """.trimIndent()

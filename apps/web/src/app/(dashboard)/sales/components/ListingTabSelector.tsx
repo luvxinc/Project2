@@ -10,13 +10,16 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 //   Listings → Offers
 // ================================
 
-type ListingTab = 'listings' | 'offers' | 'automation' | 'log';
+type ListingTab = 'listings' | 'offers' | 'orders' | 'messages' | 'afterSales' | 'automation' | 'log';
 
-const listingTabs: ListingTab[] = ['listings', 'offers', 'automation', 'log'];
+const listingTabs: ListingTab[] = ['listings', 'offers', 'orders', 'messages', 'afterSales', 'automation', 'log'];
 
 const listingTabPaths: Record<ListingTab, string> = {
   listings: '/sales/listings',
   offers: '/sales/offers',
+  orders: '/sales/orders',
+  messages: '/sales/messages',
+  afterSales: '/sales/after-sales',
   automation: '/sales/automation',
   log: '/sales/log',
 };
@@ -43,6 +46,9 @@ export default function ListingTabSelector() {
   // 确定当前选中的 tab
   const getCurrentTab = useCallback((): ListingTab => {
     if (pathname?.includes('/sales/offers')) return 'offers';
+    if (pathname?.includes('/sales/orders')) return 'orders';
+    if (pathname?.includes('/sales/messages')) return 'messages';
+    if (pathname?.includes('/sales/after-sales')) return 'afterSales';
     if (pathname?.includes('/sales/automation')) return 'automation';
     if (pathname?.includes('/sales/log')) return 'log';
     return 'listings';
@@ -110,6 +116,9 @@ export default function ListingTabSelector() {
   const tabLabels: Record<ListingTab, string> = {
     listings: t('tabListings'),
     offers: t('tabOffers'),
+    orders: t('tabOrders'),
+    messages: t('tabMessages'),
+    afterSales: t('tabAfterSales'),
     automation: t('tabAutomation'),
     log: t('tabLog'),
   };

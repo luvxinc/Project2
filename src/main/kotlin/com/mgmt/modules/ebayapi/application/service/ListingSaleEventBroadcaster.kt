@@ -4,32 +4,40 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * SSE 广播器 — 当 eBay 有新订单时, 向所有连接的 Listing 页面推送售出的 itemId。
  *
  * 前端只更新对应的行 (soldQuantity +N, availableQuantity -N), 不刷新全部数据。
+ * Emitters are keyed by seller username. Clients subscribing with "all" receive all events.
  */
 @Service
 class ListingSaleEventBroadcaster(
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(ListingSaleEventBroadcaster::class.java)
-    private val emitters = CopyOnWriteArrayList<SseEmitter>()
+    private val emittersBySeller = ConcurrentHashMap<String, CopyOnWriteArrayList<SseEmitter>>()
 
     /**
      * 注册一个新的 SSE 连接 (前端 EventSource 连接时调用)。
+     * @param seller seller username to filter events, or "all" to receive everything
      */
-    fun subscribe(): SseEmitter {
+    fun subscribe(seller: String = "all"): SseEmitter {
         val emitter = SseEmitter(0L)  // 不超时 (keep forever)
-        emitters.add(emitter)
+        val list = emittersBySeller.computeIfAbsent(seller) { CopyOnWriteArrayList() }
+        list.add(emitter)
 
-        emitter.onCompletion { emitters.remove(emitter) }
-        emitter.onTimeout { emitters.remove(emitter) }
-        emitter.onError { emitters.remove(emitter) }
+        val removeEmitter = {
+            list.remove(emitter)
+            if (list.isEmpty()) emittersBySeller.remove(seller, list)
+        }
+        emitter.onCompletion { removeEmitter() }
+        emitter.onTimeout { removeEmitter() }
+        emitter.onError { removeEmitter() }
 
-        log.info("📡 SSE client connected — total: {}", emitters.size)
+        log.info("SSE client connected for seller={} — total: {}", seller, totalEmitterCount())
 
         // 发送初始连接确认
         try {
@@ -46,13 +54,15 @@ class ListingSaleEventBroadcaster(
     }
 
     /**
-     * 广播销售事件: 推送具体售出的 item 信息给所有前端连接。
+     * 广播销售事件: 推送具体售出的 item 信息给匹配的前端连接。
      *
+     * @param seller the seller this sale belongs to
      * @param soldItems 售出的商品列表 [{itemId, sku, title, quantitySold}]
      */
-    fun broadcastSale(soldItems: List<SoldItemInfo>) {
-        if (emitters.isEmpty()) {
-            log.debug("No SSE clients connected, skipping broadcast")
+    fun broadcastSale(seller: String, soldItems: List<SoldItemInfo>) {
+        val targets = collectTargetEmitters(seller)
+        if (targets.isEmpty()) {
+            log.debug("No SSE clients connected for seller={}, skipping broadcast", seller)
             return
         }
 
@@ -62,34 +72,21 @@ class ListingSaleEventBroadcaster(
             "timestamp" to System.currentTimeMillis(),
         ))
 
-        val deadEmitters = mutableListOf<SseEmitter>()
-
-        for (emitter in emitters) {
-            try {
-                emitter.send(
-                    SseEmitter.event()
-                        .name("sale")
-                        .data(payload)
-                )
-            } catch (e: Exception) {
-                deadEmitters.add(emitter)
-                log.debug("SSE emitter dead, removing: {}", e.message)
-            }
-        }
-
-        emitters.removeAll(deadEmitters.toSet())
-        log.info("📡 Broadcasted ITEM_SOLD to {} clients: {} items",
-            emitters.size, soldItems.size)
+        sendToEmitters(targets, "sale", payload)
+        log.info("Broadcasted ITEM_SOLD to {} clients for seller={}: {} items",
+            targets.size, seller, soldItems.size)
     }
 
     /**
      * 广播 Best Offer 事件: 推送买家发起的 offer 给前端 Offer 页面。
      *
-     * @param offer Best Offer 信息
+     * @param offer Best Offer 信息 (seller is extracted from offer.seller)
      */
     fun broadcastOffer(offer: OfferEventInfo) {
-        if (emitters.isEmpty()) {
-            log.debug("No SSE clients connected, skipping offer broadcast")
+        val seller = offer.seller ?: "unknown"
+        val targets = collectTargetEmitters(seller)
+        if (targets.isEmpty()) {
+            log.debug("No SSE clients connected for seller={}, skipping offer broadcast", seller)
             return
         }
 
@@ -99,25 +96,71 @@ class ListingSaleEventBroadcaster(
             "timestamp" to System.currentTimeMillis(),
         ))
 
-        val deadEmitters = mutableListOf<SseEmitter>()
+        sendToEmitters(targets, "offer", payload)
+        log.info("Broadcasted BEST_OFFER to {} clients for seller={}: itemId={}, buyer={}",
+            targets.size, seller, offer.itemId, offer.buyerUserId)
+    }
 
+    /**
+     * Collect emitters that should receive events for the given seller:
+     * emitters registered for that specific seller + emitters registered for "all".
+     */
+    private fun collectTargetEmitters(seller: String): List<SseEmitter> {
+        val result = mutableListOf<SseEmitter>()
+        emittersBySeller["all"]?.let { result.addAll(it) }
+        if (seller != "all") {
+            emittersBySeller[seller]?.let { result.addAll(it) }
+        }
+        return result
+    }
+
+    private fun sendToEmitters(emitters: List<SseEmitter>, eventName: String, payload: String) {
+        val deadEmitters = mutableListOf<SseEmitter>()
         for (emitter in emitters) {
             try {
-                emitter.send(
-                    SseEmitter.event()
-                        .name("offer")
-                        .data(payload)
-                )
+                emitter.send(SseEmitter.event().name(eventName).data(payload))
             } catch (e: Exception) {
                 deadEmitters.add(emitter)
                 log.debug("SSE emitter dead, removing: {}", e.message)
             }
         }
-
-        emitters.removeAll(deadEmitters.toSet())
-        log.info("📡 Broadcasted BEST_OFFER to {} clients: itemId={}, buyer={}",
-            emitters.size, offer.itemId, offer.buyerUserId)
+        // Clean up dead emitters from all seller lists
+        if (deadEmitters.isNotEmpty()) {
+            val deadSet = deadEmitters.toSet()
+            for ((key, list) in emittersBySeller) {
+                list.removeAll(deadSet)
+                if (list.isEmpty()) emittersBySeller.remove(key, list)
+            }
+        }
     }
+
+    fun broadcastAfterSales(event: AfterSalesEventInfo) {
+        val seller = event.seller ?: "unknown"
+        val targets = collectTargetEmitters(seller)
+        if (targets.isEmpty()) return
+        val payload = objectMapper.writeValueAsString(mapOf(
+            "type" to "AFTER_SALES",
+            "event" to event,
+            "timestamp" to System.currentTimeMillis(),
+        ))
+        sendToEmitters(targets, "after-sales", payload)
+        log.info("Broadcasted AFTER_SALES to {} clients: {}", targets.size, event.eventId)
+    }
+
+    fun broadcastMessage(event: MessageEventInfo) {
+        val seller = event.seller ?: "unknown"
+        val targets = collectTargetEmitters(seller)
+        if (targets.isEmpty()) return
+        val payload = objectMapper.writeValueAsString(mapOf(
+            "type" to "NEW_MESSAGE",
+            "message" to event,
+            "timestamp" to System.currentTimeMillis(),
+        ))
+        sendToEmitters(targets, "message", payload)
+        log.info("Broadcasted NEW_MESSAGE to {} clients: {}", targets.size, event.messageId)
+    }
+
+    private fun totalEmitterCount(): Int = emittersBySeller.values.sumOf { it.size }
 }
 
 /**
@@ -146,4 +189,22 @@ data class OfferEventInfo(
     val message: String?,        // 买家留言
     val seller: String?,         // 卖家
     val buyItNowPrice: Double?,  // 原价 (BuyItNowPrice)
+)
+
+data class AfterSalesEventInfo(
+    val eventType: String,
+    val eventId: String,
+    val orderId: String?,
+    val buyerUsername: String?,
+    val status: String?,
+    val seller: String?,
+)
+
+data class MessageEventInfo(
+    val messageId: String,
+    val sender: String,
+    val senderUsername: String?,
+    val itemId: String?,
+    val subject: String?,
+    val seller: String?,
 )
